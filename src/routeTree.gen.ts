@@ -21,6 +21,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedColaboradoresRouteImport } from './routes/_authenticated/colaboradores'
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
+import { Route as AuthenticatedConfiguracoesProjetosRouteImport } from './routes/_authenticated/configuracoes.projetos'
 import { Route as AuthenticatedConfiguracoesEmpresasRouteImport } from './routes/_authenticated/configuracoes.empresas'
 
 const AuthRoute = AuthRouteImport.update({
@@ -85,6 +86,12 @@ const AuthenticatedAlertasRoute = AuthenticatedAlertasRouteImport.update({
   path: '/alertas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedConfiguracoesProjetosRoute =
+  AuthenticatedConfiguracoesProjetosRouteImport.update({
+    id: '/projetos',
+    path: '/projetos',
+    getParentRoute: () => AuthenticatedConfiguracoesRoute,
+  } as any)
 const AuthenticatedConfiguracoesEmpresasRoute =
   AuthenticatedConfiguracoesEmpresasRouteImport.update({
     id: '/empresas',
@@ -105,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/configuracoes/empresas': typeof AuthenticatedConfiguracoesEmpresasRoute
+  '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -119,6 +127,7 @@ export interface FileRoutesByTo {
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/configuracoes/empresas': typeof AuthenticatedConfiguracoesEmpresasRoute
+  '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -135,6 +144,7 @@ export interface FileRoutesById {
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/configuracoes/empresas': typeof AuthenticatedConfiguracoesEmpresasRoute
+  '/_authenticated/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,6 +161,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/usuarios'
     | '/configuracoes/empresas'
+    | '/configuracoes/projetos'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -165,6 +176,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/usuarios'
     | '/configuracoes/empresas'
+    | '/configuracoes/projetos'
   id:
     | '__root__'
     | '/'
@@ -180,6 +192,7 @@ export interface FileRouteTypes {
     | '/_authenticated/relatorios'
     | '/_authenticated/usuarios'
     | '/_authenticated/configuracoes/empresas'
+    | '/_authenticated/configuracoes/projetos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -274,6 +287,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAlertasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/configuracoes/projetos': {
+      id: '/_authenticated/configuracoes/projetos'
+      path: '/projetos'
+      fullPath: '/configuracoes/projetos'
+      preLoaderRoute: typeof AuthenticatedConfiguracoesProjetosRouteImport
+      parentRoute: typeof AuthenticatedConfiguracoesRoute
+    }
     '/_authenticated/configuracoes/empresas': {
       id: '/_authenticated/configuracoes/empresas'
       path: '/empresas'
@@ -286,12 +306,15 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedConfiguracoesRouteChildren {
   AuthenticatedConfiguracoesEmpresasRoute: typeof AuthenticatedConfiguracoesEmpresasRoute
+  AuthenticatedConfiguracoesProjetosRoute: typeof AuthenticatedConfiguracoesProjetosRoute
 }
 
 const AuthenticatedConfiguracoesRouteChildren: AuthenticatedConfiguracoesRouteChildren =
   {
     AuthenticatedConfiguracoesEmpresasRoute:
       AuthenticatedConfiguracoesEmpresasRoute,
+    AuthenticatedConfiguracoesProjetosRoute:
+      AuthenticatedConfiguracoesProjetosRoute,
   }
 
 const AuthenticatedConfiguracoesRouteWithChildren =
