@@ -30,6 +30,7 @@ export type Database = {
           data_inicio: string
           data_retorno: string | null
           dias: number
+          dias_label: string | null
           empresa_id: string
           id: string
           lancado_em: string | null
@@ -44,6 +45,7 @@ export type Database = {
           registrado_por: string | null
           status: Database["public"]["Enums"]["status_ausencia"]
           tipo: Database["public"]["Enums"]["tipo_ausencia"]
+          tipo_detalhe: string | null
           updated_at: string
         }
         Insert: {
@@ -61,6 +63,7 @@ export type Database = {
           data_inicio: string
           data_retorno?: string | null
           dias?: number
+          dias_label?: string | null
           empresa_id: string
           id?: string
           lancado_em?: string | null
@@ -75,6 +78,7 @@ export type Database = {
           registrado_por?: string | null
           status?: Database["public"]["Enums"]["status_ausencia"]
           tipo: Database["public"]["Enums"]["tipo_ausencia"]
+          tipo_detalhe?: string | null
           updated_at?: string
         }
         Update: {
@@ -92,6 +96,7 @@ export type Database = {
           data_inicio?: string
           data_retorno?: string | null
           dias?: number
+          dias_label?: string | null
           empresa_id?: string
           id?: string
           lancado_em?: string | null
@@ -106,6 +111,7 @@ export type Database = {
           registrado_por?: string | null
           status?: Database["public"]["Enums"]["status_ausencia"]
           tipo?: Database["public"]["Enums"]["tipo_ausencia"]
+          tipo_detalhe?: string | null
           updated_at?: string
         }
         Relationships: [
