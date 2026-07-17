@@ -119,7 +119,7 @@ function OperacoesContent({ canWrite }: { canWrite: boolean }) {
 
   const solicitar = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.rpc("registrar_solicitacao_backup" as never, { _observacoes: obs || null });
+      const { error } = await (supabase.rpc as unknown as (fn: string, args?: Record<string, unknown>) => Promise<{ error: Error | null }>)("registrar_solicitacao_backup", { _observacoes: obs || null });
       if (error) throw error;
     },
     onSuccess: () => {
