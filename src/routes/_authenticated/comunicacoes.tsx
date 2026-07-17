@@ -545,16 +545,18 @@ function ComunicacaoEditor({
   onClose,
   onSaved,
   userId,
+  initialAusenciaId,
 }: {
   existing: Comunicacao | null;
   onClose: () => void;
   onSaved: () => void;
   userId: string | null;
+  initialAusenciaId?: string | null;
 }) {
   const queryClient = useQueryClient();
   const isEdit = !!existing;
 
-  const [ausenciaId, setAusenciaId] = useState<string>(existing?.ausencia_id ?? "");
+  const [ausenciaId, setAusenciaId] = useState<string>(existing?.ausencia_id ?? initialAusenciaId ?? "");
   const [canal, setCanal] = useState<CanalComunicacao>(existing?.tipo ?? "EMAIL");
   const [assunto, setAssunto] = useState(existing?.assunto ?? "");
   const [mensagem, setMensagem] = useState(existing?.mensagem ?? "");
