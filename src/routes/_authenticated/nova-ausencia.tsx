@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,13 +11,19 @@ import {
   CalendarDays,
   ClipboardList,
   FileText,
+  Hash,
   Image as ImageIcon,
   Loader2,
   Lock,
   Mail,
   MessageSquare,
   Phone,
+  Search,
   Send,
+  ShieldCheck,
+  Sparkles,
+  Stethoscope,
+  Store,
   UploadCloud,
   User as UserIcon,
   Users,
@@ -31,6 +38,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -48,8 +63,6 @@ import {
 } from "@/components/ui/form";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
-import { useProjetosAtivosPorEmpresa } from "@/hooks/use-projetos";
-import { useColaboradoresAtivos } from "@/hooks/use-colaboradores";
 import {
   ARQUIVO_MAX_BYTES,
   ARQUIVO_MIMES,
@@ -60,6 +73,11 @@ import {
   type TipoAusencia,
 } from "@/lib/ausencias";
 import { formatTelefone } from "@/lib/br-format";
+import {
+  improveMotivo as improveMotivoFn,
+  scoreCompliance as scoreComplianceFn,
+  suggestMotivoFromCID as suggestMotivoFromCIDFn,
+} from "@/lib/ai.functions";
 
 const formatPhoneBR = formatTelefone;
 
@@ -74,9 +92,7 @@ export const Route = createFileRoute("/_authenticated/nova-ausencia")({
   component: NovaAusenciaPage,
 });
 
-type Empresa = { id: string; nome: string; ativo: boolean };
-
-type ColabDetalhe = {
+type ColabMatch = {
   id: string;
   nome_completo: string;
   matricula: string;
@@ -89,8 +105,8 @@ type ColabDetalhe = {
   ativo: boolean;
   empresa_id: string;
   projeto_id: string;
-  empresa?: { nome: string } | null;
-  projeto?: { nome: string } | null;
+  empresa: { id: string; nome: string; ativo: boolean } | null;
+  projeto: { id: string; nome: string; ativo: boolean } | null;
 };
 
 type AusenciaEdit = {
@@ -115,17 +131,19 @@ type AusenciaEdit = {
   arquivo_tamanho: number | null;
 };
 
+const DIAS_OPTIONS = Array.from({ length: 30 }, (_, i) => i + 1);
+
 const schema = z.object({
-  empresa_id: z.string().uuid("Selecione a empresa."),
-  projeto_id: z.string().uuid("Selecione o projeto."),
-  colaborador_id: z.string().uuid("Selecione o colaborador."),
+  colaborador_id: z.string().uuid("Busque um colaborador pela matrícula."),
+  empresa_id: z.string().uuid(),
+  projeto_id: z.string().uuid(),
   tipo: z.enum(TIPO_AUSENCIA, { errorMap: () => ({ message: "Selecione o tipo." }) }),
   data_inicio: z.string().min(1, "Informe a data da ausência."),
   quantidade_dias: z
-    .number({ invalid_type_error: "Informe a quantidade de dias." })
+    .number({ invalid_type_error: "Selecione a quantidade de dias." })
     .int()
-    .min(1, "Mínimo de 1 dia.")
-    .max(365, "Máximo de 365 dias."),
+    .min(1)
+    .max(30),
   localidade: z.string().trim().min(1, "Localidade é obrigatória.").max(150),
   loja_codigo_nome: z.string().trim().min(1, "Código ou nome da loja é obrigatório.").max(150),
   cid: z.string().max(20).optional().or(z.literal("")),
@@ -154,6 +172,15 @@ function formatDatePt(iso: string): string {
   return `${d}/${m}/${y}`;
 }
 
+function useDebouncedValue<T>(value: T, delay = 800): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return debounced;
+}
+
 function NovaAusenciaPage() {
   const { profile, roles } = useSession();
   const podeCadastrar =
@@ -163,6 +190,7 @@ function NovaAusenciaPage() {
   const { id: editId } = Route.useSearch();
   const isEdit = !!editId;
 
+  // Anexo
   const [file, setFile] = useState<File | null>(null);
   const [removeExistingFile, setRemoveExistingFile] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -170,12 +198,18 @@ function NovaAusenciaPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [prefilled, setPrefilled] = useState(false);
 
+  // Matrícula & colaborador
+  const [matriculaInput, setMatriculaInput] = useState("");
+  const [colab, setColab] = useState<ColabMatch | null>(null);
+  const [matchCandidates, setMatchCandidates] = useState<ColabMatch[] | null>(null);
+  const [searching, setSearching] = useState(false);
+
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
+      colaborador_id: "",
       empresa_id: "",
       projeto_id: "",
-      colaborador_id: "",
       tipo: "FALTA",
       data_inicio: "",
       quantidade_dias: 1,
@@ -187,12 +221,11 @@ function NovaAusenciaPage() {
     },
   });
 
-  const empresaId = form.watch("empresa_id");
-  const projetoId = form.watch("projeto_id");
   const colaboradorId = form.watch("colaborador_id");
   const dataInicio = form.watch("data_inicio");
   const quantidadeDias = form.watch("quantidade_dias");
   const motivo = form.watch("motivo") ?? "";
+  const cid = form.watch("cid") ?? "";
 
   const dataFim = useMemo(
     () => (dataInicio && quantidadeDias ? addDaysISO(dataInicio, quantidadeDias - 1) : ""),
@@ -203,6 +236,7 @@ function NovaAusenciaPage() {
     [dataInicio, quantidadeDias],
   );
 
+  // Carrega ausência para edição
   const ausenciaQ = useQuery({
     queryKey: ["ausencia", editId],
     enabled: !!editId,
@@ -222,15 +256,38 @@ function NovaAusenciaPage() {
   const ausencia = ausenciaQ.data ?? null;
   const bloqueado = isEdit && ausencia?.status === "LANCADO";
 
+  const applyColab = useCallback(
+    (c: ColabMatch) => {
+      setColab(c);
+      setMatriculaInput(c.matricula);
+      form.setValue("colaborador_id", c.id, { shouldValidate: true });
+      form.setValue("empresa_id", c.empresa_id, { shouldValidate: true });
+      form.setValue("projeto_id", c.projeto_id, { shouldValidate: true });
+    },
+    [form],
+  );
+
+  // Prefill em edição: carrega colaborador
   useEffect(() => {
-    if (isEdit && ausencia && !prefilled) {
+    if (!(isEdit && ausencia && !prefilled)) return;
+    (async () => {
+      const { data } = await supabase
+        .from("colaboradores")
+        .select(
+          "id, nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email, ativo, empresa_id, projeto_id, empresa:empresas(id, nome, ativo), projeto:projetos(id, nome, ativo)",
+        )
+        .eq("id", ausencia.colaborador_id)
+        .maybeSingle();
+      if (data) {
+        applyColab(data as unknown as ColabMatch);
+      }
       form.reset({
+        colaborador_id: ausencia.colaborador_id,
         empresa_id: ausencia.empresa_id,
         projeto_id: ausencia.projeto_id,
-        colaborador_id: ausencia.colaborador_id,
         tipo: ausencia.tipo,
         data_inicio: ausencia.data_inicio,
-        quantidade_dias: ausencia.dias || 1,
+        quantidade_dias: Math.min(30, Math.max(1, ausencia.dias || 1)),
         localidade: ausencia.localidade ?? "",
         loja_codigo_nome: ausencia.loja_codigo_nome ?? "",
         cid: ausencia.cid ?? "",
@@ -243,44 +300,58 @@ function NovaAusenciaPage() {
         motivo: ausencia.motivo ?? "",
       });
       setPrefilled(true);
+    })();
+  }, [isEdit, ausencia, prefilled, form, applyColab]);
+
+  async function searchMatricula(rawValue?: string) {
+    const val = (rawValue ?? matriculaInput).trim();
+    if (!val) {
+      toast.error("Digite a matrícula.");
+      return;
     }
-  }, [isEdit, ausencia, prefilled, form]);
-
-  const empresasQ = useQuery({
-    queryKey: ["empresas", "ativas"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("empresas")
-        .select("id, nome, ativo")
-        .eq("ativo", true)
-        .order("nome");
-      if (error) throw error;
-      return (data ?? []) as Empresa[];
-    },
-  });
-
-  const projetosQ = useProjetosAtivosPorEmpresa(empresaId || null);
-  const colabQ = useColaboradoresAtivos({
-    empresaId: empresaId || null,
-    projetoId: projetoId || null,
-  });
-
-  const colabDetalheQ = useQuery({
-    queryKey: ["colaborador-detalhe-nova", colaboradorId],
-    enabled: !!colaboradorId,
-    queryFn: async () => {
+    setSearching(true);
+    try {
       const { data, error } = await supabase
         .from("colaboradores")
         .select(
-          "id, nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email, ativo, empresa_id, projeto_id, empresa:empresas(nome), projeto:projetos(nome)",
+          "id, nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email, ativo, empresa_id, projeto_id, empresa:empresas(id, nome, ativo), projeto:projetos(id, nome, ativo)",
         )
-        .eq("id", colaboradorId)
-        .maybeSingle();
+        .eq("matricula", val)
+        .eq("ativo", true);
       if (error) throw error;
-      return data as unknown as ColabDetalhe | null;
-    },
-  });
+      const rows = (data ?? []) as unknown as ColabMatch[];
+      if (rows.length === 0) {
+        setColab(null);
+        form.setValue("colaborador_id", "");
+        form.setValue("empresa_id", "");
+        form.setValue("projeto_id", "");
+        toast.error("Matrícula não encontrada.", {
+          description: "Verifique o número ou cadastre o colaborador em Colaboradores.",
+        });
+      } else if (rows.length === 1) {
+        applyColab(rows[0]);
+        toast.success("Colaborador encontrado.");
+      } else {
+        setMatchCandidates(rows);
+      }
+    } catch (e) {
+      toast.error("Erro ao buscar colaborador.", {
+        description: e instanceof Error ? e.message : String(e),
+      });
+    } finally {
+      setSearching(false);
+    }
+  }
 
+  function clearColab() {
+    setColab(null);
+    setMatriculaInput("");
+    form.setValue("colaborador_id", "");
+    form.setValue("empresa_id", "");
+    form.setValue("projeto_id", "");
+  }
+
+  // Preview de arquivo
   useEffect(() => {
     if (file && file.type.startsWith("image/")) {
       const url = URL.createObjectURL(file);
@@ -321,6 +392,58 @@ function NovaAusenciaPage() {
     }
   }
 
+  // ============= IA (OpenRouter) =============
+  const suggestMotivoFromCID = useServerFn(suggestMotivoFromCIDFn);
+  const scoreComplianceServer = useServerFn(scoreComplianceFn);
+  const improveMotivo = useServerFn(improveMotivoFn);
+
+  const cidSuggestMut = useMutation({
+    mutationFn: (c: string) => suggestMotivoFromCID({ data: { cid: c } }),
+    onSuccess: (r) => {
+      if (r?.motivo) {
+        form.setValue("motivo", r.motivo, { shouldValidate: true });
+        toast.success("Motivo sugerido a partir do CID.");
+      }
+    },
+    onError: (e) =>
+      toast.error("Não foi possível sugerir motivo pelo CID.", {
+        description: e instanceof Error ? e.message : String(e),
+      }),
+  });
+
+  const improveMut = useMutation({
+    mutationFn: (m: string) => improveMotivo({ data: { motivo: m } }),
+    onSuccess: (r) => {
+      if (r?.motivo) {
+        form.setValue("motivo", r.motivo, { shouldValidate: true });
+        toast.success("Motivo aprimorado com IA.");
+      }
+    },
+    onError: (e) =>
+      toast.error("Não foi possível aprimorar o motivo.", {
+        description: e instanceof Error ? e.message : String(e),
+      }),
+  });
+
+  const debouncedMotivo = useDebouncedValue(motivo, 900);
+  const complianceQ = useQuery({
+    queryKey: ["compliance", debouncedMotivo],
+    enabled: debouncedMotivo.trim().length >= 5 && !bloqueado,
+    queryFn: () => scoreComplianceServer({ data: { motivo: debouncedMotivo } }),
+    staleTime: 60_000,
+  });
+  const compliance = complianceQ.data;
+
+  // CID → sugere motivo apenas quando motivo vazio e CID válido (blur)
+  function handleCidBlur() {
+    const c = cid.trim().toUpperCase();
+    if (!c || c.length < 2) return;
+    if (motivo.trim().length > 0) return;
+    if (cidSuggestMut.isPending) return;
+    cidSuggestMut.mutate(c);
+  }
+
+  // ============= Submit =============
   const salvarMut = useMutation({
     mutationFn: async (values: FormData) => {
       const dataInicioIso = values.data_inicio;
@@ -428,7 +551,7 @@ function NovaAusenciaPage() {
 
   if (!podeCadastrar) {
     return (
-      <AppShell title="Nova Ausência" breadcrumb={["Operações", "Nova Ausência"]}>
+      <AppShell title="Nova Ausência" breadcrumb={["CRM", "Nova Ausência"]}>
         <Card className="p-8 text-sm text-muted-foreground">
           Seu papel não permite cadastrar novas ausências.
         </Card>
@@ -438,7 +561,7 @@ function NovaAusenciaPage() {
 
   if (isEdit && ausenciaQ.isLoading) {
     return (
-      <AppShell title="Editar Ausência" breadcrumb={["Operações", "Ausências", "Editar"]}>
+      <AppShell title="Editar Ausência" breadcrumb={["CRM", "Ausências", "Editar"]}>
         <Card className="p-8 text-sm text-muted-foreground">Carregando registro…</Card>
       </AppShell>
     );
@@ -446,27 +569,31 @@ function NovaAusenciaPage() {
 
   if (isEdit && !ausencia) {
     return (
-      <AppShell title="Editar Ausência" breadcrumb={["Operações", "Ausências", "Editar"]}>
+      <AppShell title="Editar Ausência" breadcrumb={["CRM", "Ausências", "Editar"]}>
         <Card className="p-8 text-sm text-muted-foreground">Registro não encontrado.</Card>
       </AppShell>
     );
   }
 
-  const empresas = empresasQ.data ?? [];
-  const projetos = projetosQ.data ?? [];
-  const colaboradores = colabQ.data ?? [];
-  const colab = colabDetalheQ.data ?? null;
-
   const title = isEdit ? "Editar Ausência" : "Nova Ausência";
-  const crumb = isEdit ? ["Operações", "Ausências", "Editar"] : ["Operações", "Nova Ausência"];
+  const crumb = isEdit ? ["CRM", "Ausências", "Editar"] : ["CRM", "Nova Ausência"];
   const anexoExistenteVisivel =
     isEdit && ausencia?.possui_anexo && !file && !removeExistingFile;
+
+  const complianceColor =
+    !compliance || compliance.score === 0
+      ? "text-muted-foreground"
+      : compliance.score >= 75
+        ? "text-emerald-600 dark:text-emerald-400"
+        : compliance.score >= 45
+          ? "text-amber-600 dark:text-amber-400"
+          : "text-red-600 dark:text-red-400";
 
   return (
     <AppShell title={title} breadcrumb={crumb}>
       <div className="mx-auto w-full max-w-5xl">
         <Card className="overflow-hidden p-0 shadow-lg">
-          {/* Cabeçalho em gradiente */}
+          {/* Cabeçalho em gradiente MK9 */}
           <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 p-6 text-white sm:p-8">
             <div className="flex items-start gap-4">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25 backdrop-blur">
@@ -476,9 +603,7 @@ function NovaAusenciaPage() {
                 <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
                   Lançamento de Faltas e Atestados
                 </h1>
-                <p className="mt-1 text-sm text-white/85">
-                  Sistema de registro de ausências de colaboradores
-                </p>
+                <p className="mt-1 text-sm text-white/85">Sistema de registro conforme CLT</p>
               </div>
             </div>
           </div>
@@ -494,9 +619,6 @@ function NovaAusenciaPage() {
                   <p className="font-medium text-amber-900 dark:text-amber-200">
                     Este registro já foi lançado e não pode mais ser alterado.
                   </p>
-                  <p className="text-xs text-amber-800/80 dark:text-amber-200/70">
-                    Registros com status <strong>LANCADO</strong> são somente leitura.
-                  </p>
                   <Button
                     variant="outline"
                     size="sm"
@@ -507,32 +629,22 @@ function NovaAusenciaPage() {
                   </Button>
                 </div>
               </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {isEdit ? (
-                  <>
-                    Editando registro com status{" "}
-                    <span className="font-medium text-foreground">PENDENTE</span>.
-                  </>
-                ) : (
-                  <>
-                    Preencha o formulário abaixo. O lançamento nasce com status{" "}
-                    <span className="font-medium text-foreground">PENDENTE</span>.
-                  </>
-                )}
-              </p>
-            )}
+            ) : null}
 
             <Form {...form}>
               <fieldset disabled={bloqueado} className="contents">
                 <form
                   onSubmit={form.handleSubmit((v) => {
                     if (salvarMut.isPending || bloqueado) return;
+                    if (!colab && !isEdit) {
+                      toast.error("Busque um colaborador pela matrícula.");
+                      return;
+                    }
                     salvarMut.mutate(v);
                   })}
                   className="space-y-6"
                 >
-                  {/* SEÇÃO 1: Dados do Colaborador */}
+                  {/* ============= SEÇÃO 1: Dados do Colaborador ============= */}
                   <Card className="border border-border/60 p-5">
                     <div className="mb-4 flex items-center gap-2">
                       <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -540,238 +652,209 @@ function NovaAusenciaPage() {
                     </div>
 
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                      <FormField
-                        control={form.control}
-                        name="empresa_id"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Empresa *</FormLabel>
-                            <Select
-                              value={field.value}
-                              onValueChange={(v) => {
-                                field.onChange(v);
-                                form.setValue("projeto_id", "");
-                                form.setValue("colaborador_id", "");
-                              }}
-                              disabled={bloqueado}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {empresas.map((e) => (
-                                  <SelectItem key={e.id} value={e.id}>
-                                    {e.nome}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                      {/* E-mail */}
+                      <ReadonlyField
+                        label="E-mail"
+                        icon={Mail}
+                        value={colab?.email ?? ""}
+                        placeholder="colaborador@empresa.com"
+                        href={colab?.email ? `mailto:${colab.email}` : undefined}
                       />
-                      <FormField
-                        control={form.control}
-                        name="projeto_id"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Projeto *</FormLabel>
-                            <Select
-                              value={field.value}
-                              onValueChange={(v) => {
-                                field.onChange(v);
-                                form.setValue("colaborador_id", "");
-                              }}
-                              disabled={bloqueado || !empresaId || projetosQ.isLoading}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue
-                                    placeholder={
-                                      !empresaId
-                                        ? "Selecione a empresa"
-                                        : projetosQ.isLoading
-                                          ? "Carregando..."
-                                          : projetos.length === 0
-                                            ? "Sem projetos ativos"
-                                            : "Selecione"
-                                    }
-                                  />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {projetos.map((p) => (
-                                  <SelectItem key={p.id} value={p.id}>
-                                    {p.nome}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="colaborador_id"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Colaborador *</FormLabel>
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                              disabled={bloqueado || !projetoId || colabQ.isLoading}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue
-                                    placeholder={
-                                      !projetoId
-                                        ? "Selecione o projeto"
-                                        : colabQ.isLoading
-                                          ? "Carregando..."
-                                          : colaboradores.length === 0
-                                            ? "Sem colaboradores"
-                                            : "Buscar por nome ou matrícula"
-                                    }
-                                  />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {colaboradores.map((c) => (
-                                  <SelectItem key={c.id} value={c.id}>
-                                    {c.nome_completo} · {c.matricula}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
 
-                    {/* Dados automáticos */}
-                    {colaboradorId && (
-                      <div className="mt-5 rounded-lg border bg-muted/30 p-4">
-                        {colabDetalheQ.isLoading ? (
-                          <p className="text-xs text-muted-foreground">Carregando dados…</p>
-                        ) : colab ? (
-                          <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
-                            <ReadField label="Nome completo" value={colab.nome_completo} icon={UserIcon} />
-                            <ReadField label="Matrícula" value={colab.matricula} mono />
-                            <ReadField
-                              label="E-mail"
-                              value={colab.email}
-                              icon={Mail}
-                              href={colab.email ? `mailto:${colab.email}` : undefined}
-                            />
-                            <ReadField
-                              label="Telefone"
-                              value={colab.telefone ? formatPhoneBR(colab.telefone) : null}
-                              icon={Phone}
-                              href={colab.telefone ? `tel:+55${colab.telefone}` : undefined}
-                            />
-                            <ReadField
-                              label="WhatsApp"
-                              value={colab.whatsapp ? formatPhoneBR(colab.whatsapp) : null}
-                              icon={MessageSquare}
-                              href={
-                                colab.whatsapp
-                                  ? `https://wa.me/55${colab.whatsapp}`
-                                  : undefined
+                      {/* Matrícula (input principal) */}
+                      <div className="space-y-1.5">
+                        <Label className="flex items-center gap-1.5 text-sm">
+                          <Hash className="h-4 w-4 text-muted-foreground" />
+                          Matrícula <span className="text-red-500">*</span>
+                        </Label>
+                        <p className="text-[11px] leading-tight text-muted-foreground">
+                          Digite a matrícula do colaborador. Se existir em mais de uma empresa,
+                          o sistema solicitará a seleção.
+                        </p>
+                        <div className="flex gap-2">
+                          <Input
+                            value={matriculaInput}
+                            onChange={(e) => setMatriculaInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                searchMatricula();
                               }
-                              external
-                            />
-                            <ReadField
-                              label="Empresa"
-                              value={colab.empresa?.nome ?? null}
-                              icon={Building2}
-                            />
-                            <ReadField
-                              label="Projeto"
-                              value={colab.projeto?.nome ?? null}
-                              icon={ClipboardList}
-                            />
-                            <ReadField
-                              label="Supervisor(a)"
-                              value={colab.supervisor_nome}
-                              icon={UserIcon}
-                            />
-                            <ReadField
-                              label="Telefone do supervisor"
-                              value={
-                                colab.supervisor_telefone
-                                  ? formatPhoneBR(colab.supervisor_telefone)
-                                  : null
-                              }
-                              icon={Phone}
-                              href={
-                                colab.supervisor_telefone
-                                  ? `tel:+55${colab.supervisor_telefone}`
-                                  : undefined
-                              }
-                            />
-                            <ReadField
-                              label="E-mail do supervisor"
-                              value={colab.supervisor_email}
-                              icon={Mail}
-                              href={
-                                colab.supervisor_email
-                                  ? `mailto:${colab.supervisor_email}`
-                                  : undefined
-                              }
-                            />
-                          </div>
-                        ) : (
-                          <p className="text-xs text-muted-foreground">
-                            Colaborador não encontrado.
+                            }}
+                            placeholder="Ex: 12 ou 123456"
+                            disabled={bloqueado || isEdit}
+                          />
+                          {colab ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              onClick={clearColab}
+                              disabled={bloqueado || isEdit}
+                              aria-label="Limpar"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              onClick={() => searchMatricula()}
+                              disabled={searching || bloqueado || isEdit}
+                              aria-label="Buscar"
+                            >
+                              {searching ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Search className="h-4 w-4" />
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                        {form.formState.errors.colaborador_id && !colab && (
+                          <p className="text-xs text-red-500">
+                            {form.formState.errors.colaborador_id.message}
                           </p>
                         )}
                       </div>
+
+                      {/* Nome Completo */}
+                      <ReadonlyField
+                        label="Nome Completo"
+                        required
+                        icon={UserIcon}
+                        value={colab?.nome_completo ?? ""}
+                        placeholder="Nome completo do colaborador"
+                      />
+
+                      {/* Telefone */}
+                      <ReadonlyField
+                        label="Telefone do Colaborador"
+                        required
+                        icon={Phone}
+                        value={colab?.telefone ? formatPhoneBR(colab.telefone) : ""}
+                        placeholder="(XX) XXXXX-XXXX"
+                        href={colab?.telefone ? `tel:+55${colab.telefone}` : undefined}
+                      />
+
+                      {/* WhatsApp */}
+                      <div className="space-y-1.5">
+                        <ReadonlyField
+                          label="WhatsApp Alternativo"
+                          icon={MessageSquare}
+                          hint="Opcional — para contato adicional"
+                          value={colab?.whatsapp ? formatPhoneBR(colab.whatsapp) : ""}
+                          placeholder="(XX) XXXXX-XXXX"
+                          href={colab?.whatsapp ? `https://wa.me/55${colab.whatsapp}` : undefined}
+                          external
+                        />
+                      </div>
+
+                      {/* Empresa */}
+                      <ReadonlyField
+                        label="Empresa"
+                        required
+                        icon={Building2}
+                        value={colab?.empresa?.nome ?? ""}
+                        placeholder="Selecione..."
+                      />
+
+                      {/* Supervisor */}
+                      <ReadonlyField
+                        label="Supervisor(a)"
+                        required
+                        icon={UserIcon}
+                        value={colab?.supervisor_nome ?? ""}
+                        placeholder="Selecione..."
+                      />
+
+                      {/* Telefone do Supervisor */}
+                      <ReadonlyField
+                        label="Telefone do Supervisor"
+                        required
+                        icon={Phone}
+                        value={
+                          colab?.supervisor_telefone
+                            ? formatPhoneBR(colab.supervisor_telefone)
+                            : ""
+                        }
+                        placeholder="(XX) XXXXX-XXXX"
+                        href={
+                          colab?.supervisor_telefone
+                            ? `tel:+55${colab.supervisor_telefone}`
+                            : undefined
+                        }
+                      />
+
+                      {/* Projeto */}
+                      <ReadonlyField
+                        label="Projeto"
+                        required
+                        icon={ClipboardList}
+                        value={colab?.projeto?.nome ?? ""}
+                        placeholder="Selecione..."
+                      />
+                    </div>
+
+                    {colab && colab.supervisor_email && (
+                      <p className="mt-3 text-xs text-muted-foreground">
+                        E-mail do supervisor:{" "}
+                        <a
+                          href={`mailto:${colab.supervisor_email}`}
+                          className="text-blue-600 hover:underline dark:text-blue-400"
+                        >
+                          {colab.supervisor_email}
+                        </a>
+                      </p>
                     )}
                   </Card>
 
-                  {/* SEÇÃO 2: Informações da Ausência */}
+                  {/* ============= SEÇÃO 2: Informações da Ausência ============= */}
                   <Card className="border border-border/60 p-5">
                     <div className="mb-4 flex items-center gap-2">
                       <CalendarDays className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                       <h2 className="text-base font-semibold">Informações da Ausência</h2>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      <FormField
-                        control={form.control}
-                        name="localidade"
-                        render={({ field }) => (
-                          <FormItem className="lg:col-span-2">
-                            <FormLabel>Localidade *</FormLabel>
-                            <FormControl>
-                              <Input
-                                maxLength={150}
-                                placeholder="Ex.: Taguatinga Norte, Loja Carrefour Taguatinga, Atacadão Ceilândia"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                    {/* Localidade full-width */}
+                    <FormField
+                      control={form.control}
+                      name="localidade"
+                      render={({ field }) => (
+                        <FormItem className="mb-4">
+                          <FormLabel className="flex items-center gap-1.5">
+                            <Store className="h-4 w-4 text-muted-foreground" />
+                            Localidade <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              maxLength={150}
+                              placeholder="Ex.: Taguatinga Norte, Loja Carrefour Taguatinga, Atacadão Ceilândia"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                       <FormField
                         control={form.control}
                         name="tipo"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Tipo de Ausência *</FormLabel>
+                            <FormLabel>
+                              Tipo de Ausência <span className="text-red-500">*</span>
+                            </FormLabel>
                             <Select
                               value={field.value}
                               onValueChange={(v) => field.onChange(v as TipoAusencia)}
                             >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue />
+                                  <SelectValue placeholder="Selecione..." />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
@@ -786,13 +869,14 @@ function NovaAusenciaPage() {
                           </FormItem>
                         )}
                       />
-
                       <FormField
                         control={form.control}
                         name="data_inicio"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Data da Ausência *</FormLabel>
+                            <FormLabel>
+                              Data da Ausência <span className="text-red-500">*</span>
+                            </FormLabel>
                             <FormControl>
                               <Input type="date" {...field} />
                             </FormControl>
@@ -805,31 +889,47 @@ function NovaAusenciaPage() {
                         name="quantidade_dias"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Quantidade de Dias *</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                min={1}
-                                max={365}
-                                value={field.value ?? ""}
-                                onChange={(e) => {
-                                  const n = parseInt(e.target.value, 10);
-                                  field.onChange(Number.isFinite(n) ? n : 1);
-                                }}
-                              />
-                            </FormControl>
+                            <FormLabel>
+                              Quantidade de Dias <span className="text-red-500">*</span>
+                            </FormLabel>
+                            <Select
+                              value={String(field.value ?? "")}
+                              onValueChange={(v) => field.onChange(parseInt(v, 10))}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione..." />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent className="max-h-64">
+                                {DIAS_OPTIONS.map((d) => (
+                                  <SelectItem key={d} value={String(d)}>
+                                    {d} {d === 1 ? "dia" : "dias"}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      <div className="space-y-2">
-                        <Label>Data de Retorno</Label>
-                        <Input
-                          readOnly
-                          disabled
-                          value={dataRetorno ? formatDatePt(dataRetorno) : ""}
-                          placeholder="—"
-                        />
+
+                      <div className="space-y-1.5">
+                        <Label className="flex items-center gap-1.5">
+                          <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                          Data de Retorno
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            readOnly
+                            disabled
+                            value={dataRetorno ? formatDatePt(dataRetorno) : ""}
+                            placeholder="Indefinido"
+                          />
+                          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-medium text-muted-foreground">
+                            Auto
+                          </span>
+                        </div>
                         {dataFim && (
                           <p className="text-[11px] text-muted-foreground">
                             Última data de ausência: {formatDatePt(dataFim)}
@@ -842,16 +942,33 @@ function NovaAusenciaPage() {
                         name="cid"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>CID</FormLabel>
+                            <FormLabel className="flex items-center gap-1.5">
+                              <Stethoscope className="h-4 w-4 text-muted-foreground" />
+                              CID
+                            </FormLabel>
+                            <p className="text-[11px] leading-tight text-muted-foreground">
+                              Digite o código CID para preencher o motivo automaticamente
+                            </p>
                             <FormControl>
-                              <Input
-                                placeholder="Ex.: J00, F32, M54"
-                                {...field}
-                                onChange={(e) =>
-                                  field.onChange(e.target.value.toUpperCase().replace(/\s+/g, ""))
-                                }
-                                maxLength={20}
-                              />
+                              <div className="relative">
+                                <Input
+                                  placeholder="EX: J00, F32, M54"
+                                  {...field}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      e.target.value.toUpperCase().replace(/\s+/g, ""),
+                                    )
+                                  }
+                                  onBlur={() => {
+                                    field.onBlur();
+                                    handleCidBlur();
+                                  }}
+                                  maxLength={20}
+                                />
+                                {cidSuggestMut.isPending && (
+                                  <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-blue-600" />
+                                )}
+                              </div>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -861,12 +978,16 @@ function NovaAusenciaPage() {
                         control={form.control}
                         name="loja_codigo_nome"
                         render={({ field }) => (
-                          <FormItem className="lg:col-span-2">
-                            <FormLabel>Código ou Nome da Loja *</FormLabel>
+                          <FormItem>
+                            <FormLabel className="flex items-center gap-1.5">
+                              <Store className="h-4 w-4 text-muted-foreground" />
+                              Código ou Nome da Loja{" "}
+                              <span className="text-red-500">*</span>
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 maxLength={150}
-                                placeholder="Ex.: 001 ou Nome da Loja"
+                                placeholder="Ex: 001 ou Nome da Loja"
                                 {...field}
                               />
                             </FormControl>
@@ -882,7 +1003,11 @@ function NovaAusenciaPage() {
                         name="acidente_trabalho_trajeto"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Foi Acidente de Trabalho ou Trajeto? *</FormLabel>
+                            <FormLabel className="flex items-center gap-1.5">
+                              <AlertTriangle className="h-4 w-4 text-amber-500" />
+                              Foi Acidente de Trabalho/Trajeto?{" "}
+                              <span className="text-red-500">*</span>
+                            </FormLabel>
                             <FormControl>
                               <RadioGroup
                                 value={field.value ?? ""}
@@ -912,7 +1037,10 @@ function NovaAusenciaPage() {
                         render={({ field }) => (
                           <FormItem>
                             <div className="flex items-center justify-between">
-                              <FormLabel>Motivo da Ausência *</FormLabel>
+                              <FormLabel className="flex items-center gap-1.5">
+                                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                                Motivo da Ausência <span className="text-red-500">*</span>
+                              </FormLabel>
                               <span className="text-xs text-muted-foreground">
                                 {motivo.length}/500
                               </span>
@@ -930,9 +1058,57 @@ function NovaAusenciaPage() {
                         )}
                       />
                     </div>
+
+                    {/* Compliance Score + botão Melhorar com IA */}
+                    <div className="mt-4 space-y-3">
+                      <div className="flex items-start justify-between gap-3 rounded-lg border bg-muted/30 p-3">
+                        <div className="flex min-w-0 items-start gap-2">
+                          <ShieldCheck className={`h-5 w-5 shrink-0 ${complianceColor}`} />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium">
+                              Compliance Score:{" "}
+                              <span className={complianceColor}>
+                                {complianceQ.isFetching
+                                  ? "Analisando..."
+                                  : compliance && compliance.score > 0
+                                    ? `${compliance.score}/100 · ${compliance.label}`
+                                    : "Aguardando texto"}
+                              </span>
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {compliance?.feedback ||
+                                "Descreva o motivo para análise em tempo real via OpenRouter."}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+                          IA · Tempo Real
+                        </span>
+                      </div>
+
+                      <div className="flex justify-end">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={
+                            improveMut.isPending || motivo.trim().length < 5 || bloqueado
+                          }
+                          onClick={() => improveMut.mutate(motivo)}
+                          className="gap-2 border-blue-500/40 text-blue-700 hover:bg-blue-500/10 dark:text-blue-300"
+                        >
+                          {improveMut.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Sparkles className="h-4 w-4" />
+                          )}
+                          Melhorar com IA
+                        </Button>
+                      </div>
+                    </div>
                   </Card>
 
-                  {/* SEÇÃO 3: Anexar Documento */}
+                  {/* ============= SEÇÃO 3: Anexar Documento ============= */}
                   <Card className="border border-border/60 p-5">
                     <div className="mb-4 flex items-center gap-2">
                       <UploadCloud className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -959,7 +1135,12 @@ function NovaAusenciaPage() {
                               : ""}
                           </p>
                         </div>
-                        <Button type="button" variant="outline" size="sm" onClick={abrirAnexoExistente}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={abrirAnexoExistente}
+                        >
                           Abrir
                         </Button>
                         {!bloqueado && (
@@ -1011,7 +1192,7 @@ function NovaAusenciaPage() {
                           Clique ou arraste o arquivo aqui
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          PDF, JPG ou PNG — máximo de 10 MB
+                          PDF, JPG ou PNG (máx. 10MB)
                         </span>
                         <input
                           ref={fileInputRef}
@@ -1111,52 +1292,104 @@ function NovaAusenciaPage() {
                 </form>
               </fieldset>
             </Form>
+
+            <p className="text-center text-xs text-muted-foreground">
+              Sistema de Gestão de Ausências • Conforme legislação CLT vigente
+            </p>
           </div>
         </Card>
       </div>
+
+      {/* Dialog: múltiplas empresas para a mesma matrícula */}
+      <Dialog
+        open={!!matchCandidates}
+        onOpenChange={(open) => {
+          if (!open) setMatchCandidates(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Selecione a empresa</DialogTitle>
+            <DialogDescription>
+              A matrícula <strong>{matriculaInput}</strong> existe em mais de uma empresa.
+              Selecione qual colaborador deseja lançar.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            {matchCandidates?.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => {
+                  applyColab(c);
+                  setMatchCandidates(null);
+                }}
+                className="flex w-full flex-col items-start rounded-md border p-3 text-left hover:bg-muted/50"
+              >
+                <span className="text-sm font-semibold">{c.empresa?.nome ?? "—"}</span>
+                <span className="text-xs text-muted-foreground">
+                  {c.nome_completo} · Projeto: {c.projeto?.nome ?? "—"}
+                </span>
+              </button>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setMatchCandidates(null)}>
+              Cancelar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
 
-type ReadFieldProps = {
+// ============= Read-only field ================
+type ReadonlyFieldProps = {
   label: string;
-  value: string | null;
   icon?: React.ComponentType<{ className?: string }>;
-  mono?: boolean;
+  value: string;
+  placeholder?: string;
+  required?: boolean;
+  hint?: string;
   href?: string;
   external?: boolean;
 };
 
-function ReadField({ label, value, icon: Icon, mono, href, external }: ReadFieldProps) {
-  const empty = !value;
-  const content = (
-    <span className={mono ? "font-mono" : undefined}>{empty ? "Não informado" : value}</span>
-  );
+function ReadonlyField({
+  label,
+  icon: Icon,
+  value,
+  placeholder,
+  required,
+  hint,
+  href,
+  external,
+}: ReadonlyFieldProps) {
   return (
-    <div className="min-w-0 space-y-1">
-      <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-        {Icon && <Icon className="h-3 w-3" />}
-        {label}
-      </div>
-      <div
-        className={
-          "truncate text-sm " + (empty ? "italic text-muted-foreground" : "text-foreground")
-        }
-        title={value ?? undefined}
-      >
-        {href && !empty ? (
-          <a
-            href={href}
-            target={external ? "_blank" : undefined}
-            rel={external ? "noopener noreferrer" : undefined}
-            className="text-blue-600 hover:underline dark:text-blue-400"
-          >
-            {content}
-          </a>
-        ) : (
-          content
-        )}
-      </div>
+    <div className="space-y-1.5">
+      <Label className="flex items-center gap-1.5 text-sm">
+        {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
+        {label} {required && <span className="text-red-500">*</span>}
+      </Label>
+      {hint && <p className="text-[11px] leading-tight text-muted-foreground">{hint}</p>}
+      {value && href ? (
+        <a
+          href={href}
+          target={external ? "_blank" : undefined}
+          rel={external ? "noopener noreferrer" : undefined}
+          className="block"
+        >
+          <Input
+            readOnly
+            value={value}
+            placeholder={placeholder}
+            className="cursor-pointer bg-muted/40 hover:bg-muted/60"
+          />
+        </a>
+      ) : (
+        <Input readOnly value={value} placeholder={placeholder} className="bg-muted/40" />
+      )}
     </div>
   );
 }
