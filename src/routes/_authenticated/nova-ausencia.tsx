@@ -641,10 +641,10 @@ function NovaAusenciaPage() {
                       </FormItem>
                     )}
                   />
-                  <FormItem>
-                    <FormLabel>Dias</FormLabel>
+                  <div className="space-y-2">
+                    <Label>Dias</Label>
                     <Input value={dias ?? ""} readOnly disabled placeholder="—" />
-                  </FormItem>
+                  </div>
                 </div>
 
                 <FormField
