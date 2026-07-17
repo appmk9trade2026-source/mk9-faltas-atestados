@@ -895,6 +895,7 @@ export type Database = {
         }
         Returns: Json
       }
+      saude_sistema: { Args: never; Returns: Json }
       search_audit_logs: {
         Args: {
           _acao?: Database["public"]["Enums"]["audit_action"]
