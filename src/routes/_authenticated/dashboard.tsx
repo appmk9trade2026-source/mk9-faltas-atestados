@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchCategorias, CATEGORIA_CORES, type Categoria } from "@/lib/categorias";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard · CRM MK9" }] }),
