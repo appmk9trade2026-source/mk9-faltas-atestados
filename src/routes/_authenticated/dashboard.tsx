@@ -229,6 +229,8 @@ function DashboardPage() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.por_dia), "PorDia");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.por_empresa), "PorEmpresa");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.por_projeto), "PorProjeto");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.por_categoria ?? []), "PorCategoria");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.por_tipo_oficial ?? []), "PorTipoOficial");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.por_tipo), "PorTipo");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.top_supervisores), "TopSupervisores");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.top_colaboradores), "TopColaboradores");
