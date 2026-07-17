@@ -289,13 +289,34 @@ function NovaAusenciaPage() {
       if (data) {
         applyColab(data as unknown as ColabMatch);
       }
+      const fallbackDetalhe: Record<TipoAusencia, (typeof TIPO_AUSENCIA_DETALHE)[number]> = {
+        FALTA: "FALTA JUSTIFICADA",
+        ATESTADO: "ATESTADO MÉDICO (Conforme descrição do documento)",
+        DECLARACAO: "DECLARAÇÃO DE COMPARECIMENTO",
+        SUSPENSAO: "SUSPENSÃO DISCIPLINAR",
+        OUTROS: "OUTROS",
+      };
+      const detalheSalvo = ausencia.tipo_detalhe as (typeof TIPO_AUSENCIA_DETALHE)[number] | null;
+      const detalheValido =
+        detalheSalvo && (TIPO_AUSENCIA_DETALHE as readonly string[]).includes(detalheSalvo)
+          ? detalheSalvo
+          : fallbackDetalhe[ausencia.tipo];
+
+      const diasSalvo = ausencia.dias_label as (typeof QUANTIDADE_DIAS_OPTIONS)[number] | null;
+      const diasValido =
+        diasSalvo && (QUANTIDADE_DIAS_OPTIONS as readonly string[]).includes(diasSalvo)
+          ? diasSalvo
+          : ((`${ausencia.dias || 1} ${ausencia.dias === 1 ? "DIA" : "DIAS"}` as unknown) as (typeof QUANTIDADE_DIAS_OPTIONS)[number]);
+
       form.reset({
         colaborador_id: ausencia.colaborador_id,
         empresa_id: ausencia.empresa_id,
         projeto_id: ausencia.projeto_id,
-        tipo: ausencia.tipo,
+        tipo_detalhe: detalheValido,
         data_inicio: ausencia.data_inicio,
-        quantidade_dias: Math.min(30, Math.max(1, ausencia.dias || 1)),
+        dias_label: (QUANTIDADE_DIAS_OPTIONS as readonly string[]).includes(diasValido)
+          ? diasValido
+          : "1 DIA",
         localidade: ausencia.localidade ?? "",
         loja_codigo_nome: ausencia.loja_codigo_nome ?? "",
         cid: ausencia.cid ?? "",
