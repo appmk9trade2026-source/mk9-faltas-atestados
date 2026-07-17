@@ -53,8 +53,26 @@ export function useSession(): SessionState {
       supabase.from("profiles").select("id, nome, email, ativo").eq("id", userId).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", userId),
     ]);
-    setProfile((profRes.data as ProfileRow | null) ?? null);
-    setRoles(((rolesRes.data ?? []) as { role: AppRole }[]).map((r) => r.role));
+    const prof = (profRes.data as ProfileRow | null) ?? null;
+    let rolesList = ((rolesRes.data ?? []) as { role: AppRole }[]).map((r) => r.role);
+
+    // Bootstrap: primeiro Super Admin (executado no backend, uma única vez)
+    if (
+      rolesList.length === 0 &&
+      prof?.email?.toLowerCase() === "automacaomk9@gmail.com"
+    ) {
+      const created = await tryBootstrapSuperAdmin();
+      if (created) {
+        const { data: r2 } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId);
+        rolesList = ((r2 ?? []) as { role: AppRole }[]).map((x) => x.role);
+      }
+    }
+
+    setProfile(prof);
+    setRoles(rolesList);
   }
 
   async function refresh() {
