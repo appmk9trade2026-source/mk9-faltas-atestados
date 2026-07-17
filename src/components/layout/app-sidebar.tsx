@@ -11,6 +11,8 @@ import {
   UserCog,
   ShieldCheck,
   MessageSquare,
+  ScrollText,
+
 } from "lucide-react";
 import {
   Sidebar,
@@ -45,6 +47,7 @@ const items: Item[] = [
   { title: "Alertas", url: "/alertas", icon: Bell, roles: ["super_admin", "rh", "compliance"] },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: ["super_admin", "rh", "compliance"] },
   { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["super_admin", "rh"] },
+  { title: "Auditoria", url: "/auditoria", icon: ScrollText, roles: ["super_admin", "compliance", "rh"] },
   { title: "Usuários", url: "/usuarios", icon: UserCog, roles: ["super_admin"] },
 ];
 

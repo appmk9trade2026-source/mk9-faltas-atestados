@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          acao: Database["public"]["Enums"]["audit_action"]
+          antes: Json | null
+          created_at: string
+          depois: Json | null
+          empresa_id: string | null
+          entidade: string | null
+          id: string
+          ip: string | null
+          modulo: string
+          observacoes: string | null
+          origem: string | null
+          perfil: string | null
+          projeto_id: string | null
+          registro_id: string | null
+          sucesso: boolean
+          user_agent: string | null
+          usuario_id: string | null
+          usuario_nome: string | null
+        }
+        Insert: {
+          acao: Database["public"]["Enums"]["audit_action"]
+          antes?: Json | null
+          created_at?: string
+          depois?: Json | null
+          empresa_id?: string | null
+          entidade?: string | null
+          id?: string
+          ip?: string | null
+          modulo: string
+          observacoes?: string | null
+          origem?: string | null
+          perfil?: string | null
+          projeto_id?: string | null
+          registro_id?: string | null
+          sucesso?: boolean
+          user_agent?: string | null
+          usuario_id?: string | null
+          usuario_nome?: string | null
+        }
+        Update: {
+          acao?: Database["public"]["Enums"]["audit_action"]
+          antes?: Json | null
+          created_at?: string
+          depois?: Json | null
+          empresa_id?: string | null
+          entidade?: string | null
+          id?: string
+          ip?: string | null
+          modulo?: string
+          observacoes?: string | null
+          origem?: string | null
+          perfil?: string | null
+          projeto_id?: string | null
+          registro_id?: string | null
+          sucesso?: boolean
+          user_agent?: string | null
+          usuario_id?: string | null
+          usuario_nome?: string | null
+        }
+        Relationships: []
+      }
       ausencias: {
         Row: {
           acidente_trabalho_trajeto: boolean | null
@@ -460,6 +523,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      audit_kpis: { Args: { _inicio?: string }; Returns: Json }
       bootstrap_first_super_admin: { Args: never; Returns: string }
       dashboard_metrics: {
         Args: {
@@ -503,9 +567,77 @@ export type Database = {
         Returns: Json
       }
       is_active_user: { Args: { _user_id: string }; Returns: boolean }
+      log_audit_event: {
+        Args: {
+          _acao: Database["public"]["Enums"]["audit_action"]
+          _antes?: Json
+          _depois?: Json
+          _empresa_id?: string
+          _entidade?: string
+          _ip?: string
+          _modulo: string
+          _observacoes?: string
+          _origem?: string
+          _projeto_id?: string
+          _registro_id?: string
+          _sucesso?: boolean
+          _user_agent?: string
+        }
+        Returns: string
+      }
+      search_audit_logs: {
+        Args: {
+          _acao?: Database["public"]["Enums"]["audit_action"]
+          _busca?: string
+          _empresa_id?: string
+          _entidade?: string
+          _fim?: string
+          _inicio?: string
+          _limit?: number
+          _modulo?: string
+          _offset?: number
+          _perfil?: string
+          _projeto_id?: string
+          _sucesso?: boolean
+          _usuario_id?: string
+        }
+        Returns: {
+          acao: Database["public"]["Enums"]["audit_action"]
+          created_at: string
+          empresa_id: string
+          empresa_nome: string
+          entidade: string
+          id: string
+          ip: string
+          modulo: string
+          origem: string
+          perfil: string
+          projeto_id: string
+          projeto_nome: string
+          registro_id: string
+          sucesso: boolean
+          total: number
+          usuario_id: string
+          usuario_nome: string
+        }[]
+      }
     }
     Enums: {
       app_role: "super_admin" | "rh" | "supervisor" | "compliance"
+      audit_action:
+        | "CREATE"
+        | "UPDATE"
+        | "DELETE_LOGICO"
+        | "LOGIN"
+        | "LOGOUT"
+        | "IMPORTACAO"
+        | "EXPORTACAO"
+        | "DOWNLOAD"
+        | "VISUALIZACAO"
+        | "ENVIO_COMUNICACAO"
+        | "LANCAMENTO"
+        | "ACESSO_NEGADO"
+        | "MUDANCA_STATUS"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       status_ausencia: "PENDENTE" | "LANCADO"
       status_comunicacao: "RASCUNHO" | "APROVADO" | "ENVIADO" | "ERRO"
@@ -643,6 +775,21 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin", "rh", "supervisor", "compliance"],
+      audit_action: [
+        "CREATE",
+        "UPDATE",
+        "DELETE_LOGICO",
+        "LOGIN",
+        "LOGOUT",
+        "IMPORTACAO",
+        "EXPORTACAO",
+        "DOWNLOAD",
+        "VISUALIZACAO",
+        "ENVIO_COMUNICACAO",
+        "LANCAMENTO",
+        "ACESSO_NEGADO",
+        "MUDANCA_STATUS",
+      ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       status_ausencia: ["PENDENTE", "LANCADO"],
       status_comunicacao: ["RASCUNHO", "APROVADO", "ENVIADO", "ERRO"],
