@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      colaboradores: {
+        Row: {
+          ativo: boolean
+          cargo: string | null
+          cpf: string | null
+          created_at: string
+          data_admissao: string | null
+          email: string | null
+          empresa_id: string
+          id: string
+          matricula: string
+          nome_completo: string
+          observacoes: string | null
+          projeto_id: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cargo?: string | null
+          cpf?: string | null
+          created_at?: string
+          data_admissao?: string | null
+          email?: string | null
+          empresa_id: string
+          id?: string
+          matricula: string
+          nome_completo: string
+          observacoes?: string | null
+          projeto_id: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cargo?: string | null
+          cpf?: string | null
+          created_at?: string
+          data_admissao?: string | null
+          email?: string | null
+          empresa_id?: string
+          id?: string
+          matricula?: string
+          nome_completo?: string
+          observacoes?: string | null
+          projeto_id?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colaboradores_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colaboradores_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       empresas: {
         Row: {
           ativo: boolean
@@ -136,6 +202,17 @@ export type Database = {
     }
     Functions: {
       bootstrap_first_super_admin: { Args: never; Returns: string }
+      get_colaboradores_ativos: {
+        Args: { _busca?: string; _empresa_id?: string; _projeto_id?: string }
+        Returns: {
+          cargo: string
+          empresa_id: string
+          id: string
+          matricula: string
+          nome_completo: string
+          projeto_id: string
+        }[]
+      }
       get_projetos_ativos_por_empresa: {
         Args: { _empresa_id: string }
         Returns: {
