@@ -282,7 +282,7 @@ function PainelRHPage() {
 
       if (empresaF !== "all") q = q.eq("empresa_id", empresaF);
       if (projetoF !== "all") q = q.eq("projeto_id", projetoF);
-      if (tipoF !== "all") q = q.eq("tipo", tipoF);
+      if (tipoF !== "all") q = q.eq("tipo", tipoF as TipoAusencia);
       if (statusF !== "all") q = q.eq("status", statusF);
       if (dataIni) q = q.gte("data_fim", dataIni);
       if (dataFim) q = q.lte("data_inicio", dataFim);
