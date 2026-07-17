@@ -20,6 +20,7 @@ import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedColaboradoresRouteImport } from './routes/_authenticated/colaboradores'
+import { Route as AuthenticatedAusenciasRouteImport } from './routes/_authenticated/ausencias'
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
 import { Route as AuthenticatedConfiguracoesProjetosRouteImport } from './routes/_authenticated/configuracoes.projetos'
 import { Route as AuthenticatedConfiguracoesEmpresasRouteImport } from './routes/_authenticated/configuracoes.empresas'
@@ -81,6 +82,11 @@ const AuthenticatedColaboradoresRoute =
     path: '/colaboradores',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAusenciasRoute = AuthenticatedAusenciasRouteImport.update({
+  id: '/ausencias',
+  path: '/ausencias',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAlertasRoute = AuthenticatedAlertasRouteImport.update({
   id: '/alertas',
   path: '/alertas',
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/alertas': typeof AuthenticatedAlertasRoute
+  '/ausencias': typeof AuthenticatedAusenciasRoute
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -118,6 +125,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/alertas': typeof AuthenticatedAlertasRoute
+  '/ausencias': typeof AuthenticatedAusenciasRoute
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -135,6 +143,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/alertas': typeof AuthenticatedAlertasRoute
+  '/_authenticated/ausencias': typeof AuthenticatedAusenciasRoute
   '/_authenticated/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/alertas'
+    | '/ausencias'
     | '/colaboradores'
     | '/configuracoes'
     | '/dashboard'
@@ -167,6 +177,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/alertas'
+    | '/ausencias'
     | '/colaboradores'
     | '/configuracoes'
     | '/dashboard'
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/alertas'
+    | '/_authenticated/ausencias'
     | '/_authenticated/colaboradores'
     | '/_authenticated/configuracoes'
     | '/_authenticated/dashboard'
@@ -280,6 +292,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedColaboradoresRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/ausencias': {
+      id: '/_authenticated/ausencias'
+      path: '/ausencias'
+      fullPath: '/ausencias'
+      preLoaderRoute: typeof AuthenticatedAusenciasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/alertas': {
       id: '/_authenticated/alertas'
       path: '/alertas'
@@ -324,6 +343,7 @@ const AuthenticatedConfiguracoesRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAlertasRoute: typeof AuthenticatedAlertasRoute
+  AuthenticatedAusenciasRoute: typeof AuthenticatedAusenciasRoute
   AuthenticatedColaboradoresRoute: typeof AuthenticatedColaboradoresRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -336,6 +356,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAlertasRoute: AuthenticatedAlertasRoute,
+  AuthenticatedAusenciasRoute: AuthenticatedAusenciasRoute,
   AuthenticatedColaboradoresRoute: AuthenticatedColaboradoresRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
