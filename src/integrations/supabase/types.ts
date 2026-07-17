@@ -452,6 +452,114 @@ export type Database = {
         }
         Relationships: []
       }
+      go_live_checklist: {
+        Row: {
+          categoria: string
+          concluido: boolean
+          concluido_em: string | null
+          concluido_por: string | null
+          created_at: string
+          id: string
+          item: string
+          observacoes: string | null
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          categoria: string
+          concluido?: boolean
+          concluido_em?: string | null
+          concluido_por?: string | null
+          created_at?: string
+          id?: string
+          item: string
+          observacoes?: string | null
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string
+          concluido?: boolean
+          concluido_em?: string | null
+          concluido_por?: string | null
+          created_at?: string
+          id?: string
+          item?: string
+          observacoes?: string | null
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      homologacoes: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          classificacao:
+            | Database["public"]["Enums"]["homolog_classificacao"]
+            | null
+          created_at: string
+          criticidade: Database["public"]["Enums"]["homolog_criticidade"]
+          descricao: string | null
+          evidencia: string | null
+          evidencia_url: string | null
+          executado_em: string | null
+          executado_por: string | null
+          id: string
+          modulo: string
+          nome: string
+          observacoes: string | null
+          responsavel: string | null
+          resultado: string | null
+          status: Database["public"]["Enums"]["homolog_status"]
+          updated_at: string
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          classificacao?:
+            | Database["public"]["Enums"]["homolog_classificacao"]
+            | null
+          created_at?: string
+          criticidade?: Database["public"]["Enums"]["homolog_criticidade"]
+          descricao?: string | null
+          evidencia?: string | null
+          evidencia_url?: string | null
+          executado_em?: string | null
+          executado_por?: string | null
+          id?: string
+          modulo: string
+          nome: string
+          observacoes?: string | null
+          responsavel?: string | null
+          resultado?: string | null
+          status?: Database["public"]["Enums"]["homolog_status"]
+          updated_at?: string
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          classificacao?:
+            | Database["public"]["Enums"]["homolog_classificacao"]
+            | null
+          created_at?: string
+          criticidade?: Database["public"]["Enums"]["homolog_criticidade"]
+          descricao?: string | null
+          evidencia?: string | null
+          evidencia_url?: string | null
+          executado_em?: string | null
+          executado_por?: string | null
+          id?: string
+          modulo?: string
+          nome?: string
+          observacoes?: string | null
+          responsavel?: string | null
+          resultado?: string | null
+          status?: Database["public"]["Enums"]["homolog_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       importacoes: {
         Row: {
           arquivo_nome: string
@@ -542,6 +650,51 @@ export type Database = {
           tipo_periodo?: Database["public"]["Enums"]["tipo_periodo_ausencia"]
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      operacao_assistida: {
+        Row: {
+          aberto_em: string
+          aberto_por: string | null
+          created_at: string
+          descricao: string | null
+          id: string
+          ocorrencia: string
+          prioridade: Database["public"]["Enums"]["op_assist_prioridade"]
+          resolucao: string | null
+          resolvido_em: string | null
+          responsavel: string | null
+          situacao: Database["public"]["Enums"]["op_assist_status"]
+          updated_at: string
+        }
+        Insert: {
+          aberto_em?: string
+          aberto_por?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          ocorrencia: string
+          prioridade?: Database["public"]["Enums"]["op_assist_prioridade"]
+          resolucao?: string | null
+          resolvido_em?: string | null
+          responsavel?: string | null
+          situacao?: Database["public"]["Enums"]["op_assist_status"]
+          updated_at?: string
+        }
+        Update: {
+          aberto_em?: string
+          aberto_por?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          ocorrencia?: string
+          prioridade?: Database["public"]["Enums"]["op_assist_prioridade"]
+          resolucao?: string | null
+          resolvido_em?: string | null
+          responsavel?: string | null
+          situacao?: Database["public"]["Enums"]["op_assist_status"]
+          updated_at?: string
         }
         Relationships: []
       }
@@ -807,6 +960,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      homolog_kpis: { Args: never; Returns: Json }
       import_colaboradores_bulk: {
         Args: { _atualizar?: boolean; _rows: Json }
         Returns: Json
@@ -950,6 +1104,16 @@ export type Database = {
         | "ACESSO_NEGADO"
         | "MUDANCA_STATUS"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
+      homolog_classificacao: "BUG" | "MELHORIA" | "DUVIDA" | "CONFIGURACAO"
+      homolog_criticidade: "BAIXA" | "MEDIA" | "ALTA" | "CRITICA"
+      homolog_status:
+        | "PENDENTE"
+        | "EM_EXECUCAO"
+        | "APROVADO"
+        | "REPROVADO"
+        | "NAO_APLICAVEL"
+      op_assist_prioridade: "BAIXA" | "MEDIA" | "ALTA" | "CRITICA"
+      op_assist_status: "ABERTO" | "EM_ANDAMENTO" | "RESOLVIDO" | "CANCELADO"
       status_ausencia: "PENDENTE" | "LANCADO"
       status_comunicacao: "RASCUNHO" | "APROVADO" | "ENVIADO" | "ERRO"
       tipo_ausencia:
@@ -1107,6 +1271,17 @@ export const Constants = {
         "MUDANCA_STATUS",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
+      homolog_classificacao: ["BUG", "MELHORIA", "DUVIDA", "CONFIGURACAO"],
+      homolog_criticidade: ["BAIXA", "MEDIA", "ALTA", "CRITICA"],
+      homolog_status: [
+        "PENDENTE",
+        "EM_EXECUCAO",
+        "APROVADO",
+        "REPROVADO",
+        "NAO_APLICAVEL",
+      ],
+      op_assist_prioridade: ["BAIXA", "MEDIA", "ALTA", "CRITICA"],
+      op_assist_status: ["ABERTO", "EM_ANDAMENTO", "RESOLVIDO", "CANCELADO"],
       status_ausencia: ["PENDENTE", "LANCADO"],
       status_comunicacao: ["RASCUNHO", "APROVADO", "ENVIADO", "ERRO"],
       tipo_ausencia: ["FALTA", "ATESTADO", "DECLARACAO", "SUSPENSAO", "OUTROS"],

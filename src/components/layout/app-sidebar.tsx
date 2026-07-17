@@ -14,6 +14,7 @@ import {
   ScrollText,
   Activity,
   BookOpen,
+  ClipboardCheck,
 } from "lucide-react";
 import {
   Sidebar,
@@ -50,6 +51,7 @@ const items: Item[] = [
   { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["super_admin", "rh"] },
   { title: "Auditoria", url: "/auditoria", icon: ScrollText, roles: ["super_admin", "compliance", "rh"] },
   { title: "Usuários", url: "/usuarios", icon: UserCog, roles: ["super_admin"] },
+  { title: "Homologação", url: "/homologacao", icon: ClipboardCheck, roles: ["super_admin", "compliance", "rh"] },
   { title: "Saúde do Sistema", url: "/saude", icon: Activity, roles: ["super_admin"] },
   { title: "Documentação", url: "/documentacao", icon: BookOpen, roles: ["super_admin"] },
 ];
