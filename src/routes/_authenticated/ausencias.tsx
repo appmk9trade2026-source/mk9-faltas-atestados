@@ -1,0 +1,756 @@
+import { useMemo, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  ArrowUpDown,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Eye,
+  FileText,
+  History as HistoryIcon,
+  MoreHorizontal,
+  Paperclip,
+  Plus,
+  Search,
+} from "lucide-react";
+import { toast } from "sonner";
+
+import { AppShell } from "@/components/layout/app-shell";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/hooks/use-session";
+import {
+  BUCKET_ATESTADOS,
+  TIPO_AUSENCIA,
+  TIPO_LABEL,
+  getSignedAtestadoUrl,
+  type StatusAusencia,
+  type TipoAusencia,
+} from "@/lib/ausencias";
+
+export const Route = createFileRoute("/_authenticated/ausencias")({
+  head: () => ({ meta: [{ title: "Ausências · CRM MK9" }] }),
+  component: AusenciasPage,
+});
+
+type Empresa = { id: string; nome: string; ativo: boolean };
+type Projeto = { id: string; nome: string; ativo: boolean; empresa_id: string };
+
+type Ausencia = {
+  id: string;
+  empresa_id: string;
+  projeto_id: string;
+  colaborador_id: string;
+  tipo: TipoAusencia;
+  motivo: string | null;
+  data_inicio: string;
+  data_fim: string;
+  dias: number;
+  possui_anexo: boolean;
+  arquivo_url: string | null;
+  arquivo_nome: string | null;
+  arquivo_mime: string | null;
+  arquivo_tamanho: number | null;
+  status: StatusAusencia;
+  observacoes: string | null;
+  registrado_por: string | null;
+  registrado_em: string;
+  lancado_por: string | null;
+  lancado_em: string | null;
+  created_at: string;
+  updated_at: string;
+  empresa?: { nome: string } | null;
+  projeto?: { nome: string } | null;
+  colaborador?: { nome_completo: string; matricula: string; cargo: string | null } | null;
+  registrador?: { nome: string | null; email: string | null } | null;
+  lancador?: { nome: string | null; email: string | null } | null;
+};
+
+const PAGE_SIZE = 10;
+
+function formatBRDate(d: string | null | undefined) {
+  if (!d) return "—";
+  return new Date(d + "T00:00:00").toLocaleDateString("pt-BR");
+}
+function formatDateTime(d: string | null | undefined) {
+  if (!d) return "—";
+  return new Date(d).toLocaleString("pt-BR");
+}
+function formatSize(n: number | null | undefined) {
+  if (!n) return "";
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / 1024 / 1024).toFixed(2)} MB`;
+}
+
+function StatusBadge({ status }: { status: StatusAusencia }) {
+  if (status === "PENDENTE")
+    return (
+      <Badge
+        variant="secondary"
+        className="border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+      >
+        Pendente
+      </Badge>
+    );
+  return (
+    <Badge
+      variant="secondary"
+      className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+    >
+      Lançado
+    </Badge>
+  );
+}
+
+function AusenciasPage() {
+  const { roles } = useSession();
+  const podeCadastrar =
+    roles.includes("super_admin") || roles.includes("rh") || roles.includes("supervisor");
+  const podeLancar = roles.includes("super_admin") || roles.includes("rh");
+  const queryClient = useQueryClient();
+
+  const [search, setSearch] = useState("");
+  const [empresaFiltro, setEmpresaFiltro] = useState<string>("all");
+  const [projetoFiltro, setProjetoFiltro] = useState<string>("all");
+  const [tipoFiltro, setTipoFiltro] = useState<string>("all");
+  const [statusFiltro, setStatusFiltro] = useState<string>("all");
+  const [periodoIni, setPeriodoIni] = useState("");
+  const [periodoFim, setPeriodoFim] = useState("");
+  const [sortBy, setSortBy] = useState<"data_inicio" | "created_at" | "colaborador">("data_inicio");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [page, setPage] = useState(1);
+
+  const [viewing, setViewing] = useState<Ausencia | null>(null);
+  const [confirmLancar, setConfirmLancar] = useState<Ausencia | null>(null);
+  const [downloading, setDownloading] = useState<string | null>(null);
+
+  const empresasQ = useQuery({
+    queryKey: ["empresas", "todas"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("empresas")
+        .select("id, nome, ativo")
+        .order("nome");
+      if (error) throw error;
+      return (data ?? []) as Empresa[];
+    },
+  });
+  const projetosQ = useQuery({
+    queryKey: ["projetos", "todos-para-filtro"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projetos")
+        .select("id, nome, ativo, empresa_id")
+        .order("nome");
+      if (error) throw error;
+      return (data ?? []) as Projeto[];
+    },
+  });
+
+  const ausenciasQ = useQuery({
+    queryKey: ["ausencias"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ausencias")
+        .select(
+          "*, empresa:empresas(nome), projeto:projetos(nome), colaborador:colaboradores(nome_completo, matricula, cargo), registrador:profiles!ausencias_registrado_por_fkey(nome, email), lancador:profiles!ausencias_lancado_por_fkey(nome, email)",
+        );
+      if (error) {
+        // fallback: join sem FK explícita se relacionamento não existir
+        const alt = await supabase
+          .from("ausencias")
+          .select(
+            "*, empresa:empresas(nome), projeto:projetos(nome), colaborador:colaboradores(nome_completo, matricula, cargo)",
+          );
+        if (alt.error) throw alt.error;
+        return (alt.data ?? []) as Ausencia[];
+      }
+      return (data ?? []) as Ausencia[];
+    },
+  });
+
+  const empresas = empresasQ.data ?? [];
+  const projetos = projetosQ.data ?? [];
+  const projetosFiltro = useMemo(
+    () => (empresaFiltro === "all" ? projetos : projetos.filter((p) => p.empresa_id === empresaFiltro)),
+    [projetos, empresaFiltro],
+  );
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    let list = ausenciasQ.data ?? [];
+    if (q)
+      list = list.filter((a) => {
+        const hay =
+          (a.colaborador?.nome_completo ?? "").toLowerCase() +
+          " " +
+          (a.colaborador?.matricula ?? "").toLowerCase() +
+          " " +
+          (a.empresa?.nome ?? "").toLowerCase() +
+          " " +
+          (a.projeto?.nome ?? "").toLowerCase() +
+          " " +
+          (a.motivo ?? "").toLowerCase();
+        return hay.includes(q);
+      });
+    if (empresaFiltro !== "all") list = list.filter((a) => a.empresa_id === empresaFiltro);
+    if (projetoFiltro !== "all") list = list.filter((a) => a.projeto_id === projetoFiltro);
+    if (tipoFiltro !== "all") list = list.filter((a) => a.tipo === tipoFiltro);
+    if (statusFiltro !== "all") list = list.filter((a) => a.status === statusFiltro);
+    if (periodoIni) list = list.filter((a) => a.data_fim >= periodoIni);
+    if (periodoFim) list = list.filter((a) => a.data_inicio <= periodoFim);
+
+    list = [...list].sort((a, b) => {
+      const dir = sortDir === "asc" ? 1 : -1;
+      if (sortBy === "colaborador")
+        return (
+          (a.colaborador?.nome_completo ?? "").localeCompare(
+            b.colaborador?.nome_completo ?? "",
+            "pt-BR",
+          ) * dir
+        );
+      if (sortBy === "created_at")
+        return (
+          (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * dir
+        );
+      return (
+        (new Date(a.data_inicio).getTime() - new Date(b.data_inicio).getTime()) * dir
+      );
+    });
+    return list;
+  }, [
+    ausenciasQ.data,
+    search,
+    empresaFiltro,
+    projetoFiltro,
+    tipoFiltro,
+    statusFiltro,
+    periodoIni,
+    periodoFim,
+    sortBy,
+    sortDir,
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  const lancarMut = useMutation({
+    mutationFn: async (row: Ausencia) => {
+      const { error } = await supabase
+        .from("ausencias")
+        .update({ status: "LANCADO" })
+        .eq("id", row.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Ausência marcada como lançada.");
+      queryClient.invalidateQueries({ queryKey: ["ausencias"] });
+      setConfirmLancar(null);
+    },
+    onError: (err: unknown) => {
+      toast.error("Não foi possível atualizar o status.", {
+        description: err instanceof Error ? err.message : String(err),
+      });
+      setConfirmLancar(null);
+    },
+  });
+
+  async function baixarAnexo(row: Ausencia) {
+    if (!row.arquivo_url) return;
+    try {
+      setDownloading(row.id);
+      const url = await getSignedAtestadoUrl(row.arquivo_url, 120);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      toast.error("Não foi possível baixar o anexo.", {
+        description: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      setDownloading(null);
+    }
+  }
+
+  function toggleSort(col: typeof sortBy) {
+    if (sortBy === col) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortBy(col);
+      setSortDir("asc");
+    }
+  }
+
+  return (
+    <AppShell title="Ausências" breadcrumb={["Operações", "Ausências"]}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-muted-foreground">
+          Registros de faltas, atestados, declarações e demais ausências. Nenhum
+          registro é excluído — todo histórico é preservado.
+        </p>
+        {podeCadastrar && (
+          <Button asChild className="sm:w-auto">
+            <Link to="/nova-ausencia">
+              <Plus className="mr-2 h-4 w-4" /> Nova ausência
+            </Link>
+          </Button>
+        )}
+      </div>
+
+      <Card className="overflow-hidden">
+        <div className="flex flex-col gap-3 border-b p-4">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Colaborador, matrícula, empresa..."
+                className="pl-8"
+              />
+            </div>
+            <Select
+              value={empresaFiltro}
+              onValueChange={(v) => {
+                setEmpresaFiltro(v);
+                setProjetoFiltro("all");
+                setPage(1);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Empresa" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as empresas</SelectItem>
+                {empresas.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={projetoFiltro} onValueChange={(v) => { setProjetoFiltro(v); setPage(1); }}>
+              <SelectTrigger>
+                <SelectValue placeholder="Projeto" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os projetos</SelectItem>
+                {projetosFiltro.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="grid grid-cols-2 gap-2">
+              <Select value={tipoFiltro} onValueChange={(v) => { setTipoFiltro(v); setPage(1); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os tipos</SelectItem>
+                  {TIPO_AUSENCIA.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {TIPO_LABEL[t]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={statusFiltro} onValueChange={(v) => { setStatusFiltro(v); setPage(1); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="PENDENTE">Pendente</SelectItem>
+                  <SelectItem value="LANCADO">Lançado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <label className="text-xs text-muted-foreground">Período:</label>
+            <Input
+              type="date"
+              value={periodoIni}
+              onChange={(e) => { setPeriodoIni(e.target.value); setPage(1); }}
+              className="sm:w-44"
+            />
+            <span className="text-xs text-muted-foreground">até</span>
+            <Input
+              type="date"
+              value={periodoFim}
+              onChange={(e) => { setPeriodoFim(e.target.value); setPage(1); }}
+              className="sm:w-44"
+            />
+            {(periodoIni || periodoFim) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { setPeriodoIni(""); setPeriodoFim(""); }}
+              >
+                Limpar período
+              </Button>
+            )}
+            <div className="sm:ml-auto text-xs text-muted-foreground">
+              {filtered.length} {filtered.length === 1 ? "registro" : "registros"}
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="min-w-[200px]">
+                  <button
+                    onClick={() => toggleSort("colaborador")}
+                    className="inline-flex items-center gap-1 hover:text-foreground"
+                  >
+                    Colaborador <ArrowUpDown className="h-3.5 w-3.5" />
+                  </button>
+                </TableHead>
+                <TableHead className="hidden md:table-cell">Empresa</TableHead>
+                <TableHead className="hidden lg:table-cell">Projeto</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>
+                  <button
+                    onClick={() => toggleSort("data_inicio")}
+                    className="inline-flex items-center gap-1 hover:text-foreground"
+                  >
+                    Período <ArrowUpDown className="h-3.5 w-3.5" />
+                  </button>
+                </TableHead>
+                <TableHead className="text-center">Dias</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-center">Anexo</TableHead>
+                <TableHead className="hidden xl:table-cell">Registrado por</TableHead>
+                <TableHead className="hidden lg:table-cell">
+                  <button
+                    onClick={() => toggleSort("created_at")}
+                    className="inline-flex items-center gap-1 hover:text-foreground"
+                  >
+                    Cadastro <ArrowUpDown className="h-3.5 w-3.5" />
+                  </button>
+                </TableHead>
+                <TableHead className="w-[70px] text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {ausenciasQ.isLoading &&
+                Array.from({ length: 4 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell colSpan={11}>
+                      <Skeleton className="h-6 w-full" />
+                    </TableCell>
+                  </TableRow>
+                ))}
+
+              {ausenciasQ.isError && (
+                <TableRow>
+                  <TableCell colSpan={11} className="py-10 text-center text-sm text-destructive">
+                    Erro ao carregar: {(ausenciasQ.error as Error)?.message}
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {!ausenciasQ.isLoading && !ausenciasQ.isError && pageRows.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={11} className="py-14">
+                    <div className="flex flex-col items-center gap-2 text-center">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                        <HistoryIcon className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm font-medium">Nenhuma ausência encontrada</p>
+                      <p className="text-xs text-muted-foreground">
+                        Ajuste os filtros ou registre uma nova ausência.
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {pageRows.map((row) => (
+                <TableRow key={row.id}>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span className="font-medium">
+                        {row.colaborador?.nome_completo ?? "—"}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        Mat. {row.colaborador?.matricula ?? "—"}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell text-muted-foreground">
+                    {row.empresa?.nome ?? "—"}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell text-muted-foreground">
+                    {row.projeto?.nome ?? "—"}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{TIPO_LABEL[row.tipo]}</Badge>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-sm">
+                    {formatBRDate(row.data_inicio)} — {formatBRDate(row.data_fim)}
+                  </TableCell>
+                  <TableCell className="text-center">{row.dias}</TableCell>
+                  <TableCell>
+                    <StatusBadge status={row.status} />
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {row.possui_anexo ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => baixarAnexo(row)}
+                        disabled={downloading === row.id}
+                        aria-label="Baixar anexo"
+                      >
+                        <Paperclip className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="hidden xl:table-cell text-xs text-muted-foreground">
+                    {row.registrador?.nome ?? row.registrador?.email ?? "—"}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
+                    {formatDateTime(row.created_at)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Ações</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setViewing(row)}>
+                          <Eye className="mr-2 h-4 w-4" /> Visualizar
+                        </DropdownMenuItem>
+                        {row.possui_anexo && (
+                          <DropdownMenuItem onClick={() => baixarAnexo(row)}>
+                            <Download className="mr-2 h-4 w-4" /> Baixar anexo
+                          </DropdownMenuItem>
+                        )}
+                        {podeLancar && row.status === "PENDENTE" && (
+                          <DropdownMenuItem onClick={() => setConfirmLancar(row)}>
+                            <CheckCircle2 className="mr-2 h-4 w-4" /> Marcar como lançado
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        <div className="flex items-center justify-between border-t p-3">
+          <p className="text-xs text-muted-foreground">
+            Página {currentPage} de {totalPages}
+          </p>
+          <div className="flex gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{viewing?.colaborador?.nome_completo ?? "Ausência"}</DialogTitle>
+            <DialogDescription>Detalhes do registro</DialogDescription>
+          </DialogHeader>
+          {viewing && (
+            <div className="space-y-4 text-sm">
+              <section>
+                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Colaborador
+                </h4>
+                <dl className="grid grid-cols-3 gap-2">
+                  <dt className="text-muted-foreground">Nome</dt>
+                  <dd className="col-span-2">{viewing.colaborador?.nome_completo ?? "—"}</dd>
+                  <dt className="text-muted-foreground">Matrícula</dt>
+                  <dd className="col-span-2 font-mono">{viewing.colaborador?.matricula ?? "—"}</dd>
+                  <dt className="text-muted-foreground">Cargo</dt>
+                  <dd className="col-span-2">{viewing.colaborador?.cargo ?? "—"}</dd>
+                  <dt className="text-muted-foreground">Empresa</dt>
+                  <dd className="col-span-2">{viewing.empresa?.nome ?? "—"}</dd>
+                  <dt className="text-muted-foreground">Projeto</dt>
+                  <dd className="col-span-2">{viewing.projeto?.nome ?? "—"}</dd>
+                </dl>
+              </section>
+              <section>
+                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Ausência
+                </h4>
+                <dl className="grid grid-cols-3 gap-2">
+                  <dt className="text-muted-foreground">Tipo</dt>
+                  <dd className="col-span-2">{TIPO_LABEL[viewing.tipo]}</dd>
+                  <dt className="text-muted-foreground">Período</dt>
+                  <dd className="col-span-2">
+                    {formatBRDate(viewing.data_inicio)} — {formatBRDate(viewing.data_fim)} ·{" "}
+                    <span className="text-muted-foreground">{viewing.dias} dia(s)</span>
+                  </dd>
+                  <dt className="text-muted-foreground">Status</dt>
+                  <dd className="col-span-2">
+                    <StatusBadge status={viewing.status} />
+                  </dd>
+                  <dt className="text-muted-foreground">Motivo</dt>
+                  <dd className="col-span-2 whitespace-pre-wrap">{viewing.motivo ?? "—"}</dd>
+                  <dt className="text-muted-foreground">Observações</dt>
+                  <dd className="col-span-2 whitespace-pre-wrap">{viewing.observacoes ?? "—"}</dd>
+                </dl>
+              </section>
+              <section>
+                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Histórico
+                </h4>
+                <dl className="grid grid-cols-3 gap-2">
+                  <dt className="text-muted-foreground">Registrado por</dt>
+                  <dd className="col-span-2">
+                    {viewing.registrador?.nome ?? viewing.registrador?.email ?? "—"}
+                  </dd>
+                  <dt className="text-muted-foreground">Registrado em</dt>
+                  <dd className="col-span-2">{formatDateTime(viewing.registrado_em)}</dd>
+                  <dt className="text-muted-foreground">Lançado por</dt>
+                  <dd className="col-span-2">
+                    {viewing.lancador?.nome ?? viewing.lancador?.email ?? "—"}
+                  </dd>
+                  <dt className="text-muted-foreground">Lançado em</dt>
+                  <dd className="col-span-2">{formatDateTime(viewing.lancado_em)}</dd>
+                </dl>
+              </section>
+              <section>
+                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Anexo
+                </h4>
+                {viewing.possui_anexo ? (
+                  <div className="flex items-center gap-3 rounded-md border p-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded bg-muted">
+                      <FileText className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {viewing.arquivo_nome ?? "arquivo"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {viewing.arquivo_mime ?? BUCKET_ATESTADOS} ·{" "}
+                        {formatSize(viewing.arquivo_tamanho)}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => baixarAnexo(viewing)}
+                      disabled={downloading === viewing.id}
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Baixar
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Sem anexo.</p>
+                )}
+              </section>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!confirmLancar} onOpenChange={(o) => !o && setConfirmLancar(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Marcar como lançado?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O registro será marcado como <strong>LANCADO</strong> e a data/autor do
+              lançamento serão gravados. O histórico é preservado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={lancarMut.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmLancar) lancarMut.mutate(confirmLancar);
+              }}
+              disabled={lancarMut.isPending}
+            >
+              {lancarMut.isPending ? "Aplicando..." : "Confirmar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </AppShell>
+  );
+}
