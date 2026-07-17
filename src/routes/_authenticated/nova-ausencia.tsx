@@ -67,9 +67,11 @@ import {
   ARQUIVO_MAX_BYTES,
   ARQUIVO_MIMES,
   BUCKET_ATESTADOS,
-  TIPO_AUSENCIA,
-  TIPO_LABEL,
+  QUANTIDADE_DIAS_OPTIONS,
+  TIPO_AUSENCIA_DETALHE,
+  diasFromLabel,
   getSignedAtestadoUrl,
+  tipoBaseFromDetalhe,
   type TipoAusencia,
 } from "@/lib/ausencias";
 import { formatTelefone } from "@/lib/br-format";
@@ -115,6 +117,8 @@ type AusenciaEdit = {
   projeto_id: string;
   colaborador_id: string;
   tipo: TipoAusencia;
+  tipo_detalhe: string | null;
+  dias_label: string | null;
   motivo: string | null;
   data_inicio: string;
   data_fim: string;
@@ -131,19 +135,17 @@ type AusenciaEdit = {
   arquivo_tamanho: number | null;
 };
 
-const DIAS_OPTIONS = Array.from({ length: 30 }, (_, i) => i + 1);
-
 const schema = z.object({
   colaborador_id: z.string().uuid("Busque um colaborador pela matrícula."),
   empresa_id: z.string().uuid(),
   projeto_id: z.string().uuid(),
-  tipo: z.enum(TIPO_AUSENCIA, { errorMap: () => ({ message: "Selecione o tipo." }) }),
+  tipo_detalhe: z.enum(TIPO_AUSENCIA_DETALHE, {
+    errorMap: () => ({ message: "Selecione o tipo." }),
+  }),
   data_inicio: z.string().min(1, "Informe a data da ausência."),
-  quantidade_dias: z
-    .number({ invalid_type_error: "Selecione a quantidade de dias." })
-    .int()
-    .min(1)
-    .max(30),
+  dias_label: z.enum(QUANTIDADE_DIAS_OPTIONS, {
+    errorMap: () => ({ message: "Selecione a quantidade de dias." }),
+  }),
   localidade: z.string().trim().min(1, "Localidade é obrigatória.").max(150),
   loja_codigo_nome: z.string().trim().min(1, "Código ou nome da loja é obrigatório.").max(150),
   cid: z.string().max(20).optional().or(z.literal("")),
@@ -210,9 +212,9 @@ function NovaAusenciaPage() {
       colaborador_id: "",
       empresa_id: "",
       projeto_id: "",
-      tipo: "FALTA",
+      tipo_detalhe: "FALTA JUSTIFICADA",
       data_inicio: "",
-      quantidade_dias: 1,
+      dias_label: "1 DIA",
       localidade: "",
       loja_codigo_nome: "",
       cid: "",
@@ -223,17 +225,23 @@ function NovaAusenciaPage() {
 
   const colaboradorId = form.watch("colaborador_id");
   const dataInicio = form.watch("data_inicio");
-  const quantidadeDias = form.watch("quantidade_dias");
+  const diasLabel = form.watch("dias_label");
   const motivo = form.watch("motivo") ?? "";
   const cid = form.watch("cid") ?? "";
 
+  const diasNumericos = useMemo(() => diasFromLabel(diasLabel ?? "") ?? 1, [diasLabel]);
+  const diasNumericoDisponivel = useMemo(
+    () => diasFromLabel(diasLabel ?? "") !== null,
+    [diasLabel],
+  );
+
   const dataFim = useMemo(
-    () => (dataInicio && quantidadeDias ? addDaysISO(dataInicio, quantidadeDias - 1) : ""),
-    [dataInicio, quantidadeDias],
+    () => (dataInicio && diasNumericoDisponivel ? addDaysISO(dataInicio, diasNumericos - 1) : ""),
+    [dataInicio, diasNumericos, diasNumericoDisponivel],
   );
   const dataRetorno = useMemo(
-    () => (dataInicio && quantidadeDias ? addDaysISO(dataInicio, quantidadeDias) : ""),
-    [dataInicio, quantidadeDias],
+    () => (dataInicio && diasNumericoDisponivel ? addDaysISO(dataInicio, diasNumericos) : ""),
+    [dataInicio, diasNumericos, diasNumericoDisponivel],
   );
 
   // Carrega ausência para edição
@@ -244,7 +252,7 @@ function NovaAusenciaPage() {
       const { data, error } = await supabase
         .from("ausencias")
         .select(
-          "id, empresa_id, projeto_id, colaborador_id, tipo, motivo, data_inicio, data_fim, dias, localidade, cid, loja_codigo_nome, acidente_trabalho_trajeto, status, possui_anexo, arquivo_url, arquivo_nome, arquivo_mime, arquivo_tamanho",
+          "id, empresa_id, projeto_id, colaborador_id, tipo, tipo_detalhe, dias_label, motivo, data_inicio, data_fim, dias, localidade, cid, loja_codigo_nome, acidente_trabalho_trajeto, status, possui_anexo, arquivo_url, arquivo_nome, arquivo_mime, arquivo_tamanho",
         )
         .eq("id", editId!)
         .maybeSingle();
@@ -281,13 +289,34 @@ function NovaAusenciaPage() {
       if (data) {
         applyColab(data as unknown as ColabMatch);
       }
+      const fallbackDetalhe: Record<TipoAusencia, (typeof TIPO_AUSENCIA_DETALHE)[number]> = {
+        FALTA: "FALTA JUSTIFICADA",
+        ATESTADO: "ATESTADO MÉDICO (Conforme descrição do documento)",
+        DECLARACAO: "DECLARAÇÃO DE COMPARECIMENTO",
+        SUSPENSAO: "SUSPENSÃO DISCIPLINAR",
+        OUTROS: "OUTROS",
+      };
+      const detalheSalvo = ausencia.tipo_detalhe as (typeof TIPO_AUSENCIA_DETALHE)[number] | null;
+      const detalheValido =
+        detalheSalvo && (TIPO_AUSENCIA_DETALHE as readonly string[]).includes(detalheSalvo)
+          ? detalheSalvo
+          : fallbackDetalhe[ausencia.tipo];
+
+      const diasSalvo = ausencia.dias_label as (typeof QUANTIDADE_DIAS_OPTIONS)[number] | null;
+      const diasValido =
+        diasSalvo && (QUANTIDADE_DIAS_OPTIONS as readonly string[]).includes(diasSalvo)
+          ? diasSalvo
+          : ((`${ausencia.dias || 1} ${ausencia.dias === 1 ? "DIA" : "DIAS"}` as unknown) as (typeof QUANTIDADE_DIAS_OPTIONS)[number]);
+
       form.reset({
         colaborador_id: ausencia.colaborador_id,
         empresa_id: ausencia.empresa_id,
         projeto_id: ausencia.projeto_id,
-        tipo: ausencia.tipo,
+        tipo_detalhe: detalheValido,
         data_inicio: ausencia.data_inicio,
-        quantidade_dias: Math.min(30, Math.max(1, ausencia.dias || 1)),
+        dias_label: (QUANTIDADE_DIAS_OPTIONS as readonly string[]).includes(diasValido)
+          ? diasValido
+          : "1 DIA",
         localidade: ausencia.localidade ?? "",
         loja_codigo_nome: ausencia.loja_codigo_nome ?? "",
         cid: ausencia.cid ?? "",
@@ -447,7 +476,8 @@ function NovaAusenciaPage() {
   const salvarMut = useMutation({
     mutationFn: async (values: FormData) => {
       const dataInicioIso = values.data_inicio;
-      const dataFimIso = addDaysISO(dataInicioIso, values.quantidade_dias - 1);
+      const diasNum = diasFromLabel(values.dias_label) ?? 1;
+      const dataFimIso = addDaysISO(dataInicioIso, diasNum - 1);
 
       let arquivo_url: string | null | undefined = undefined;
       let arquivo_nome: string | null | undefined = undefined;
@@ -484,7 +514,9 @@ function NovaAusenciaPage() {
         empresa_id: values.empresa_id,
         projeto_id: values.projeto_id,
         colaborador_id: values.colaborador_id,
-        tipo: values.tipo,
+        tipo: tipoBaseFromDetalhe(values.tipo_detalhe),
+        tipo_detalhe: values.tipo_detalhe,
+        dias_label: values.dias_label,
         motivo: values.motivo.trim(),
         data_inicio: dataInicioIso,
         data_fim: dataFimIso,
@@ -839,28 +871,25 @@ function NovaAusenciaPage() {
                       )}
                     />
 
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <FormField
                         control={form.control}
-                        name="tipo"
+                        name="tipo_detalhe"
                         render={({ field }) => (
-                          <FormItem>
+                          <FormItem className="md:col-span-2">
                             <FormLabel>
                               Tipo de Ausência <span className="text-red-500">*</span>
                             </FormLabel>
-                            <Select
-                              value={field.value}
-                              onValueChange={(v) => field.onChange(v as TipoAusencia)}
-                            >
+                            <Select value={field.value} onValueChange={field.onChange}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Selecione..." />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent>
-                                {TIPO_AUSENCIA.map((t) => (
+                              <SelectContent className="max-h-72">
+                                {TIPO_AUSENCIA_DETALHE.map((t) => (
                                   <SelectItem key={t} value={t}>
-                                    {TIPO_LABEL[t]}
+                                    {t}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -886,25 +915,22 @@ function NovaAusenciaPage() {
                       />
                       <FormField
                         control={form.control}
-                        name="quantidade_dias"
+                        name="dias_label"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>
                               Quantidade de Dias <span className="text-red-500">*</span>
                             </FormLabel>
-                            <Select
-                              value={String(field.value ?? "")}
-                              onValueChange={(v) => field.onChange(parseInt(v, 10))}
-                            >
+                            <Select value={field.value} onValueChange={field.onChange}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Selecione..." />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent className="max-h-64">
-                                {DIAS_OPTIONS.map((d) => (
-                                  <SelectItem key={d} value={String(d)}>
-                                    {d} {d === 1 ? "dia" : "dias"}
+                              <SelectContent className="max-h-72">
+                                {QUANTIDADE_DIAS_OPTIONS.map((d) => (
+                                  <SelectItem key={d} value={d}>
+                                    {d}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -913,6 +939,7 @@ function NovaAusenciaPage() {
                           </FormItem>
                         )}
                       />
+
 
                       <div className="space-y-1.5">
                         <Label className="flex items-center gap-1.5">
