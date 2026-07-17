@@ -236,6 +236,51 @@ export type Database = {
           },
         ]
       }
+      backup_logs: {
+        Row: {
+          created_at: string
+          duracao_segundos: number | null
+          fim: string | null
+          id: string
+          inicio: string
+          observacoes: string | null
+          origem: string | null
+          solicitado_por: string | null
+          solicitado_por_nome: string | null
+          status: string
+          tamanho_bytes: number | null
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          duracao_segundos?: number | null
+          fim?: string | null
+          id?: string
+          inicio?: string
+          observacoes?: string | null
+          origem?: string | null
+          solicitado_por?: string | null
+          solicitado_por_nome?: string | null
+          status?: string
+          tamanho_bytes?: number | null
+          tipo: string
+        }
+        Update: {
+          created_at?: string
+          duracao_segundos?: number | null
+          fim?: string | null
+          id?: string
+          inicio?: string
+          observacoes?: string | null
+          origem?: string | null
+          solicitado_por?: string | null
+          solicitado_por_nome?: string | null
+          status?: string
+          tamanho_bytes?: number | null
+          tipo?: string
+        }
+        Relationships: []
+      }
       categorias_ausencia: {
         Row: {
           ativo: boolean
@@ -653,6 +698,51 @@ export type Database = {
         }
         Relationships: []
       }
+      operacao_alertas: {
+        Row: {
+          created_at: string
+          criado_por: string | null
+          id: string
+          mensagem: string | null
+          origem: string | null
+          resolvido_em: string | null
+          resolvido_por: string | null
+          severidade: string
+          status: string
+          tipo: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          mensagem?: string | null
+          origem?: string | null
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          severidade?: string
+          status?: string
+          tipo: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          mensagem?: string | null
+          origem?: string | null
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          severidade?: string
+          status?: string
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       operacao_assistida: {
         Row: {
           aberto_em: string
@@ -695,6 +785,33 @@ export type Database = {
           responsavel?: string | null
           situacao?: Database["public"]["Enums"]["op_assist_status"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      operacao_metricas: {
+        Row: {
+          categoria: string
+          created_at: string
+          detalhes: Json | null
+          id: string
+          sucesso: boolean
+          tempo_ms: number
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          detalhes?: Json | null
+          id?: string
+          sucesso?: boolean
+          tempo_ms: number
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          detalhes?: Json | null
+          id?: string
+          sucesso?: boolean
+          tempo_ms?: number
         }
         Relationships: []
       }
@@ -982,6 +1099,12 @@ export type Database = {
           _sucesso?: boolean
           _user_agent?: string
         }
+        Returns: string
+      }
+      operacoes_dashboard: { Args: never; Returns: Json }
+      operacoes_health_check: { Args: never; Returns: Json }
+      registrar_solicitacao_backup: {
+        Args: { _observacoes?: string }
         Returns: string
       }
       rel_absenteismo: {
