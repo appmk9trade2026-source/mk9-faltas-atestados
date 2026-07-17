@@ -117,6 +117,8 @@ type AusenciaEdit = {
   projeto_id: string;
   colaborador_id: string;
   tipo: TipoAusencia;
+  tipo_detalhe: string | null;
+  dias_label: string | null;
   motivo: string | null;
   data_inicio: string;
   data_fim: string;
@@ -133,19 +135,17 @@ type AusenciaEdit = {
   arquivo_tamanho: number | null;
 };
 
-const DIAS_OPTIONS = Array.from({ length: 30 }, (_, i) => i + 1);
-
 const schema = z.object({
   colaborador_id: z.string().uuid("Busque um colaborador pela matrícula."),
   empresa_id: z.string().uuid(),
   projeto_id: z.string().uuid(),
-  tipo: z.enum(TIPO_AUSENCIA, { errorMap: () => ({ message: "Selecione o tipo." }) }),
+  tipo_detalhe: z.enum(TIPO_AUSENCIA_DETALHE, {
+    errorMap: () => ({ message: "Selecione o tipo." }),
+  }),
   data_inicio: z.string().min(1, "Informe a data da ausência."),
-  quantidade_dias: z
-    .number({ invalid_type_error: "Selecione a quantidade de dias." })
-    .int()
-    .min(1)
-    .max(30),
+  dias_label: z.enum(QUANTIDADE_DIAS_OPTIONS, {
+    errorMap: () => ({ message: "Selecione a quantidade de dias." }),
+  }),
   localidade: z.string().trim().min(1, "Localidade é obrigatória.").max(150),
   loja_codigo_nome: z.string().trim().min(1, "Código ou nome da loja é obrigatório.").max(150),
   cid: z.string().max(20).optional().or(z.literal("")),
