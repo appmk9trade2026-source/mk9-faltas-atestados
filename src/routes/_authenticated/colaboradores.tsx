@@ -397,12 +397,12 @@ function ColaboradoresPage() {
         </p>
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline">
-            <Link to="/colaboradores_/importacoes">Histórico de importações</Link>
+            <Link to="/colaboradores/importacoes">Histórico de importações</Link>
           </Button>
           {canManage && (
             <>
               <Button asChild variant="outline">
-                <Link to="/colaboradores_/importar">Importar planilha</Link>
+                <Link to="/colaboradores/importar">Importar planilha</Link>
               </Button>
               <Button onClick={openCreate}>
                 <Plus className="mr-2 h-4 w-4" /> Novo colaborador

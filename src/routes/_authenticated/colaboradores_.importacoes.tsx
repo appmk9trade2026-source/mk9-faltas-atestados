@@ -82,7 +82,7 @@ function HistoricoPage() {
         </Button>
         {canImport && (
           <Button asChild>
-            <Link to="/colaboradores_/importar">
+            <Link to="/colaboradores/importar">
               <Upload className="mr-2 h-4 w-4" /> Nova importação
             </Link>
           </Button>
