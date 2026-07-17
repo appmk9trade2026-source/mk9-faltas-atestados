@@ -14,6 +14,7 @@ import {
   ScrollText,
   Activity,
   BookOpen,
+  ClipboardCheck,
 } from "lucide-react";
 import {
   Sidebar,
