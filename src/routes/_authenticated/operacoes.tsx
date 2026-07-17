@@ -135,7 +135,7 @@ function OperacoesContent({ canWrite }: { canWrite: boolean }) {
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const patch: Record<string, unknown> = { status };
       if (status === "RESOLVIDO") patch.resolvido_em = new Date().toISOString();
-      const { error } = await supabase.from("operacao_alertas" as never).update(patch).eq("id", id);
+      const { error } = await (supabase.from("operacao_alertas" as never) as unknown as { update: (v: Record<string, unknown>) => { eq: (c: string, v: string) => Promise<{ error: Error | null }> } }).update(patch).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
