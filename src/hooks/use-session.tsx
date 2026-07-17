@@ -1,0 +1,93 @@
+import { useEffect, useState } from "react";
+import type { Session, User } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+
+export type AppRole = "super_admin" | "rh" | "supervisor" | "compliance";
+
+export type ProfileRow = {
+  id: string;
+  nome: string;
+  email: string;
+  ativo: boolean;
+};
+
+export type SessionState = {
+  loading: boolean;
+  session: Session | null;
+  user: User | null;
+  profile: ProfileRow | null;
+  roles: AppRole[];
+  primaryRole: AppRole | null;
+  refresh: () => Promise<void>;
+};
+
+export function useSession(): SessionState {
+  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<ProfileRow | null>(null);
+  const [roles, setRoles] = useState<AppRole[]>([]);
+
+  async function loadProfile(userId: string) {
+    const [profRes, rolesRes] = await Promise.all([
+      supabase.from("profiles").select("id, nome, email, ativo").eq("id", userId).maybeSingle(),
+      supabase.from("user_roles").select("role").eq("user_id", userId),
+    ]);
+    setProfile((profRes.data as ProfileRow | null) ?? null);
+    setRoles(((rolesRes.data ?? []) as { role: AppRole }[]).map((r) => r.role));
+  }
+
+  async function refresh() {
+    const { data } = await supabase.auth.getSession();
+    setSession(data.session);
+    if (data.session?.user) await loadProfile(data.session.user.id);
+    else {
+      setProfile(null);
+      setRoles([]);
+    }
+  }
+
+  useEffect(() => {
+    let mounted = true;
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+      if (!mounted) return;
+      setSession(s);
+      if (s?.user) {
+        // defer to avoid deadlock inside supabase callback
+        setTimeout(() => {
+          loadProfile(s.user.id);
+        }, 0);
+      } else {
+        setProfile(null);
+        setRoles([]);
+      }
+    });
+
+    (async () => {
+      await refresh();
+      if (mounted) setLoading(false);
+    })();
+
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  const primaryRole: AppRole | null =
+    roles.find((r) => r === "super_admin") ??
+    roles.find((r) => r === "rh") ??
+    roles.find((r) => r === "compliance") ??
+    roles.find((r) => r === "supervisor") ??
+    null;
+
+  return {
+    loading,
+    session,
+    user: session?.user ?? null,
+    profile,
+    roles,
+    primaryRole,
+    refresh,
+  };
+}
