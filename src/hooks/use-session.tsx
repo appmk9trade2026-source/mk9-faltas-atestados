@@ -1,6 +1,27 @@
 import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+let bootstrapAttempted = false;
+async function tryBootstrapSuperAdmin(): Promise<boolean> {
+  if (bootstrapAttempted) return false;
+  bootstrapAttempted = true;
+  try {
+    const { data, error } = await supabase.rpc("bootstrap_first_super_admin");
+    if (error) {
+      console.error("[bootstrap_first_super_admin]", error);
+      return false;
+    }
+    if (data === "created") {
+      toast.success("Primeiro Super Administrador configurado com sucesso.");
+      return true;
+    }
+  } catch (e) {
+    console.error("[bootstrap_first_super_admin] exception", e);
+  }
+  return false;
+}
 
 export type AppRole = "super_admin" | "rh" | "supervisor" | "compliance";
 
@@ -32,8 +53,26 @@ export function useSession(): SessionState {
       supabase.from("profiles").select("id, nome, email, ativo").eq("id", userId).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", userId),
     ]);
-    setProfile((profRes.data as ProfileRow | null) ?? null);
-    setRoles(((rolesRes.data ?? []) as { role: AppRole }[]).map((r) => r.role));
+    const prof = (profRes.data as ProfileRow | null) ?? null;
+    let rolesList = ((rolesRes.data ?? []) as { role: AppRole }[]).map((r) => r.role);
+
+    // Bootstrap: primeiro Super Admin (executado no backend, uma única vez)
+    if (
+      rolesList.length === 0 &&
+      prof?.email?.toLowerCase() === "automacaomk9@gmail.com"
+    ) {
+      const created = await tryBootstrapSuperAdmin();
+      if (created) {
+        const { data: r2 } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId);
+        rolesList = ((r2 ?? []) as { role: AppRole }[]).map((x) => x.role);
+      }
+    }
+
+    setProfile(prof);
+    setRoles(rolesList);
   }
 
   async function refresh() {
