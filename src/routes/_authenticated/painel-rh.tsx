@@ -267,11 +267,32 @@ function PainelRHPage() {
 
   const kpisQ = useKPIs(auto);
 
+  const categoriasQ = useQuery<Categoria[]>({
+    queryKey: ["categorias-ausencia"],
+    queryFn: fetchCategorias,
+    staleTime: 10 * 60_000,
+  });
+  const tiposQ = useQuery<TipoComCategoria[]>({
+    queryKey: ["tipos-ausencia-com-categoria"],
+    queryFn: fetchTiposComCategoria,
+    staleTime: 10 * 60_000,
+  });
+  const categorias = categoriasQ.data ?? [];
+  const tiposAll = tiposQ.data ?? [];
+  const tiposFiltro = useMemo(
+    () => (categoriaF === "all" ? tiposAll : tiposAll.filter((t) => t.categoria_ausencia_id === categoriaF)),
+    [tiposAll, categoriaF],
+  );
+  const tiposIdsDaCategoria = useMemo(
+    () => tiposAll.filter((t) => t.categoria_ausencia_id === categoriaF).map((t) => t.id),
+    [tiposAll, categoriaF],
+  );
+
   const listQ = useQuery({
     queryKey: [
       "painel-rh",
       "list",
-      { empresaF, projetoF, supervisorF, tipoF, statusF, dataIni, dataFim, busca, page, pageSize },
+      { empresaF, projetoF, supervisorF, categoriaF, tipoOficialF, statusF, dataIni, dataFim, busca, page, pageSize },
     ],
     refetchInterval: auto ? 60_000 : false,
     queryFn: async () => {
@@ -280,13 +301,17 @@ function PainelRHPage() {
 
       const supervisorAtivo = supervisorF.trim();
       const joinKind = supervisorAtivo ? "!inner" : "";
-      const selectStr = `id, status, tipo, data_inicio, data_fim, dias, cid, loja_codigo_nome, localidade, motivo, acidente_trabalho_trajeto, possui_anexo, arquivo_url, arquivo_nome, registrado_por, registrado_em, lancado_por, lancado_em, empresa_id, projeto_id, colaborador_id, empresa:empresas(nome), projeto:projetos(nome), colaborador:colaboradores${joinKind}(nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email)`;
+      const selectStr = `id, status, tipo, tipo_ausencia_id, tipo_ausencia_codigo, tipo_ausencia_nome, data_inicio, data_fim, dias, cid, loja_codigo_nome, localidade, motivo, acidente_trabalho_trajeto, possui_anexo, arquivo_url, arquivo_nome, registrado_por, registrado_em, lancado_por, lancado_em, empresa_id, projeto_id, colaborador_id, empresa:empresas(nome), projeto:projetos(nome), colaborador:colaboradores${joinKind}(nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email)`;
 
       let q = supabase.from("ausencias").select(selectStr, { count: "exact" });
 
       if (empresaF !== "all") q = q.eq("empresa_id", empresaF);
       if (projetoF !== "all") q = q.eq("projeto_id", projetoF);
-      if (tipoF !== "all") q = q.eq("tipo", tipoF as TipoAusencia);
+      if (tipoOficialF !== "all") {
+        q = q.eq("tipo_ausencia_id", tipoOficialF);
+      } else if (categoriaF !== "all" && tiposIdsDaCategoria.length) {
+        q = q.in("tipo_ausencia_id", tiposIdsDaCategoria);
+      }
       if (statusF !== "all") q = q.eq("status", statusF);
       if (dataIni) q = q.gte("data_fim", dataIni);
       if (dataFim) q = q.lte("data_inicio", dataFim);
@@ -301,6 +326,7 @@ function PainelRHPage() {
           `loja_codigo_nome.ilike.%${buscaTrim}%,cid.ilike.%${buscaTrim.toUpperCase()}%`,
         );
       }
+
 
       q = q.order("data_inicio", { ascending: false }).range(from, to);
 
