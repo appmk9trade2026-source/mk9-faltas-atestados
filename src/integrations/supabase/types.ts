@@ -131,8 +131,12 @@ export type Database = {
           nome_completo: string
           observacoes: string | null
           projeto_id: string
+          supervisor_email: string | null
+          supervisor_nome: string | null
+          supervisor_telefone: string | null
           telefone: string | null
           updated_at: string
+          whatsapp: string | null
         }
         Insert: {
           ativo?: boolean
@@ -147,8 +151,12 @@ export type Database = {
           nome_completo: string
           observacoes?: string | null
           projeto_id: string
+          supervisor_email?: string | null
+          supervisor_nome?: string | null
+          supervisor_telefone?: string | null
           telefone?: string | null
           updated_at?: string
+          whatsapp?: string | null
         }
         Update: {
           ativo?: boolean
@@ -163,8 +171,12 @@ export type Database = {
           nome_completo?: string
           observacoes?: string | null
           projeto_id?: string
+          supervisor_email?: string | null
+          supervisor_nome?: string | null
+          supervisor_telefone?: string | null
           telefone?: string | null
           updated_at?: string
+          whatsapp?: string | null
         }
         Relationships: [
           {
