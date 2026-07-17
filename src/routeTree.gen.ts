@@ -13,10 +13,12 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
+import { Route as AuthenticatedSaudeRouteImport } from './routes/_authenticated/saude'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedPainelRhRouteImport } from './routes/_authenticated/painel-rh'
 import { Route as AuthenticatedNovaAusenciaRouteImport } from './routes/_authenticated/nova-ausencia'
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
+import { Route as AuthenticatedDocumentacaoRouteImport } from './routes/_authenticated/documentacao'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedComunicacoesRouteImport } from './routes/_authenticated/comunicacoes'
@@ -49,6 +51,11 @@ const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
   path: '/usuarios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSaudeRoute = AuthenticatedSaudeRouteImport.update({
+  id: '/saude',
+  path: '/saude',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
@@ -70,6 +77,12 @@ const AuthenticatedHistoricoRoute = AuthenticatedHistoricoRouteImport.update({
   path: '/historico',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDocumentacaoRoute =
+  AuthenticatedDocumentacaoRouteImport.update({
+    id: '/documentacao',
+    path: '/documentacao',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -149,10 +162,12 @@ export interface FileRoutesByFullPath {
   '/comunicacoes': typeof AuthenticatedComunicacoesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/documentacao': typeof AuthenticatedDocumentacaoRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/nova-ausencia': typeof AuthenticatedNovaAusenciaRoute
   '/painel-rh': typeof AuthenticatedPainelRhRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/saude': typeof AuthenticatedSaudeRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/colaboradores/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/colaboradores/importar': typeof AuthenticatedColaboradoresImportarRoute
@@ -170,10 +185,12 @@ export interface FileRoutesByTo {
   '/comunicacoes': typeof AuthenticatedComunicacoesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/documentacao': typeof AuthenticatedDocumentacaoRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/nova-ausencia': typeof AuthenticatedNovaAusenciaRoute
   '/painel-rh': typeof AuthenticatedPainelRhRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/saude': typeof AuthenticatedSaudeRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/colaboradores/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/colaboradores/importar': typeof AuthenticatedColaboradoresImportarRoute
@@ -193,10 +210,12 @@ export interface FileRoutesById {
   '/_authenticated/comunicacoes': typeof AuthenticatedComunicacoesRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/documentacao': typeof AuthenticatedDocumentacaoRoute
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
   '/_authenticated/nova-ausencia': typeof AuthenticatedNovaAusenciaRoute
   '/_authenticated/painel-rh': typeof AuthenticatedPainelRhRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
+  '/_authenticated/saude': typeof AuthenticatedSaudeRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/colaboradores_/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/_authenticated/colaboradores_/importar': typeof AuthenticatedColaboradoresImportarRoute
@@ -216,10 +235,12 @@ export interface FileRouteTypes {
     | '/comunicacoes'
     | '/configuracoes'
     | '/dashboard'
+    | '/documentacao'
     | '/historico'
     | '/nova-ausencia'
     | '/painel-rh'
     | '/relatorios'
+    | '/saude'
     | '/usuarios'
     | '/colaboradores/importacoes'
     | '/colaboradores/importar'
@@ -237,10 +258,12 @@ export interface FileRouteTypes {
     | '/comunicacoes'
     | '/configuracoes'
     | '/dashboard'
+    | '/documentacao'
     | '/historico'
     | '/nova-ausencia'
     | '/painel-rh'
     | '/relatorios'
+    | '/saude'
     | '/usuarios'
     | '/colaboradores/importacoes'
     | '/colaboradores/importar'
@@ -259,10 +282,12 @@ export interface FileRouteTypes {
     | '/_authenticated/comunicacoes'
     | '/_authenticated/configuracoes'
     | '/_authenticated/dashboard'
+    | '/_authenticated/documentacao'
     | '/_authenticated/historico'
     | '/_authenticated/nova-ausencia'
     | '/_authenticated/painel-rh'
     | '/_authenticated/relatorios'
+    | '/_authenticated/saude'
     | '/_authenticated/usuarios'
     | '/_authenticated/colaboradores_/importacoes'
     | '/_authenticated/colaboradores_/importar'
@@ -307,6 +332,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUsuariosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/saude': {
+      id: '/_authenticated/saude'
+      path: '/saude'
+      fullPath: '/saude'
+      preLoaderRoute: typeof AuthenticatedSaudeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/relatorios': {
       id: '/_authenticated/relatorios'
       path: '/relatorios'
@@ -333,6 +365,13 @@ declare module '@tanstack/react-router' {
       path: '/historico'
       fullPath: '/historico'
       preLoaderRoute: typeof AuthenticatedHistoricoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/documentacao': {
+      id: '/_authenticated/documentacao'
+      path: '/documentacao'
+      fullPath: '/documentacao'
+      preLoaderRoute: typeof AuthenticatedDocumentacaoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -451,10 +490,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedComunicacoesRoute: typeof AuthenticatedComunicacoesRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDocumentacaoRoute: typeof AuthenticatedDocumentacaoRoute
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
   AuthenticatedNovaAusenciaRoute: typeof AuthenticatedNovaAusenciaRoute
   AuthenticatedPainelRhRoute: typeof AuthenticatedPainelRhRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
+  AuthenticatedSaudeRoute: typeof AuthenticatedSaudeRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
   AuthenticatedColaboradoresImportacoesRoute: typeof AuthenticatedColaboradoresImportacoesRoute
   AuthenticatedColaboradoresImportarRoute: typeof AuthenticatedColaboradoresImportarRoute
@@ -468,10 +509,12 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedComunicacoesRoute: AuthenticatedComunicacoesRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDocumentacaoRoute: AuthenticatedDocumentacaoRoute,
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
   AuthenticatedNovaAusenciaRoute: AuthenticatedNovaAusenciaRoute,
   AuthenticatedPainelRhRoute: AuthenticatedPainelRhRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
+  AuthenticatedSaudeRoute: AuthenticatedSaudeRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
   AuthenticatedColaboradoresImportacoesRoute:
     AuthenticatedColaboradoresImportacoesRoute,
