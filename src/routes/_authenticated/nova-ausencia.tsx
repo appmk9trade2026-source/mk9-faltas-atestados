@@ -476,7 +476,8 @@ function NovaAusenciaPage() {
   const salvarMut = useMutation({
     mutationFn: async (values: FormData) => {
       const dataInicioIso = values.data_inicio;
-      const dataFimIso = addDaysISO(dataInicioIso, values.quantidade_dias - 1);
+      const diasNum = diasFromLabel(values.dias_label) ?? 1;
+      const dataFimIso = addDaysISO(dataInicioIso, diasNum - 1);
 
       let arquivo_url: string | null | undefined = undefined;
       let arquivo_nome: string | null | undefined = undefined;
@@ -513,7 +514,9 @@ function NovaAusenciaPage() {
         empresa_id: values.empresa_id,
         projeto_id: values.projeto_id,
         colaborador_id: values.colaborador_id,
-        tipo: values.tipo,
+        tipo: tipoBaseFromDetalhe(values.tipo_detalhe),
+        tipo_detalhe: values.tipo_detalhe,
+        dias_label: values.dias_label,
         motivo: values.motivo.trim(),
         data_inicio: dataInicioIso,
         data_fim: dataFimIso,
