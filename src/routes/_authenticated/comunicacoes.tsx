@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Eye, MessageSquarePlus, Pencil, Search, Send, ShieldAlert } from "lucide-react";
@@ -62,6 +62,9 @@ import {
 
 export const Route = createFileRoute("/_authenticated/comunicacoes")({
   head: () => ({ meta: [{ title: "Comunicações · CRM MK9" }] }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    ausencia: typeof s.ausencia === "string" ? s.ausencia : undefined,
+  }),
   component: ComunicacoesPage,
 });
 
@@ -150,6 +153,8 @@ function ComunicacoesPage() {
   const { roles, user } = useSession();
   const isRH = roles.includes("super_admin") || roles.includes("rh");
   const queryClient = useQueryClient();
+  const { ausencia: ausenciaParam } = Route.useSearch();
+  const navigate = Route.useNavigate();
 
   const [search, setSearch] = useState("");
   const [empresaF, setEmpresaF] = useState("all");
@@ -161,8 +166,17 @@ function ComunicacoesPage() {
 
   const [editing, setEditing] = useState<Comunicacao | null>(null);
   const [creating, setCreating] = useState(false);
+  const [initialAusenciaId, setInitialAusenciaId] = useState<string | null>(null);
   const [viewing, setViewing] = useState<Comunicacao | null>(null);
   const [confirmSend, setConfirmSend] = useState<Comunicacao | null>(null);
+
+  useEffect(() => {
+    if (ausenciaParam && isRH) {
+      setInitialAusenciaId(ausenciaParam);
+      setCreating(true);
+      navigate({ search: {}, replace: true });
+    }
+  }, [ausenciaParam, isRH, navigate]);
 
   const empresasQ = useQuery({
     queryKey: ["empresas", "todas"],
@@ -434,9 +448,11 @@ function ComunicacoesPage() {
         <ComunicacaoEditor
           userId={user?.id ?? null}
           existing={editing}
+          initialAusenciaId={initialAusenciaId}
           onClose={() => {
             setCreating(false);
             setEditing(null);
+            setInitialAusenciaId(null);
           }}
           onSaved={() => {
             queryClient.invalidateQueries({ queryKey: ["comunicacoes"] });
@@ -529,16 +545,18 @@ function ComunicacaoEditor({
   onClose,
   onSaved,
   userId,
+  initialAusenciaId,
 }: {
   existing: Comunicacao | null;
   onClose: () => void;
   onSaved: () => void;
   userId: string | null;
+  initialAusenciaId?: string | null;
 }) {
   const queryClient = useQueryClient();
   const isEdit = !!existing;
 
-  const [ausenciaId, setAusenciaId] = useState<string>(existing?.ausencia_id ?? "");
+  const [ausenciaId, setAusenciaId] = useState<string>(existing?.ausencia_id ?? initialAusenciaId ?? "");
   const [canal, setCanal] = useState<CanalComunicacao>(existing?.tipo ?? "EMAIL");
   const [assunto, setAssunto] = useState(existing?.assunto ?? "");
   const [mensagem, setMensagem] = useState(existing?.mensagem ?? "");
