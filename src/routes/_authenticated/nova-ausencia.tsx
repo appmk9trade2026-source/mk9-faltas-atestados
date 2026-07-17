@@ -55,6 +55,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import {
   Form,
   FormControl,
@@ -141,13 +151,9 @@ const schema = z.object({
   colaborador_id: z.string().uuid("Busque um colaborador pela matrícula."),
   empresa_id: z.string().uuid(),
   projeto_id: z.string().uuid(),
-  tipo_detalhe: z.enum(TIPO_AUSENCIA_DETALHE, {
-    errorMap: () => ({ message: "Selecione o tipo." }),
-  }),
+  tipo_ausencia_id: z.string().uuid("Selecione o tipo de ausência."),
+  opcao_periodo_id: z.string().uuid("Selecione a quantidade / período."),
   data_inicio: z.string().min(1, "Informe a data da ausência."),
-  dias_label: z.enum(QUANTIDADE_DIAS_OPTIONS, {
-    errorMap: () => ({ message: "Selecione a quantidade de dias." }),
-  }),
   localidade: z.string().trim().min(1, "Localidade é obrigatória.").max(150),
   loja_codigo_nome: z.string().trim().min(1, "Código ou nome da loja é obrigatório.").max(150),
   cid: z.string().max(20).optional().or(z.literal("")),
@@ -214,9 +220,9 @@ function NovaAusenciaPage() {
       colaborador_id: "",
       empresa_id: "",
       projeto_id: "",
-      tipo_detalhe: "FALTA JUSTIFICADA",
+      tipo_ausencia_id: "",
+      opcao_periodo_id: "",
       data_inicio: "",
-      dias_label: "1 DIA",
       localidade: "",
       loja_codigo_nome: "",
       cid: "",
@@ -227,15 +233,73 @@ function NovaAusenciaPage() {
 
   const colaboradorId = form.watch("colaborador_id");
   const dataInicio = form.watch("data_inicio");
-  const diasLabel = form.watch("dias_label");
+  const tipoAusenciaId = form.watch("tipo_ausencia_id");
+  const opcaoPeriodoId = form.watch("opcao_periodo_id");
   const motivo = form.watch("motivo") ?? "";
   const cid = form.watch("cid") ?? "";
 
-  const diasNumericos = useMemo(() => diasFromLabel(diasLabel ?? "") ?? 1, [diasLabel]);
-  const diasNumericoDisponivel = useMemo(
-    () => diasFromLabel(diasLabel ?? "") !== null,
-    [diasLabel],
+  // ============= Tipos e opções (DB-driven) =============
+  const tiposQ = useQuery({
+    queryKey: ["tipos_ausencia_ativos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tipos_ausencia" as never)
+        .select("id, codigo, nome, ativo, exige_documento, permite_cid, permite_acidente, ordem")
+        .eq("ativo", true)
+        .order("ordem", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as unknown as Array<{
+        id: string;
+        codigo: string;
+        nome: string;
+        ativo: boolean;
+        exige_documento: boolean;
+        permite_cid: boolean;
+        permite_acidente: boolean;
+        ordem: number;
+      }>;
+    },
+  });
+
+  const opcoesPorTipoQ = useQuery({
+    queryKey: ["opcoes_por_tipo", tipoAusenciaId],
+    enabled: !!tipoAusenciaId,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_opcoes_periodo_por_tipo" as never, {
+        _tipo_id: tipoAusenciaId,
+      } as never);
+      if (error) throw error;
+      return (data ?? []) as unknown as Array<{
+        id: string;
+        codigo: string;
+        nome: string;
+        quantidade_dias: number | null;
+        tipo_periodo: "DIAS" | "HORAS" | "MEIO_PERIODO" | "PERIODO_INTEGRAL";
+        ordem: number;
+      }>;
+    },
+  });
+
+  const tipoSelecionado = useMemo(
+    () => tiposQ.data?.find((t) => t.id === tipoAusenciaId) ?? null,
+    [tiposQ.data, tipoAusenciaId],
   );
+  const opcaoSelecionada = useMemo(
+    () => opcoesPorTipoQ.data?.find((o) => o.id === opcaoPeriodoId) ?? null,
+    [opcoesPorTipoQ.data, opcaoPeriodoId],
+  );
+  const [tipoPopoverOpen, setTipoPopoverOpen] = useState(false);
+
+  // Limpa período se não for válido para o novo tipo
+  useEffect(() => {
+    if (!opcoesPorTipoQ.data || !opcaoPeriodoId) return;
+    if (!opcoesPorTipoQ.data.some((o) => o.id === opcaoPeriodoId)) {
+      form.setValue("opcao_periodo_id", "", { shouldValidate: false });
+    }
+  }, [opcoesPorTipoQ.data, opcaoPeriodoId, form]);
+
+  const diasNumericos = opcaoSelecionada?.quantidade_dias ?? 1;
+  const diasNumericoDisponivel = (opcaoSelecionada?.quantidade_dias ?? null) !== null;
 
   const dataFim = useMemo(
     () => (dataInicio && diasNumericoDisponivel ? addDaysISO(dataInicio, diasNumericos - 1) : ""),
