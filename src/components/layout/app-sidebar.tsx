@@ -44,7 +44,7 @@ const items: Item[] = [
   { title: "Painel do RH", url: "/painel-rh", icon: ClipboardList, roles: ["super_admin", "rh"] },
   { title: "Histórico", url: "/historico", icon: History, roles: ["super_admin", "rh", "supervisor"] },
   { title: "Colaboradores", url: "/colaboradores", icon: Users, roles: ["super_admin", "rh", "supervisor", "compliance"] },
-  { title: "Importações", url: "/colaboradores_/importacoes", icon: History, roles: ["super_admin", "rh", "supervisor", "compliance"] },
+  { title: "Importações", url: "/colaboradores/importacoes", icon: History, roles: ["super_admin", "rh", "supervisor", "compliance"] },
   { title: "Comunicações", url: "/comunicacoes", icon: MessageSquare, roles: ["super_admin", "rh", "supervisor", "compliance"] },
   { title: "Alertas", url: "/alertas", icon: Bell, roles: ["super_admin", "rh", "compliance"] },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: ["super_admin", "rh", "compliance"] },
