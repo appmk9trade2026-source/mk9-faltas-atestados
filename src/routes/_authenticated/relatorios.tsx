@@ -7,6 +7,7 @@ import {
   FileType2, Play, Clock,
 } from "lucide-react";
 import { toast } from "sonner";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { AppShell } from "@/components/layout/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
