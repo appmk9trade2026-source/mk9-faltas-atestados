@@ -448,9 +448,11 @@ function ComunicacoesPage() {
         <ComunicacaoEditor
           userId={user?.id ?? null}
           existing={editing}
+          initialAusenciaId={initialAusenciaId}
           onClose={() => {
             setCreating(false);
             setEditing(null);
+            setInitialAusenciaId(null);
           }}
           onSaved={() => {
             queryClient.invalidateQueries({ queryKey: ["comunicacoes"] });
