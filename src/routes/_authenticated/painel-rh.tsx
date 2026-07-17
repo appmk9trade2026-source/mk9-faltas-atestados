@@ -444,20 +444,26 @@ function PainelRHPage() {
       toast.info("Nada para exportar com os filtros atuais.");
       return;
     }
-    const data = rows.map((r) => ({
-      Colaborador: r.colaborador?.nome_completo ?? "",
-      Matricula: r.colaborador?.matricula ?? "",
-      Empresa: r.empresa?.nome ?? "",
-      Projeto: r.projeto?.nome ?? "",
-      Tipo: TIPO_LABEL[r.tipo],
-      DataInicio: r.data_inicio,
-      DataFim: r.data_fim,
-      Dias: r.dias,
-      Status: r.status,
-      Supervisor: r.colaborador?.supervisor_nome ?? "",
-      Loja: r.loja_codigo_nome ?? "",
-      CID: r.cid ?? "",
-    }));
+    const data = rows.map((r) => {
+      const tipoOf = tiposAll.find((t) => t.id === r.tipo_ausencia_id);
+      const cat = tipoOf ? categorias.find((c) => c.id === tipoOf.categoria_ausencia_id) : undefined;
+      return {
+        Colaborador: r.colaborador?.nome_completo ?? "",
+        Matricula: r.colaborador?.matricula ?? "",
+        Empresa: r.empresa?.nome ?? "",
+        Projeto: r.projeto?.nome ?? "",
+        Categoria: cat?.nome ?? "",
+        TipoOficial: r.tipo_ausencia_nome ?? tipoOf?.nome ?? "",
+        TipoBase: TIPO_LABEL[r.tipo],
+        DataInicio: r.data_inicio,
+        DataFim: r.data_fim,
+        Dias: r.dias,
+        Status: r.status,
+        Supervisor: r.colaborador?.supervisor_nome ?? "",
+        Loja: r.loja_codigo_nome ?? "",
+        CID: r.cid ?? "",
+      };
+    });
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(data);
     XLSX.utils.book_append_sheet(wb, ws, "Ausencias");
