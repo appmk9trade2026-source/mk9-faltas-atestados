@@ -210,6 +210,78 @@ export type Database = {
           },
         ]
       }
+      comunicacoes: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          assunto: string | null
+          ausencia_id: string
+          colaborador_id: string
+          created_at: string
+          criado_por: string | null
+          destinatario: string
+          enviado_em: string | null
+          enviado_por: string | null
+          erro: string | null
+          id: string
+          mensagem: string
+          status: Database["public"]["Enums"]["status_comunicacao"]
+          tipo: Database["public"]["Enums"]["canal_comunicacao"]
+          updated_at: string
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          assunto?: string | null
+          ausencia_id: string
+          colaborador_id: string
+          created_at?: string
+          criado_por?: string | null
+          destinatario: string
+          enviado_em?: string | null
+          enviado_por?: string | null
+          erro?: string | null
+          id?: string
+          mensagem: string
+          status?: Database["public"]["Enums"]["status_comunicacao"]
+          tipo: Database["public"]["Enums"]["canal_comunicacao"]
+          updated_at?: string
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          assunto?: string | null
+          ausencia_id?: string
+          colaborador_id?: string
+          created_at?: string
+          criado_por?: string | null
+          destinatario?: string
+          enviado_em?: string | null
+          enviado_por?: string | null
+          erro?: string | null
+          id?: string
+          mensagem?: string
+          status?: Database["public"]["Enums"]["status_comunicacao"]
+          tipo?: Database["public"]["Enums"]["canal_comunicacao"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comunicacoes_ausencia_id_fkey"
+            columns: ["ausencia_id"]
+            isOneToOne: false
+            referencedRelation: "ausencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comunicacoes_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       empresas: {
         Row: {
           ativo: boolean
@@ -361,7 +433,9 @@ export type Database = {
     }
     Enums: {
       app_role: "super_admin" | "rh" | "supervisor" | "compliance"
+      canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       status_ausencia: "PENDENTE" | "LANCADO"
+      status_comunicacao: "RASCUNHO" | "APROVADO" | "ENVIADO" | "ERRO"
       tipo_ausencia:
         | "FALTA"
         | "ATESTADO"
@@ -496,7 +570,9 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin", "rh", "supervisor", "compliance"],
+      canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       status_ausencia: ["PENDENTE", "LANCADO"],
+      status_comunicacao: ["RASCUNHO", "APROVADO", "ENVIADO", "ERRO"],
       tipo_ausencia: ["FALTA", "ATESTADO", "DECLARACAO", "SUSPENSAO", "OUTROS"],
     },
   },
