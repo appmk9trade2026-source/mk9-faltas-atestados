@@ -12,7 +12,8 @@ import {
   ShieldCheck,
   MessageSquare,
   ScrollText,
-
+  Activity,
+  BookOpen,
 } from "lucide-react";
 import {
   Sidebar,
