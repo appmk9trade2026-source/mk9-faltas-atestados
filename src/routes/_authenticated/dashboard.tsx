@@ -81,9 +81,12 @@ type DashboardData = {
   ultimos: Array<{
     id: string; registrado_em: string; colab_nome: string; empresa_nome: string;
     projeto_nome: string; tipo: string; status: string; data_inicio: string; data_fim: string;
+    tipo_oficial_nome?: string | null; tipo_oficial_codigo?: string | null;
   }>;
   top_empresas: Array<{ empresa_id: string; nome: string; total: number }>;
   top_projetos: Array<{ projeto_id: string; nome: string; total: number }>;
+  por_categoria: Array<{ categoria_id: string | null; codigo: string | null; nome: string | null; cor: string | null; total: number }>;
+  por_tipo_oficial: Array<{ tipo_id: string | null; codigo: string; nome: string; cor: string | null; categoria_id: string | null; total: number }>;
 };
 
 // ---------- Helpers
