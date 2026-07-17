@@ -321,15 +321,18 @@ function NovaAusenciaPage() {
       };
 
       if (isEdit && editId) {
-        const updatePayload: Record<string, unknown> = { ...basePayload };
-        if (arquivo_url !== undefined) {
-          updatePayload.arquivo_url = arquivo_url;
-          updatePayload.arquivo_nome = arquivo_nome;
-          updatePayload.arquivo_mime = arquivo_mime;
-          updatePayload.arquivo_tamanho = arquivo_tamanho;
-          updatePayload.arquivo_criado_por = arquivo_criado_por;
-          updatePayload.arquivo_criado_em = arquivo_criado_em;
-        }
+        const updatePayload =
+          arquivo_url !== undefined
+            ? {
+                ...basePayload,
+                arquivo_url,
+                arquivo_nome,
+                arquivo_mime,
+                arquivo_tamanho,
+                arquivo_criado_por,
+                arquivo_criado_em,
+              }
+            : basePayload;
         const { error } = await supabase
           .from("ausencias")
           .update(updatePayload)
