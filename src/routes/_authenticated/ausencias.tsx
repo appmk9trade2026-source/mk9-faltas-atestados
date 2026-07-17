@@ -199,19 +199,30 @@ function AusenciasPage() {
       const { data, error } = await supabase
         .from("ausencias")
         .select(
-          "*, empresa:empresas(nome), projeto:projetos(nome), colaborador:colaboradores(nome_completo, matricula, cargo), registrador:profiles!ausencias_registrado_por_fkey(nome, email), lancador:profiles!ausencias_lancado_por_fkey(nome, email)",
+          "*, empresa:empresas(nome), projeto:projetos(nome), colaborador:colaboradores(nome_completo, matricula, cargo)",
         );
-      if (error) {
-        // fallback: join sem FK explícita se relacionamento não existir
-        const alt = await supabase
-          .from("ausencias")
-          .select(
-            "*, empresa:empresas(nome), projeto:projetos(nome), colaborador:colaboradores(nome_completo, matricula, cargo)",
-          );
-        if (alt.error) throw alt.error;
-        return (alt.data ?? []) as Ausencia[];
+      if (error) throw error;
+      const rows = (data ?? []) as unknown as Ausencia[];
+
+      const ids = Array.from(
+        new Set(
+          rows
+            .flatMap((r) => [r.registrado_por, r.lancado_por])
+            .filter((x): x is string => !!x),
+        ),
+      );
+      if (ids.length) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id, nome, email")
+          .in("id", ids);
+        const map = new Map((profs ?? []).map((p) => [p.id, p]));
+        for (const r of rows) {
+          r.registrador = r.registrado_por ? (map.get(r.registrado_por) ?? null) : null;
+          r.lancador = r.lancado_por ? (map.get(r.lancado_por) ?? null) : null;
+        }
       }
-      return (data ?? []) as Ausencia[];
+      return rows;
     },
   });
 
