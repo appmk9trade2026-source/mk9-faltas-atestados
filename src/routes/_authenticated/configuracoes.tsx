@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useMatches } from "@tanstack/react-router";
-import { Building2, ChevronRight, FolderKanban } from "lucide-react";
+import { Building2, ChevronRight, FolderKanban, ListChecks } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -9,7 +9,7 @@ export const Route = createFileRoute("/_authenticated/configuracoes")({
 });
 
 type Section = {
-  to: "/configuracoes/empresas" | "/configuracoes/projetos";
+  to: "/configuracoes/empresas" | "/configuracoes/projetos" | "/configuracoes/tipos-ausencia";
   icon: typeof Building2;
   title: string;
   desc: string;
@@ -28,7 +28,14 @@ const SECTIONS: Section[] = [
     title: "Projetos",
     desc: "Projetos vinculados a cada empresa.",
   },
+  {
+    to: "/configuracoes/tipos-ausencia",
+    icon: ListChecks,
+    title: "Tipos de Ausência",
+    desc: "Tipos oficiais e opções de período (dias/horas) permitidas.",
+  },
 ];
+
 
 function ConfiguracoesLayout() {
   const matches = useMatches();
