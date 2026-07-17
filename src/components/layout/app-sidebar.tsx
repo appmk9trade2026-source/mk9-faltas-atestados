@@ -10,6 +10,7 @@ import {
   Settings,
   UserCog,
   ShieldCheck,
+  MessageSquare,
 } from "lucide-react";
 import {
   Sidebar,
@@ -39,6 +40,7 @@ const items: Item[] = [
   { title: "Painel do RH", url: "/painel-rh", icon: ClipboardList, roles: ["super_admin", "rh"] },
   { title: "Histórico", url: "/historico", icon: History, roles: ["super_admin", "rh", "supervisor"] },
   { title: "Colaboradores", url: "/colaboradores", icon: Users, roles: ["super_admin", "rh", "supervisor", "compliance"] },
+  { title: "Comunicações", url: "/comunicacoes", icon: MessageSquare, roles: ["super_admin", "rh", "supervisor", "compliance"] },
   { title: "Alertas", url: "/alertas", icon: Bell, roles: ["super_admin", "rh", "compliance"] },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: ["super_admin", "rh", "compliance"] },
   { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["super_admin", "rh"] },
