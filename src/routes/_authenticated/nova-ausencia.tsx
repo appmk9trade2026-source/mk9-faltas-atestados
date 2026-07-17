@@ -67,9 +67,11 @@ import {
   ARQUIVO_MAX_BYTES,
   ARQUIVO_MIMES,
   BUCKET_ATESTADOS,
-  TIPO_AUSENCIA,
-  TIPO_LABEL,
+  QUANTIDADE_DIAS_OPTIONS,
+  TIPO_AUSENCIA_DETALHE,
+  diasFromLabel,
   getSignedAtestadoUrl,
+  tipoBaseFromDetalhe,
   type TipoAusencia,
 } from "@/lib/ausencias";
 import { formatTelefone } from "@/lib/br-format";
