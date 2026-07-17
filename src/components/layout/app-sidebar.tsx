@@ -13,6 +13,7 @@ import {
   MessageSquare,
   ScrollText,
   Activity,
+  HardDrive,
   BookOpen,
   ClipboardCheck,
 } from "lucide-react";
