@@ -591,6 +591,13 @@ function AusenciasPage() {
                         <DropdownMenuItem onClick={() => setViewing(row)}>
                           <Eye className="mr-2 h-4 w-4" /> Visualizar
                         </DropdownMenuItem>
+                        {podeCadastrar && row.status === "PENDENTE" && (
+                          <DropdownMenuItem asChild>
+                            <Link to="/nova-ausencia" search={{ id: row.id }}>
+                              <Pencil className="mr-2 h-4 w-4" /> Editar
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
                         {row.possui_anexo && (
                           <DropdownMenuItem onClick={() => baixarAnexo(row)}>
                             <Download className="mr-2 h-4 w-4" /> Baixar anexo
