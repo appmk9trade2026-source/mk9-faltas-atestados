@@ -11,6 +11,8 @@ import {
   UserCog,
   ShieldCheck,
   MessageSquare,
+  ScrollText,
+
 } from "lucide-react";
 import {
   Sidebar,
