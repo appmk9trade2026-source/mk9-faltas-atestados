@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Eye, MessageSquarePlus, Pencil, Search, Send, ShieldAlert } from "lucide-react";
@@ -153,6 +153,8 @@ function ComunicacoesPage() {
   const { roles, user } = useSession();
   const isRH = roles.includes("super_admin") || roles.includes("rh");
   const queryClient = useQueryClient();
+  const { ausencia: ausenciaParam } = Route.useSearch();
+  const navigate = Route.useNavigate();
 
   const [search, setSearch] = useState("");
   const [empresaF, setEmpresaF] = useState("all");
@@ -164,8 +166,17 @@ function ComunicacoesPage() {
 
   const [editing, setEditing] = useState<Comunicacao | null>(null);
   const [creating, setCreating] = useState(false);
+  const [initialAusenciaId, setInitialAusenciaId] = useState<string | null>(null);
   const [viewing, setViewing] = useState<Comunicacao | null>(null);
   const [confirmSend, setConfirmSend] = useState<Comunicacao | null>(null);
+
+  useEffect(() => {
+    if (ausenciaParam && isRH) {
+      setInitialAusenciaId(ausenciaParam);
+      setCreating(true);
+      navigate({ search: {}, replace: true });
+    }
+  }, [ausenciaParam, isRH, navigate]);
 
   const empresasQ = useQuery({
     queryKey: ["empresas", "todas"],
