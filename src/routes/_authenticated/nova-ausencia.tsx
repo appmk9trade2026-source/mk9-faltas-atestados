@@ -963,26 +963,64 @@ function NovaAusenciaPage() {
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <FormField
                         control={form.control}
-                        name="tipo_detalhe"
+                        name="tipo_ausencia_id"
                         render={({ field }) => (
                           <FormItem className="md:col-span-2">
                             <FormLabel>
                               Tipo de Ausência <span className="text-red-500">*</span>
                             </FormLabel>
-                            <Select value={field.value} onValueChange={field.onChange}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione..." />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent className="max-h-72">
-                                {TIPO_AUSENCIA_DETALHE.map((t) => (
-                                  <SelectItem key={t} value={t}>
-                                    {t}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <Popover open={tipoPopoverOpen} onOpenChange={setTipoPopoverOpen}>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn(
+                                      "w-full justify-between font-normal",
+                                      !field.value && "text-muted-foreground",
+                                    )}
+                                    disabled={tiposQ.isLoading}
+                                  >
+                                    {tipoSelecionado?.nome ?? "Selecione o tipo..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                className="w-[--radix-popover-trigger-width] p-0"
+                                align="start"
+                              >
+                                <Command>
+                                  <CommandInput placeholder="Buscar tipo..." />
+                                  <CommandList>
+                                    <CommandEmpty>Nenhum tipo encontrado.</CommandEmpty>
+                                    <CommandGroup>
+                                      {(tiposQ.data ?? []).map((t) => (
+                                        <CommandItem
+                                          key={t.id}
+                                          value={t.nome}
+                                          onSelect={() => {
+                                            field.onChange(t.id);
+                                            form.setValue("opcao_periodo_id", "", {
+                                              shouldValidate: false,
+                                            });
+                                            setTipoPopoverOpen(false);
+                                          }}
+                                        >
+                                          <Check
+                                            className={cn(
+                                              "mr-2 h-4 w-4",
+                                              field.value === t.id ? "opacity-100" : "opacity-0",
+                                            )}
+                                          />
+                                          {t.nome}
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -1004,30 +1042,50 @@ function NovaAusenciaPage() {
                       />
                       <FormField
                         control={form.control}
-                        name="dias_label"
+                        name="opcao_periodo_id"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>
-                              Quantidade de Dias <span className="text-red-500">*</span>
+                              Quantidade / Período <span className="text-red-500">*</span>
                             </FormLabel>
-                            <Select value={field.value} onValueChange={field.onChange}>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                              disabled={!tipoAusenciaId || opcoesPorTipoQ.isLoading}
+                            >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Selecione..." />
+                                  <SelectValue
+                                    placeholder={
+                                      tipoAusenciaId
+                                        ? opcoesPorTipoQ.isLoading
+                                          ? "Carregando..."
+                                          : "Selecione..."
+                                        : "Selecione o tipo primeiro"
+                                    }
+                                  />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent className="max-h-72">
-                                {QUANTIDADE_DIAS_OPTIONS.map((d) => (
-                                  <SelectItem key={d} value={d}>
-                                    {d}
+                                {(opcoesPorTipoQ.data ?? []).map((d) => (
+                                  <SelectItem key={d.id} value={d.id}>
+                                    {d.nome}
                                   </SelectItem>
                                 ))}
+                                {tipoAusenciaId &&
+                                  !opcoesPorTipoQ.isLoading &&
+                                  (opcoesPorTipoQ.data?.length ?? 0) === 0 && (
+                                    <div className="px-2 py-3 text-xs text-muted-foreground">
+                                      Nenhum período configurado para este tipo.
+                                    </div>
+                                  )}
                               </SelectContent>
                             </Select>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+
 
 
                       <div className="space-y-1.5">
