@@ -301,8 +301,29 @@ function DashboardPage() {
             </Select>
           </div>
 
+          <div className="min-w-[180px]">
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">Categoria</label>
+            <Select
+              value={filters.categoria_id ?? "all"}
+              onValueChange={(v) => setFilters((f) => ({ ...f, categoria_id: v === "all" ? undefined : v }))}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {categorias.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    <span className="inline-flex items-center gap-2">
+                      <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: c.cor ?? CATEGORIA_CORES[c.codigo] ?? "#94a3b8" }} />
+                      {c.nome}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="min-w-[160px]">
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">Tipo</label>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">Tipo (base)</label>
             <Select value={filters.tipo ?? "all"} onValueChange={(v) => setFilters((f) => ({ ...f, tipo: v === "all" ? undefined : v }))}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
