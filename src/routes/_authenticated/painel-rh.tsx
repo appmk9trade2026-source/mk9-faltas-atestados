@@ -219,7 +219,8 @@ function PainelRHPage() {
   const [empresaF, setEmpresaF] = useState("all");
   const [projetoF, setProjetoF] = useState("all");
   const [supervisorF, setSupervisorF] = useState("");
-  const [tipoF, setTipoF] = useState("all");
+  const [categoriaF, setCategoriaF] = useState("all");
+  const [tipoOficialF, setTipoOficialF] = useState("all");
   const [statusF, setStatusF] = useState<"all" | StatusAusencia>("PENDENTE");
   const [dataIni, setDataIni] = useState("");
   const [dataFim, setDataFim] = useState("");
@@ -236,7 +237,7 @@ function PainelRHPage() {
   // Reset página quando filtros mudam
   useEffect(() => {
     setPage(1);
-  }, [empresaF, projetoF, supervisorF, tipoF, statusF, dataIni, dataFim, busca, pageSize]);
+  }, [empresaF, projetoF, supervisorF, categoriaF, tipoOficialF, statusF, dataIni, dataFim, busca, pageSize]);
 
   const empresasQ = useQuery({
     queryKey: ["empresas", "todas"],
