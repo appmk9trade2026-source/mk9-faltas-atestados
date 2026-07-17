@@ -145,6 +145,12 @@ function DashboardPage() {
     staleTime: 5 * 60_000,
   });
 
+  const { data: categorias = [] } = useQuery<Categoria[]>({
+    queryKey: ["dash-categorias"],
+    queryFn: fetchCategorias,
+    staleTime: 10 * 60_000,
+  });
+
   // Main query — single RPC, auto refresh 60s
   const query = useQuery({
     queryKey: ["dashboard-metrics", filters],
@@ -157,6 +163,7 @@ function DashboardPage() {
         _supervisor: filters.supervisor,
         _tipo: filters.tipo as never,
         _status: filters.status as never,
+        _categoria_id: filters.categoria_id as never,
       });
       if (error) throw error;
       return data as unknown as DashboardData;
