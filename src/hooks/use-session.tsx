@@ -88,15 +88,33 @@ export function useSession(): SessionState {
   useEffect(() => {
     let mounted = true;
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       if (!mounted) return;
       setSession(s);
       if (s?.user) {
         // defer to avoid deadlock inside supabase callback
         setTimeout(() => {
           loadProfile(s.user.id);
+          if (event === "SIGNED_IN") {
+            supabase.rpc("log_audit_event", {
+              _modulo: "auth",
+              _acao: "LOGIN",
+              _entidade: "Sessão",
+              _observacoes: null,
+              _origem: "web",
+              _user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+            } as never).then(() => {}, () => {});
+          }
         }, 0);
       } else {
+        if (event === "SIGNED_OUT") {
+          supabase.rpc("log_audit_event", {
+            _modulo: "auth",
+            _acao: "LOGOUT",
+            _entidade: "Sessão",
+            _origem: "web",
+          } as never).then(() => {}, () => {});
+        }
         setProfile(null);
         setRoles([]);
       }
