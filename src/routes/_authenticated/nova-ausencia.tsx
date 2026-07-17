@@ -355,34 +355,49 @@ function NovaAusenciaPage() {
       if (data) {
         applyColab(data as unknown as ColabMatch);
       }
-      const fallbackDetalhe: Record<TipoAusencia, (typeof TIPO_AUSENCIA_DETALHE)[number]> = {
-        FALTA: "FALTA JUSTIFICADA",
-        ATESTADO: "ATESTADO MÉDICO (Conforme descrição do documento)",
-        DECLARACAO: "DECLARAÇÃO DE COMPARECIMENTO",
-        SUSPENSAO: "SUSPENSÃO DISCIPLINAR",
+      // Resolve tipo_ausencia_id / opcao_periodo_id a partir do snapshot ou do enum legado.
+      const tipoCodPorEnum: Record<TipoAusencia, string> = {
+        FALTA: "FALTA_JUSTIFICADA",
+        ATESTADO: "ATESTADO_MEDICO",
+        DECLARACAO: "DECLARACAO_COMPARECIMENTO",
+        SUSPENSAO: "SUSPENSAO_DISCIPLINAR",
         OUTROS: "OUTROS",
       };
-      const detalheSalvo = ausencia.tipo_detalhe as (typeof TIPO_AUSENCIA_DETALHE)[number] | null;
-      const detalheValido =
-        detalheSalvo && (TIPO_AUSENCIA_DETALHE as readonly string[]).includes(detalheSalvo)
-          ? detalheSalvo
-          : fallbackDetalhe[ausencia.tipo];
-
-      const diasSalvo = ausencia.dias_label as (typeof QUANTIDADE_DIAS_OPTIONS)[number] | null;
-      const diasValido =
-        diasSalvo && (QUANTIDADE_DIAS_OPTIONS as readonly string[]).includes(diasSalvo)
-          ? diasSalvo
-          : ((`${ausencia.dias || 1} ${ausencia.dias === 1 ? "DIA" : "DIAS"}` as unknown) as (typeof QUANTIDADE_DIAS_OPTIONS)[number]);
+      const ausRow = ausencia as unknown as {
+        tipo_ausencia_id: string | null;
+        opcao_periodo_id: string | null;
+        tipo_ausencia_codigo: string | null;
+        opcao_periodo_codigo: string | null;
+      };
+      let tipoId = ausRow.tipo_ausencia_id ?? "";
+      if (!tipoId) {
+        const cod = ausRow.tipo_ausencia_codigo ?? tipoCodPorEnum[ausencia.tipo];
+        const { data: t } = await supabase
+          .from("tipos_ausencia" as never)
+          .select("id")
+          .eq("codigo", cod)
+          .maybeSingle();
+        tipoId = (t as { id?: string } | null)?.id ?? "";
+      }
+      let opcaoId = ausRow.opcao_periodo_id ?? "";
+      if (!opcaoId) {
+        const dias = ausencia.dias || 1;
+        const cod = ausRow.opcao_periodo_codigo ?? `${dias}_${dias === 1 ? "DIA" : "DIAS"}`;
+        const { data: o } = await supabase
+          .from("opcoes_periodo_ausencia" as never)
+          .select("id")
+          .eq("codigo", cod)
+          .maybeSingle();
+        opcaoId = (o as { id?: string } | null)?.id ?? "";
+      }
 
       form.reset({
         colaborador_id: ausencia.colaborador_id,
         empresa_id: ausencia.empresa_id,
         projeto_id: ausencia.projeto_id,
-        tipo_detalhe: detalheValido,
+        tipo_ausencia_id: tipoId,
+        opcao_periodo_id: opcaoId,
         data_inicio: ausencia.data_inicio,
-        dias_label: (QUANTIDADE_DIAS_OPTIONS as readonly string[]).includes(diasValido)
-          ? diasValido
-          : "1 DIA",
         localidade: ausencia.localidade ?? "",
         loja_codigo_nome: ausencia.loja_codigo_nome ?? "",
         cid: ausencia.cid ?? "",
@@ -397,6 +412,7 @@ function NovaAusenciaPage() {
       setPrefilled(true);
     })();
   }, [isEdit, ausencia, prefilled, form, applyColab]);
+
 
   async function searchMatricula(rawValue?: string) {
     const val = (rawValue ?? matriculaInput).trim();
