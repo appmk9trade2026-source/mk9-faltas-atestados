@@ -16,6 +16,7 @@ import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedSaudeRouteImport } from './routes/_authenticated/saude'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedPainelRhRouteImport } from './routes/_authenticated/painel-rh'
+import { Route as AuthenticatedOperacoesRouteImport } from './routes/_authenticated/operacoes'
 import { Route as AuthenticatedNovaAusenciaRouteImport } from './routes/_authenticated/nova-ausencia'
 import { Route as AuthenticatedHomologacaoRouteImport } from './routes/_authenticated/homologacao'
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
@@ -65,6 +66,11 @@ const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
 const AuthenticatedPainelRhRoute = AuthenticatedPainelRhRouteImport.update({
   id: '/painel-rh',
   path: '/painel-rh',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOperacoesRoute = AuthenticatedOperacoesRouteImport.update({
+  id: '/operacoes',
+  path: '/operacoes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedNovaAusenciaRoute =
@@ -173,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/historico': typeof AuthenticatedHistoricoRoute
   '/homologacao': typeof AuthenticatedHomologacaoRoute
   '/nova-ausencia': typeof AuthenticatedNovaAusenciaRoute
+  '/operacoes': typeof AuthenticatedOperacoesRoute
   '/painel-rh': typeof AuthenticatedPainelRhRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/saude': typeof AuthenticatedSaudeRoute
@@ -197,6 +204,7 @@ export interface FileRoutesByTo {
   '/historico': typeof AuthenticatedHistoricoRoute
   '/homologacao': typeof AuthenticatedHomologacaoRoute
   '/nova-ausencia': typeof AuthenticatedNovaAusenciaRoute
+  '/operacoes': typeof AuthenticatedOperacoesRoute
   '/painel-rh': typeof AuthenticatedPainelRhRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/saude': typeof AuthenticatedSaudeRoute
@@ -223,6 +231,7 @@ export interface FileRoutesById {
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
   '/_authenticated/homologacao': typeof AuthenticatedHomologacaoRoute
   '/_authenticated/nova-ausencia': typeof AuthenticatedNovaAusenciaRoute
+  '/_authenticated/operacoes': typeof AuthenticatedOperacoesRoute
   '/_authenticated/painel-rh': typeof AuthenticatedPainelRhRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/saude': typeof AuthenticatedSaudeRoute
@@ -249,6 +258,7 @@ export interface FileRouteTypes {
     | '/historico'
     | '/homologacao'
     | '/nova-ausencia'
+    | '/operacoes'
     | '/painel-rh'
     | '/relatorios'
     | '/saude'
@@ -273,6 +283,7 @@ export interface FileRouteTypes {
     | '/historico'
     | '/homologacao'
     | '/nova-ausencia'
+    | '/operacoes'
     | '/painel-rh'
     | '/relatorios'
     | '/saude'
@@ -298,6 +309,7 @@ export interface FileRouteTypes {
     | '/_authenticated/historico'
     | '/_authenticated/homologacao'
     | '/_authenticated/nova-ausencia'
+    | '/_authenticated/operacoes'
     | '/_authenticated/painel-rh'
     | '/_authenticated/relatorios'
     | '/_authenticated/saude'
@@ -364,6 +376,13 @@ declare module '@tanstack/react-router' {
       path: '/painel-rh'
       fullPath: '/painel-rh'
       preLoaderRoute: typeof AuthenticatedPainelRhRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/operacoes': {
+      id: '/_authenticated/operacoes'
+      path: '/operacoes'
+      fullPath: '/operacoes'
+      preLoaderRoute: typeof AuthenticatedOperacoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/nova-ausencia': {
@@ -514,6 +533,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
   AuthenticatedHomologacaoRoute: typeof AuthenticatedHomologacaoRoute
   AuthenticatedNovaAusenciaRoute: typeof AuthenticatedNovaAusenciaRoute
+  AuthenticatedOperacoesRoute: typeof AuthenticatedOperacoesRoute
   AuthenticatedPainelRhRoute: typeof AuthenticatedPainelRhRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedSaudeRoute: typeof AuthenticatedSaudeRoute
@@ -534,6 +554,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
   AuthenticatedHomologacaoRoute: AuthenticatedHomologacaoRoute,
   AuthenticatedNovaAusenciaRoute: AuthenticatedNovaAusenciaRoute,
+  AuthenticatedOperacoesRoute: AuthenticatedOperacoesRoute,
   AuthenticatedPainelRhRoute: AuthenticatedPainelRhRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedSaudeRoute: AuthenticatedSaudeRoute,
