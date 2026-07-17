@@ -62,6 +62,9 @@ import {
 
 export const Route = createFileRoute("/_authenticated/comunicacoes")({
   head: () => ({ meta: [{ title: "Comunicações · CRM MK9" }] }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    ausencia: typeof s.ausencia === "string" ? s.ausencia : undefined,
+  }),
   component: ComunicacoesPage,
 });
 
