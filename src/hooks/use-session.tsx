@@ -1,6 +1,27 @@
 import { useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+let bootstrapAttempted = false;
+async function tryBootstrapSuperAdmin(): Promise<boolean> {
+  if (bootstrapAttempted) return false;
+  bootstrapAttempted = true;
+  try {
+    const { data, error } = await supabase.rpc("bootstrap_first_super_admin");
+    if (error) {
+      console.error("[bootstrap_first_super_admin]", error);
+      return false;
+    }
+    if (data === "created") {
+      toast.success("Primeiro Super Administrador configurado com sucesso.");
+      return true;
+    }
+  } catch (e) {
+    console.error("[bootstrap_first_super_admin] exception", e);
+  }
+  return false;
+}
 
 export type AppRole = "super_admin" | "rh" | "supervisor" | "compliance";
 
