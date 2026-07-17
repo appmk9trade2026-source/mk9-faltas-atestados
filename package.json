@@ -9,7 +9,14 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "typecheck": "tsgo --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
+    "test:smoke": "node tests/smoke/smoke.mjs",
+    "test:e2e": "echo 'E2E flows run via Playwright in preview environments — see tests/README.md' && exit 0",
+    "check": "bun run typecheck && bun run test:unit && bun run test:smoke && bun run build"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
