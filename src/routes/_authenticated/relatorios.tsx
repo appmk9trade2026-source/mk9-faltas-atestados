@@ -1,8 +1,11 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Download, FileSpreadsheet, Loader2 } from "lucide-react";
-import * as XLSX from "xlsx";
+import {
+  BarChart3, CalendarClock, FileBarChart2, FileText, HeartPulse, Loader2,
+  MessageSquare, ScrollText, ShieldAlert, Stethoscope, Download, FileSpreadsheet,
+  FileType2, Play, Clock,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/layout/app-shell";
@@ -10,216 +13,372 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
-import { CATEGORIA_CORES, fetchCategorias, fetchTiposComCategoria, type Categoria, type TipoComCategoria } from "@/lib/categorias";
+import { useSession } from "@/hooks/use-session";
+import { exportReport, type ExportFormat, type ReportPayload } from "@/lib/relatorios-export";
 
 export const Route = createFileRoute("/_authenticated/relatorios")({
   head: () => ({ meta: [{ title: "Relatórios · CRM MK9" }] }),
   component: RelatoriosPage,
 });
 
-type AusRow = {
-  id: string;
-  data_inicio: string;
-  data_fim: string;
-  dias: number;
-  status: string;
-  tipo_ausencia_id: string | null;
-  tipo_ausencia_nome: string | null;
-  empresa: { nome: string } | null;
-  projeto: { nome: string } | null;
-  colaborador: { nome_completo: string; matricula: string } | null;
+type ReportId =
+  | "absenteismo" | "atestados" | "faltas" | "licencas"
+  | "inss" | "medidas" | "comunicacoes" | "auditoria";
+
+type ReportDef = {
+  id: ReportId;
+  nome: string;
+  descricao: string;
+  icon: typeof FileText;
+  requireAudit?: boolean;
 };
 
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
-}
-function firstOfMonthISO() {
-  const d = new Date();
-  d.setDate(1);
-  return d.toISOString().slice(0, 10);
-}
+const REPORTS: ReportDef[] = [
+  { id: "absenteismo", nome: "Absenteísmo Geral", descricao: "Visão consolidada com categorias, tipos oficiais e evolução diária/mensal.", icon: BarChart3 },
+  { id: "atestados", nome: "Atestados", descricao: "Quantidade, dias afastados, distribuição por tipo e ranking de projetos.", icon: Stethoscope },
+  { id: "faltas", nome: "Faltas", descricao: "Faltas justificadas e injustificadas com ranking de projetos/colaboradores.", icon: FileBarChart2 },
+  { id: "licencas", nome: "Licenças", descricao: "Nojo, Gala, Paternidade e Maternidade.", icon: FileText },
+  { id: "inss", nome: "Afastamentos INSS", descricao: "Doença e Acidente — em andamento e encerrados.", icon: HeartPulse },
+  { id: "medidas", nome: "Medidas Administrativas", descricao: "Suspensões disciplinares e abandono de emprego.", icon: ShieldAlert },
+  { id: "comunicacoes", nome: "Comunicações", descricao: "Criadas, aprovadas, enviadas e erros.", icon: MessageSquare },
+  { id: "auditoria", nome: "Auditoria", descricao: "Logins, exportações, downloads, alterações e acessos negados.", icon: ScrollText, requireAudit: true },
+];
+
+function firstOfMonth() { const d = new Date(); d.setDate(1); return d.toISOString().slice(0, 10); }
+function today() { return new Date().toISOString().slice(0, 10); }
+
+type Empresa = { id: string; nome: string };
+type Projeto = { id: string; nome: string; empresa_id: string };
 
 function RelatoriosPage() {
-  const [inicio, setInicio] = useState(firstOfMonthISO());
-  const [fim, setFim] = useState(todayISO());
-  const [agrupar, setAgrupar] = useState<"categoria" | "tipo_oficial" | "empresa" | "projeto">("categoria");
+  const { roles, profile } = useSession();
+  const [open, setOpen] = useState<ReportId | null>(null);
+  const [lastRun, setLastRun] = useState<Record<string, string>>({});
 
-  const categoriasQ = useQuery<Categoria[]>({ queryKey: ["categorias-ausencia"], queryFn: fetchCategorias, staleTime: 10 * 60_000 });
-  const tiposQ = useQuery<TipoComCategoria[]>({ queryKey: ["tipos-ausencia-com-categoria"], queryFn: fetchTiposComCategoria, staleTime: 10 * 60_000 });
-  const categorias = categoriasQ.data ?? [];
-  const tipos = tiposQ.data ?? [];
+  const canAudit = roles.includes("super_admin") || roles.includes("compliance") || roles.includes("rh");
 
-  const dadosQ = useQuery({
-    queryKey: ["relatorios-ausencias", inicio, fim],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("ausencias")
-        .select("id, data_inicio, data_fim, dias, status, tipo_ausencia_id, tipo_ausencia_nome, empresa:empresas(nome), projeto:projetos(nome), colaborador:colaboradores(nome_completo, matricula)")
-        .lte("data_inicio", fim)
-        .gte("data_fim", inicio)
-        .order("data_inicio", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as unknown as AusRow[];
-    },
-  });
+  const visible = REPORTS.filter((r) => !r.requireAudit || canAudit);
 
-  const rows = dadosQ.data ?? [];
-
-  const grupos = useMemo(() => {
-    const map = new Map<string, { chave: string; label: string; cor?: string; total: number; dias: number; pendentes: number; lancadas: number }>();
-    for (const r of rows) {
-      let chave = "—", label = "—", cor: string | undefined;
-      if (agrupar === "categoria") {
-        const t = tipos.find((x) => x.id === r.tipo_ausencia_id);
-        const c = t ? categorias.find((cc) => cc.id === t.categoria_ausencia_id) : undefined;
-        chave = c?.id ?? "sem"; label = c?.nome ?? "(Sem categoria)"; cor = c?.cor ?? (c ? CATEGORIA_CORES[c.codigo] : undefined);
-      } else if (agrupar === "tipo_oficial") {
-        chave = r.tipo_ausencia_id ?? "sem"; label = r.tipo_ausencia_nome ?? "(Sem tipo)";
-      } else if (agrupar === "empresa") {
-        chave = r.empresa?.nome ?? "—"; label = chave;
-      } else {
-        chave = r.projeto?.nome ?? "—"; label = chave;
-      }
-      const cur = map.get(chave) ?? { chave, label, cor, total: 0, dias: 0, pendentes: 0, lancadas: 0 };
-      cur.total += 1;
-      cur.dias += r.dias ?? 0;
-      if (r.status === "PENDENTE") cur.pendentes += 1;
-      if (r.status === "LANCADO") cur.lancadas += 1;
-      map.set(chave, cur);
-    }
-    return Array.from(map.values()).sort((a, b) => b.total - a.total);
-  }, [rows, agrupar, categorias, tipos]);
-
-  const totalGeral = rows.length;
-
-  function exportar(kind: "csv" | "xlsx") {
-    if (!grupos.length) {
-      toast.info("Nada para exportar.");
-      return;
-    }
-    const wb = XLSX.utils.book_new();
-    const resumo = grupos.map((g) => ({
-      Grupo: g.label, Total: g.total, Dias: g.dias, Pendentes: g.pendentes, Lancadas: g.lancadas,
-      Percentual: totalGeral ? Math.round((g.total / totalGeral) * 1000) / 10 : 0,
-    }));
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumo), "Resumo");
-
-    const detalhado = rows.map((r) => {
-      const t = tipos.find((x) => x.id === r.tipo_ausencia_id);
-      const c = t ? categorias.find((cc) => cc.id === t.categoria_ausencia_id) : undefined;
-      return {
-        Colaborador: r.colaborador?.nome_completo ?? "",
-        Matricula: r.colaborador?.matricula ?? "",
-        Empresa: r.empresa?.nome ?? "",
-        Projeto: r.projeto?.nome ?? "",
-        Categoria: c?.nome ?? "",
-        TipoOficial: r.tipo_ausencia_nome ?? t?.nome ?? "",
-        DataInicio: r.data_inicio,
-        DataFim: r.data_fim,
-        Dias: r.dias,
-        Status: r.status,
-      };
-    });
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(detalhado), "Detalhado");
-
-    const filename = `relatorio-ausencias-${todayISO()}`;
-    if (kind === "csv") {
-      const csv = XLSX.utils.sheet_to_csv(XLSX.utils.json_to_sheet(resumo));
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = `${filename}.csv`; a.click();
-      URL.revokeObjectURL(url);
-    } else {
-      XLSX.writeFile(wb, `${filename}.xlsx`);
-    }
-  }
+  const current = REPORTS.find((r) => r.id === open) ?? null;
 
   return (
     <AppShell title="Relatórios" breadcrumb={["Relatórios"]}>
-      <Card>
-        <CardContent className="grid gap-3 p-4 sm:grid-cols-[1fr_1fr_1fr_auto]">
-          <div className="space-y-1.5">
-            <Label>Início</Label>
-            <Input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Fim</Label>
-            <Input type="date" value={fim} onChange={(e) => setFim(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Agrupar por</Label>
-            <Select value={agrupar} onValueChange={(v) => setAgrupar(v as typeof agrupar)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="categoria">Categoria</SelectItem>
-                <SelectItem value="tipo_oficial">Tipo oficial</SelectItem>
-                <SelectItem value="empresa">Empresa</SelectItem>
-                <SelectItem value="projeto">Projeto</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-end gap-2">
-            <Button variant="outline" onClick={() => exportar("csv")}>
-              <Download className="mr-2 h-4 w-4" /> CSV
-            </Button>
-            <Button onClick={() => exportar("xlsx")}>
-              <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <p className="-mt-4 text-sm text-muted-foreground">
+        Documentos oficiais da operação. Dados extraídos diretamente do banco e agregados no servidor.
+      </p>
 
-      <Card>
-        <CardContent className="p-0">
-          {dadosQ.isLoading ? (
-            <div className="flex items-center gap-2 p-6 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Carregando...
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Grupo</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Dias</TableHead>
-                  <TableHead className="text-right">Pendentes</TableHead>
-                  <TableHead className="text-right">Lançadas</TableHead>
-                  <TableHead className="text-right">%</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {grupos.map((g) => (
-                  <TableRow key={g.chave}>
-                    <TableCell>
-                      <span className="inline-flex items-center gap-2">
-                        {g.cor && <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: g.cor }} />}
-                        {g.label}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">{g.total}</TableCell>
-                    <TableCell className="text-right tabular-nums">{g.dias}</TableCell>
-                    <TableCell className="text-right"><Badge variant="secondary">{g.pendentes}</Badge></TableCell>
-                    <TableCell className="text-right"><Badge>{g.lancadas}</Badge></TableCell>
-                    <TableCell className="text-right text-xs text-muted-foreground tabular-nums">
-                      {totalGeral ? Math.round((g.total / totalGeral) * 1000) / 10 : 0}%
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {grupos.length === 0 && (
-                  <TableRow><TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">Sem dados no período.</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {visible.map((r) => {
+          const Icon = r.icon;
+          return (
+            <Card key={r.id} className="flex flex-col">
+              <CardContent className="flex flex-1 flex-col gap-3 p-5">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold">{r.nome}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{r.descricao}</p>
+                  </div>
+                </div>
+                <div className="mt-auto flex items-center justify-between gap-2 pt-2 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5" />
+                    {lastRun[r.id] ? `Última execução: ${lastRun[r.id]}` : "Ainda não executado"}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" className="flex-1" onClick={() => setOpen(r.id)}>
+                    <Play className="mr-1.5 h-3.5 w-3.5" /> Gerar
+                  </Button>
+                  <Button size="sm" variant="outline" disabled title="Em breve">
+                    <CalendarClock className="mr-1.5 h-3.5 w-3.5" /> Agendar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      <Dialog open={!!current} onOpenChange={(o) => !o && setOpen(null)}>
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+          {current && (
+            <ReportRunner
+              report={current}
+              usuarioNome={profile?.nome ?? null}
+              onRun={() => setLastRun((s) => ({ ...s, [current.id]: new Date().toLocaleString("pt-BR") }))}
+            />
           )}
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
+
+function ReportRunner({ report, usuarioNome, onRun }: { report: ReportDef; usuarioNome: string | null; onRun: () => void }) {
+  const [inicio, setInicio] = useState(firstOfMonth());
+  const [fim, setFim] = useState(today());
+  const [empresaId, setEmpresaId] = useState<string>("");
+  const [projetoId, setProjetoId] = useState<string>("");
+  const [supervisor, setSupervisor] = useState("");
+  const [executing, setExecuting] = useState(false);
+  const [result, setResult] = useState<any>(null);
+
+  const empresasQ = useQuery<Empresa[]>({
+    queryKey: ["rel-empresas"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("empresas").select("id, nome").eq("ativo", true).order("nome");
+      if (error) throw error;
+      return (data ?? []) as Empresa[];
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  const projetosQ = useQuery<Projeto[]>({
+    queryKey: ["rel-projetos", empresaId],
+    queryFn: async () => {
+      let q = supabase.from("projetos").select("id, nome, empresa_id").eq("ativo", true).order("nome");
+      if (empresaId) q = q.eq("empresa_id", empresaId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as Projeto[];
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  const usesEmpresa = report.id !== "auditoria";
+  const usesProjeto = report.id !== "auditoria";
+  const usesSupervisor = report.id === "absenteismo";
+
+  const filtrosLabel = useMemo(() => {
+    const l: Record<string, string> = { Período: `${inicio} a ${fim}` };
+    if (usesEmpresa) l["Empresa"] = empresasQ.data?.find((e) => e.id === empresaId)?.nome ?? "Todas";
+    if (usesProjeto) l["Projeto"] = projetosQ.data?.find((p) => p.id === projetoId)?.nome ?? "Todos";
+    if (usesSupervisor) l["Supervisor"] = supervisor || "Todos";
+    return l;
+  }, [inicio, fim, empresaId, projetoId, supervisor, empresasQ.data, projetosQ.data, usesEmpresa, usesProjeto, usesSupervisor]);
+
+  async function run() {
+    setExecuting(true);
+    try {
+      const args: Record<string, unknown> = { _inicio: inicio, _fim: fim };
+      if (usesEmpresa) args._empresa_id = empresaId || null;
+      if (usesProjeto) args._projeto_id = projetoId || null;
+      if (usesSupervisor) args._supervisor = supervisor || null;
+      const rpc = `rel_${report.id === "inss" ? "afastamentos_inss" : report.id === "medidas" ? "medidas_administrativas" : report.id}`;
+      const { data, error } = await supabase.rpc(rpc as never, args as never);
+      if (error) throw error;
+      setResult(data);
+      onRun();
+      toast.success("Relatório gerado.");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao gerar relatório.");
+    } finally {
+      setExecuting(false);
+    }
+  }
+
+  async function doExport(formato: ExportFormat) {
+    if (!result) {
+      toast.info("Gere o relatório primeiro.");
+      return;
+    }
+    const payload: ReportPayload = {
+      id: report.id,
+      nome: report.nome,
+      filtrosLabel,
+      usuarioNome,
+      sections: buildSections(report.id, result),
+    };
+    await exportReport(payload, formato);
+    toast.success(`Arquivo ${formato.toUpperCase()} gerado.`);
+  }
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <report.icon className="h-5 w-5 text-primary" /> {report.nome}
+        </DialogTitle>
+        <DialogDescription>{report.descricao}</DialogDescription>
+      </DialogHeader>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="space-y-1.5">
+          <Label>Início</Label>
+          <Input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Fim</Label>
+          <Input type="date" value={fim} onChange={(e) => setFim(e.target.value)} />
+        </div>
+        {usesEmpresa && (
+          <div className="space-y-1.5">
+            <Label>Empresa</Label>
+            <Select value={empresaId || "all"} onValueChange={(v) => { setEmpresaId(v === "all" ? "" : v); setProjetoId(""); }}>
+              <SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {(empresasQ.data ?? []).map((e) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        {usesProjeto && (
+          <div className="space-y-1.5">
+            <Label>Projeto</Label>
+            <Select value={projetoId || "all"} onValueChange={(v) => setProjetoId(v === "all" ? "" : v)}>
+              <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {(projetosQ.data ?? []).map((p) => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        {usesSupervisor && (
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Supervisor</Label>
+            <Input placeholder="Nome do supervisor" value={supervisor} onChange={(e) => setSupervisor(e.target.value)} />
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Button onClick={run} disabled={executing}>
+          {executing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+          Gerar relatório
+        </Button>
+        <Separator orientation="vertical" className="mx-1 h-6" />
+        <Button variant="outline" size="sm" onClick={() => doExport("xlsx")} disabled={!result}>
+          <FileSpreadsheet className="mr-1.5 h-4 w-4" /> Excel
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => doExport("csv")} disabled={!result}>
+          <Download className="mr-1.5 h-4 w-4" /> CSV
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => doExport("pdf")} disabled={!result}>
+          <FileType2 className="mr-1.5 h-4 w-4" /> PDF
+        </Button>
+      </div>
+
+      {result && (
+        <div className="space-y-4">
+          <Separator />
+          <ReportPreview id={report.id} data={result} />
+        </div>
+      )}
+    </>
+  );
+}
+
+/* ----------------- Preview e mapeamento em seções ------------------ */
+
+function ReportPreview({ id, data }: { id: ReportId; data: any }) {
+  const sections = buildSections(id, data);
+  return (
+    <div className="space-y-4">
+      {sections.map((s) => (
+        <div key={s.title}>
+          <p className="mb-2 text-sm font-semibold">{s.title}</p>
+          {s.rows.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Sem dados no período.</p>
+          ) : (
+            <div className="overflow-x-auto rounded border">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50">
+                  <tr>
+                    {Object.keys(s.rows[0]).map((h) => <th key={h} className="px-3 py-2 text-left font-medium">{h}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {s.rows.slice(0, 25).map((r, i) => (
+                    <tr key={i} className="border-t">
+                      {Object.keys(s.rows[0]).map((h) => (
+                        <td key={h} className="px-3 py-1.5 tabular-nums">{String(r[h] ?? "")}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {s.rows.length > 25 && (
+                <div className="border-t bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground">
+                  Exibindo 25 de {s.rows.length} · exporte para ver o conteúdo completo.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function buildSections(id: ReportId, d: any): { title: string; rows: Record<string, string | number>[] }[] {
+  switch (id) {
+    case "absenteismo":
+      return [
+        { title: "Resumo", rows: [{ Total: d.total ?? 0, "Total de dias": d.total_dias ?? 0 }] },
+        { title: "Por categoria", rows: (d.por_categoria ?? []).map((r: any) => ({ Categoria: r.nome ?? "(sem)", Total: r.total, Dias: r.dias, "%": pct(r.total, d.total) })) },
+        { title: "Por tipo oficial", rows: (d.por_tipo_oficial ?? []).map((r: any) => ({ Tipo: r.nome, Código: r.codigo, Total: r.total, Dias: r.dias, "%": pct(r.total, d.total) })) },
+        { title: "Evolução diária", rows: (d.evolucao_diaria ?? []).map((r: any) => ({ Dia: r.dia, Total: r.total, Dias: r.dias })) },
+        { title: "Evolução mensal", rows: (d.evolucao_mensal ?? []).map((r: any) => ({ Mês: r.mes, Total: r.total, Dias: r.dias })) },
+      ];
+    case "atestados":
+      return [
+        { title: "Resumo", rows: [{ Quantidade: d.quantidade ?? 0, "Dias afastados": d.dias ?? 0 }] },
+        { title: "Distribuição por tipo", rows: (d.por_tipo ?? []).map((r: any) => ({ Tipo: r.nome, Total: r.total, Dias: r.dias })) },
+        { title: "Ranking de projetos", rows: (d.ranking_projetos ?? []).map((r: any) => ({ Projeto: r.nome, Total: r.total, Dias: r.dias })) },
+      ];
+    case "faltas":
+      return [
+        { title: "Justificadas", rows: [{ Quantidade: d.justificadas?.quantidade ?? 0, Dias: d.justificadas?.dias ?? 0 }] },
+        { title: "Injustificadas", rows: [{ Quantidade: d.injustificadas?.quantidade ?? 0, Dias: d.injustificadas?.dias ?? 0 }] },
+        { title: "Ranking de projetos", rows: (d.ranking_projetos ?? []).map((r: any) => ({ Projeto: r.nome, Total: r.total, Dias: r.dias })) },
+        { title: "Ranking de colaboradores", rows: (d.ranking_colaboradores ?? []).map((r: any) => ({ Colaborador: r.nome, Total: r.total, Dias: r.dias })) },
+      ];
+    case "licencas":
+      return [
+        { title: "Resumo", rows: [{ Quantidade: d.quantidade ?? 0, Dias: d.dias ?? 0 }] },
+        { title: "Por tipo", rows: (d.por_tipo ?? []).map((r: any) => ({ Tipo: r.nome, Código: r.codigo, Total: r.total, Dias: r.dias })) },
+      ];
+    case "inss":
+      return [
+        { title: "Doença", rows: [{ Quantidade: d.doenca?.quantidade ?? 0, Dias: d.doenca?.dias ?? 0, "Em andamento": d.doenca?.em_andamento ?? 0, Encerrados: d.doenca?.encerrados ?? 0 }] },
+        { title: "Acidente", rows: [{ Quantidade: d.acidente?.quantidade ?? 0, Dias: d.acidente?.dias ?? 0, "Em andamento": d.acidente?.em_andamento ?? 0, Encerrados: d.acidente?.encerrados ?? 0 }] },
+      ];
+    case "medidas":
+      return [
+        { title: "Suspensões", rows: [{ Quantidade: d.suspensoes?.quantidade ?? 0, Dias: d.suspensoes?.dias ?? 0 }] },
+        { title: "Abandono de Emprego", rows: [{ Quantidade: d.abandono?.quantidade ?? 0, Dias: d.abandono?.dias ?? 0 }] },
+      ];
+    case "comunicacoes":
+      return [
+        { title: "Resumo", rows: [{ Criadas: d.criadas ?? 0, Aprovadas: d.aprovadas ?? 0, Enviadas: d.enviadas ?? 0, Erros: d.erros ?? 0 }] },
+        { title: "Por canal", rows: (d.por_canal ?? []).map((r: any) => ({ Canal: r.canal, Total: r.total })) },
+      ];
+    case "auditoria":
+      return [
+        { title: "Resumo", rows: [{
+          Logins: d.logins ?? 0, Logouts: d.logouts ?? 0, Exportações: d.exportacoes ?? 0,
+          Downloads: d.downloads ?? 0, Alterações: d.alteracoes ?? 0, "Acessos negados": d.acessos_negados ?? 0,
+        }] },
+        { title: "Por módulo", rows: (d.por_modulo ?? []).map((r: any) => ({ Módulo: r.modulo, Total: r.total })) },
+        { title: "Por usuário", rows: (d.por_usuario ?? []).map((r: any) => ({ Usuário: r.usuario, Total: r.total })) },
+      ];
+  }
+}
+
+function pct(v: number, total: number) {
+  if (!total) return "0%";
+  return `${Math.round((v / total) * 1000) / 10}%`;
+}
+
+// hint for unused imports
+void Badge;
