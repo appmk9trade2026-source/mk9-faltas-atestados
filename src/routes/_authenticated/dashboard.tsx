@@ -54,6 +54,8 @@ type Filters = {
   supervisor?: string;
   tipo?: string;
   status?: string;
+  categoria_id?: string;
+  tipo_oficial_id?: string;
 };
 type Kpis = {
   total: number; pendentes: number; lancadas: number;
