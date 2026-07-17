@@ -16,21 +16,26 @@ export type Database = {
     Tables: {
       ausencias: {
         Row: {
+          acidente_trabalho_trajeto: boolean | null
           arquivo_criado_em: string | null
           arquivo_criado_por: string | null
           arquivo_mime: string | null
           arquivo_nome: string | null
           arquivo_tamanho: number | null
           arquivo_url: string | null
+          cid: string | null
           colaborador_id: string
           created_at: string
           data_fim: string
           data_inicio: string
+          data_retorno: string | null
           dias: number
           empresa_id: string
           id: string
           lancado_em: string | null
           lancado_por: string | null
+          localidade: string | null
+          loja_codigo_nome: string | null
           motivo: string | null
           observacoes: string | null
           possui_anexo: boolean
@@ -42,21 +47,26 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          acidente_trabalho_trajeto?: boolean | null
           arquivo_criado_em?: string | null
           arquivo_criado_por?: string | null
           arquivo_mime?: string | null
           arquivo_nome?: string | null
           arquivo_tamanho?: number | null
           arquivo_url?: string | null
+          cid?: string | null
           colaborador_id: string
           created_at?: string
           data_fim: string
           data_inicio: string
+          data_retorno?: string | null
           dias?: number
           empresa_id: string
           id?: string
           lancado_em?: string | null
           lancado_por?: string | null
+          localidade?: string | null
+          loja_codigo_nome?: string | null
           motivo?: string | null
           observacoes?: string | null
           possui_anexo?: boolean
@@ -68,21 +78,26 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          acidente_trabalho_trajeto?: boolean | null
           arquivo_criado_em?: string | null
           arquivo_criado_por?: string | null
           arquivo_mime?: string | null
           arquivo_nome?: string | null
           arquivo_tamanho?: number | null
           arquivo_url?: string | null
+          cid?: string | null
           colaborador_id?: string
           created_at?: string
           data_fim?: string
           data_inicio?: string
+          data_retorno?: string | null
           dias?: number
           empresa_id?: string
           id?: string
           lancado_em?: string | null
           lancado_por?: string | null
+          localidade?: string | null
+          loja_codigo_nome?: string | null
           motivo?: string | null
           observacoes?: string | null
           possui_anexo?: boolean
