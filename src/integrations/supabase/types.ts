@@ -830,6 +830,71 @@ export type Database = {
         }
         Returns: string
       }
+      rel_absenteismo: {
+        Args: {
+          _empresa_id?: string
+          _fim: string
+          _inicio: string
+          _projeto_id?: string
+          _supervisor?: string
+        }
+        Returns: Json
+      }
+      rel_afastamentos_inss: {
+        Args: {
+          _empresa_id?: string
+          _fim: string
+          _inicio: string
+          _projeto_id?: string
+        }
+        Returns: Json
+      }
+      rel_atestados: {
+        Args: {
+          _empresa_id?: string
+          _fim: string
+          _inicio: string
+          _projeto_id?: string
+        }
+        Returns: Json
+      }
+      rel_auditoria: { Args: { _fim: string; _inicio: string }; Returns: Json }
+      rel_comunicacoes: {
+        Args: {
+          _empresa_id?: string
+          _fim: string
+          _inicio: string
+          _projeto_id?: string
+        }
+        Returns: Json
+      }
+      rel_faltas: {
+        Args: {
+          _empresa_id?: string
+          _fim: string
+          _inicio: string
+          _projeto_id?: string
+        }
+        Returns: Json
+      }
+      rel_licencas: {
+        Args: {
+          _empresa_id?: string
+          _fim: string
+          _inicio: string
+          _projeto_id?: string
+        }
+        Returns: Json
+      }
+      rel_medidas_administrativas: {
+        Args: {
+          _empresa_id?: string
+          _fim: string
+          _inicio: string
+          _projeto_id?: string
+        }
+        Returns: Json
+      }
       search_audit_logs: {
         Args: {
           _acao?: Database["public"]["Enums"]["audit_action"]
