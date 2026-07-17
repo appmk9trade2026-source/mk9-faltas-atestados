@@ -558,7 +558,11 @@ function NovaAusenciaPage() {
   const salvarMut = useMutation({
     mutationFn: async (values: FormData) => {
       const dataInicioIso = values.data_inicio;
-      const diasNum = diasFromLabel(values.dias_label) ?? 1;
+      const tipo = tiposQ.data?.find((t) => t.id === values.tipo_ausencia_id);
+      const opcao = opcoesPorTipoQ.data?.find((o) => o.id === values.opcao_periodo_id);
+      if (!tipo) throw new Error("Selecione o tipo de ausência.");
+      if (!opcao) throw new Error("Selecione a quantidade / período.");
+      const diasNum = opcao.quantidade_dias ?? 1;
       const dataFimIso = addDaysISO(dataInicioIso, diasNum - 1);
 
       let arquivo_url: string | null | undefined = undefined;
@@ -596,9 +600,11 @@ function NovaAusenciaPage() {
         empresa_id: values.empresa_id,
         projeto_id: values.projeto_id,
         colaborador_id: values.colaborador_id,
-        tipo: tipoBaseFromDetalhe(values.tipo_detalhe),
-        tipo_detalhe: values.tipo_detalhe,
-        dias_label: values.dias_label,
+        tipo: tipoBaseFromDetalhe(tipo.nome),
+        tipo_detalhe: tipo.nome,
+        dias_label: opcao.nome,
+        tipo_ausencia_id: tipo.id,
+        opcao_periodo_id: opcao.id,
         motivo: values.motivo.trim(),
         data_inicio: dataInicioIso,
         data_fim: dataFimIso,
@@ -607,6 +613,7 @@ function NovaAusenciaPage() {
         cid: values.cid && values.cid.trim() ? values.cid.trim().toUpperCase() : null,
         acidente_trabalho_trajeto: values.acidente_trabalho_trajeto === "sim",
       };
+
 
       if (isEdit && editId) {
         const updatePayload =
