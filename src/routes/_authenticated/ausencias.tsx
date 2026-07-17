@@ -12,6 +12,7 @@ import {
   History as HistoryIcon,
   MoreHorizontal,
   Paperclip,
+  Pencil,
   Plus,
   Search,
 } from "lucide-react";
