@@ -345,7 +345,7 @@ function ImportarPage() {
             <Download className="mr-2 h-4 w-4" /> Baixar modelo
           </Button>
           <Button asChild variant="outline">
-            <Link to="/colaboradores_/importacoes">
+            <Link to="/colaboradores/importacoes">
               <History className="mr-2 h-4 w-4" /> Histórico
             </Link>
           </Button>
