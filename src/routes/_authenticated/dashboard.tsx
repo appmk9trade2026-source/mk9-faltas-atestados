@@ -196,10 +196,14 @@ function DashboardPage() {
       chips.push({ label: `Projeto: ${p?.nome ?? "…"}`, onClear: () => setFilters((f) => ({ ...f, projeto_id: undefined })) });
     }
     if (filters.supervisor) chips.push({ label: `Sup: ${filters.supervisor}`, onClear: () => setFilters((f) => ({ ...f, supervisor: undefined })) });
+    if (filters.categoria_id) {
+      const c = categorias.find((x) => x.id === filters.categoria_id);
+      chips.push({ label: `Categoria: ${c?.nome ?? "…"}`, onClear: () => setFilters((f) => ({ ...f, categoria_id: undefined })) });
+    }
     if (filters.tipo) chips.push({ label: `Tipo: ${filters.tipo}`, onClear: () => setFilters((f) => ({ ...f, tipo: undefined })) });
     if (filters.status) chips.push({ label: `Status: ${filters.status}`, onClear: () => setFilters((f) => ({ ...f, status: undefined })) });
     return chips;
-  }, [filters, empresas, projetos]);
+  }, [filters, empresas, projetos, categorias]);
 
   // ------- Export helpers
   async function exportPNG() {
