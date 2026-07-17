@@ -547,11 +547,25 @@ function PainelRHPage() {
             onChange={(e) => setSupervisorF(e.target.value)}
             placeholder="Supervisor (nome)"
           />
-          <Select value={tipoF} onValueChange={setTipoF}>
-            <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
+          <Select value={categoriaF} onValueChange={(v) => { setCategoriaF(v); setTipoOficialF("all"); }}>
+            <SelectTrigger><SelectValue placeholder="Categoria" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as categorias</SelectItem>
+              {categorias.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  <span className="inline-flex items-center gap-2">
+                    <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: c.cor ?? CATEGORIA_CORES[c.codigo] ?? "#94a3b8" }} />
+                    {c.nome}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={tipoOficialF} onValueChange={setTipoOficialF}>
+            <SelectTrigger><SelectValue placeholder="Tipo oficial" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os tipos</SelectItem>
-              {TIPO_AUSENCIA.map((t) => <SelectItem key={t} value={t}>{TIPO_LABEL[t]}</SelectItem>)}
+              {tiposFiltro.map((t) => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={statusF} onValueChange={(v) => setStatusF(v as typeof statusF)}>
