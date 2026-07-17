@@ -146,11 +146,11 @@ function DashboardPage() {
       const { data, error } = await supabase.rpc("dashboard_metrics", {
         _inicio: filters.inicio,
         _fim: filters.fim,
-        _empresa_id: filters.empresa_id ?? null,
-        _projeto_id: filters.projeto_id ?? null,
-        _supervisor: filters.supervisor ?? null,
-        _tipo: (filters.tipo as never) ?? null,
-        _status: (filters.status as never) ?? null,
+        _empresa_id: filters.empresa_id,
+        _projeto_id: filters.projeto_id,
+        _supervisor: filters.supervisor,
+        _tipo: filters.tipo as never,
+        _status: filters.status as never,
       });
       if (error) throw error;
       return data as unknown as DashboardData;
