@@ -212,9 +212,9 @@ function NovaAusenciaPage() {
       colaborador_id: "",
       empresa_id: "",
       projeto_id: "",
-      tipo: "FALTA",
+      tipo_detalhe: "FALTA JUSTIFICADA",
       data_inicio: "",
-      quantidade_dias: 1,
+      dias_label: "1 DIA",
       localidade: "",
       loja_codigo_nome: "",
       cid: "",
@@ -225,17 +225,23 @@ function NovaAusenciaPage() {
 
   const colaboradorId = form.watch("colaborador_id");
   const dataInicio = form.watch("data_inicio");
-  const quantidadeDias = form.watch("quantidade_dias");
+  const diasLabel = form.watch("dias_label");
   const motivo = form.watch("motivo") ?? "";
   const cid = form.watch("cid") ?? "";
 
+  const diasNumericos = useMemo(() => diasFromLabel(diasLabel ?? "") ?? 1, [diasLabel]);
+  const diasNumericoDisponivel = useMemo(
+    () => diasFromLabel(diasLabel ?? "") !== null,
+    [diasLabel],
+  );
+
   const dataFim = useMemo(
-    () => (dataInicio && quantidadeDias ? addDaysISO(dataInicio, quantidadeDias - 1) : ""),
-    [dataInicio, quantidadeDias],
+    () => (dataInicio && diasNumericoDisponivel ? addDaysISO(dataInicio, diasNumericos - 1) : ""),
+    [dataInicio, diasNumericos, diasNumericoDisponivel],
   );
   const dataRetorno = useMemo(
-    () => (dataInicio && quantidadeDias ? addDaysISO(dataInicio, quantidadeDias) : ""),
-    [dataInicio, quantidadeDias],
+    () => (dataInicio && diasNumericoDisponivel ? addDaysISO(dataInicio, diasNumericos) : ""),
+    [dataInicio, diasNumericos, diasNumericoDisponivel],
   );
 
   // Carrega ausência para edição
