@@ -24,6 +24,7 @@ import { Route as AuthenticatedColaboradoresRouteImport } from './routes/_authen
 import { Route as AuthenticatedAusenciasRouteImport } from './routes/_authenticated/ausencias'
 import { Route as AuthenticatedAuditoriaRouteImport } from './routes/_authenticated/auditoria'
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
+import { Route as AuthenticatedConfiguracoesTiposAusenciaRouteImport } from './routes/_authenticated/configuracoes.tipos-ausencia'
 import { Route as AuthenticatedConfiguracoesProjetosRouteImport } from './routes/_authenticated/configuracoes.projetos'
 import { Route as AuthenticatedConfiguracoesEmpresasRouteImport } from './routes/_authenticated/configuracoes.empresas'
 import { Route as AuthenticatedColaboradoresImportarRouteImport } from './routes/_authenticated/colaboradores_.importar'
@@ -107,6 +108,12 @@ const AuthenticatedAlertasRoute = AuthenticatedAlertasRouteImport.update({
   path: '/alertas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedConfiguracoesTiposAusenciaRoute =
+  AuthenticatedConfiguracoesTiposAusenciaRouteImport.update({
+    id: '/tipos-ausencia',
+    path: '/tipos-ausencia',
+    getParentRoute: () => AuthenticatedConfiguracoesRoute,
+  } as any)
 const AuthenticatedConfiguracoesProjetosRoute =
   AuthenticatedConfiguracoesProjetosRouteImport.update({
     id: '/projetos',
@@ -151,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/colaboradores/importar': typeof AuthenticatedColaboradoresImportarRoute
   '/configuracoes/empresas': typeof AuthenticatedConfiguracoesEmpresasRoute
   '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
+  '/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -171,6 +179,7 @@ export interface FileRoutesByTo {
   '/colaboradores/importar': typeof AuthenticatedColaboradoresImportarRoute
   '/configuracoes/empresas': typeof AuthenticatedConfiguracoesEmpresasRoute
   '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
+  '/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -193,6 +202,7 @@ export interface FileRoutesById {
   '/_authenticated/colaboradores_/importar': typeof AuthenticatedColaboradoresImportarRoute
   '/_authenticated/configuracoes/empresas': typeof AuthenticatedConfiguracoesEmpresasRoute
   '/_authenticated/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
+  '/_authenticated/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
     | '/colaboradores/importar'
     | '/configuracoes/empresas'
     | '/configuracoes/projetos'
+    | '/configuracoes/tipos-ausencia'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/colaboradores/importar'
     | '/configuracoes/empresas'
     | '/configuracoes/projetos'
+    | '/configuracoes/tipos-ausencia'
   id:
     | '__root__'
     | '/'
@@ -256,6 +268,7 @@ export interface FileRouteTypes {
     | '/_authenticated/colaboradores_/importar'
     | '/_authenticated/configuracoes/empresas'
     | '/_authenticated/configuracoes/projetos'
+    | '/_authenticated/configuracoes/tipos-ausencia'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -371,6 +384,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAlertasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/configuracoes/tipos-ausencia': {
+      id: '/_authenticated/configuracoes/tipos-ausencia'
+      path: '/tipos-ausencia'
+      fullPath: '/configuracoes/tipos-ausencia'
+      preLoaderRoute: typeof AuthenticatedConfiguracoesTiposAusenciaRouteImport
+      parentRoute: typeof AuthenticatedConfiguracoesRoute
+    }
     '/_authenticated/configuracoes/projetos': {
       id: '/_authenticated/configuracoes/projetos'
       path: '/projetos'
@@ -405,6 +425,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedConfiguracoesRouteChildren {
   AuthenticatedConfiguracoesEmpresasRoute: typeof AuthenticatedConfiguracoesEmpresasRoute
   AuthenticatedConfiguracoesProjetosRoute: typeof AuthenticatedConfiguracoesProjetosRoute
+  AuthenticatedConfiguracoesTiposAusenciaRoute: typeof AuthenticatedConfiguracoesTiposAusenciaRoute
 }
 
 const AuthenticatedConfiguracoesRouteChildren: AuthenticatedConfiguracoesRouteChildren =
@@ -413,6 +434,8 @@ const AuthenticatedConfiguracoesRouteChildren: AuthenticatedConfiguracoesRouteCh
       AuthenticatedConfiguracoesEmpresasRoute,
     AuthenticatedConfiguracoesProjetosRoute:
       AuthenticatedConfiguracoesProjetosRoute,
+    AuthenticatedConfiguracoesTiposAusenciaRoute:
+      AuthenticatedConfiguracoesTiposAusenciaRoute,
   }
 
 const AuthenticatedConfiguracoesRouteWithChildren =
