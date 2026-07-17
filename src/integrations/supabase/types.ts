@@ -318,6 +318,57 @@ export type Database = {
         }
         Relationships: []
       }
+      importacoes: {
+        Row: {
+          arquivo_nome: string
+          arquivo_tamanho: number | null
+          atualizadas: number
+          created_at: string
+          detalhes: Json | null
+          duracao_ms: number
+          erros: number
+          id: string
+          ignoradas: number
+          importadas: number
+          status: string
+          total_linhas: number
+          updated_at: string
+          usuario_id: string
+        }
+        Insert: {
+          arquivo_nome: string
+          arquivo_tamanho?: number | null
+          atualizadas?: number
+          created_at?: string
+          detalhes?: Json | null
+          duracao_ms?: number
+          erros?: number
+          id?: string
+          ignoradas?: number
+          importadas?: number
+          status?: string
+          total_linhas?: number
+          updated_at?: string
+          usuario_id: string
+        }
+        Update: {
+          arquivo_nome?: string
+          arquivo_tamanho?: number | null
+          atualizadas?: number
+          created_at?: string
+          detalhes?: Json | null
+          duracao_ms?: number
+          erros?: number
+          id?: string
+          ignoradas?: number
+          importadas?: number
+          status?: string
+          total_linhas?: number
+          updated_at?: string
+          usuario_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           ativo: boolean
@@ -434,6 +485,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      import_colaboradores_bulk: {
+        Args: { _atualizar?: boolean; _rows: Json }
+        Returns: Json
       }
       is_active_user: { Args: { _user_id: string }; Returns: boolean }
     }
