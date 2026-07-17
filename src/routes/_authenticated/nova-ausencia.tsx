@@ -871,28 +871,25 @@ function NovaAusenciaPage() {
                       )}
                     />
 
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <FormField
                         control={form.control}
-                        name="tipo"
+                        name="tipo_detalhe"
                         render={({ field }) => (
-                          <FormItem>
+                          <FormItem className="md:col-span-2">
                             <FormLabel>
                               Tipo de Ausência <span className="text-red-500">*</span>
                             </FormLabel>
-                            <Select
-                              value={field.value}
-                              onValueChange={(v) => field.onChange(v as TipoAusencia)}
-                            >
+                            <Select value={field.value} onValueChange={field.onChange}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Selecione..." />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent>
-                                {TIPO_AUSENCIA.map((t) => (
+                              <SelectContent className="max-h-72">
+                                {TIPO_AUSENCIA_DETALHE.map((t) => (
                                   <SelectItem key={t} value={t}>
-                                    {TIPO_LABEL[t]}
+                                    {t}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -918,25 +915,22 @@ function NovaAusenciaPage() {
                       />
                       <FormField
                         control={form.control}
-                        name="quantidade_dias"
+                        name="dias_label"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>
                               Quantidade de Dias <span className="text-red-500">*</span>
                             </FormLabel>
-                            <Select
-                              value={String(field.value ?? "")}
-                              onValueChange={(v) => field.onChange(parseInt(v, 10))}
-                            >
+                            <Select value={field.value} onValueChange={field.onChange}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Selecione..." />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent className="max-h-64">
-                                {DIAS_OPTIONS.map((d) => (
-                                  <SelectItem key={d} value={String(d)}>
-                                    {d} {d === 1 ? "dia" : "dias"}
+                              <SelectContent className="max-h-72">
+                                {QUANTIDADE_DIAS_OPTIONS.map((d) => (
+                                  <SelectItem key={d} value={d}>
+                                    {d}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -945,6 +939,7 @@ function NovaAusenciaPage() {
                           </FormItem>
                         )}
                       />
+
 
                       <div className="space-y-1.5">
                         <Label className="flex items-center gap-1.5">
