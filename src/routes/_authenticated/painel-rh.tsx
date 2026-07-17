@@ -72,12 +72,12 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import {
-  TIPO_AUSENCIA,
   TIPO_LABEL,
   getSignedAtestadoUrl,
   type StatusAusencia,
   type TipoAusencia,
 } from "@/lib/ausencias";
+import { fetchCategorias, fetchTiposComCategoria, CATEGORIA_CORES, type Categoria, type TipoComCategoria } from "@/lib/categorias";
 
 export const Route = createFileRoute("/_authenticated/painel-rh")({
   head: () => ({ meta: [{ title: "Painel do RH · CRM MK9" }] }),
