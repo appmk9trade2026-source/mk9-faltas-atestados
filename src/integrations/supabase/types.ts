@@ -102,12 +102,19 @@ export type Database = {
           loja_codigo_nome: string | null
           motivo: string | null
           observacoes: string | null
+          opcao_periodo_codigo: string | null
+          opcao_periodo_id: string | null
+          opcao_periodo_nome: string | null
           possui_anexo: boolean
           projeto_id: string
+          quantidade_dias_calculada: number | null
           registrado_em: string
           registrado_por: string | null
           status: Database["public"]["Enums"]["status_ausencia"]
           tipo: Database["public"]["Enums"]["tipo_ausencia"]
+          tipo_ausencia_codigo: string | null
+          tipo_ausencia_id: string | null
+          tipo_ausencia_nome: string | null
           tipo_detalhe: string | null
           updated_at: string
         }
@@ -135,12 +142,19 @@ export type Database = {
           loja_codigo_nome?: string | null
           motivo?: string | null
           observacoes?: string | null
+          opcao_periodo_codigo?: string | null
+          opcao_periodo_id?: string | null
+          opcao_periodo_nome?: string | null
           possui_anexo?: boolean
           projeto_id: string
+          quantidade_dias_calculada?: number | null
           registrado_em?: string
           registrado_por?: string | null
           status?: Database["public"]["Enums"]["status_ausencia"]
           tipo: Database["public"]["Enums"]["tipo_ausencia"]
+          tipo_ausencia_codigo?: string | null
+          tipo_ausencia_id?: string | null
+          tipo_ausencia_nome?: string | null
           tipo_detalhe?: string | null
           updated_at?: string
         }
@@ -168,12 +182,19 @@ export type Database = {
           loja_codigo_nome?: string | null
           motivo?: string | null
           observacoes?: string | null
+          opcao_periodo_codigo?: string | null
+          opcao_periodo_id?: string | null
+          opcao_periodo_nome?: string | null
           possui_anexo?: boolean
           projeto_id?: string
+          quantidade_dias_calculada?: number | null
           registrado_em?: string
           registrado_por?: string | null
           status?: Database["public"]["Enums"]["status_ausencia"]
           tipo?: Database["public"]["Enums"]["tipo_ausencia"]
+          tipo_ausencia_codigo?: string | null
+          tipo_ausencia_id?: string | null
+          tipo_ausencia_nome?: string | null
           tipo_detalhe?: string | null
           updated_at?: string
         }
@@ -193,10 +214,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "ausencias_opcao_periodo_id_fkey"
+            columns: ["opcao_periodo_id"]
+            isOneToOne: false
+            referencedRelation: "opcoes_periodo_ausencia"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "ausencias_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ausencias_tipo_ausencia_id_fkey"
+            columns: ["tipo_ausencia_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_ausencia"
             referencedColumns: ["id"]
           },
         ]
@@ -432,6 +467,48 @@ export type Database = {
         }
         Relationships: []
       }
+      opcoes_periodo_ausencia: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          created_by: string | null
+          id: string
+          nome: string
+          ordem: number
+          quantidade_dias: number | null
+          tipo_periodo: Database["public"]["Enums"]["tipo_periodo_ausencia"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          quantidade_dias?: number | null
+          tipo_periodo?: Database["public"]["Enums"]["tipo_periodo_ausencia"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          quantidade_dias?: number | null
+          tipo_periodo?: Database["public"]["Enums"]["tipo_periodo_ausencia"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           ativo: boolean
@@ -497,6 +574,102 @@ export type Database = {
           },
         ]
       }
+      tipo_ausencia_opcoes_periodo: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          opcao_periodo_id: string
+          tipo_ausencia_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          opcao_periodo_id: string
+          tipo_ausencia_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          opcao_periodo_id?: string
+          tipo_ausencia_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tipo_ausencia_opcoes_periodo_opcao_periodo_id_fkey"
+            columns: ["opcao_periodo_id"]
+            isOneToOne: false
+            referencedRelation: "opcoes_periodo_ausencia"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tipo_ausencia_opcoes_periodo_tipo_ausencia_id_fkey"
+            columns: ["tipo_ausencia_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_ausencia"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tipos_ausencia: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          cor: string | null
+          created_at: string
+          created_by: string | null
+          descricao: string | null
+          exige_documento: boolean
+          icone: string | null
+          id: string
+          nome: string
+          ordem: number
+          permite_acidente: boolean
+          permite_cid: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          cor?: string | null
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          exige_documento?: boolean
+          icone?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          permite_acidente?: boolean
+          permite_cid?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          cor?: string | null
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          exige_documento?: boolean
+          icone?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          permite_acidente?: boolean
+          permite_cid?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -546,6 +719,17 @@ export type Database = {
           matricula: string
           nome_completo: string
           projeto_id: string
+        }[]
+      }
+      get_opcoes_periodo_por_tipo: {
+        Args: { _tipo_id: string }
+        Returns: {
+          codigo: string
+          id: string
+          nome: string
+          ordem: number
+          quantidade_dias: number
+          tipo_periodo: Database["public"]["Enums"]["tipo_periodo_ausencia"]
         }[]
       }
       get_projetos_ativos_por_empresa: {
@@ -647,6 +831,11 @@ export type Database = {
         | "DECLARACAO"
         | "SUSPENSAO"
         | "OUTROS"
+      tipo_periodo_ausencia:
+        | "DIAS"
+        | "HORAS"
+        | "MEIO_PERIODO"
+        | "PERIODO_INTEGRAL"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -794,6 +983,12 @@ export const Constants = {
       status_ausencia: ["PENDENTE", "LANCADO"],
       status_comunicacao: ["RASCUNHO", "APROVADO", "ENVIADO", "ERRO"],
       tipo_ausencia: ["FALTA", "ATESTADO", "DECLARACAO", "SUSPENSAO", "OUTROS"],
+      tipo_periodo_ausencia: [
+        "DIAS",
+        "HORAS",
+        "MEIO_PERIODO",
+        "PERIODO_INTEGRAL",
+      ],
     },
   },
 } as const

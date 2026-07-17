@@ -9,6 +9,8 @@ import {
   AlertTriangle,
   Building2,
   CalendarDays,
+  Check,
+  ChevronsUpDown,
   ClipboardList,
   FileText,
   Hash,
@@ -53,6 +55,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import {
   Form,
   FormControl,
@@ -139,13 +151,9 @@ const schema = z.object({
   colaborador_id: z.string().uuid("Busque um colaborador pela matrícula."),
   empresa_id: z.string().uuid(),
   projeto_id: z.string().uuid(),
-  tipo_detalhe: z.enum(TIPO_AUSENCIA_DETALHE, {
-    errorMap: () => ({ message: "Selecione o tipo." }),
-  }),
+  tipo_ausencia_id: z.string().uuid("Selecione o tipo de ausência."),
+  opcao_periodo_id: z.string().uuid("Selecione a quantidade / período."),
   data_inicio: z.string().min(1, "Informe a data da ausência."),
-  dias_label: z.enum(QUANTIDADE_DIAS_OPTIONS, {
-    errorMap: () => ({ message: "Selecione a quantidade de dias." }),
-  }),
   localidade: z.string().trim().min(1, "Localidade é obrigatória.").max(150),
   loja_codigo_nome: z.string().trim().min(1, "Código ou nome da loja é obrigatório.").max(150),
   cid: z.string().max(20).optional().or(z.literal("")),
@@ -212,9 +220,9 @@ function NovaAusenciaPage() {
       colaborador_id: "",
       empresa_id: "",
       projeto_id: "",
-      tipo_detalhe: "FALTA JUSTIFICADA",
+      tipo_ausencia_id: "",
+      opcao_periodo_id: "",
       data_inicio: "",
-      dias_label: "1 DIA",
       localidade: "",
       loja_codigo_nome: "",
       cid: "",
@@ -225,15 +233,73 @@ function NovaAusenciaPage() {
 
   const colaboradorId = form.watch("colaborador_id");
   const dataInicio = form.watch("data_inicio");
-  const diasLabel = form.watch("dias_label");
+  const tipoAusenciaId = form.watch("tipo_ausencia_id");
+  const opcaoPeriodoId = form.watch("opcao_periodo_id");
   const motivo = form.watch("motivo") ?? "";
   const cid = form.watch("cid") ?? "";
 
-  const diasNumericos = useMemo(() => diasFromLabel(diasLabel ?? "") ?? 1, [diasLabel]);
-  const diasNumericoDisponivel = useMemo(
-    () => diasFromLabel(diasLabel ?? "") !== null,
-    [diasLabel],
+  // ============= Tipos e opções (DB-driven) =============
+  const tiposQ = useQuery({
+    queryKey: ["tipos_ausencia_ativos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tipos_ausencia" as never)
+        .select("id, codigo, nome, ativo, exige_documento, permite_cid, permite_acidente, ordem")
+        .eq("ativo", true)
+        .order("ordem", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as unknown as Array<{
+        id: string;
+        codigo: string;
+        nome: string;
+        ativo: boolean;
+        exige_documento: boolean;
+        permite_cid: boolean;
+        permite_acidente: boolean;
+        ordem: number;
+      }>;
+    },
+  });
+
+  const opcoesPorTipoQ = useQuery({
+    queryKey: ["opcoes_por_tipo", tipoAusenciaId],
+    enabled: !!tipoAusenciaId,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_opcoes_periodo_por_tipo" as never, {
+        _tipo_id: tipoAusenciaId,
+      } as never);
+      if (error) throw error;
+      return (data ?? []) as unknown as Array<{
+        id: string;
+        codigo: string;
+        nome: string;
+        quantidade_dias: number | null;
+        tipo_periodo: "DIAS" | "HORAS" | "MEIO_PERIODO" | "PERIODO_INTEGRAL";
+        ordem: number;
+      }>;
+    },
+  });
+
+  const tipoSelecionado = useMemo(
+    () => tiposQ.data?.find((t) => t.id === tipoAusenciaId) ?? null,
+    [tiposQ.data, tipoAusenciaId],
   );
+  const opcaoSelecionada = useMemo(
+    () => opcoesPorTipoQ.data?.find((o) => o.id === opcaoPeriodoId) ?? null,
+    [opcoesPorTipoQ.data, opcaoPeriodoId],
+  );
+  const [tipoPopoverOpen, setTipoPopoverOpen] = useState(false);
+
+  // Limpa período se não for válido para o novo tipo
+  useEffect(() => {
+    if (!opcoesPorTipoQ.data || !opcaoPeriodoId) return;
+    if (!opcoesPorTipoQ.data.some((o) => o.id === opcaoPeriodoId)) {
+      form.setValue("opcao_periodo_id", "", { shouldValidate: false });
+    }
+  }, [opcoesPorTipoQ.data, opcaoPeriodoId, form]);
+
+  const diasNumericos = opcaoSelecionada?.quantidade_dias ?? 1;
+  const diasNumericoDisponivel = (opcaoSelecionada?.quantidade_dias ?? null) !== null;
 
   const dataFim = useMemo(
     () => (dataInicio && diasNumericoDisponivel ? addDaysISO(dataInicio, diasNumericos - 1) : ""),
@@ -289,34 +355,49 @@ function NovaAusenciaPage() {
       if (data) {
         applyColab(data as unknown as ColabMatch);
       }
-      const fallbackDetalhe: Record<TipoAusencia, (typeof TIPO_AUSENCIA_DETALHE)[number]> = {
-        FALTA: "FALTA JUSTIFICADA",
-        ATESTADO: "ATESTADO MÉDICO (Conforme descrição do documento)",
-        DECLARACAO: "DECLARAÇÃO DE COMPARECIMENTO",
-        SUSPENSAO: "SUSPENSÃO DISCIPLINAR",
+      // Resolve tipo_ausencia_id / opcao_periodo_id a partir do snapshot ou do enum legado.
+      const tipoCodPorEnum: Record<TipoAusencia, string> = {
+        FALTA: "FALTA_JUSTIFICADA",
+        ATESTADO: "ATESTADO_MEDICO",
+        DECLARACAO: "DECLARACAO_COMPARECIMENTO",
+        SUSPENSAO: "SUSPENSAO_DISCIPLINAR",
         OUTROS: "OUTROS",
       };
-      const detalheSalvo = ausencia.tipo_detalhe as (typeof TIPO_AUSENCIA_DETALHE)[number] | null;
-      const detalheValido =
-        detalheSalvo && (TIPO_AUSENCIA_DETALHE as readonly string[]).includes(detalheSalvo)
-          ? detalheSalvo
-          : fallbackDetalhe[ausencia.tipo];
-
-      const diasSalvo = ausencia.dias_label as (typeof QUANTIDADE_DIAS_OPTIONS)[number] | null;
-      const diasValido =
-        diasSalvo && (QUANTIDADE_DIAS_OPTIONS as readonly string[]).includes(diasSalvo)
-          ? diasSalvo
-          : ((`${ausencia.dias || 1} ${ausencia.dias === 1 ? "DIA" : "DIAS"}` as unknown) as (typeof QUANTIDADE_DIAS_OPTIONS)[number]);
+      const ausRow = ausencia as unknown as {
+        tipo_ausencia_id: string | null;
+        opcao_periodo_id: string | null;
+        tipo_ausencia_codigo: string | null;
+        opcao_periodo_codigo: string | null;
+      };
+      let tipoId = ausRow.tipo_ausencia_id ?? "";
+      if (!tipoId) {
+        const cod = ausRow.tipo_ausencia_codigo ?? tipoCodPorEnum[ausencia.tipo];
+        const { data: t } = await supabase
+          .from("tipos_ausencia" as never)
+          .select("id")
+          .eq("codigo", cod)
+          .maybeSingle();
+        tipoId = (t as { id?: string } | null)?.id ?? "";
+      }
+      let opcaoId = ausRow.opcao_periodo_id ?? "";
+      if (!opcaoId) {
+        const dias = ausencia.dias || 1;
+        const cod = ausRow.opcao_periodo_codigo ?? `${dias}_${dias === 1 ? "DIA" : "DIAS"}`;
+        const { data: o } = await supabase
+          .from("opcoes_periodo_ausencia" as never)
+          .select("id")
+          .eq("codigo", cod)
+          .maybeSingle();
+        opcaoId = (o as { id?: string } | null)?.id ?? "";
+      }
 
       form.reset({
         colaborador_id: ausencia.colaborador_id,
         empresa_id: ausencia.empresa_id,
         projeto_id: ausencia.projeto_id,
-        tipo_detalhe: detalheValido,
+        tipo_ausencia_id: tipoId,
+        opcao_periodo_id: opcaoId,
         data_inicio: ausencia.data_inicio,
-        dias_label: (QUANTIDADE_DIAS_OPTIONS as readonly string[]).includes(diasValido)
-          ? diasValido
-          : "1 DIA",
         localidade: ausencia.localidade ?? "",
         loja_codigo_nome: ausencia.loja_codigo_nome ?? "",
         cid: ausencia.cid ?? "",
@@ -331,6 +412,7 @@ function NovaAusenciaPage() {
       setPrefilled(true);
     })();
   }, [isEdit, ausencia, prefilled, form, applyColab]);
+
 
   async function searchMatricula(rawValue?: string) {
     const val = (rawValue ?? matriculaInput).trim();
@@ -476,7 +558,11 @@ function NovaAusenciaPage() {
   const salvarMut = useMutation({
     mutationFn: async (values: FormData) => {
       const dataInicioIso = values.data_inicio;
-      const diasNum = diasFromLabel(values.dias_label) ?? 1;
+      const tipo = tiposQ.data?.find((t) => t.id === values.tipo_ausencia_id);
+      const opcao = opcoesPorTipoQ.data?.find((o) => o.id === values.opcao_periodo_id);
+      if (!tipo) throw new Error("Selecione o tipo de ausência.");
+      if (!opcao) throw new Error("Selecione a quantidade / período.");
+      const diasNum = opcao.quantidade_dias ?? 1;
       const dataFimIso = addDaysISO(dataInicioIso, diasNum - 1);
 
       let arquivo_url: string | null | undefined = undefined;
@@ -514,9 +600,11 @@ function NovaAusenciaPage() {
         empresa_id: values.empresa_id,
         projeto_id: values.projeto_id,
         colaborador_id: values.colaborador_id,
-        tipo: tipoBaseFromDetalhe(values.tipo_detalhe),
-        tipo_detalhe: values.tipo_detalhe,
-        dias_label: values.dias_label,
+        tipo: tipoBaseFromDetalhe(tipo.nome),
+        tipo_detalhe: tipo.nome,
+        dias_label: opcao.nome,
+        tipo_ausencia_id: tipo.id,
+        opcao_periodo_id: opcao.id,
         motivo: values.motivo.trim(),
         data_inicio: dataInicioIso,
         data_fim: dataFimIso,
@@ -525,6 +613,7 @@ function NovaAusenciaPage() {
         cid: values.cid && values.cid.trim() ? values.cid.trim().toUpperCase() : null,
         acidente_trabalho_trajeto: values.acidente_trabalho_trajeto === "sim",
       };
+
 
       if (isEdit && editId) {
         const updatePayload =
@@ -874,26 +963,64 @@ function NovaAusenciaPage() {
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <FormField
                         control={form.control}
-                        name="tipo_detalhe"
+                        name="tipo_ausencia_id"
                         render={({ field }) => (
                           <FormItem className="md:col-span-2">
                             <FormLabel>
                               Tipo de Ausência <span className="text-red-500">*</span>
                             </FormLabel>
-                            <Select value={field.value} onValueChange={field.onChange}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione..." />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent className="max-h-72">
-                                {TIPO_AUSENCIA_DETALHE.map((t) => (
-                                  <SelectItem key={t} value={t}>
-                                    {t}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <Popover open={tipoPopoverOpen} onOpenChange={setTipoPopoverOpen}>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn(
+                                      "w-full justify-between font-normal",
+                                      !field.value && "text-muted-foreground",
+                                    )}
+                                    disabled={tiposQ.isLoading}
+                                  >
+                                    {tipoSelecionado?.nome ?? "Selecione o tipo..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                className="w-[--radix-popover-trigger-width] p-0"
+                                align="start"
+                              >
+                                <Command>
+                                  <CommandInput placeholder="Buscar tipo..." />
+                                  <CommandList>
+                                    <CommandEmpty>Nenhum tipo encontrado.</CommandEmpty>
+                                    <CommandGroup>
+                                      {(tiposQ.data ?? []).map((t) => (
+                                        <CommandItem
+                                          key={t.id}
+                                          value={t.nome}
+                                          onSelect={() => {
+                                            field.onChange(t.id);
+                                            form.setValue("opcao_periodo_id", "", {
+                                              shouldValidate: false,
+                                            });
+                                            setTipoPopoverOpen(false);
+                                          }}
+                                        >
+                                          <Check
+                                            className={cn(
+                                              "mr-2 h-4 w-4",
+                                              field.value === t.id ? "opacity-100" : "opacity-0",
+                                            )}
+                                          />
+                                          {t.nome}
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -915,30 +1042,50 @@ function NovaAusenciaPage() {
                       />
                       <FormField
                         control={form.control}
-                        name="dias_label"
+                        name="opcao_periodo_id"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>
-                              Quantidade de Dias <span className="text-red-500">*</span>
+                              Quantidade / Período <span className="text-red-500">*</span>
                             </FormLabel>
-                            <Select value={field.value} onValueChange={field.onChange}>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                              disabled={!tipoAusenciaId || opcoesPorTipoQ.isLoading}
+                            >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Selecione..." />
+                                  <SelectValue
+                                    placeholder={
+                                      tipoAusenciaId
+                                        ? opcoesPorTipoQ.isLoading
+                                          ? "Carregando..."
+                                          : "Selecione..."
+                                        : "Selecione o tipo primeiro"
+                                    }
+                                  />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent className="max-h-72">
-                                {QUANTIDADE_DIAS_OPTIONS.map((d) => (
-                                  <SelectItem key={d} value={d}>
-                                    {d}
+                                {(opcoesPorTipoQ.data ?? []).map((d) => (
+                                  <SelectItem key={d.id} value={d.id}>
+                                    {d.nome}
                                   </SelectItem>
                                 ))}
+                                {tipoAusenciaId &&
+                                  !opcoesPorTipoQ.isLoading &&
+                                  (opcoesPorTipoQ.data?.length ?? 0) === 0 && (
+                                    <div className="px-2 py-3 text-xs text-muted-foreground">
+                                      Nenhum período configurado para este tipo.
+                                    </div>
+                                  )}
                               </SelectContent>
                             </Select>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+
 
 
                       <div className="space-y-1.5">
