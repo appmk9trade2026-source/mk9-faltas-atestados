@@ -461,6 +461,18 @@ export type Database = {
     }
     Functions: {
       bootstrap_first_super_admin: { Args: never; Returns: string }
+      dashboard_metrics: {
+        Args: {
+          _empresa_id?: string
+          _fim: string
+          _inicio: string
+          _projeto_id?: string
+          _status?: Database["public"]["Enums"]["status_ausencia"]
+          _supervisor?: string
+          _tipo?: Database["public"]["Enums"]["tipo_ausencia"]
+        }
+        Returns: Json
+      }
       get_colaboradores_ativos: {
         Args: { _busca?: string; _empresa_id?: string; _projeto_id?: string }
         Returns: {
