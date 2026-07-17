@@ -395,11 +395,21 @@ function ColaboradoresPage() {
           Pessoas vinculadas às empresas e projetos operacionais. Colaboradores não
           são excluídos — apenas desativados quando deixam a operação.
         </p>
-        {canManage && (
-          <Button onClick={openCreate} className="sm:w-auto">
-            <Plus className="mr-2 h-4 w-4" /> Novo colaborador
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline">
+            <Link to="/colaboradores_/importacoes">Histórico de importações</Link>
           </Button>
-        )}
+          {canManage && (
+            <>
+              <Button asChild variant="outline">
+                <Link to="/colaboradores_/importar">Importar planilha</Link>
+              </Button>
+              <Button onClick={openCreate}>
+                <Plus className="mr-2 h-4 w-4" /> Novo colaborador
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       <Card className="overflow-hidden">

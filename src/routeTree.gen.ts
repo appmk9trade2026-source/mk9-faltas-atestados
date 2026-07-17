@@ -26,6 +26,7 @@ import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedConfiguracoesProjetosRouteImport } from './routes/_authenticated/configuracoes.projetos'
 import { Route as AuthenticatedConfiguracoesEmpresasRouteImport } from './routes/_authenticated/configuracoes.empresas'
 import { Route as AuthenticatedColaboradoresImportarRouteImport } from './routes/_authenticated/colaboradores_.importar'
+import { Route as AuthenticatedColaboradoresImportacoesRouteImport } from './routes/_authenticated/colaboradores_.importacoes'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -118,6 +119,12 @@ const AuthenticatedColaboradoresImportarRoute =
     path: '/colaboradores/importar',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedColaboradoresImportacoesRoute =
+  AuthenticatedColaboradoresImportacoesRouteImport.update({
+    id: '/colaboradores_/importacoes',
+    path: '/colaboradores/importacoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -133,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/painel-rh': typeof AuthenticatedPainelRhRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
+  '/colaboradores/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/colaboradores/importar': typeof AuthenticatedColaboradoresImportarRoute
   '/configuracoes/empresas': typeof AuthenticatedConfiguracoesEmpresasRoute
   '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
@@ -151,6 +159,7 @@ export interface FileRoutesByTo {
   '/painel-rh': typeof AuthenticatedPainelRhRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/usuarios': typeof AuthenticatedUsuariosRoute
+  '/colaboradores/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/colaboradores/importar': typeof AuthenticatedColaboradoresImportarRoute
   '/configuracoes/empresas': typeof AuthenticatedConfiguracoesEmpresasRoute
   '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
@@ -171,6 +180,7 @@ export interface FileRoutesById {
   '/_authenticated/painel-rh': typeof AuthenticatedPainelRhRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
+  '/_authenticated/colaboradores_/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/_authenticated/colaboradores_/importar': typeof AuthenticatedColaboradoresImportarRoute
   '/_authenticated/configuracoes/empresas': typeof AuthenticatedConfiguracoesEmpresasRoute
   '/_authenticated/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
@@ -191,6 +201,7 @@ export interface FileRouteTypes {
     | '/painel-rh'
     | '/relatorios'
     | '/usuarios'
+    | '/colaboradores/importacoes'
     | '/colaboradores/importar'
     | '/configuracoes/empresas'
     | '/configuracoes/projetos'
@@ -209,6 +220,7 @@ export interface FileRouteTypes {
     | '/painel-rh'
     | '/relatorios'
     | '/usuarios'
+    | '/colaboradores/importacoes'
     | '/colaboradores/importar'
     | '/configuracoes/empresas'
     | '/configuracoes/projetos'
@@ -228,6 +240,7 @@ export interface FileRouteTypes {
     | '/_authenticated/painel-rh'
     | '/_authenticated/relatorios'
     | '/_authenticated/usuarios'
+    | '/_authenticated/colaboradores_/importacoes'
     | '/_authenticated/colaboradores_/importar'
     | '/_authenticated/configuracoes/empresas'
     | '/_authenticated/configuracoes/projetos'
@@ -360,6 +373,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedColaboradoresImportarRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/colaboradores_/importacoes': {
+      id: '/_authenticated/colaboradores_/importacoes'
+      path: '/colaboradores/importacoes'
+      fullPath: '/colaboradores/importacoes'
+      preLoaderRoute: typeof AuthenticatedColaboradoresImportacoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -393,6 +413,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPainelRhRoute: typeof AuthenticatedPainelRhRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
+  AuthenticatedColaboradoresImportacoesRoute: typeof AuthenticatedColaboradoresImportacoesRoute
   AuthenticatedColaboradoresImportarRoute: typeof AuthenticatedColaboradoresImportarRoute
 }
 
@@ -408,6 +429,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPainelRhRoute: AuthenticatedPainelRhRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
+  AuthenticatedColaboradoresImportacoesRoute:
+    AuthenticatedColaboradoresImportacoesRoute,
   AuthenticatedColaboradoresImportarRoute:
     AuthenticatedColaboradoresImportarRoute,
 }
