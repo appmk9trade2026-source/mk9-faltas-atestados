@@ -93,6 +93,9 @@ type AusenciaRow = {
   id: string;
   status: StatusAusencia;
   tipo: TipoAusencia;
+  tipo_ausencia_id: string | null;
+  tipo_ausencia_codigo: string | null;
+  tipo_ausencia_nome: string | null;
   data_inicio: string;
   data_fim: string;
   dias: number;
