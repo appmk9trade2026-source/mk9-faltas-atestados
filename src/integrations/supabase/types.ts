@@ -14,6 +14,109 @@ export type Database = {
   }
   public: {
     Tables: {
+      ausencias: {
+        Row: {
+          arquivo_criado_em: string | null
+          arquivo_criado_por: string | null
+          arquivo_mime: string | null
+          arquivo_nome: string | null
+          arquivo_tamanho: number | null
+          arquivo_url: string | null
+          colaborador_id: string
+          created_at: string
+          data_fim: string
+          data_inicio: string
+          dias: number
+          empresa_id: string
+          id: string
+          lancado_em: string | null
+          lancado_por: string | null
+          motivo: string | null
+          observacoes: string | null
+          possui_anexo: boolean
+          projeto_id: string
+          registrado_em: string
+          registrado_por: string | null
+          status: Database["public"]["Enums"]["status_ausencia"]
+          tipo: Database["public"]["Enums"]["tipo_ausencia"]
+          updated_at: string
+        }
+        Insert: {
+          arquivo_criado_em?: string | null
+          arquivo_criado_por?: string | null
+          arquivo_mime?: string | null
+          arquivo_nome?: string | null
+          arquivo_tamanho?: number | null
+          arquivo_url?: string | null
+          colaborador_id: string
+          created_at?: string
+          data_fim: string
+          data_inicio: string
+          dias?: number
+          empresa_id: string
+          id?: string
+          lancado_em?: string | null
+          lancado_por?: string | null
+          motivo?: string | null
+          observacoes?: string | null
+          possui_anexo?: boolean
+          projeto_id: string
+          registrado_em?: string
+          registrado_por?: string | null
+          status?: Database["public"]["Enums"]["status_ausencia"]
+          tipo: Database["public"]["Enums"]["tipo_ausencia"]
+          updated_at?: string
+        }
+        Update: {
+          arquivo_criado_em?: string | null
+          arquivo_criado_por?: string | null
+          arquivo_mime?: string | null
+          arquivo_nome?: string | null
+          arquivo_tamanho?: number | null
+          arquivo_url?: string | null
+          colaborador_id?: string
+          created_at?: string
+          data_fim?: string
+          data_inicio?: string
+          dias?: number
+          empresa_id?: string
+          id?: string
+          lancado_em?: string | null
+          lancado_por?: string | null
+          motivo?: string | null
+          observacoes?: string | null
+          possui_anexo?: boolean
+          projeto_id?: string
+          registrado_em?: string
+          registrado_por?: string | null
+          status?: Database["public"]["Enums"]["status_ausencia"]
+          tipo?: Database["public"]["Enums"]["tipo_ausencia"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ausencias_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ausencias_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ausencias_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       colaboradores: {
         Row: {
           ativo: boolean
@@ -231,6 +334,13 @@ export type Database = {
     }
     Enums: {
       app_role: "super_admin" | "rh" | "supervisor" | "compliance"
+      status_ausencia: "PENDENTE" | "LANCADO"
+      tipo_ausencia:
+        | "FALTA"
+        | "ATESTADO"
+        | "DECLARACAO"
+        | "SUSPENSAO"
+        | "OUTROS"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -359,6 +469,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin", "rh", "supervisor", "compliance"],
+      status_ausencia: ["PENDENTE", "LANCADO"],
+      tipo_ausencia: ["FALTA", "ATESTADO", "DECLARACAO", "SUSPENSAO", "OUTROS"],
     },
   },
 } as const
