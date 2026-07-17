@@ -44,10 +44,13 @@ const CRITICAL_URLS = [
 
 describe("route registry", () => {
   it.each(CRITICAL_URLS)("registers %s in routeTree.gen.ts", (url) => {
-    // routeTree lines look like: path: '/colaboradores/importar',
-    const escaped = url.replace(/\//g, "\\/");
-    const re = new RegExp(`path:\\s*['"]${escaped}['"]`);
-    expect(re.test(TREE), `missing route ${url}`).toBe(true);
+    // TanStack emits FullPath keys like `'/configuracoes/empresas': typeof ...`
+    // as well as leaf `path: '/foo'` entries. Match either.
+    const escaped = url.replace(/[/-]/g, (c) => `\\${c}`);
+    const fullPath = new RegExp(`['"]${escaped}['"]\\s*:`);
+    const leafPath = new RegExp(`path:\\s*['"]${escaped}['"]`);
+    const found = fullPath.test(TREE) || leafPath.test(TREE);
+    expect(found, `missing route ${url}`).toBe(true);
   });
 
   it("colaboradores_ filename convention produces /colaboradores/importar (not /colaboradores_/importar)", () => {
