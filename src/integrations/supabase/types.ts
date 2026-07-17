@@ -236,6 +236,42 @@ export type Database = {
           },
         ]
       }
+      categorias_ausencia: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          cor: string | null
+          created_at: string
+          icone: string | null
+          id: string
+          nome: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          cor?: string | null
+          created_at?: string
+          icone?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          cor?: string | null
+          created_at?: string
+          icone?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       colaboradores: {
         Row: {
           ativo: boolean
@@ -619,6 +655,7 @@ export type Database = {
       tipos_ausencia: {
         Row: {
           ativo: boolean
+          categoria_ausencia_id: string | null
           codigo: string
           cor: string | null
           created_at: string
@@ -636,6 +673,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          categoria_ausencia_id?: string | null
           codigo: string
           cor?: string | null
           created_at?: string
@@ -653,6 +691,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          categoria_ausencia_id?: string | null
           codigo?: string
           cor?: string | null
           created_at?: string
@@ -668,7 +707,15 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tipos_ausencia_categoria_ausencia_id_fkey"
+            columns: ["categoria_ausencia_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_ausencia"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -698,18 +745,32 @@ export type Database = {
     Functions: {
       audit_kpis: { Args: { _inicio?: string }; Returns: Json }
       bootstrap_first_super_admin: { Args: never; Returns: string }
-      dashboard_metrics: {
-        Args: {
-          _empresa_id?: string
-          _fim: string
-          _inicio: string
-          _projeto_id?: string
-          _status?: Database["public"]["Enums"]["status_ausencia"]
-          _supervisor?: string
-          _tipo?: Database["public"]["Enums"]["tipo_ausencia"]
-        }
-        Returns: Json
-      }
+      dashboard_metrics:
+        | {
+            Args: {
+              _empresa_id?: string
+              _fim: string
+              _inicio: string
+              _projeto_id?: string
+              _status?: Database["public"]["Enums"]["status_ausencia"]
+              _supervisor?: string
+              _tipo?: Database["public"]["Enums"]["tipo_ausencia"]
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _categoria_id?: string
+              _empresa_id?: string
+              _fim: string
+              _inicio: string
+              _projeto_id?: string
+              _status?: Database["public"]["Enums"]["status_ausencia"]
+              _supervisor?: string
+              _tipo?: Database["public"]["Enums"]["tipo_ausencia"]
+            }
+            Returns: Json
+          }
       get_colaboradores_ativos: {
         Args: { _busca?: string; _empresa_id?: string; _projeto_id?: string }
         Returns: {
