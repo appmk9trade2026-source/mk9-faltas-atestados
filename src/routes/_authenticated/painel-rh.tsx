@@ -72,12 +72,12 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import {
-  TIPO_AUSENCIA,
   TIPO_LABEL,
   getSignedAtestadoUrl,
   type StatusAusencia,
   type TipoAusencia,
 } from "@/lib/ausencias";
+import { fetchCategorias, fetchTiposComCategoria, CATEGORIA_CORES, type Categoria, type TipoComCategoria } from "@/lib/categorias";
 
 export const Route = createFileRoute("/_authenticated/painel-rh")({
   head: () => ({ meta: [{ title: "Painel do RH · CRM MK9" }] }),
@@ -93,6 +93,9 @@ type AusenciaRow = {
   id: string;
   status: StatusAusencia;
   tipo: TipoAusencia;
+  tipo_ausencia_id: string | null;
+  tipo_ausencia_codigo: string | null;
+  tipo_ausencia_nome: string | null;
   data_inicio: string;
   data_fim: string;
   dias: number;
@@ -216,7 +219,8 @@ function PainelRHPage() {
   const [empresaF, setEmpresaF] = useState("all");
   const [projetoF, setProjetoF] = useState("all");
   const [supervisorF, setSupervisorF] = useState("");
-  const [tipoF, setTipoF] = useState("all");
+  const [categoriaF, setCategoriaF] = useState("all");
+  const [tipoOficialF, setTipoOficialF] = useState("all");
   const [statusF, setStatusF] = useState<"all" | StatusAusencia>("PENDENTE");
   const [dataIni, setDataIni] = useState("");
   const [dataFim, setDataFim] = useState("");
@@ -233,7 +237,7 @@ function PainelRHPage() {
   // Reset página quando filtros mudam
   useEffect(() => {
     setPage(1);
-  }, [empresaF, projetoF, supervisorF, tipoF, statusF, dataIni, dataFim, busca, pageSize]);
+  }, [empresaF, projetoF, supervisorF, categoriaF, tipoOficialF, statusF, dataIni, dataFim, busca, pageSize]);
 
   const empresasQ = useQuery({
     queryKey: ["empresas", "todas"],
@@ -263,11 +267,32 @@ function PainelRHPage() {
 
   const kpisQ = useKPIs(auto);
 
+  const categoriasQ = useQuery<Categoria[]>({
+    queryKey: ["categorias-ausencia"],
+    queryFn: fetchCategorias,
+    staleTime: 10 * 60_000,
+  });
+  const tiposQ = useQuery<TipoComCategoria[]>({
+    queryKey: ["tipos-ausencia-com-categoria"],
+    queryFn: fetchTiposComCategoria,
+    staleTime: 10 * 60_000,
+  });
+  const categorias = categoriasQ.data ?? [];
+  const tiposAll = tiposQ.data ?? [];
+  const tiposFiltro = useMemo(
+    () => (categoriaF === "all" ? tiposAll : tiposAll.filter((t) => t.categoria_ausencia_id === categoriaF)),
+    [tiposAll, categoriaF],
+  );
+  const tiposIdsDaCategoria = useMemo(
+    () => tiposAll.filter((t) => t.categoria_ausencia_id === categoriaF).map((t) => t.id),
+    [tiposAll, categoriaF],
+  );
+
   const listQ = useQuery({
     queryKey: [
       "painel-rh",
       "list",
-      { empresaF, projetoF, supervisorF, tipoF, statusF, dataIni, dataFim, busca, page, pageSize },
+      { empresaF, projetoF, supervisorF, categoriaF, tipoOficialF, statusF, dataIni, dataFim, busca, page, pageSize },
     ],
     refetchInterval: auto ? 60_000 : false,
     queryFn: async () => {
@@ -276,13 +301,17 @@ function PainelRHPage() {
 
       const supervisorAtivo = supervisorF.trim();
       const joinKind = supervisorAtivo ? "!inner" : "";
-      const selectStr = `id, status, tipo, data_inicio, data_fim, dias, cid, loja_codigo_nome, localidade, motivo, acidente_trabalho_trajeto, possui_anexo, arquivo_url, arquivo_nome, registrado_por, registrado_em, lancado_por, lancado_em, empresa_id, projeto_id, colaborador_id, empresa:empresas(nome), projeto:projetos(nome), colaborador:colaboradores${joinKind}(nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email)`;
+      const selectStr = `id, status, tipo, tipo_ausencia_id, tipo_ausencia_codigo, tipo_ausencia_nome, data_inicio, data_fim, dias, cid, loja_codigo_nome, localidade, motivo, acidente_trabalho_trajeto, possui_anexo, arquivo_url, arquivo_nome, registrado_por, registrado_em, lancado_por, lancado_em, empresa_id, projeto_id, colaborador_id, empresa:empresas(nome), projeto:projetos(nome), colaborador:colaboradores${joinKind}(nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email)`;
 
       let q = supabase.from("ausencias").select(selectStr, { count: "exact" });
 
       if (empresaF !== "all") q = q.eq("empresa_id", empresaF);
       if (projetoF !== "all") q = q.eq("projeto_id", projetoF);
-      if (tipoF !== "all") q = q.eq("tipo", tipoF as TipoAusencia);
+      if (tipoOficialF !== "all") {
+        q = q.eq("tipo_ausencia_id", tipoOficialF);
+      } else if (categoriaF !== "all" && tiposIdsDaCategoria.length) {
+        q = q.in("tipo_ausencia_id", tiposIdsDaCategoria);
+      }
       if (statusF !== "all") q = q.eq("status", statusF);
       if (dataIni) q = q.gte("data_fim", dataIni);
       if (dataFim) q = q.lte("data_inicio", dataFim);
@@ -297,6 +326,7 @@ function PainelRHPage() {
           `loja_codigo_nome.ilike.%${buscaTrim}%,cid.ilike.%${buscaTrim.toUpperCase()}%`,
         );
       }
+
 
       q = q.order("data_inicio", { ascending: false }).range(from, to);
 
@@ -414,20 +444,26 @@ function PainelRHPage() {
       toast.info("Nada para exportar com os filtros atuais.");
       return;
     }
-    const data = rows.map((r) => ({
-      Colaborador: r.colaborador?.nome_completo ?? "",
-      Matricula: r.colaborador?.matricula ?? "",
-      Empresa: r.empresa?.nome ?? "",
-      Projeto: r.projeto?.nome ?? "",
-      Tipo: TIPO_LABEL[r.tipo],
-      DataInicio: r.data_inicio,
-      DataFim: r.data_fim,
-      Dias: r.dias,
-      Status: r.status,
-      Supervisor: r.colaborador?.supervisor_nome ?? "",
-      Loja: r.loja_codigo_nome ?? "",
-      CID: r.cid ?? "",
-    }));
+    const data = rows.map((r) => {
+      const tipoOf = tiposAll.find((t) => t.id === r.tipo_ausencia_id);
+      const cat = tipoOf ? categorias.find((c) => c.id === tipoOf.categoria_ausencia_id) : undefined;
+      return {
+        Colaborador: r.colaborador?.nome_completo ?? "",
+        Matricula: r.colaborador?.matricula ?? "",
+        Empresa: r.empresa?.nome ?? "",
+        Projeto: r.projeto?.nome ?? "",
+        Categoria: cat?.nome ?? "",
+        TipoOficial: r.tipo_ausencia_nome ?? tipoOf?.nome ?? "",
+        TipoBase: TIPO_LABEL[r.tipo],
+        DataInicio: r.data_inicio,
+        DataFim: r.data_fim,
+        Dias: r.dias,
+        Status: r.status,
+        Supervisor: r.colaborador?.supervisor_nome ?? "",
+        Loja: r.loja_codigo_nome ?? "",
+        CID: r.cid ?? "",
+      };
+    });
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(data);
     XLSX.utils.book_append_sheet(wb, ws, "Ausencias");
@@ -517,11 +553,25 @@ function PainelRHPage() {
             onChange={(e) => setSupervisorF(e.target.value)}
             placeholder="Supervisor (nome)"
           />
-          <Select value={tipoF} onValueChange={setTipoF}>
-            <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
+          <Select value={categoriaF} onValueChange={(v) => { setCategoriaF(v); setTipoOficialF("all"); }}>
+            <SelectTrigger><SelectValue placeholder="Categoria" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as categorias</SelectItem>
+              {categorias.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  <span className="inline-flex items-center gap-2">
+                    <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: c.cor ?? CATEGORIA_CORES[c.codigo] ?? "#94a3b8" }} />
+                    {c.nome}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={tipoOficialF} onValueChange={setTipoOficialF}>
+            <SelectTrigger><SelectValue placeholder="Tipo oficial" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os tipos</SelectItem>
-              {TIPO_AUSENCIA.map((t) => <SelectItem key={t} value={t}>{TIPO_LABEL[t]}</SelectItem>)}
+              {tiposFiltro.map((t) => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={statusF} onValueChange={(v) => setStatusF(v as typeof statusF)}>

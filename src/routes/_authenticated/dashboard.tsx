@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchCategorias, CATEGORIA_CORES, type Categoria } from "@/lib/categorias";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard · CRM MK9" }] }),
@@ -53,6 +54,8 @@ type Filters = {
   supervisor?: string;
   tipo?: string;
   status?: string;
+  categoria_id?: string;
+  tipo_oficial_id?: string;
 };
 type Kpis = {
   total: number; pendentes: number; lancadas: number;
@@ -78,9 +81,12 @@ type DashboardData = {
   ultimos: Array<{
     id: string; registrado_em: string; colab_nome: string; empresa_nome: string;
     projeto_nome: string; tipo: string; status: string; data_inicio: string; data_fim: string;
+    tipo_oficial_nome?: string | null; tipo_oficial_codigo?: string | null;
   }>;
   top_empresas: Array<{ empresa_id: string; nome: string; total: number }>;
   top_projetos: Array<{ projeto_id: string; nome: string; total: number }>;
+  por_categoria: Array<{ categoria_id: string | null; codigo: string | null; nome: string | null; cor: string | null; total: number }>;
+  por_tipo_oficial: Array<{ tipo_id: string | null; codigo: string; nome: string; cor: string | null; categoria_id: string | null; total: number }>;
 };
 
 // ---------- Helpers
@@ -139,6 +145,12 @@ function DashboardPage() {
     staleTime: 5 * 60_000,
   });
 
+  const { data: categorias = [] } = useQuery<Categoria[]>({
+    queryKey: ["dash-categorias"],
+    queryFn: fetchCategorias,
+    staleTime: 10 * 60_000,
+  });
+
   // Main query — single RPC, auto refresh 60s
   const query = useQuery({
     queryKey: ["dashboard-metrics", filters],
@@ -151,6 +163,7 @@ function DashboardPage() {
         _supervisor: filters.supervisor,
         _tipo: filters.tipo as never,
         _status: filters.status as never,
+        _categoria_id: filters.categoria_id as never,
       });
       if (error) throw error;
       return data as unknown as DashboardData;
@@ -183,10 +196,14 @@ function DashboardPage() {
       chips.push({ label: `Projeto: ${p?.nome ?? "…"}`, onClear: () => setFilters((f) => ({ ...f, projeto_id: undefined })) });
     }
     if (filters.supervisor) chips.push({ label: `Sup: ${filters.supervisor}`, onClear: () => setFilters((f) => ({ ...f, supervisor: undefined })) });
+    if (filters.categoria_id) {
+      const c = categorias.find((x) => x.id === filters.categoria_id);
+      chips.push({ label: `Categoria: ${c?.nome ?? "…"}`, onClear: () => setFilters((f) => ({ ...f, categoria_id: undefined })) });
+    }
     if (filters.tipo) chips.push({ label: `Tipo: ${filters.tipo}`, onClear: () => setFilters((f) => ({ ...f, tipo: undefined })) });
     if (filters.status) chips.push({ label: `Status: ${filters.status}`, onClear: () => setFilters((f) => ({ ...f, status: undefined })) });
     return chips;
-  }, [filters, empresas, projetos]);
+  }, [filters, empresas, projetos, categorias]);
 
   // ------- Export helpers
   async function exportPNG() {
@@ -212,6 +229,8 @@ function DashboardPage() {
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.por_dia), "PorDia");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.por_empresa), "PorEmpresa");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.por_projeto), "PorProjeto");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.por_categoria ?? []), "PorCategoria");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.por_tipo_oficial ?? []), "PorTipoOficial");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.por_tipo), "PorTipo");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.top_supervisores), "TopSupervisores");
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data.top_colaboradores), "TopColaboradores");
@@ -282,8 +301,29 @@ function DashboardPage() {
             </Select>
           </div>
 
+          <div className="min-w-[180px]">
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">Categoria</label>
+            <Select
+              value={filters.categoria_id ?? "all"}
+              onValueChange={(v) => setFilters((f) => ({ ...f, categoria_id: v === "all" ? undefined : v }))}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {categorias.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    <span className="inline-flex items-center gap-2">
+                      <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: c.cor ?? CATEGORIA_CORES[c.codigo] ?? "#94a3b8" }} />
+                      {c.nome}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="min-w-[160px]">
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">Tipo</label>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">Tipo (base)</label>
             <Select value={filters.tipo ?? "all"} onValueChange={(v) => setFilters((f) => ({ ...f, tipo: v === "all" ? undefined : v }))}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -343,6 +383,57 @@ function DashboardPage() {
       <div ref={exportRef} className="space-y-4">
         {/* ---- KPIs */}
         <KpisGrid data={data} loading={query.isLoading} />
+
+        {/* ---- Categorias analíticas */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <ChartCard title="Distribuição por Categoria">
+            <ResponsiveContainer width="100%" height={280}>
+              <PieChart>
+                <Pie
+                  data={(data?.por_categoria ?? []).filter((c) => c.nome)}
+                  dataKey="total"
+                  nameKey="nome"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={2}
+                  onClick={(d: { categoria_id?: string | null }) =>
+                    d.categoria_id && setFilters((f) => ({ ...f, categoria_id: d.categoria_id ?? undefined, tipo_oficial_id: undefined }))
+                  }
+                  cursor="pointer"
+                >
+                  {(data?.por_categoria ?? []).filter((c) => c.nome).map((c, i) => (
+                    <Cell key={i} fill={c.cor ?? (c.codigo ? CATEGORIA_CORES[c.codigo] : undefined) ?? COLORS[i % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </ChartCard>
+
+          <ChartCard title={filters.categoria_id
+            ? `Tipos oficiais — ${categorias.find((c) => c.id === filters.categoria_id)?.nome ?? "Categoria"}`
+            : "Tipos oficiais por categoria"}>
+            <ResponsiveContainer
+              width="100%"
+              height={Math.max(280, ((data?.por_tipo_oficial ?? []).length || 1) * 26)}
+            >
+              <BarChart data={data?.por_tipo_oficial ?? []} layout="vertical" margin={{ left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
+                <YAxis type="category" dataKey="nome" width={200} tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Bar dataKey="total" radius={[0, 4, 4, 0]} cursor="pointer">
+                  {(data?.por_tipo_oficial ?? []).map((t, i) => {
+                    const cat = categorias.find((c) => c.id === t.categoria_id);
+                    const fill = t.cor ?? cat?.cor ?? (cat ? CATEGORIA_CORES[cat.codigo] : undefined) ?? COLORS[i % COLORS.length];
+                    return <Cell key={i} fill={fill} />;
+                  })}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        </div>
 
         {/* ---- Charts */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
