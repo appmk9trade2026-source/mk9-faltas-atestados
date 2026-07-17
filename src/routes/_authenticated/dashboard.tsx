@@ -384,6 +384,57 @@ function DashboardPage() {
         {/* ---- KPIs */}
         <KpisGrid data={data} loading={query.isLoading} />
 
+        {/* ---- Categorias analíticas */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <ChartCard title="Distribuição por Categoria">
+            <ResponsiveContainer width="100%" height={280}>
+              <PieChart>
+                <Pie
+                  data={(data?.por_categoria ?? []).filter((c) => c.nome)}
+                  dataKey="total"
+                  nameKey="nome"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={2}
+                  onClick={(d: { categoria_id?: string | null }) =>
+                    d.categoria_id && setFilters((f) => ({ ...f, categoria_id: d.categoria_id ?? undefined, tipo_oficial_id: undefined }))
+                  }
+                  cursor="pointer"
+                >
+                  {(data?.por_categoria ?? []).filter((c) => c.nome).map((c, i) => (
+                    <Cell key={i} fill={c.cor ?? (c.codigo ? CATEGORIA_CORES[c.codigo] : undefined) ?? COLORS[i % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </ChartCard>
+
+          <ChartCard title={filters.categoria_id
+            ? `Tipos oficiais — ${categorias.find((c) => c.id === filters.categoria_id)?.nome ?? "Categoria"}`
+            : "Tipos oficiais por categoria"}>
+            <ResponsiveContainer
+              width="100%"
+              height={Math.max(280, ((data?.por_tipo_oficial ?? []).length || 1) * 26)}
+            >
+              <BarChart data={data?.por_tipo_oficial ?? []} layout="vertical" margin={{ left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
+                <YAxis type="category" dataKey="nome" width={200} tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Bar dataKey="total" radius={[0, 4, 4, 0]} cursor="pointer">
+                  {(data?.por_tipo_oficial ?? []).map((t, i) => {
+                    const cat = categorias.find((c) => c.id === t.categoria_id);
+                    const fill = t.cor ?? cat?.cor ?? (cat ? CATEGORIA_CORES[cat.codigo] : undefined) ?? COLORS[i % COLORS.length];
+                    return <Cell key={i} fill={fill} />;
+                  })}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        </div>
+
         {/* ---- Charts */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <ChartCard title="Ausências por dia">
