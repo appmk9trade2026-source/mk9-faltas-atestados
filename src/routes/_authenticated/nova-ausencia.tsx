@@ -59,7 +59,9 @@ import {
   getSignedAtestadoUrl,
   type TipoAusencia,
 } from "@/lib/ausencias";
-import { formatPhoneBR } from "@/lib/br-format";
+import { formatTelefone } from "@/lib/br-format";
+
+const formatPhoneBR = formatTelefone;
 
 type SearchParams = { id?: string };
 
