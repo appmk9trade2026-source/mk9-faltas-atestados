@@ -424,6 +424,183 @@ export type Database = {
         }
         Relationships: []
       }
+      bi_absenteismo_diario: {
+        Row: {
+          afastamentos: number
+          atestados: number
+          categoria_id: string | null
+          created_at: string
+          data_referencia: string
+          empresa_id: string | null
+          faltas: number
+          id: string
+          licencas: number
+          medidas_administrativas: number
+          outros: number
+          projeto_id: string | null
+          sem_duracao: number
+          status: string
+          tipo_ausencia_id: string | null
+          total_colaboradores_afetados: number
+          total_dias_ausencia: number
+          total_horas_estimadas: number
+          total_registros: number
+          updated_at: string
+        }
+        Insert: {
+          afastamentos?: number
+          atestados?: number
+          categoria_id?: string | null
+          created_at?: string
+          data_referencia: string
+          empresa_id?: string | null
+          faltas?: number
+          id?: string
+          licencas?: number
+          medidas_administrativas?: number
+          outros?: number
+          projeto_id?: string | null
+          sem_duracao?: number
+          status: string
+          tipo_ausencia_id?: string | null
+          total_colaboradores_afetados?: number
+          total_dias_ausencia?: number
+          total_horas_estimadas?: number
+          total_registros?: number
+          updated_at?: string
+        }
+        Update: {
+          afastamentos?: number
+          atestados?: number
+          categoria_id?: string | null
+          created_at?: string
+          data_referencia?: string
+          empresa_id?: string | null
+          faltas?: number
+          id?: string
+          licencas?: number
+          medidas_administrativas?: number
+          outros?: number
+          projeto_id?: string | null
+          sem_duracao?: number
+          status?: string
+          tipo_ausencia_id?: string | null
+          total_colaboradores_afetados?: number
+          total_dias_ausencia?: number
+          total_horas_estimadas?: number
+          total_registros?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bi_config: {
+        Row: {
+          id: string
+          janela_recorrencia_dias: number
+          limite_recorrencia: number
+          minimo_periodos_sazonalidade: number
+          minimo_pontos_tendencia: number
+          singleton: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          janela_recorrencia_dias?: number
+          limite_recorrencia?: number
+          minimo_periodos_sazonalidade?: number
+          minimo_pontos_tendencia?: number
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          janela_recorrencia_dias?: number
+          limite_recorrencia?: number
+          minimo_periodos_sazonalidade?: number
+          minimo_pontos_tendencia?: number
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      bi_refresh_execucoes: {
+        Row: {
+          created_at: string
+          duracao_ms: number | null
+          execution_id: string
+          finalizado_em: string | null
+          id: string
+          iniciado_em: string
+          linhas_processadas: number | null
+          mensagem_resumida: string | null
+          metadata: Json
+          origem: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          duracao_ms?: number | null
+          execution_id?: string
+          finalizado_em?: string | null
+          id?: string
+          iniciado_em?: string
+          linhas_processadas?: number | null
+          mensagem_resumida?: string | null
+          metadata?: Json
+          origem?: string
+          status: string
+        }
+        Update: {
+          created_at?: string
+          duracao_ms?: number | null
+          execution_id?: string
+          finalizado_em?: string | null
+          id?: string
+          iniciado_em?: string
+          linhas_processadas?: number | null
+          mensagem_resumida?: string | null
+          metadata?: Json
+          origem?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      bi_visoes_salvas: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          filtros: Json
+          id: string
+          is_padrao: boolean
+          nome: string
+          updated_at: string
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          filtros?: Json
+          id?: string
+          is_padrao?: boolean
+          nome: string
+          updated_at?: string
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          filtros?: Json
+          id?: string
+          is_padrao?: boolean
+          nome?: string
+          updated_at?: string
+          usuario_id?: string
+        }
+        Relationships: []
+      }
       categorias_ausencia: {
         Row: {
           ativo: boolean
@@ -2190,6 +2367,9 @@ export type Database = {
         Returns: Json
       }
       automacao_status: { Args: never; Returns: Json }
+      bi_analisar_tendencias: { Args: { p_filtros?: Json }; Returns: Json }
+      bi_executivo_consultar: { Args: { p_filtros?: Json }; Returns: Json }
+      bi_healthcheck: { Args: never; Returns: Json }
       bootstrap_first_super_admin: { Args: never; Returns: string }
       contar_notificacoes_nao_lidas: { Args: never; Returns: number }
       criar_notificacao: {
@@ -2400,6 +2580,7 @@ export type Database = {
         Returns: Json
       }
       processar_escalonamentos_pendentes: { Args: never; Returns: Json }
+      refresh_bi_absenteismo: { Args: { p_origem?: string }; Returns: Json }
       registrar_login_event: {
         Args: {
           _evento: Database["public"]["Enums"]["login_event_tipo"]
