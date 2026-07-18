@@ -5,7 +5,7 @@ import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Activity, AlertTriangle, ArrowDown, ArrowUp, BarChart3, Calendar as CalendarIcon,
-  Database, Info, RefreshCw, Save, Sparkles, TrendingDown, TrendingUp, Users,
+  Database, Download, Info, RefreshCw, Save, Sparkles, TrendingDown, TrendingUp, Users,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
