@@ -236,6 +236,59 @@ export type Database = {
           },
         ]
       }
+      backup_execution_events: {
+        Row: {
+          correlation_id: string
+          created_at: string
+          created_by: string | null
+          duracao_segundos: number | null
+          evento: string
+          id: string
+          mensagem: string | null
+          metadata: Json
+          origem: string
+          solicitacao_id: string
+          status: string
+          tamanho_bytes: number | null
+        }
+        Insert: {
+          correlation_id?: string
+          created_at?: string
+          created_by?: string | null
+          duracao_segundos?: number | null
+          evento: string
+          id?: string
+          mensagem?: string | null
+          metadata?: Json
+          origem?: string
+          solicitacao_id: string
+          status: string
+          tamanho_bytes?: number | null
+        }
+        Update: {
+          correlation_id?: string
+          created_at?: string
+          created_by?: string | null
+          duracao_segundos?: number | null
+          evento?: string
+          id?: string
+          mensagem?: string | null
+          metadata?: Json
+          origem?: string
+          solicitacao_id?: string
+          status?: string
+          tamanho_bytes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backup_execution_events_solicitacao_id_fkey"
+            columns: ["solicitacao_id"]
+            isOneToOne: false
+            referencedRelation: "backup_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backup_logs: {
         Row: {
           created_at: string
