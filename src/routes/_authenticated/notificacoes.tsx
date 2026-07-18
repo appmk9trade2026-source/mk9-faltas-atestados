@@ -201,9 +201,19 @@ function NotificacoesPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="preferencias">
+          <PreferenciasTab />
+        </TabsContent>
+
         <TabsContent value="regras">
           <RegrasEscalonamento canEdit={isAdmin} />
         </TabsContent>
+
+        {(isAdmin || roles.includes("compliance")) && (
+          <TabsContent value="simulador">
+            <SimuladorTab readonly={!isAdmin} />
+          </TabsContent>
+        )}
 
         {isAdmin && (
           <TabsContent value="motor" className="space-y-3">
