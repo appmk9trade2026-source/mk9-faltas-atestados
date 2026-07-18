@@ -97,7 +97,9 @@ function NotificacoesPage() {
       <Tabs defaultValue="caixa">
         <TabsList>
           <TabsTrigger value="caixa"><Bell className="mr-1.5 h-3.5 w-3.5" />Caixa de entrada</TabsTrigger>
+          <TabsTrigger value="preferencias">Preferências</TabsTrigger>
           <TabsTrigger value="regras">Regras de escalonamento</TabsTrigger>
+          {(isAdmin || roles.includes("compliance")) && <TabsTrigger value="simulador">Simulador</TabsTrigger>}
           {isAdmin && <TabsTrigger value="motor">Motor de SLA</TabsTrigger>}
         </TabsList>
 
