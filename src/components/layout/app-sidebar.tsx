@@ -69,6 +69,7 @@ const items: Item[] = [
   { title: "Roadmap", url: "/roadmap", icon: Map, roles: ["super_admin", "compliance"] },
   { title: "Acessos", url: "/acessos", icon: KeyRound, roles: ["super_admin", "compliance"] },
   { title: "BI Executivo", url: "/bi-executivo", icon: Sparkles, roles: ["super_admin", "compliance", "rh"] },
+  { title: "Observabilidade", url: "/observabilidade", icon: Gauge, roles: ["super_admin", "compliance"] },
 ];
 
 export function AppSidebar({ roles }: { roles: AppRole[] }) {
