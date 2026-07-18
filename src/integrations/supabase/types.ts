@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_reviews: {
+        Row: {
+          conclusao: string | null
+          created_at: string
+          criado_por: string | null
+          id: string
+          inicio: string
+          observacoes: string | null
+          papel: Database["public"]["Enums"]["app_role"]
+          prazo: string
+          responsavel_id: string | null
+          responsavel_nome: string | null
+          status: Database["public"]["Enums"]["access_review_status"]
+          updated_at: string
+          usuario_id: string
+          usuario_nome: string | null
+        }
+        Insert: {
+          conclusao?: string | null
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          inicio?: string
+          observacoes?: string | null
+          papel: Database["public"]["Enums"]["app_role"]
+          prazo?: string
+          responsavel_id?: string | null
+          responsavel_nome?: string | null
+          status?: Database["public"]["Enums"]["access_review_status"]
+          updated_at?: string
+          usuario_id: string
+          usuario_nome?: string | null
+        }
+        Update: {
+          conclusao?: string | null
+          created_at?: string
+          criado_por?: string | null
+          id?: string
+          inicio?: string
+          observacoes?: string | null
+          papel?: Database["public"]["Enums"]["app_role"]
+          prazo?: string
+          responsavel_id?: string | null
+          responsavel_nome?: string | null
+          status?: Database["public"]["Enums"]["access_review_status"]
+          updated_at?: string
+          usuario_id?: string
+          usuario_nome?: string | null
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           acao: Database["public"]["Enums"]["audit_action"]
@@ -808,6 +859,39 @@ export type Database = {
           total_linhas?: number
           updated_at?: string
           usuario_id?: string
+        }
+        Relationships: []
+      }
+      login_events: {
+        Row: {
+          created_at: string
+          evento: Database["public"]["Enums"]["login_event_tipo"]
+          id: string
+          metadata: Json
+          origem: string | null
+          provider: string | null
+          resultado: Database["public"]["Enums"]["login_event_resultado"]
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          evento: Database["public"]["Enums"]["login_event_tipo"]
+          id?: string
+          metadata?: Json
+          origem?: string | null
+          provider?: string | null
+          resultado?: Database["public"]["Enums"]["login_event_resultado"]
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          evento?: Database["public"]["Enums"]["login_event_tipo"]
+          id?: string
+          metadata?: Json
+          origem?: string | null
+          provider?: string | null
+          resultado?: Database["public"]["Enums"]["login_event_resultado"]
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1930,11 +2014,75 @@ export type Database = {
         }
         Relationships: []
       }
+      user_sessions: {
+        Row: {
+          browser: string | null
+          cidade: string | null
+          created_at: string
+          device: string | null
+          encerrada_em: string | null
+          expires_at: string | null
+          id: string
+          ip_hash: string | null
+          last_activity: string
+          motivo_encerramento: string | null
+          os: string | null
+          pais: string | null
+          provider: string | null
+          session_id: string | null
+          status: Database["public"]["Enums"]["session_status"]
+          updated_at: string
+          user_agent_hash: string | null
+          user_id: string
+        }
+        Insert: {
+          browser?: string | null
+          cidade?: string | null
+          created_at?: string
+          device?: string | null
+          encerrada_em?: string | null
+          expires_at?: string | null
+          id?: string
+          ip_hash?: string | null
+          last_activity?: string
+          motivo_encerramento?: string | null
+          os?: string | null
+          pais?: string | null
+          provider?: string | null
+          session_id?: string | null
+          status?: Database["public"]["Enums"]["session_status"]
+          updated_at?: string
+          user_agent_hash?: string | null
+          user_id: string
+        }
+        Update: {
+          browser?: string | null
+          cidade?: string | null
+          created_at?: string
+          device?: string | null
+          encerrada_em?: string | null
+          expires_at?: string | null
+          id?: string
+          ip_hash?: string | null
+          last_activity?: string
+          motivo_encerramento?: string | null
+          os?: string | null
+          pais?: string | null
+          provider?: string | null
+          session_id?: string | null
+          status?: Database["public"]["Enums"]["session_status"]
+          updated_at?: string
+          user_agent_hash?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      acessos_dashboard: { Args: never; Returns: Json }
       arquivar_notificacao: {
         Args: { _notificacao_id: string }
         Returns: undefined
@@ -2000,6 +2148,10 @@ export type Database = {
             }
             Returns: Json
           }
+      gerar_campanha_revisao: {
+        Args: { _dias_prazo?: number }
+        Returns: number
+      }
       get_colaboradores_ativos: {
         Args: { _busca?: string; _empresa_id?: string; _projeto_id?: string }
         Returns: {
@@ -2113,6 +2265,18 @@ export type Database = {
       operacoes_dashboard: { Args: never; Returns: Json }
       operacoes_health_check: { Args: never; Returns: Json }
       processar_escalonamentos_pendentes: { Args: never; Returns: Json }
+      registrar_login_event: {
+        Args: {
+          _evento: Database["public"]["Enums"]["login_event_tipo"]
+          _ip?: string
+          _metadata?: Json
+          _origem?: string
+          _provider?: string
+          _resultado?: Database["public"]["Enums"]["login_event_resultado"]
+          _user_agent?: string
+        }
+        Returns: string
+      }
       registrar_solicitacao_backup: {
         Args: { _observacoes?: string }
         Returns: string
@@ -2183,6 +2347,10 @@ export type Database = {
         Returns: Json
       }
       reprocessar_escalonamentos: { Args: never; Returns: Json }
+      revogar_sessao: {
+        Args: { _motivo?: string; _session_id: string }
+        Returns: undefined
+      }
       roadmap_dashboard: { Args: never; Returns: Json }
       run_escalonamentos: { Args: { p_origem?: string }; Returns: Json }
       saude_sistema: { Args: never; Returns: Json }
@@ -2224,6 +2392,7 @@ export type Database = {
       }
     }
     Enums: {
+      access_review_status: "PENDENTE" | "APROVADA" | "REVOGADA" | "PRORROGADA"
       app_role: "super_admin" | "rh" | "supervisor" | "compliance"
       audit_action:
         | "CREATE"
@@ -2256,6 +2425,13 @@ export type Database = {
         | "APROVADO"
         | "REPROVADO"
         | "NAO_APLICAVEL"
+      login_event_resultado: "SUCESSO" | "FALHA" | "BLOQUEADO"
+      login_event_tipo:
+        | "LOGIN"
+        | "LOGOUT"
+        | "TOKEN_REFRESH"
+        | "FALHA_LOGIN"
+        | "SESSAO_REVOGADA"
       notif_evento:
         | "CRIADA"
         | "ENTREGUE"
@@ -2386,6 +2562,7 @@ export type Database = {
         | "PERFORMANCE"
         | "UX"
         | "DOCUMENTACAO"
+      session_status: "ATIVA" | "ENCERRADA" | "EXPIRADA" | "REVOGADA"
       status_ausencia: "PENDENTE" | "LANCADO"
       status_comunicacao: "RASCUNHO" | "APROVADO" | "ENVIADO" | "ERRO"
       tipo_ausencia:
@@ -2526,6 +2703,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      access_review_status: ["PENDENTE", "APROVADA", "REVOGADA", "PRORROGADA"],
       app_role: ["super_admin", "rh", "supervisor", "compliance"],
       audit_action: [
         "CREATE",
@@ -2560,6 +2738,14 @@ export const Constants = {
         "APROVADO",
         "REPROVADO",
         "NAO_APLICAVEL",
+      ],
+      login_event_resultado: ["SUCESSO", "FALHA", "BLOQUEADO"],
+      login_event_tipo: [
+        "LOGIN",
+        "LOGOUT",
+        "TOKEN_REFRESH",
+        "FALHA_LOGIN",
+        "SESSAO_REVOGADA",
       ],
       notif_evento: [
         "CRIADA",
@@ -2702,6 +2888,7 @@ export const Constants = {
         "UX",
         "DOCUMENTACAO",
       ],
+      session_status: ["ATIVA", "ENCERRADA", "EXPIRADA", "REVOGADA"],
       status_ausencia: ["PENDENTE", "LANCADO"],
       status_comunicacao: ["RASCUNHO", "APROVADO", "ENVIADO", "ERRO"],
       tipo_ausencia: ["FALTA", "ATESTADO", "DECLARACAO", "SUSPENSAO", "OUTROS"],
