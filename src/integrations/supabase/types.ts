@@ -933,6 +933,39 @@ export type Database = {
           },
         ]
       }
+      notificacao_metricas_agregadas: {
+        Row: {
+          bucket_date: string
+          created_at: string
+          id: string
+          materializadas: number
+          severidade: Database["public"]["Enums"]["notif_severidade"]
+          suprimidas: number
+          tipo: Database["public"]["Enums"]["notif_tipo"]
+          updated_at: string
+        }
+        Insert: {
+          bucket_date?: string
+          created_at?: string
+          id?: string
+          materializadas?: number
+          severidade: Database["public"]["Enums"]["notif_severidade"]
+          suprimidas?: number
+          tipo: Database["public"]["Enums"]["notif_tipo"]
+          updated_at?: string
+        }
+        Update: {
+          bucket_date?: string
+          created_at?: string
+          id?: string
+          materializadas?: number
+          severidade?: Database["public"]["Enums"]["notif_severidade"]
+          suprimidas?: number
+          tipo?: Database["public"]["Enums"]["notif_tipo"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notificacao_tipos_config: {
         Row: {
           ativo: boolean
@@ -2314,7 +2347,28 @@ export type Database = {
         Args: { _notificacao_id: string }
         Returns: number
       }
+      materializar_notificacao: {
+        Args: {
+          _ambiente?: string
+          _created_by?: string
+          _destinatario_papel?: Database["public"]["Enums"]["app_role"]
+          _destinatario_usuario_id?: string
+          _expira_em?: string
+          _idempotency_key?: string
+          _mensagem: string
+          _metadata?: Json
+          _modulo?: string
+          _origem?: Database["public"]["Enums"]["notif_origem"]
+          _origem_id?: string
+          _rota_destino?: string
+          _severidade?: Database["public"]["Enums"]["notif_severidade"]
+          _tipo: Database["public"]["Enums"]["notif_tipo"]
+          _titulo: string
+        }
+        Returns: Json
+      }
       metricas_notificacoes: { Args: never; Returns: Json }
+      notificacoes_motor_healthcheck: { Args: never; Returns: Json }
       oa_dashboard: { Args: { _periodo_id?: string }; Returns: Json }
       oa_incidente_transicionar: {
         Args: {
