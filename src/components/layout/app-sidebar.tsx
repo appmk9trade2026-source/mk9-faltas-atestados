@@ -19,6 +19,7 @@ import {
   Rocket,
   BellRing,
   Map,
+  KeyRound,
 } from "lucide-react";
 import { buildStamp } from "@/lib/app-meta";
 import {
