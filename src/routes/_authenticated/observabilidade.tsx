@@ -106,7 +106,11 @@ function ObservabilidadePage() {
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="cron">Jobs pg_cron</TabsTrigger>
           <TabsTrigger value="indices">Índices</TabsTrigger>
+          <TabsTrigger value="seguranca">Segurança</TabsTrigger>
+          <TabsTrigger value="queries">Queries</TabsTrigger>
         </TabsList>
+        <SegurancaQueriesTabs />
+
 
         <TabsContent value="diagnostico" className="space-y-4 mt-4">
           <DiagList titulo="Tabelas sem RLS" itens={(db.data?.tabelas_sem_rls as Json[]) ?? []} severidade="ALTA" render={(i) => `${i.schema}.${i.tabela}`} />
