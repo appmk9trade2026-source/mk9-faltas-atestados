@@ -41,6 +41,7 @@ import { Route as AuthenticatedConfiguracoesEmpresasRouteImport } from './routes
 import { Route as AuthenticatedColaboradoresImportarRouteImport } from './routes/_authenticated/colaboradores_.importar'
 import { Route as AuthenticatedColaboradoresImportacoesRouteImport } from './routes/_authenticated/colaboradores_.importacoes'
 import { Route as ApiPublicHooksProcessWhatsappOutboxRouteImport } from './routes/api/public/hooks/process-whatsapp-outbox'
+import { Route as ApiPublicHooksEvolutionWhatsappWebhookRouteImport } from './routes/api/public/hooks/evolution-whatsapp-webhook'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -217,6 +218,12 @@ const ApiPublicHooksProcessWhatsappOutboxRoute =
     path: '/api/public/hooks/process-whatsapp-outbox',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksEvolutionWhatsappWebhookRoute =
+  ApiPublicHooksEvolutionWhatsappWebhookRouteImport.update({
+    id: '/api/public/hooks/evolution-whatsapp-webhook',
+    path: '/api/public/hooks/evolution-whatsapp-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -249,6 +256,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes/empresas': typeof AuthenticatedConfiguracoesEmpresasRoute
   '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
+  '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   '/api/public/hooks/process-whatsapp-outbox': typeof ApiPublicHooksProcessWhatsappOutboxRoute
 }
 export interface FileRoutesByTo {
@@ -282,6 +290,7 @@ export interface FileRoutesByTo {
   '/configuracoes/empresas': typeof AuthenticatedConfiguracoesEmpresasRoute
   '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
+  '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   '/api/public/hooks/process-whatsapp-outbox': typeof ApiPublicHooksProcessWhatsappOutboxRoute
 }
 export interface FileRoutesById {
@@ -317,6 +326,7 @@ export interface FileRoutesById {
   '/_authenticated/configuracoes/empresas': typeof AuthenticatedConfiguracoesEmpresasRoute
   '/_authenticated/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/_authenticated/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
+  '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   '/api/public/hooks/process-whatsapp-outbox': typeof ApiPublicHooksProcessWhatsappOutboxRoute
 }
 export interface FileRouteTypes {
@@ -352,6 +362,7 @@ export interface FileRouteTypes {
     | '/configuracoes/empresas'
     | '/configuracoes/projetos'
     | '/configuracoes/tipos-ausencia'
+    | '/api/public/hooks/evolution-whatsapp-webhook'
     | '/api/public/hooks/process-whatsapp-outbox'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -385,6 +396,7 @@ export interface FileRouteTypes {
     | '/configuracoes/empresas'
     | '/configuracoes/projetos'
     | '/configuracoes/tipos-ausencia'
+    | '/api/public/hooks/evolution-whatsapp-webhook'
     | '/api/public/hooks/process-whatsapp-outbox'
   id:
     | '__root__'
@@ -419,6 +431,7 @@ export interface FileRouteTypes {
     | '/_authenticated/configuracoes/empresas'
     | '/_authenticated/configuracoes/projetos'
     | '/_authenticated/configuracoes/tipos-ausencia'
+    | '/api/public/hooks/evolution-whatsapp-webhook'
     | '/api/public/hooks/process-whatsapp-outbox'
   fileRoutesById: FileRoutesById
 }
@@ -426,6 +439,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicHooksEvolutionWhatsappWebhookRoute: typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   ApiPublicHooksProcessWhatsappOutboxRoute: typeof ApiPublicHooksProcessWhatsappOutboxRoute
 }
 
@@ -655,6 +669,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksProcessWhatsappOutboxRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/evolution-whatsapp-webhook': {
+      id: '/api/public/hooks/evolution-whatsapp-webhook'
+      path: '/api/public/hooks/evolution-whatsapp-webhook'
+      fullPath: '/api/public/hooks/evolution-whatsapp-webhook'
+      preLoaderRoute: typeof ApiPublicHooksEvolutionWhatsappWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -744,6 +765,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicHooksEvolutionWhatsappWebhookRoute:
+    ApiPublicHooksEvolutionWhatsappWebhookRoute,
   ApiPublicHooksProcessWhatsappOutboxRoute:
     ApiPublicHooksProcessWhatsappOutboxRoute,
 }
