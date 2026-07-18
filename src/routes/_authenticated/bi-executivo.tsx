@@ -32,6 +32,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { cn } from "@/lib/utils";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const sb = supabase as any;
+
 export const Route = createFileRoute("/_authenticated/bi-executivo")({
   head: () => ({
     meta: [
