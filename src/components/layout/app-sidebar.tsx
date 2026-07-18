@@ -17,6 +17,7 @@ import {
   BookOpen,
   ClipboardCheck,
   Rocket,
+  BellRing,
 } from "lucide-react";
 import { buildStamp } from "@/lib/app-meta";
 import {
@@ -60,6 +61,7 @@ const items: Item[] = [
   { title: "Documentação", url: "/documentacao", icon: BookOpen, roles: ["super_admin"] },
   { title: "Deploy & Go-Live", url: "/deploy", icon: Rocket, roles: ["super_admin", "compliance"] },
   { title: "Operação Assistida", url: "/operacao-assistida", icon: ClipboardCheck, roles: ["super_admin", "compliance", "rh"] },
+  { title: "Notificações", url: "/notificacoes", icon: BellRing, roles: ["super_admin", "compliance", "rh"] },
 ];
 
 export function AppSidebar({ roles }: { roles: AppRole[] }) {
