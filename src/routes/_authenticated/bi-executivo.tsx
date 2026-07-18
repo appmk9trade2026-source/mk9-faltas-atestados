@@ -34,7 +34,7 @@ import { cn } from "@/lib/utils";
 import { VariacoesAtipicasTab } from "@/components/bi/variacoes-tab";
 import { RecorrenciaTab } from "@/components/bi/recorrencia-tab";
 import { exportBI, type ExportFormato } from "@/lib/bi-export";
-import { APP_META } from "@/lib/app-meta";
+import { buildStamp } from "@/lib/app-meta";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
