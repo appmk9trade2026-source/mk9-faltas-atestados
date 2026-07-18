@@ -2361,6 +2361,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _obs_can_read: { Args: never; Returns: boolean }
       acessos_dashboard: { Args: never; Returns: Json }
       analisar_conflitos_regras_escalonamento: { Args: never; Returns: Json }
       arquivar_notificacao: {
@@ -2417,6 +2418,7 @@ export type Database = {
         }
         Returns: string
       }
+      cron_healthcheck: { Args: never; Returns: Json }
       cron_refresh_bi_absenteismo_tick: { Args: never; Returns: Json }
       cron_run_escalonamentos_tick: { Args: never; Returns: undefined }
       dashboard_metrics:
@@ -2445,6 +2447,9 @@ export type Database = {
             }
             Returns: Json
           }
+      database_healthcheck: { Args: never; Returns: Json }
+      database_indices_report: { Args: never; Returns: Json }
+      database_performance: { Args: never; Returns: Json }
       gerar_campanha_revisao: {
         Args: { _dias_prazo?: number }
         Returns: number
@@ -2596,8 +2601,13 @@ export type Database = {
         Args: { _motivo: string; _nova_data: string; _periodo_id: string }
         Returns: undefined
       }
+      observabilidade_registrar_execucao: {
+        Args: { p_acao: string; p_detalhes?: Json }
+        Returns: undefined
+      }
       operacoes_dashboard: { Args: never; Returns: Json }
       operacoes_health_check: { Args: never; Returns: Json }
+      plataforma_health_score: { Args: never; Returns: Json }
       preferencia_notificacao_efetiva: {
         Args: {
           p_severidade?: Database["public"]["Enums"]["notif_severidade"]
