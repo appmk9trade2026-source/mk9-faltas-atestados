@@ -51,7 +51,7 @@ function NotificacoesPage() {
 
   const marcar = useMarcarLida();
   const arquivar = useArquivar();
-  const processar = useProcessarEscalonamentos();
+  
 
   const filtered = useMemo(() => {
     const q = busca.trim().toLowerCase();
