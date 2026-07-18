@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { AutomacaoStatusCards, MotorControls, HistoricoExecucoes } from "@/components/automacao/automacao-motor";
 import { PreferenciasTab } from "@/components/notificacoes/preferencias-tab";
 import { SimuladorTab } from "@/components/notificacoes/simulador-tab";
+import { MotorV2Metricas } from "@/components/notificacoes/motor-v2-metricas";
 
 
 export const Route = createFileRoute("/_authenticated/notificacoes")({
@@ -231,6 +232,7 @@ function NotificacoesPage() {
                 </div>
               </CardContent>
             </Card>
+            <MotorV2Metricas />
             <Card>
               <CardContent className="space-y-3 pt-6">
                 <h4 className="text-sm font-semibold">Histórico de execuções</h4>
