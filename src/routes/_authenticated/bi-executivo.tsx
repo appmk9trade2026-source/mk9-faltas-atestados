@@ -610,6 +610,15 @@ function BIExecutivoPage() {
           </TabsContent>
         </Tabs>
 
+        {/* Exportação */}
+        <ExportDialog
+          open={showExport}
+          onOpenChange={setShowExport}
+          dados={dados}
+          filtros={filtros}
+          ultimaAtualizacao={health?.ultima_atualizacao ?? null}
+        />
+
         {/* Metodologia */}
         <Dialog open={showMetodologia} onOpenChange={setShowMetodologia}>
           <DialogContent className="max-w-2xl">
