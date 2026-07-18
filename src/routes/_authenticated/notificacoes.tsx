@@ -22,6 +22,8 @@ import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { AutomacaoStatusCards, MotorControls, HistoricoExecucoes } from "@/components/automacao/automacao-motor";
+import { PreferenciasTab } from "@/components/notificacoes/preferencias-tab";
+import { SimuladorTab } from "@/components/notificacoes/simulador-tab";
 
 
 export const Route = createFileRoute("/_authenticated/notificacoes")({
