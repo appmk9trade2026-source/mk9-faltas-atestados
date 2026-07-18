@@ -3224,6 +3224,17 @@ export type Database = {
         Args: { p_codigo: string; p_id: string; p_mensagem_resumida: string }
         Returns: Database["public"]["Enums"]["whatsapp_status"]
       }
+      whatsapp_outbox_processar_webhook: {
+        Args: {
+          p_codigo?: string
+          p_instance: string
+          p_mensagem?: string
+          p_metadata?: Json
+          p_provider_message_id: string
+          p_status_novo: Database["public"]["Enums"]["whatsapp_status"]
+        }
+        Returns: Json
+      }
       whatsapp_outbox_recuperar_travadas: {
         Args: { p_timeout_seg?: number }
         Returns: number
@@ -3274,6 +3285,13 @@ export type Database = {
           p_outbox_id: string
         }
         Returns: undefined
+      }
+      whatsapp_status_pode_evoluir: {
+        Args: {
+          atual: Database["public"]["Enums"]["whatsapp_status"]
+          novo: Database["public"]["Enums"]["whatsapp_status"]
+        }
+        Returns: boolean
       }
     }
     Enums: {
