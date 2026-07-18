@@ -82,6 +82,7 @@ function BIExecutivoPage() {
   const [showMetodologia, setShowMetodologia] = useState(false);
   const [nomeVisao, setNomeVisao] = useState("");
   const [showSalvar, setShowSalvar] = useState(false);
+  const [showExport, setShowExport] = useState(false);
 
   const empresasQ = useQuery({
     queryKey: ["bi-empresas"],
