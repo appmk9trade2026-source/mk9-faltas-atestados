@@ -21,6 +21,7 @@ import { Route as AuthenticatedNovaAusenciaRouteImport } from './routes/_authent
 import { Route as AuthenticatedHomologacaoRouteImport } from './routes/_authenticated/homologacao'
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
 import { Route as AuthenticatedDocumentacaoRouteImport } from './routes/_authenticated/documentacao'
+import { Route as AuthenticatedDeployRouteImport } from './routes/_authenticated/deploy'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedComunicacoesRouteImport } from './routes/_authenticated/comunicacoes'
@@ -96,6 +97,11 @@ const AuthenticatedDocumentacaoRoute =
     path: '/documentacao',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDeployRoute = AuthenticatedDeployRouteImport.update({
+  id: '/deploy',
+  path: '/deploy',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -175,6 +181,7 @@ export interface FileRoutesByFullPath {
   '/comunicacoes': typeof AuthenticatedComunicacoesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/deploy': typeof AuthenticatedDeployRoute
   '/documentacao': typeof AuthenticatedDocumentacaoRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/homologacao': typeof AuthenticatedHomologacaoRoute
@@ -200,6 +207,7 @@ export interface FileRoutesByTo {
   '/comunicacoes': typeof AuthenticatedComunicacoesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/deploy': typeof AuthenticatedDeployRoute
   '/documentacao': typeof AuthenticatedDocumentacaoRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/homologacao': typeof AuthenticatedHomologacaoRoute
@@ -227,6 +235,7 @@ export interface FileRoutesById {
   '/_authenticated/comunicacoes': typeof AuthenticatedComunicacoesRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/deploy': typeof AuthenticatedDeployRoute
   '/_authenticated/documentacao': typeof AuthenticatedDocumentacaoRoute
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
   '/_authenticated/homologacao': typeof AuthenticatedHomologacaoRoute
@@ -254,6 +263,7 @@ export interface FileRouteTypes {
     | '/comunicacoes'
     | '/configuracoes'
     | '/dashboard'
+    | '/deploy'
     | '/documentacao'
     | '/historico'
     | '/homologacao'
@@ -279,6 +289,7 @@ export interface FileRouteTypes {
     | '/comunicacoes'
     | '/configuracoes'
     | '/dashboard'
+    | '/deploy'
     | '/documentacao'
     | '/historico'
     | '/homologacao'
@@ -305,6 +316,7 @@ export interface FileRouteTypes {
     | '/_authenticated/comunicacoes'
     | '/_authenticated/configuracoes'
     | '/_authenticated/dashboard'
+    | '/_authenticated/deploy'
     | '/_authenticated/documentacao'
     | '/_authenticated/historico'
     | '/_authenticated/homologacao'
@@ -411,6 +423,13 @@ declare module '@tanstack/react-router' {
       path: '/documentacao'
       fullPath: '/documentacao'
       preLoaderRoute: typeof AuthenticatedDocumentacaoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/deploy': {
+      id: '/_authenticated/deploy'
+      path: '/deploy'
+      fullPath: '/deploy'
+      preLoaderRoute: typeof AuthenticatedDeployRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -529,6 +548,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedComunicacoesRoute: typeof AuthenticatedComunicacoesRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDeployRoute: typeof AuthenticatedDeployRoute
   AuthenticatedDocumentacaoRoute: typeof AuthenticatedDocumentacaoRoute
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
   AuthenticatedHomologacaoRoute: typeof AuthenticatedHomologacaoRoute
@@ -550,6 +570,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedComunicacoesRoute: AuthenticatedComunicacoesRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDeployRoute: AuthenticatedDeployRoute,
   AuthenticatedDocumentacaoRoute: AuthenticatedDocumentacaoRoute,
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
   AuthenticatedHomologacaoRoute: AuthenticatedHomologacaoRoute,
