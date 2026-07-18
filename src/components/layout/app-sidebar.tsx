@@ -16,7 +16,9 @@ import {
   HardDrive,
   BookOpen,
   ClipboardCheck,
+  Rocket,
 } from "lucide-react";
+import { buildStamp } from "@/lib/app-meta";
 import {
   Sidebar,
   SidebarContent,
@@ -56,6 +58,7 @@ const items: Item[] = [
   { title: "Saúde do Sistema", url: "/saude", icon: Activity, roles: ["super_admin"] },
   { title: "Operações", url: "/operacoes", icon: HardDrive, roles: ["super_admin", "compliance"] },
   { title: "Documentação", url: "/documentacao", icon: BookOpen, roles: ["super_admin"] },
+  { title: "Deploy & Go-Live", url: "/deploy", icon: Rocket, roles: ["super_admin", "compliance"] },
 ];
 
 export function AppSidebar({ roles }: { roles: AppRole[] }) {
@@ -101,7 +104,7 @@ export function AppSidebar({ roles }: { roles: AppRole[] }) {
 
       <SidebarFooter>
         <div className="px-2 pb-2 text-[11px] text-muted-foreground group-data-[collapsible=icon]:hidden">
-          v0.1 · Fundação
+          {buildStamp()}
         </div>
       </SidebarFooter>
     </Sidebar>
