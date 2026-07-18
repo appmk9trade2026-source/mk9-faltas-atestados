@@ -371,9 +371,20 @@ function BIExecutivoPage() {
             <TabsTrigger value="empresas">Empresas & Projetos</TabsTrigger>
             <TabsTrigger value="sazonalidade">Sazonalidade</TabsTrigger>
             <TabsTrigger value="concentracao">Concentração</TabsTrigger>
+            <TabsTrigger value="variacoes">Variações Atípicas</TabsTrigger>
+            <TabsTrigger value="recorrencia">Recorrência</TabsTrigger>
             <TabsTrigger value="qualidade">Qualidade</TabsTrigger>
             <TabsTrigger value="tendencia">Tendência</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="variacoes" className="mt-4">
+            <VariacoesAtipicasTab dataInicio={filtros.data_inicio} dataFim={filtros.data_fim} />
+          </TabsContent>
+
+          <TabsContent value="recorrencia" className="mt-4">
+            <RecorrenciaTab dataInicio={filtros.data_inicio} dataFim={filtros.data_fim} />
+          </TabsContent>
+
 
           <TabsContent value="evolucao" className="mt-4">
             <Card>
