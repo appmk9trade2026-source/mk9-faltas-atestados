@@ -232,6 +232,7 @@ function NotificacoesPage() {
                 </div>
               </CardContent>
             </Card>
+            <MotorV2Metricas />
             <Card>
               <CardContent className="space-y-3 pt-6">
                 <h4 className="text-sm font-semibold">Histórico de execuções</h4>
