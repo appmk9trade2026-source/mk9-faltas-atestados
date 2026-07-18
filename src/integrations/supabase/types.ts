@@ -841,6 +841,318 @@ export type Database = {
         }
         Relationships: []
       }
+      operacao_assistida_periodos: {
+        Row: {
+          ambiente: Database["public"]["Enums"]["oa_ambiente"]
+          created_at: string
+          created_by: string | null
+          criterios_encerramento: string | null
+          data_fim_prevista: string
+          data_fim_real: string | null
+          data_inicio: string
+          descricao: string | null
+          id: string
+          nome: string
+          responsavel_principal: string | null
+          status: Database["public"]["Enums"]["oa_periodo_status"]
+          updated_at: string
+        }
+        Insert: {
+          ambiente?: Database["public"]["Enums"]["oa_ambiente"]
+          created_at?: string
+          created_by?: string | null
+          criterios_encerramento?: string | null
+          data_fim_prevista: string
+          data_fim_real?: string | null
+          data_inicio: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          responsavel_principal?: string | null
+          status?: Database["public"]["Enums"]["oa_periodo_status"]
+          updated_at?: string
+        }
+        Update: {
+          ambiente?: Database["public"]["Enums"]["oa_ambiente"]
+          created_at?: string
+          created_by?: string | null
+          criterios_encerramento?: string | null
+          data_fim_prevista?: string
+          data_fim_real?: string | null
+          data_inicio?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          responsavel_principal?: string | null
+          status?: Database["public"]["Enums"]["oa_periodo_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      operacao_incidente_comentarios: {
+        Row: {
+          conteudo: string
+          created_at: string
+          created_by: string | null
+          created_by_nome: string | null
+          id: string
+          incidente_id: string
+          interno: boolean
+          tipo: Database["public"]["Enums"]["oa_comentario_tipo"]
+        }
+        Insert: {
+          conteudo: string
+          created_at?: string
+          created_by?: string | null
+          created_by_nome?: string | null
+          id?: string
+          incidente_id: string
+          interno?: boolean
+          tipo?: Database["public"]["Enums"]["oa_comentario_tipo"]
+        }
+        Update: {
+          conteudo?: string
+          created_at?: string
+          created_by?: string | null
+          created_by_nome?: string | null
+          id?: string
+          incidente_id?: string
+          interno?: boolean
+          tipo?: Database["public"]["Enums"]["oa_comentario_tipo"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operacao_incidente_comentarios_incidente_id_fkey"
+            columns: ["incidente_id"]
+            isOneToOne: false
+            referencedRelation: "operacao_incidentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operacao_incidente_eventos: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          created_by_nome: string | null
+          evento: Database["public"]["Enums"]["oa_evento_tipo"]
+          id: string
+          incidente_id: string
+          mensagem: string | null
+          metadata: Json | null
+          status_anterior:
+            | Database["public"]["Enums"]["oa_incidente_status"]
+            | null
+          status_novo: Database["public"]["Enums"]["oa_incidente_status"] | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          created_by_nome?: string | null
+          evento: Database["public"]["Enums"]["oa_evento_tipo"]
+          id?: string
+          incidente_id: string
+          mensagem?: string | null
+          metadata?: Json | null
+          status_anterior?:
+            | Database["public"]["Enums"]["oa_incidente_status"]
+            | null
+          status_novo?:
+            | Database["public"]["Enums"]["oa_incidente_status"]
+            | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          created_by_nome?: string | null
+          evento?: Database["public"]["Enums"]["oa_evento_tipo"]
+          id?: string
+          incidente_id?: string
+          mensagem?: string | null
+          metadata?: Json | null
+          status_anterior?:
+            | Database["public"]["Enums"]["oa_incidente_status"]
+            | null
+          status_novo?:
+            | Database["public"]["Enums"]["oa_incidente_status"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operacao_incidente_eventos_incidente_id_fkey"
+            columns: ["incidente_id"]
+            isOneToOne: false
+            referencedRelation: "operacao_incidentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operacao_incidente_evidencias: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          created_by_nome: string | null
+          descricao: string | null
+          id: string
+          incidente_id: string
+          nome: string
+          tipo: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          created_by_nome?: string | null
+          descricao?: string | null
+          id?: string
+          incidente_id: string
+          nome: string
+          tipo?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          created_by_nome?: string | null
+          descricao?: string | null
+          id?: string
+          incidente_id?: string
+          nome?: string
+          tipo?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operacao_incidente_evidencias_incidente_id_fkey"
+            columns: ["incidente_id"]
+            isOneToOne: false
+            referencedRelation: "operacao_incidentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operacao_incidentes: {
+        Row: {
+          alerta_id: string | null
+          ambiente: Database["public"]["Enums"]["oa_ambiente"]
+          backup_event_id: string | null
+          categoria: Database["public"]["Enums"]["oa_incidente_categoria"]
+          causa_raiz: string | null
+          codigo: string | null
+          created_at: string
+          descricao: string | null
+          encerrado_em: string | null
+          id: string
+          impacto: Database["public"]["Enums"]["oa_impacto"]
+          modulo_afetado: string | null
+          origem: string | null
+          periodo_id: string | null
+          plano_contencao: string | null
+          plano_prevencao: string | null
+          possui_dados_sensiveis: boolean
+          prazo_resolucao: string | null
+          primeira_resposta_em: string | null
+          prioridade: Database["public"]["Enums"]["oa_prioridade"]
+          reportado_em: string
+          reportado_por: string | null
+          reportado_por_nome: string | null
+          resolvido_em: string | null
+          responsavel_id: string | null
+          responsavel_nome: string | null
+          rota_afetada: string | null
+          severidade: Database["public"]["Enums"]["oa_severidade"]
+          solucao_aplicada: string | null
+          status: Database["public"]["Enums"]["oa_incidente_status"]
+          tipo: Database["public"]["Enums"]["oa_incidente_tipo"]
+          titulo: string
+          updated_at: string
+          versao_corrigida: string | null
+          versao_detectada: string | null
+        }
+        Insert: {
+          alerta_id?: string | null
+          ambiente?: Database["public"]["Enums"]["oa_ambiente"]
+          backup_event_id?: string | null
+          categoria?: Database["public"]["Enums"]["oa_incidente_categoria"]
+          causa_raiz?: string | null
+          codigo?: string | null
+          created_at?: string
+          descricao?: string | null
+          encerrado_em?: string | null
+          id?: string
+          impacto?: Database["public"]["Enums"]["oa_impacto"]
+          modulo_afetado?: string | null
+          origem?: string | null
+          periodo_id?: string | null
+          plano_contencao?: string | null
+          plano_prevencao?: string | null
+          possui_dados_sensiveis?: boolean
+          prazo_resolucao?: string | null
+          primeira_resposta_em?: string | null
+          prioridade?: Database["public"]["Enums"]["oa_prioridade"]
+          reportado_em?: string
+          reportado_por?: string | null
+          reportado_por_nome?: string | null
+          resolvido_em?: string | null
+          responsavel_id?: string | null
+          responsavel_nome?: string | null
+          rota_afetada?: string | null
+          severidade?: Database["public"]["Enums"]["oa_severidade"]
+          solucao_aplicada?: string | null
+          status?: Database["public"]["Enums"]["oa_incidente_status"]
+          tipo?: Database["public"]["Enums"]["oa_incidente_tipo"]
+          titulo: string
+          updated_at?: string
+          versao_corrigida?: string | null
+          versao_detectada?: string | null
+        }
+        Update: {
+          alerta_id?: string | null
+          ambiente?: Database["public"]["Enums"]["oa_ambiente"]
+          backup_event_id?: string | null
+          categoria?: Database["public"]["Enums"]["oa_incidente_categoria"]
+          causa_raiz?: string | null
+          codigo?: string | null
+          created_at?: string
+          descricao?: string | null
+          encerrado_em?: string | null
+          id?: string
+          impacto?: Database["public"]["Enums"]["oa_impacto"]
+          modulo_afetado?: string | null
+          origem?: string | null
+          periodo_id?: string | null
+          plano_contencao?: string | null
+          plano_prevencao?: string | null
+          possui_dados_sensiveis?: boolean
+          prazo_resolucao?: string | null
+          primeira_resposta_em?: string | null
+          prioridade?: Database["public"]["Enums"]["oa_prioridade"]
+          reportado_em?: string
+          reportado_por?: string | null
+          reportado_por_nome?: string | null
+          resolvido_em?: string | null
+          responsavel_id?: string | null
+          responsavel_nome?: string | null
+          rota_afetada?: string | null
+          severidade?: Database["public"]["Enums"]["oa_severidade"]
+          solucao_aplicada?: string | null
+          status?: Database["public"]["Enums"]["oa_incidente_status"]
+          tipo?: Database["public"]["Enums"]["oa_incidente_tipo"]
+          titulo?: string
+          updated_at?: string
+          versao_corrigida?: string | null
+          versao_detectada?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operacao_incidentes_periodo_id_fkey"
+            columns: ["periodo_id"]
+            isOneToOne: false
+            referencedRelation: "operacao_assistida_periodos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       operacao_metricas: {
         Row: {
           categoria: string
@@ -1154,6 +1466,26 @@ export type Database = {
         }
         Returns: string
       }
+      oa_dashboard: { Args: { _periodo_id?: string }; Returns: Json }
+      oa_incidente_transicionar: {
+        Args: {
+          _causa_raiz?: string
+          _incidente_id: string
+          _mensagem?: string
+          _novo_status: Database["public"]["Enums"]["oa_incidente_status"]
+          _plano_prevencao?: string
+          _solucao?: string
+        }
+        Returns: string
+      }
+      oa_periodo_encerrar: {
+        Args: { _observacoes?: string; _periodo_id: string }
+        Returns: undefined
+      }
+      oa_periodo_prorrogar: {
+        Args: { _motivo: string; _nova_data: string; _periodo_id: string }
+        Returns: undefined
+      }
       operacoes_dashboard: { Args: never; Returns: Json }
       operacoes_health_check: { Args: never; Returns: Json }
       registrar_solicitacao_backup: {
@@ -1288,6 +1620,64 @@ export type Database = {
         | "APROVADO"
         | "REPROVADO"
         | "NAO_APLICAVEL"
+      oa_ambiente: "desenvolvimento" | "homologacao" | "preview" | "producao"
+      oa_comentario_tipo: "COMENTARIO" | "ATUALIZACAO" | "VALIDACAO" | "DECISAO"
+      oa_evento_tipo:
+        | "CRIADO"
+        | "CLASSIFICADO"
+        | "RESPONSAVEL_ATRIBUIDO"
+        | "STATUS_ALTERADO"
+        | "COMENTARIO_ADICIONADO"
+        | "EVIDENCIA_ADICIONADA"
+        | "PRAZO_ALTERADO"
+        | "SOLUCAO_REGISTRADA"
+        | "VALIDACAO_SOLICITADA"
+        | "RESOLVIDO"
+        | "ENCERRADO"
+        | "REABERTO"
+        | "CANCELADO"
+      oa_impacto: "INDIVIDUAL" | "EQUIPE" | "DEPARTAMENTO" | "GERAL"
+      oa_incidente_categoria:
+        | "AUTENTICACAO"
+        | "PERMISSAO"
+        | "IMPORTACAO"
+        | "COLABORADORES"
+        | "AUSENCIAS"
+        | "COMUNICACOES"
+        | "PAINEL_RH"
+        | "DASHBOARD"
+        | "RELATORIOS"
+        | "AUDITORIA"
+        | "OPERACOES"
+        | "DEPLOY"
+        | "DESEMPENHO"
+        | "INTERFACE"
+        | "DADOS"
+        | "OUTROS"
+      oa_incidente_status:
+        | "NOVO"
+        | "EM_TRIAGEM"
+        | "EM_ANALISE"
+        | "EM_CORRECAO"
+        | "AGUARDANDO_VALIDACAO"
+        | "RESOLVIDO"
+        | "ENCERRADO"
+        | "CANCELADO"
+      oa_incidente_tipo:
+        | "INCIDENTE"
+        | "BUG"
+        | "DUVIDA"
+        | "SOLICITACAO"
+        | "CONFIGURACAO"
+        | "MELHORIA"
+      oa_periodo_status:
+        | "PLANEJADO"
+        | "ATIVO"
+        | "PRORROGADO"
+        | "ENCERRADO"
+        | "CANCELADO"
+      oa_prioridade: "P4" | "P3" | "P2" | "P1"
+      oa_severidade: "BAIXA" | "MEDIA" | "ALTA" | "CRITICA"
       op_assist_prioridade: "BAIXA" | "MEDIA" | "ALTA" | "CRITICA"
       op_assist_status: "ABERTO" | "EM_ANDAMENTO" | "RESOLVIDO" | "CANCELADO"
       status_ausencia: "PENDENTE" | "LANCADO"
@@ -1456,6 +1846,69 @@ export const Constants = {
         "REPROVADO",
         "NAO_APLICAVEL",
       ],
+      oa_ambiente: ["desenvolvimento", "homologacao", "preview", "producao"],
+      oa_comentario_tipo: ["COMENTARIO", "ATUALIZACAO", "VALIDACAO", "DECISAO"],
+      oa_evento_tipo: [
+        "CRIADO",
+        "CLASSIFICADO",
+        "RESPONSAVEL_ATRIBUIDO",
+        "STATUS_ALTERADO",
+        "COMENTARIO_ADICIONADO",
+        "EVIDENCIA_ADICIONADA",
+        "PRAZO_ALTERADO",
+        "SOLUCAO_REGISTRADA",
+        "VALIDACAO_SOLICITADA",
+        "RESOLVIDO",
+        "ENCERRADO",
+        "REABERTO",
+        "CANCELADO",
+      ],
+      oa_impacto: ["INDIVIDUAL", "EQUIPE", "DEPARTAMENTO", "GERAL"],
+      oa_incidente_categoria: [
+        "AUTENTICACAO",
+        "PERMISSAO",
+        "IMPORTACAO",
+        "COLABORADORES",
+        "AUSENCIAS",
+        "COMUNICACOES",
+        "PAINEL_RH",
+        "DASHBOARD",
+        "RELATORIOS",
+        "AUDITORIA",
+        "OPERACOES",
+        "DEPLOY",
+        "DESEMPENHO",
+        "INTERFACE",
+        "DADOS",
+        "OUTROS",
+      ],
+      oa_incidente_status: [
+        "NOVO",
+        "EM_TRIAGEM",
+        "EM_ANALISE",
+        "EM_CORRECAO",
+        "AGUARDANDO_VALIDACAO",
+        "RESOLVIDO",
+        "ENCERRADO",
+        "CANCELADO",
+      ],
+      oa_incidente_tipo: [
+        "INCIDENTE",
+        "BUG",
+        "DUVIDA",
+        "SOLICITACAO",
+        "CONFIGURACAO",
+        "MELHORIA",
+      ],
+      oa_periodo_status: [
+        "PLANEJADO",
+        "ATIVO",
+        "PRORROGADO",
+        "ENCERRADO",
+        "CANCELADO",
+      ],
+      oa_prioridade: ["P4", "P3", "P2", "P1"],
+      oa_severidade: ["BAIXA", "MEDIA", "ALTA", "CRITICA"],
       op_assist_prioridade: ["BAIXA", "MEDIA", "ALTA", "CRITICA"],
       op_assist_status: ["ABERTO", "EM_ANDAMENTO", "RESOLVIDO", "CANCELADO"],
       status_ausencia: ["PENDENTE", "LANCADO"],
