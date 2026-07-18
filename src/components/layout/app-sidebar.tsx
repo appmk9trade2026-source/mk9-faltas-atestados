@@ -20,6 +20,7 @@ import {
   BellRing,
   Map,
   KeyRound,
+  Sparkles,
 } from "lucide-react";
 import { buildStamp } from "@/lib/app-meta";
 import {
@@ -66,6 +67,7 @@ const items: Item[] = [
   { title: "Notificações", url: "/notificacoes", icon: BellRing, roles: ["super_admin", "compliance", "rh"] },
   { title: "Roadmap", url: "/roadmap", icon: Map, roles: ["super_admin", "compliance"] },
   { title: "Acessos", url: "/acessos", icon: KeyRound, roles: ["super_admin", "compliance"] },
+  { title: "BI Executivo", url: "/bi-executivo", icon: Sparkles, roles: ["super_admin", "compliance", "rh"] },
 ];
 
 export function AppSidebar({ roles }: { roles: AppRole[] }) {
