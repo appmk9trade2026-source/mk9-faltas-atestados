@@ -21,6 +21,7 @@ import {
   Map,
   KeyRound,
   Sparkles,
+  Gauge,
 } from "lucide-react";
 import { buildStamp } from "@/lib/app-meta";
 import {
