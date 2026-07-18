@@ -21,6 +21,7 @@ import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { AutomacaoStatusCards, HistoricoExecucoes, MotorControls } from "@/components/automacao/automacao-motor";
+import { BIHealthCard } from "@/components/bi/bi-health-card";
 
 export const Route = createFileRoute("/_authenticated/operacoes")({
   head: () => ({ meta: [{ title: "Operações · CRM MK9" }] }),
