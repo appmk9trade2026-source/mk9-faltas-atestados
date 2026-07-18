@@ -103,7 +103,7 @@ function BIExecutivoPage() {
   const dadosQ = useQuery({
     queryKey: ["bi-consultar", filtros],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("bi_executivo_consultar" as never, {
+      const { data, error } = await sb.rpc("bi_executivo_consultar" as never, {
         p_filtros: filtros as never,
       });
       if (error) throw error;
@@ -114,7 +114,7 @@ function BIExecutivoPage() {
   const tendenciaQ = useQuery({
     queryKey: ["bi-tendencia", filtros.data_inicio, filtros.data_fim],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("bi_analisar_tendencias" as never, {
+      const { data, error } = await sb.rpc("bi_analisar_tendencias" as never, {
         p_filtros: { data_inicio: filtros.data_inicio, data_fim: filtros.data_fim } as never,
       });
       if (error) throw error;
@@ -125,7 +125,7 @@ function BIExecutivoPage() {
   const healthQ = useQuery({
     queryKey: ["bi-health"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("bi_healthcheck" as never);
+      const { data, error } = await sb.rpc("bi_healthcheck" as never);
       if (error) return null;
       return data as never;
     },
@@ -136,7 +136,7 @@ function BIExecutivoPage() {
   const visoesQ = useQuery({
     queryKey: ["bi-visoes"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("bi_visoes_salvas" as never).select("*").order("created_at", { ascending: false });
+      const { data, error } = await sb.from("bi_visoes_salvas" as never).select("*").order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Array<{ id: string; nome: string; filtros: Filtros; is_padrao: boolean }>;
     },
@@ -144,7 +144,7 @@ function BIExecutivoPage() {
 
   const refreshMut = useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.rpc("refresh_bi_absenteismo" as never, { p_origem: "MANUAL" as never });
+      const { data, error } = await sb.rpc("refresh_bi_absenteismo" as never, { p_origem: "MANUAL" as never });
       if (error) throw error;
       return data as never;
     },
@@ -163,7 +163,7 @@ function BIExecutivoPage() {
     mutationFn: async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) throw new Error("Sem sessão");
-      const { error } = await supabase.from("bi_visoes_salvas" as never).insert({
+      const { error } = await sb.from("bi_visoes_salvas" as never).insert({
         usuario_id: u.user.id, nome: nomeVisao, filtros: filtros as never,
       } as never);
       if (error) throw error;
