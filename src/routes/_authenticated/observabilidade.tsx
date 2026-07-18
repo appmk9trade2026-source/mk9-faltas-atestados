@@ -10,6 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { cn } from "@/lib/utils";
+import { SegurancaQueriesTabs } from "@/components/observabilidade/seguranca-queries-tabs";
+
 
 export const Route = createFileRoute("/_authenticated/observabilidade")({
   component: ObservabilidadePage,
