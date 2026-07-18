@@ -126,6 +126,14 @@ export function SegurancaQueriesTabs() {
   const expAnon = invRows.filter((r) => r.execute_anon).length;
   const okCount = invRows.filter((r) => r.status === "OK").length;
 
+  // Fase B — KPIs de hardening (categoria + risco)
+  const catCount = (c: string) => invRows.filter((r) => r.categoria === c).length;
+  const authOnly = invRows.filter((r) => r.execute_authenticated && !r.execute_anon && !r.execute_public).length;
+  const svcOnly = invRows.filter((r) => r.execute_service_role && !r.execute_authenticated).length;
+  const riskAlto = invRows.filter((r) => r.risk_level === "ALTO").length;
+  const riskMedio = invRows.filter((r) => r.risk_level === "MEDIO").length;
+  const riskBaixo = invRows.filter((r) => r.risk_level === "BAIXO").length;
+
   const exportSeguranca = async () => {
     downloadCsv("mk9-seguranca-funcoes.csv", invRows as unknown as Record<string, unknown>[]);
     await registrarExport("security_functions_inventory").catch(() => undefined);
@@ -147,6 +155,17 @@ export function SegurancaQueriesTabs() {
               <ScoreCard label="Status OK" value={okCount} tone="ok" icon={ShieldCheck} />
             </div>
 
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+              <ScoreCard label="Auth + Service" value={authOnly} tone="ok" />
+              <ScoreCard label="Service_role only" value={svcOnly} tone="ok" />
+              <ScoreCard label="Triggers" value={catCount("TRIGGER")} tone="neutral" />
+              <ScoreCard label="CRON only" value={catCount("CRON_ONLY")} tone="neutral" />
+              <ScoreCard label="Admin RPC" value={catCount("ADMIN_RPC")} tone="neutral" />
+              <ScoreCard label="Risco Alto" value={riskAlto} tone={riskAlto === 0 ? "ok" : "critico"} />
+              <ScoreCard label="Risco Médio" value={riskMedio} tone={riskMedio === 0 ? "ok" : "atencao"} />
+              <ScoreCard label="Risco Baixo" value={riskBaixo} tone="ok" />
+            </div>
+
             <div className="flex justify-end">
               <Button variant="outline" size="sm" onClick={exportSeguranca} disabled={invRows.length === 0}>
                 <Download className="h-4 w-4 mr-2" /> Exportar CSV
@@ -166,13 +185,13 @@ export function SegurancaQueriesTabs() {
                       <TableHeader className="sticky top-0 bg-background">
                         <TableRow>
                           <TableHead>Função</TableHead>
-                          <TableHead>SECDEF</TableHead>
-                          <TableHead>search_path</TableHead>
+                          <TableHead>Categoria</TableHead>
+                          <TableHead>Grant</TableHead>
+                          <TableHead>Risco</TableHead>
                           <TableHead>public</TableHead>
                           <TableHead>anon</TableHead>
-                          <TableHead>authenticated</TableHead>
-                          <TableHead>service_role</TableHead>
-                          <TableHead>Owner</TableHead>
+                          <TableHead>auth</TableHead>
+                          <TableHead>service</TableHead>
                           <TableHead>Status</TableHead>
                         </TableRow>
                       </TableHeader>
