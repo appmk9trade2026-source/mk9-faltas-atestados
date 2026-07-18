@@ -236,6 +236,45 @@ export type Database = {
           },
         ]
       }
+      automacao_config: {
+        Row: {
+          agendamento_ativo: boolean
+          created_at: string
+          execucao_travada_minutos: number
+          falhas_para_alta: number
+          falhas_para_critica: number
+          id: boolean
+          intervalo_minutos: number
+          tolerancia_minutos: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          agendamento_ativo?: boolean
+          created_at?: string
+          execucao_travada_minutos?: number
+          falhas_para_alta?: number
+          falhas_para_critica?: number
+          id?: boolean
+          intervalo_minutos?: number
+          tolerancia_minutos?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          agendamento_ativo?: boolean
+          created_at?: string
+          execucao_travada_minutos?: number
+          falhas_para_alta?: number
+          falhas_para_critica?: number
+          id?: boolean
+          intervalo_minutos?: number
+          tolerancia_minutos?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       backup_execution_events: {
         Row: {
           correlation_id: string
@@ -552,36 +591,63 @@ export type Database = {
       }
       escalonamento_execucoes: {
         Row: {
+          created_at: string
+          duplicidades_ignoradas: number
+          duracao_ms: number | null
           erro: string | null
+          erros_encontrados: number
           executado_por: string | null
+          execution_id: string
           finalizado_em: string | null
           id: string
+          incidentes_avaliados: number
           iniciado_em: string
+          mensagem_resumida: string | null
+          metadata: Json
           notificacoes_geradas: number
           origem: string
           processados: number
+          regras_avaliadas: number
           status: string
         }
         Insert: {
+          created_at?: string
+          duplicidades_ignoradas?: number
+          duracao_ms?: number | null
           erro?: string | null
+          erros_encontrados?: number
           executado_por?: string | null
+          execution_id: string
           finalizado_em?: string | null
           id?: string
+          incidentes_avaliados?: number
           iniciado_em?: string
+          mensagem_resumida?: string | null
+          metadata?: Json
           notificacoes_geradas?: number
           origem?: string
           processados?: number
+          regras_avaliadas?: number
           status?: string
         }
         Update: {
+          created_at?: string
+          duplicidades_ignoradas?: number
+          duracao_ms?: number | null
           erro?: string | null
+          erros_encontrados?: number
           executado_por?: string | null
+          execution_id?: string
           finalizado_em?: string | null
           id?: string
+          incidentes_avaliados?: number
           iniciado_em?: string
+          mensagem_resumida?: string | null
+          metadata?: Json
           notificacoes_geradas?: number
           origem?: string
           processados?: number
+          regras_avaliadas?: number
           status?: string
         }
         Relationships: []
@@ -1874,6 +1940,18 @@ export type Database = {
         Returns: undefined
       }
       audit_kpis: { Args: { _inicio?: string }; Returns: Json }
+      automacao_config_atualizar: {
+        Args: {
+          p_ativo: boolean
+          p_falhas_alta: number
+          p_falhas_critica: number
+          p_intervalo: number
+          p_tolerancia: number
+          p_travada: number
+        }
+        Returns: Json
+      }
+      automacao_status: { Args: never; Returns: Json }
       bootstrap_first_super_admin: { Args: never; Returns: string }
       contar_notificacoes_nao_lidas: { Args: never; Returns: number }
       criar_notificacao: {
@@ -1895,6 +1973,7 @@ export type Database = {
         }
         Returns: string
       }
+      cron_run_escalonamentos_tick: { Args: never; Returns: undefined }
       dashboard_metrics:
         | {
             Args: {
@@ -2103,7 +2182,9 @@ export type Database = {
         }
         Returns: Json
       }
+      reprocessar_escalonamentos: { Args: never; Returns: Json }
       roadmap_dashboard: { Args: never; Returns: Json }
+      run_escalonamentos: { Args: { p_origem?: string }; Returns: Json }
       saude_sistema: { Args: never; Returns: Json }
       search_audit_logs: {
         Args: {

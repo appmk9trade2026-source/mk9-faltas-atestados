@@ -1,8 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
-  Archive, Bell, CheckCheck, ExternalLink, Loader2, PlayCircle,
-  RefreshCw, ShieldAlert, Timer, Inbox, Filter,
+  Archive, Bell, CheckCheck, ExternalLink, RefreshCw, ShieldAlert, Timer, Inbox, Filter,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,13 +14,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useSession } from "@/hooks/use-session";
 import {
-  useNotificacoes, useMarcarLida, useArquivar, useProcessarEscalonamentos,
+  useNotificacoes, useMarcarLida, useArquivar,
   type NotifStatus, type NotifSeveridade,
 } from "@/hooks/use-notificacoes";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { AutomacaoStatusCards, MotorControls, HistoricoExecucoes } from "@/components/automacao/automacao-motor";
+
 
 export const Route = createFileRoute("/_authenticated/notificacoes")({
   head: () => ({ meta: [{ title: "Notificações · CRM MK9" }] }),
@@ -50,7 +51,7 @@ function NotificacoesPage() {
 
   const marcar = useMarcarLida();
   const arquivar = useArquivar();
-  const processar = useProcessarEscalonamentos();
+  
 
   const filtered = useMemo(() => {
     const q = busca.trim().toLowerCase();
@@ -203,28 +204,28 @@ function NotificacoesPage() {
         {isAdmin && (
           <TabsContent value="motor" className="space-y-3">
             <Card>
-              <CardContent className="pt-6 space-y-4">
+              <CardContent className="space-y-4 pt-6">
                 <div>
-                  <h3 className="text-base font-semibold">Motor de escalonamento</h3>
+                  <h3 className="text-base font-semibold">Motor de SLA e escalonamento</h3>
                   <p className="text-xs text-muted-foreground">
-                    Execução automática não configurada. Rode manualmente para gerar notificações a partir do estado atual de incidentes e SLA.
+                    Executado automaticamente pelo backend. Ações manuais são idempotentes e ficam registradas em auditoria.
                   </p>
                 </div>
-                <Button
-                  onClick={async () => {
-                    const res = await processar.mutateAsync();
-                    toast.success(`Processados ${res.processados} · Geradas ${res.gerados}`);
-                  }}
-                  disabled={processar.isPending}
-                >
-                  {processar.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlayCircle className="mr-2 h-4 w-4" />}
-                  Processar escalonamentos pendentes
-                </Button>
-                <UltimasExecucoes />
+                <AutomacaoStatusCards />
+                <div className="border-t pt-4">
+                  <MotorControls canWrite={isAdmin} />
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="space-y-3 pt-6">
+                <h4 className="text-sm font-semibold">Histórico de execuções</h4>
+                <HistoricoExecucoes />
               </CardContent>
             </Card>
           </TabsContent>
         )}
+
       </Tabs>
     </AppShell>
   );

@@ -75,14 +75,76 @@ export function useArquivar() {
   });
 }
 
+export type MotorRunResult = {
+  execution_id: string;
+  status: "CONCLUIDO" | "CONCLUIDO_COM_ALERTAS" | "FALHOU" | "IGNORADO_POR_LOCK";
+  processados?: number;
+  gerados?: number;
+  duplicadas?: number;
+  erro?: string;
+};
+
 export function useProcessarEscalonamentos() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.rpc("processar_escalonamentos_pendentes");
       if (error) throw error;
-      return data as { execucao_id: string; processados: number; gerados: number };
+      return data as unknown as MotorRunResult;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["notif"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["notif"] });
+      qc.invalidateQueries({ queryKey: ["automacao"] });
+      qc.invalidateQueries({ queryKey: ["esc-execs"] });
+    },
   });
 }
+
+export function useReprocessarEscalonamentos() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc("reprocessar_escalonamentos" as never);
+      if (error) throw error;
+      return data as unknown as MotorRunResult;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["notif"] });
+      qc.invalidateQueries({ queryKey: ["automacao"] });
+      qc.invalidateQueries({ queryKey: ["esc-execs"] });
+    },
+  });
+}
+
+export type AutomacaoStatus = {
+  estado: "ATIVO" | "ATRASADO" | "COM_FALHA" | "INATIVO" | "NAO_CONFIGURADO";
+  agendamento_ativo: boolean;
+  cron_configurado: boolean;
+  intervalo_minutos: number;
+  tolerancia_minutos: number;
+  execucao_travada_minutos: number;
+  ultima_execucao: string | null;
+  ultima_execucao_status: string | null;
+  ultimo_sucesso: string | null;
+  ultima_falha: string | null;
+  proxima_execucao_esperada: string | null;
+  duracao_media_ms: number;
+  notificacoes_24h: number;
+  ignoradas_por_lock_24h: number;
+  falhas_consecutivas: number;
+  config: { falhas_para_alta: number; falhas_para_critica: number };
+};
+
+export function useAutomacaoStatus(refetchMs = 30_000) {
+  return useQuery({
+    queryKey: ["automacao", "status"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("automacao_status" as never);
+      if (error) throw error;
+      return data as unknown as AutomacaoStatus;
+    },
+    refetchInterval: refetchMs,
+    staleTime: 15_000,
+  });
+}
+
