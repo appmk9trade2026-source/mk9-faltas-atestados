@@ -32,6 +32,7 @@ import { Route as AuthenticatedColaboradoresRouteImport } from './routes/_authen
 import { Route as AuthenticatedAusenciasRouteImport } from './routes/_authenticated/ausencias'
 import { Route as AuthenticatedAuditoriaRouteImport } from './routes/_authenticated/auditoria'
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
+import { Route as AuthenticatedAcessosRouteImport } from './routes/_authenticated/acessos'
 import { Route as AuthenticatedConfiguracoesTiposAusenciaRouteImport } from './routes/_authenticated/configuracoes.tipos-ausencia'
 import { Route as AuthenticatedConfiguracoesProjetosRouteImport } from './routes/_authenticated/configuracoes.projetos'
 import { Route as AuthenticatedConfiguracoesEmpresasRouteImport } from './routes/_authenticated/configuracoes.empresas'
@@ -160,6 +161,11 @@ const AuthenticatedAlertasRoute = AuthenticatedAlertasRouteImport.update({
   path: '/alertas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAcessosRoute = AuthenticatedAcessosRouteImport.update({
+  id: '/acessos',
+  path: '/acessos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedConfiguracoesTiposAusenciaRoute =
   AuthenticatedConfiguracoesTiposAusenciaRouteImport.update({
     id: '/tipos-ausencia',
@@ -194,6 +200,7 @@ const AuthenticatedColaboradoresImportacoesRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/acessos': typeof AuthenticatedAcessosRoute
   '/alertas': typeof AuthenticatedAlertasRoute
   '/auditoria': typeof AuthenticatedAuditoriaRoute
   '/ausencias': typeof AuthenticatedAusenciasRoute
@@ -223,6 +230,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/acessos': typeof AuthenticatedAcessosRoute
   '/alertas': typeof AuthenticatedAlertasRoute
   '/auditoria': typeof AuthenticatedAuditoriaRoute
   '/ausencias': typeof AuthenticatedAusenciasRoute
@@ -254,6 +262,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/acessos': typeof AuthenticatedAcessosRoute
   '/_authenticated/alertas': typeof AuthenticatedAlertasRoute
   '/_authenticated/auditoria': typeof AuthenticatedAuditoriaRoute
   '/_authenticated/ausencias': typeof AuthenticatedAusenciasRoute
@@ -285,6 +294,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/acessos'
     | '/alertas'
     | '/auditoria'
     | '/ausencias'
@@ -314,6 +324,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/acessos'
     | '/alertas'
     | '/auditoria'
     | '/ausencias'
@@ -344,6 +355,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/acessos'
     | '/_authenticated/alertas'
     | '/_authenticated/auditoria'
     | '/_authenticated/ausencias'
@@ -540,6 +552,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAlertasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/acessos': {
+      id: '/_authenticated/acessos'
+      path: '/acessos'
+      fullPath: '/acessos'
+      preLoaderRoute: typeof AuthenticatedAcessosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/configuracoes/tipos-ausencia': {
       id: '/_authenticated/configuracoes/tipos-ausencia'
       path: '/tipos-ausencia'
@@ -600,6 +619,7 @@ const AuthenticatedConfiguracoesRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAcessosRoute: typeof AuthenticatedAcessosRoute
   AuthenticatedAlertasRoute: typeof AuthenticatedAlertasRoute
   AuthenticatedAuditoriaRoute: typeof AuthenticatedAuditoriaRoute
   AuthenticatedAusenciasRoute: typeof AuthenticatedAusenciasRoute
@@ -625,6 +645,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAcessosRoute: AuthenticatedAcessosRoute,
   AuthenticatedAlertasRoute: AuthenticatedAlertasRoute,
   AuthenticatedAuditoriaRoute: AuthenticatedAuditoriaRoute,
   AuthenticatedAusenciasRoute: AuthenticatedAusenciasRoute,
