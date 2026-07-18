@@ -1517,6 +1517,225 @@ export type Database = {
         }
         Relationships: []
       }
+      release_changelog: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          descricao: string | null
+          id: string
+          impacto: string | null
+          modulo: string | null
+          release_id: string
+          roadmap_id: string | null
+          tipo: Database["public"]["Enums"]["changelog_tipo"]
+          titulo: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          impacto?: string | null
+          modulo?: string | null
+          release_id: string
+          roadmap_id?: string | null
+          tipo: Database["public"]["Enums"]["changelog_tipo"]
+          titulo: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          impacto?: string | null
+          modulo?: string | null
+          release_id?: string
+          roadmap_id?: string | null
+          tipo?: Database["public"]["Enums"]["changelog_tipo"]
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "release_changelog_release_id_fkey"
+            columns: ["release_id"]
+            isOneToOne: false
+            referencedRelation: "releases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "release_changelog_roadmap_id_fkey"
+            columns: ["roadmap_id"]
+            isOneToOne: false
+            referencedRelation: "roadmap"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      releases: {
+        Row: {
+          ambiente: string
+          build: string | null
+          commit: string | null
+          created_at: string
+          created_by: string | null
+          data_prevista: string | null
+          data_publicacao: string | null
+          descricao: string | null
+          id: string
+          nome: string | null
+          observacoes: string | null
+          responsavel: string | null
+          responsavel_nome: string | null
+          status: Database["public"]["Enums"]["release_status"]
+          tipo: Database["public"]["Enums"]["release_tipo"]
+          updated_at: string
+          versao: string
+        }
+        Insert: {
+          ambiente?: string
+          build?: string | null
+          commit?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_prevista?: string | null
+          data_publicacao?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string | null
+          observacoes?: string | null
+          responsavel?: string | null
+          responsavel_nome?: string | null
+          status?: Database["public"]["Enums"]["release_status"]
+          tipo?: Database["public"]["Enums"]["release_tipo"]
+          updated_at?: string
+          versao: string
+        }
+        Update: {
+          ambiente?: string
+          build?: string | null
+          commit?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_prevista?: string | null
+          data_publicacao?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string | null
+          observacoes?: string | null
+          responsavel?: string | null
+          responsavel_nome?: string | null
+          status?: Database["public"]["Enums"]["release_status"]
+          tipo?: Database["public"]["Enums"]["release_tipo"]
+          updated_at?: string
+          versao?: string
+        }
+        Relationships: []
+      }
+      roadmap: {
+        Row: {
+          arquivos: Json
+          categoria: Database["public"]["Enums"]["roadmap_categoria"]
+          checklist: Json
+          created_at: string
+          created_by: string | null
+          criterios_aceite: string | null
+          descricao: string | null
+          descricao_funcional: string | null
+          descricao_tecnica: string | null
+          fim_previsto: string | null
+          fim_real: string | null
+          id: string
+          incidente_id: string | null
+          inicio_previsto: string | null
+          inicio_real: string | null
+          links: Json
+          objetivo: string | null
+          ordem: number
+          prioridade: Database["public"]["Enums"]["roadmap_prioridade"]
+          release_id: string | null
+          responsavel: string | null
+          responsavel_nome: string | null
+          status: Database["public"]["Enums"]["roadmap_status"]
+          tipo: Database["public"]["Enums"]["roadmap_tipo"]
+          titulo: string
+          updated_at: string
+          versao: string | null
+        }
+        Insert: {
+          arquivos?: Json
+          categoria?: Database["public"]["Enums"]["roadmap_categoria"]
+          checklist?: Json
+          created_at?: string
+          created_by?: string | null
+          criterios_aceite?: string | null
+          descricao?: string | null
+          descricao_funcional?: string | null
+          descricao_tecnica?: string | null
+          fim_previsto?: string | null
+          fim_real?: string | null
+          id?: string
+          incidente_id?: string | null
+          inicio_previsto?: string | null
+          inicio_real?: string | null
+          links?: Json
+          objetivo?: string | null
+          ordem?: number
+          prioridade?: Database["public"]["Enums"]["roadmap_prioridade"]
+          release_id?: string | null
+          responsavel?: string | null
+          responsavel_nome?: string | null
+          status?: Database["public"]["Enums"]["roadmap_status"]
+          tipo?: Database["public"]["Enums"]["roadmap_tipo"]
+          titulo: string
+          updated_at?: string
+          versao?: string | null
+        }
+        Update: {
+          arquivos?: Json
+          categoria?: Database["public"]["Enums"]["roadmap_categoria"]
+          checklist?: Json
+          created_at?: string
+          created_by?: string | null
+          criterios_aceite?: string | null
+          descricao?: string | null
+          descricao_funcional?: string | null
+          descricao_tecnica?: string | null
+          fim_previsto?: string | null
+          fim_real?: string | null
+          id?: string
+          incidente_id?: string | null
+          inicio_previsto?: string | null
+          inicio_real?: string | null
+          links?: Json
+          objetivo?: string | null
+          ordem?: number
+          prioridade?: Database["public"]["Enums"]["roadmap_prioridade"]
+          release_id?: string | null
+          responsavel?: string | null
+          responsavel_nome?: string | null
+          status?: Database["public"]["Enums"]["roadmap_status"]
+          tipo?: Database["public"]["Enums"]["roadmap_tipo"]
+          titulo?: string
+          updated_at?: string
+          versao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roadmap_incidente_id_fkey"
+            columns: ["incidente_id"]
+            isOneToOne: false
+            referencedRelation: "operacao_incidentes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roadmap_release_id_fkey"
+            columns: ["release_id"]
+            isOneToOne: false
+            referencedRelation: "releases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tipo_ausencia_opcoes_periodo: {
         Row: {
           ativo: boolean
@@ -1884,6 +2103,7 @@ export type Database = {
         }
         Returns: Json
       }
+      roadmap_dashboard: { Args: never; Returns: Json }
       saude_sistema: { Args: never; Returns: Json }
       search_audit_logs: {
         Args: {
@@ -1939,6 +2159,14 @@ export type Database = {
         | "ACESSO_NEGADO"
         | "MUDANCA_STATUS"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
+      changelog_tipo:
+        | "NOVA_FUNCIONALIDADE"
+        | "CORRECAO"
+        | "SEGURANCA"
+        | "PERFORMANCE"
+        | "REFATORACAO"
+        | "UI"
+        | "INFRAESTRUTURA"
       homolog_classificacao: "BUG" | "MELHORIA" | "DUVIDA" | "CONFIGURACAO"
       homolog_criticidade: "BAIXA" | "MEDIA" | "ALTA" | "CRITICA"
       homolog_status:
@@ -2042,6 +2270,41 @@ export type Database = {
       oa_severidade: "BAIXA" | "MEDIA" | "ALTA" | "CRITICA"
       op_assist_prioridade: "BAIXA" | "MEDIA" | "ALTA" | "CRITICA"
       op_assist_status: "ABERTO" | "EM_ANDAMENTO" | "RESOLVIDO" | "CANCELADO"
+      release_status: "PLANEJADA" | "EM_EXECUCAO" | "PUBLICADA" | "CANCELADA"
+      release_tipo: "HOTFIX" | "PATCH" | "MINOR" | "MAJOR"
+      roadmap_categoria:
+        | "RH"
+        | "OPERACOES"
+        | "AUDITORIA"
+        | "DASHBOARD"
+        | "COMUNICACOES"
+        | "AUSENCIAS"
+        | "COLABORADORES"
+        | "DEPLOY"
+        | "INFRAESTRUTURA"
+        | "NOTIFICACOES"
+        | "OPERACAO_ASSISTIDA"
+        | "RELATORIOS"
+        | "OUTROS"
+      roadmap_prioridade: "BAIXA" | "MEDIA" | "ALTA" | "CRITICA"
+      roadmap_status:
+        | "BACKLOG"
+        | "PLANEJADO"
+        | "EM_DESENVOLVIMENTO"
+        | "EM_TESTES"
+        | "HOMOLOGACAO"
+        | "PRONTO_PARA_RELEASE"
+        | "PUBLICADO"
+        | "CANCELADO"
+      roadmap_tipo:
+        | "FEATURE"
+        | "BUG"
+        | "MELHORIA"
+        | "REFATORACAO"
+        | "SEGURANCA"
+        | "PERFORMANCE"
+        | "UX"
+        | "DOCUMENTACAO"
       status_ausencia: "PENDENTE" | "LANCADO"
       status_comunicacao: "RASCUNHO" | "APROVADO" | "ENVIADO" | "ERRO"
       tipo_ausencia:
@@ -2199,6 +2462,15 @@ export const Constants = {
         "MUDANCA_STATUS",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
+      changelog_tipo: [
+        "NOVA_FUNCIONALIDADE",
+        "CORRECAO",
+        "SEGURANCA",
+        "PERFORMANCE",
+        "REFATORACAO",
+        "UI",
+        "INFRAESTRUTURA",
+      ],
       homolog_classificacao: ["BUG", "MELHORIA", "DUVIDA", "CONFIGURACAO"],
       homolog_criticidade: ["BAIXA", "MEDIA", "ALTA", "CRITICA"],
       homolog_status: [
@@ -2311,6 +2583,44 @@ export const Constants = {
       oa_severidade: ["BAIXA", "MEDIA", "ALTA", "CRITICA"],
       op_assist_prioridade: ["BAIXA", "MEDIA", "ALTA", "CRITICA"],
       op_assist_status: ["ABERTO", "EM_ANDAMENTO", "RESOLVIDO", "CANCELADO"],
+      release_status: ["PLANEJADA", "EM_EXECUCAO", "PUBLICADA", "CANCELADA"],
+      release_tipo: ["HOTFIX", "PATCH", "MINOR", "MAJOR"],
+      roadmap_categoria: [
+        "RH",
+        "OPERACOES",
+        "AUDITORIA",
+        "DASHBOARD",
+        "COMUNICACOES",
+        "AUSENCIAS",
+        "COLABORADORES",
+        "DEPLOY",
+        "INFRAESTRUTURA",
+        "NOTIFICACOES",
+        "OPERACAO_ASSISTIDA",
+        "RELATORIOS",
+        "OUTROS",
+      ],
+      roadmap_prioridade: ["BAIXA", "MEDIA", "ALTA", "CRITICA"],
+      roadmap_status: [
+        "BACKLOG",
+        "PLANEJADO",
+        "EM_DESENVOLVIMENTO",
+        "EM_TESTES",
+        "HOMOLOGACAO",
+        "PRONTO_PARA_RELEASE",
+        "PUBLICADO",
+        "CANCELADO",
+      ],
+      roadmap_tipo: [
+        "FEATURE",
+        "BUG",
+        "MELHORIA",
+        "REFATORACAO",
+        "SEGURANCA",
+        "PERFORMANCE",
+        "UX",
+        "DOCUMENTACAO",
+      ],
       status_ausencia: ["PENDENTE", "LANCADO"],
       status_comunicacao: ["RASCUNHO", "APROVADO", "ENVIADO", "ERRO"],
       tipo_ausencia: ["FALTA", "ATESTADO", "DECLARACAO", "SUSPENSAO", "OUTROS"],
