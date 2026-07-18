@@ -29,6 +29,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedComunicacoesRouteImport } from './routes/_authenticated/comunicacoes'
 import { Route as AuthenticatedColaboradoresRouteImport } from './routes/_authenticated/colaboradores'
+import { Route as AuthenticatedBiExecutivoRouteImport } from './routes/_authenticated/bi-executivo'
 import { Route as AuthenticatedAusenciasRouteImport } from './routes/_authenticated/ausencias'
 import { Route as AuthenticatedAuditoriaRouteImport } from './routes/_authenticated/auditoria'
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
@@ -146,6 +147,12 @@ const AuthenticatedColaboradoresRoute =
     path: '/colaboradores',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedBiExecutivoRoute =
+  AuthenticatedBiExecutivoRouteImport.update({
+    id: '/bi-executivo',
+    path: '/bi-executivo',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAusenciasRoute = AuthenticatedAusenciasRouteImport.update({
   id: '/ausencias',
   path: '/ausencias',
@@ -204,6 +211,7 @@ export interface FileRoutesByFullPath {
   '/alertas': typeof AuthenticatedAlertasRoute
   '/auditoria': typeof AuthenticatedAuditoriaRoute
   '/ausencias': typeof AuthenticatedAusenciasRoute
+  '/bi-executivo': typeof AuthenticatedBiExecutivoRoute
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/comunicacoes': typeof AuthenticatedComunicacoesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
@@ -234,6 +242,7 @@ export interface FileRoutesByTo {
   '/alertas': typeof AuthenticatedAlertasRoute
   '/auditoria': typeof AuthenticatedAuditoriaRoute
   '/ausencias': typeof AuthenticatedAusenciasRoute
+  '/bi-executivo': typeof AuthenticatedBiExecutivoRoute
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/comunicacoes': typeof AuthenticatedComunicacoesRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
@@ -266,6 +275,7 @@ export interface FileRoutesById {
   '/_authenticated/alertas': typeof AuthenticatedAlertasRoute
   '/_authenticated/auditoria': typeof AuthenticatedAuditoriaRoute
   '/_authenticated/ausencias': typeof AuthenticatedAusenciasRoute
+  '/_authenticated/bi-executivo': typeof AuthenticatedBiExecutivoRoute
   '/_authenticated/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/_authenticated/comunicacoes': typeof AuthenticatedComunicacoesRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
@@ -298,6 +308,7 @@ export interface FileRouteTypes {
     | '/alertas'
     | '/auditoria'
     | '/ausencias'
+    | '/bi-executivo'
     | '/colaboradores'
     | '/comunicacoes'
     | '/configuracoes'
@@ -328,6 +339,7 @@ export interface FileRouteTypes {
     | '/alertas'
     | '/auditoria'
     | '/ausencias'
+    | '/bi-executivo'
     | '/colaboradores'
     | '/comunicacoes'
     | '/configuracoes'
@@ -359,6 +371,7 @@ export interface FileRouteTypes {
     | '/_authenticated/alertas'
     | '/_authenticated/auditoria'
     | '/_authenticated/ausencias'
+    | '/_authenticated/bi-executivo'
     | '/_authenticated/colaboradores'
     | '/_authenticated/comunicacoes'
     | '/_authenticated/configuracoes'
@@ -531,6 +544,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedColaboradoresRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/bi-executivo': {
+      id: '/_authenticated/bi-executivo'
+      path: '/bi-executivo'
+      fullPath: '/bi-executivo'
+      preLoaderRoute: typeof AuthenticatedBiExecutivoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/ausencias': {
       id: '/_authenticated/ausencias'
       path: '/ausencias'
@@ -623,6 +643,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAlertasRoute: typeof AuthenticatedAlertasRoute
   AuthenticatedAuditoriaRoute: typeof AuthenticatedAuditoriaRoute
   AuthenticatedAusenciasRoute: typeof AuthenticatedAusenciasRoute
+  AuthenticatedBiExecutivoRoute: typeof AuthenticatedBiExecutivoRoute
   AuthenticatedColaboradoresRoute: typeof AuthenticatedColaboradoresRoute
   AuthenticatedComunicacoesRoute: typeof AuthenticatedComunicacoesRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRouteWithChildren
@@ -649,6 +670,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAlertasRoute: AuthenticatedAlertasRoute,
   AuthenticatedAuditoriaRoute: AuthenticatedAuditoriaRoute,
   AuthenticatedAusenciasRoute: AuthenticatedAusenciasRoute,
+  AuthenticatedBiExecutivoRoute: AuthenticatedBiExecutivoRoute,
   AuthenticatedColaboradoresRoute: AuthenticatedColaboradoresRoute,
   AuthenticatedComunicacoesRoute: AuthenticatedComunicacoesRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRouteWithChildren,
