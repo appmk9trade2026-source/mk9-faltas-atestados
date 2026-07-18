@@ -2692,6 +2692,57 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_worker_execucoes: {
+        Row: {
+          created_at: string
+          detalhes: Json
+          duracao_ms: number | null
+          enviadas: number
+          execution_id: string
+          falhas_definitivas: number
+          falhas_temporarias: number
+          fim: string | null
+          id: string
+          ignoradas: number
+          inicio: string
+          selecionadas: number
+          status: string
+          worker: string
+        }
+        Insert: {
+          created_at?: string
+          detalhes?: Json
+          duracao_ms?: number | null
+          enviadas?: number
+          execution_id: string
+          falhas_definitivas?: number
+          falhas_temporarias?: number
+          fim?: string | null
+          id?: string
+          ignoradas?: number
+          inicio: string
+          selecionadas?: number
+          status: string
+          worker: string
+        }
+        Update: {
+          created_at?: string
+          detalhes?: Json
+          duracao_ms?: number | null
+          enviadas?: number
+          execution_id?: string
+          falhas_definitivas?: number
+          falhas_temporarias?: number
+          fim?: string | null
+          id?: string
+          ignoradas?: number
+          inicio?: string
+          selecionadas?: number
+          status?: string
+          worker?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -3145,6 +3196,10 @@ export type Database = {
         Args: { p_conteudo: string; p_variaveis: string[] }
         Returns: undefined
       }
+      whatsapp_calc_backoff: {
+        Args: { p_base_seg: number; p_max_seg: number; p_tentativas: number }
+        Returns: string
+      }
       whatsapp_idem_key_ausencia: {
         Args: {
           p_alvo_id: string
@@ -3152,6 +3207,63 @@ export type Database = {
           p_publico: Database["public"]["Enums"]["whatsapp_publico"]
         }
         Returns: string
+      }
+      whatsapp_outbox_cancelar: {
+        Args: { p_id: string; p_motivo: string }
+        Returns: undefined
+      }
+      whatsapp_outbox_marcar_enviado: {
+        Args: { p_id: string; p_provider_message_id: string }
+        Returns: undefined
+      }
+      whatsapp_outbox_marcar_falha_definitiva: {
+        Args: { p_codigo: string; p_id: string; p_mensagem_resumida: string }
+        Returns: undefined
+      }
+      whatsapp_outbox_marcar_falha_temporaria: {
+        Args: { p_codigo: string; p_id: string; p_mensagem_resumida: string }
+        Returns: Database["public"]["Enums"]["whatsapp_status"]
+      }
+      whatsapp_outbox_recuperar_travadas: {
+        Args: { p_timeout_seg?: number }
+        Returns: number
+      }
+      whatsapp_outbox_reenfileirar: {
+        Args: { p_id: string; p_motivo?: string }
+        Returns: undefined
+      }
+      whatsapp_outbox_registrar_execucao: {
+        Args: {
+          p_detalhes?: Json
+          p_enviadas: number
+          p_execution_id: string
+          p_falhas_definitivas: number
+          p_falhas_temporarias: number
+          p_fim: string
+          p_ignoradas: number
+          p_inicio: string
+          p_selecionadas: number
+          p_status: string
+          p_worker: string
+        }
+        Returns: undefined
+      }
+      whatsapp_outbox_reservar_lote: {
+        Args: { p_limite?: number; p_worker_id: string }
+        Returns: {
+          id: string
+          idempotency_key: string
+          payload: Json
+          provider: Database["public"]["Enums"]["whatsapp_provider"]
+          provider_instance: string
+          publico: Database["public"]["Enums"]["whatsapp_publico"]
+          telefone_hash: string
+          telefone_mascarado: string
+          template_codigo: string
+          template_id: string
+          template_versao: number
+          tentativas: number
+        }[]
       }
       whatsapp_registrar_evento_seguro: {
         Args: {
