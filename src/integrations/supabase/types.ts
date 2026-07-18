@@ -933,6 +933,51 @@ export type Database = {
           },
         ]
       }
+      notificacao_tipos_config: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          created_at: string
+          descricao: string
+          nome_exibicao: string
+          obrigatoria: boolean
+          ordem: number
+          papeis_aplicaveis: Database["public"]["Enums"]["app_role"][]
+          severidade_padrao: Database["public"]["Enums"]["notif_severidade"]
+          silenciavel: boolean
+          tipo: Database["public"]["Enums"]["notif_tipo"]
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria: string
+          created_at?: string
+          descricao: string
+          nome_exibicao: string
+          obrigatoria?: boolean
+          ordem?: number
+          papeis_aplicaveis?: Database["public"]["Enums"]["app_role"][]
+          severidade_padrao?: Database["public"]["Enums"]["notif_severidade"]
+          silenciavel?: boolean
+          tipo: Database["public"]["Enums"]["notif_tipo"]
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          created_at?: string
+          descricao?: string
+          nome_exibicao?: string
+          obrigatoria?: boolean
+          ordem?: number
+          papeis_aplicaveis?: Database["public"]["Enums"]["app_role"][]
+          severidade_padrao?: Database["public"]["Enums"]["notif_severidade"]
+          silenciavel?: boolean
+          tipo?: Database["public"]["Enums"]["notif_tipo"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notificacao_usuarios: {
         Row: {
           arquivada_em: string | null
@@ -1504,6 +1549,7 @@ export type Database = {
       }
       preferencias_notificacao: {
         Row: {
+          canal: string
           created_at: string
           habilitada: boolean
           id: string
@@ -1513,6 +1559,7 @@ export type Database = {
           usuario_id: string
         }
         Insert: {
+          canal?: string
           created_at?: string
           habilitada?: boolean
           id?: string
@@ -1522,6 +1569,7 @@ export type Database = {
           usuario_id: string
         }
         Update: {
+          canal?: string
           created_at?: string
           habilitada?: boolean
           id?: string
@@ -2083,9 +2131,18 @@ export type Database = {
     }
     Functions: {
       acessos_dashboard: { Args: never; Returns: Json }
+      analisar_conflitos_regras_escalonamento: { Args: never; Returns: Json }
       arquivar_notificacao: {
         Args: { _notificacao_id: string }
         Returns: undefined
+      }
+      atualizar_preferencia_notificacao: {
+        Args: {
+          p_habilitada: boolean
+          p_silenciar_info?: boolean
+          p_tipo: Database["public"]["Enums"]["notif_tipo"]
+        }
+        Returns: Json
       }
       audit_kpis: { Args: { _inicio?: string }; Returns: Json }
       automacao_config_atualizar: {
@@ -2216,6 +2273,21 @@ export type Database = {
           titulo: string
         }[]
       }
+      listar_preferencias_notificacao: {
+        Args: never
+        Returns: {
+          categoria: string
+          descricao: string
+          habilitada: boolean
+          nome_exibicao: string
+          obrigatoria: boolean
+          origem: string
+          severidade_padrao: Database["public"]["Enums"]["notif_severidade"]
+          silenciar_info: boolean
+          silenciavel: boolean
+          tipo: Database["public"]["Enums"]["notif_tipo"]
+        }[]
+      }
       log_audit_event: {
         Args: {
           _acao: Database["public"]["Enums"]["audit_action"]
@@ -2242,6 +2314,7 @@ export type Database = {
         Args: { _notificacao_id: string }
         Returns: number
       }
+      metricas_notificacoes: { Args: never; Returns: Json }
       oa_dashboard: { Args: { _periodo_id?: string }; Returns: Json }
       oa_incidente_transicionar: {
         Args: {
@@ -2264,6 +2337,14 @@ export type Database = {
       }
       operacoes_dashboard: { Args: never; Returns: Json }
       operacoes_health_check: { Args: never; Returns: Json }
+      preferencia_notificacao_efetiva: {
+        Args: {
+          p_severidade?: Database["public"]["Enums"]["notif_severidade"]
+          p_tipo: Database["public"]["Enums"]["notif_tipo"]
+          p_usuario_id: string
+        }
+        Returns: Json
+      }
       processar_escalonamentos_pendentes: { Args: never; Returns: Json }
       registrar_login_event: {
         Args: {
@@ -2347,6 +2428,7 @@ export type Database = {
         Returns: Json
       }
       reprocessar_escalonamentos: { Args: never; Returns: Json }
+      restaurar_preferencias_padrao: { Args: never; Returns: number }
       revogar_sessao: {
         Args: { _motivo?: string; _session_id: string }
         Returns: undefined
@@ -2390,6 +2472,7 @@ export type Database = {
           usuario_nome: string
         }[]
       }
+      simular_regras_escalonamento: { Args: { p_evento: Json }; Returns: Json }
     }
     Enums: {
       access_review_status: "PENDENTE" | "APROVADA" | "REVOGADA" | "PRORROGADA"
@@ -2408,6 +2491,8 @@ export type Database = {
         | "LANCAMENTO"
         | "ACESSO_NEGADO"
         | "MUDANCA_STATUS"
+        | "SIMULACAO"
+        | "ANALISE_CONFLITOS"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       changelog_tipo:
         | "NOVA_FUNCIONALIDADE"
@@ -2719,6 +2804,8 @@ export const Constants = {
         "LANCAMENTO",
         "ACESSO_NEGADO",
         "MUDANCA_STATUS",
+        "SIMULACAO",
+        "ANALISE_CONFLITOS",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       changelog_tipo: [

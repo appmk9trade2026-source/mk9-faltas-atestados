@@ -22,6 +22,8 @@ import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { AutomacaoStatusCards, MotorControls, HistoricoExecucoes } from "@/components/automacao/automacao-motor";
+import { PreferenciasTab } from "@/components/notificacoes/preferencias-tab";
+import { SimuladorTab } from "@/components/notificacoes/simulador-tab";
 
 
 export const Route = createFileRoute("/_authenticated/notificacoes")({
@@ -95,7 +97,9 @@ function NotificacoesPage() {
       <Tabs defaultValue="caixa">
         <TabsList>
           <TabsTrigger value="caixa"><Bell className="mr-1.5 h-3.5 w-3.5" />Caixa de entrada</TabsTrigger>
+          <TabsTrigger value="preferencias">Preferências</TabsTrigger>
           <TabsTrigger value="regras">Regras de escalonamento</TabsTrigger>
+          {(isAdmin || roles.includes("compliance")) && <TabsTrigger value="simulador">Simulador</TabsTrigger>}
           {isAdmin && <TabsTrigger value="motor">Motor de SLA</TabsTrigger>}
         </TabsList>
 
@@ -197,9 +201,19 @@ function NotificacoesPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="preferencias">
+          <PreferenciasTab />
+        </TabsContent>
+
         <TabsContent value="regras">
           <RegrasEscalonamento canEdit={isAdmin} />
         </TabsContent>
+
+        {(isAdmin || roles.includes("compliance")) && (
+          <TabsContent value="simulador">
+            <SimuladorTab readonly={!isAdmin} />
+          </TabsContent>
+        )}
 
         {isAdmin && (
           <TabsContent value="motor" className="space-y-3">
