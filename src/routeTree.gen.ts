@@ -19,6 +19,7 @@ import { Route as AuthenticatedPainelRhRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedOperacoesRouteImport } from './routes/_authenticated/operacoes'
 import { Route as AuthenticatedOperacaoAssistidaRouteImport } from './routes/_authenticated/operacao-assistida'
 import { Route as AuthenticatedNovaAusenciaRouteImport } from './routes/_authenticated/nova-ausencia'
+import { Route as AuthenticatedNotificacoesRouteImport } from './routes/_authenticated/notificacoes'
 import { Route as AuthenticatedHomologacaoRouteImport } from './routes/_authenticated/homologacao'
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
 import { Route as AuthenticatedDocumentacaoRouteImport } from './routes/_authenticated/documentacao'
@@ -85,6 +86,12 @@ const AuthenticatedNovaAusenciaRoute =
   AuthenticatedNovaAusenciaRouteImport.update({
     id: '/nova-ausencia',
     path: '/nova-ausencia',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedNotificacoesRoute =
+  AuthenticatedNotificacoesRouteImport.update({
+    id: '/notificacoes',
+    path: '/notificacoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedHomologacaoRoute =
@@ -192,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/documentacao': typeof AuthenticatedDocumentacaoRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/homologacao': typeof AuthenticatedHomologacaoRoute
+  '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/nova-ausencia': typeof AuthenticatedNovaAusenciaRoute
   '/operacao-assistida': typeof AuthenticatedOperacaoAssistidaRoute
   '/operacoes': typeof AuthenticatedOperacoesRoute
@@ -219,6 +227,7 @@ export interface FileRoutesByTo {
   '/documentacao': typeof AuthenticatedDocumentacaoRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/homologacao': typeof AuthenticatedHomologacaoRoute
+  '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/nova-ausencia': typeof AuthenticatedNovaAusenciaRoute
   '/operacao-assistida': typeof AuthenticatedOperacaoAssistidaRoute
   '/operacoes': typeof AuthenticatedOperacoesRoute
@@ -248,6 +257,7 @@ export interface FileRoutesById {
   '/_authenticated/documentacao': typeof AuthenticatedDocumentacaoRoute
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
   '/_authenticated/homologacao': typeof AuthenticatedHomologacaoRoute
+  '/_authenticated/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/_authenticated/nova-ausencia': typeof AuthenticatedNovaAusenciaRoute
   '/_authenticated/operacao-assistida': typeof AuthenticatedOperacaoAssistidaRoute
   '/_authenticated/operacoes': typeof AuthenticatedOperacoesRoute
@@ -277,6 +287,7 @@ export interface FileRouteTypes {
     | '/documentacao'
     | '/historico'
     | '/homologacao'
+    | '/notificacoes'
     | '/nova-ausencia'
     | '/operacao-assistida'
     | '/operacoes'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/documentacao'
     | '/historico'
     | '/homologacao'
+    | '/notificacoes'
     | '/nova-ausencia'
     | '/operacao-assistida'
     | '/operacoes'
@@ -332,6 +344,7 @@ export interface FileRouteTypes {
     | '/_authenticated/documentacao'
     | '/_authenticated/historico'
     | '/_authenticated/homologacao'
+    | '/_authenticated/notificacoes'
     | '/_authenticated/nova-ausencia'
     | '/_authenticated/operacao-assistida'
     | '/_authenticated/operacoes'
@@ -422,6 +435,13 @@ declare module '@tanstack/react-router' {
       path: '/nova-ausencia'
       fullPath: '/nova-ausencia'
       preLoaderRoute: typeof AuthenticatedNovaAusenciaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/notificacoes': {
+      id: '/_authenticated/notificacoes'
+      path: '/notificacoes'
+      fullPath: '/notificacoes'
+      preLoaderRoute: typeof AuthenticatedNotificacoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/homologacao': {
@@ -572,6 +592,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDocumentacaoRoute: typeof AuthenticatedDocumentacaoRoute
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
   AuthenticatedHomologacaoRoute: typeof AuthenticatedHomologacaoRoute
+  AuthenticatedNotificacoesRoute: typeof AuthenticatedNotificacoesRoute
   AuthenticatedNovaAusenciaRoute: typeof AuthenticatedNovaAusenciaRoute
   AuthenticatedOperacaoAssistidaRoute: typeof AuthenticatedOperacaoAssistidaRoute
   AuthenticatedOperacoesRoute: typeof AuthenticatedOperacoesRoute
@@ -595,6 +616,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDocumentacaoRoute: AuthenticatedDocumentacaoRoute,
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
   AuthenticatedHomologacaoRoute: AuthenticatedHomologacaoRoute,
+  AuthenticatedNotificacoesRoute: AuthenticatedNotificacoesRoute,
   AuthenticatedNovaAusenciaRoute: AuthenticatedNovaAusenciaRoute,
   AuthenticatedOperacaoAssistidaRoute: AuthenticatedOperacaoAssistidaRoute,
   AuthenticatedOperacoesRoute: AuthenticatedOperacoesRoute,
