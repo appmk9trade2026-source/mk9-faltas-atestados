@@ -221,14 +221,34 @@ function OperacoesContent({ canWrite }: { canWrite: boolean }) {
         <KPI icon={MinusCircle} label="Alertas ignorados" value={m?.alertas_ignorados} loading={dash.isLoading} />
       </div>
 
-      <Tabs defaultValue="health">
+      <Tabs defaultValue="automacao">
         <TabsList>
+          <TabsTrigger value="automacao">Automação de SLA</TabsTrigger>
           <TabsTrigger value="health">Health Check</TabsTrigger>
           <TabsTrigger value="backup">Backup</TabsTrigger>
           <TabsTrigger value="dr">Disaster Recovery</TabsTrigger>
           <TabsTrigger value="alertas">Alertas</TabsTrigger>
           <TabsTrigger value="metricas">Métricas & Logs</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="automacao" className="space-y-4">
+          <Card><CardContent className="space-y-4 p-5">
+            <AutomacaoStatusCards />
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-4">
+              <p className="text-xs text-muted-foreground">
+                Motor server-side executado por agendamento interno. Ações administrativas são idempotentes e auditadas.
+              </p>
+              <MotorControls canWrite={canWrite} />
+            </div>
+          </CardContent></Card>
+          <Card><CardContent className="space-y-3 p-5">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <History className="h-4 w-4 text-primary" /> Histórico de execuções
+            </div>
+            <HistoricoExecucoes />
+          </CardContent></Card>
+        </TabsContent>
+
 
         <TabsContent value="health" className="space-y-3">
           <Card><CardContent className="p-5">
