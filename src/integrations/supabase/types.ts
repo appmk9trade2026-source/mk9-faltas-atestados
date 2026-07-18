@@ -2763,12 +2763,16 @@ export type Database = {
       security_functions_inventory: {
         Args: never
         Returns: {
+          categoria: string
           execute_anon: boolean
           execute_authenticated: boolean
           execute_public: boolean
           execute_service_role: boolean
+          expected_roles: string
           function_name: string
+          grant_status: string
           owner_name: string
+          risk_level: string
           schema_name: string
           search_path_configurado: boolean
           search_path_valor: string
