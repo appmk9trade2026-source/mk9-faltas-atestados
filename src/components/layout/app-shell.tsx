@@ -18,6 +18,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useSession, type AppRole } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
+import { NotificationBell } from "@/components/layout/notification-bell";
 import { toast } from "sonner";
 
 const roleLabel: Record<AppRole, string> = {
@@ -68,6 +69,7 @@ export function AppShell({ title, breadcrumb, children }: { title: string; bread
             </nav>
           </div>
           <div className="flex items-center gap-1.5">
+            <NotificationBell />
             <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

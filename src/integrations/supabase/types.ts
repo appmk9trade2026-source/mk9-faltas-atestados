@@ -550,6 +550,42 @@ export type Database = {
         }
         Relationships: []
       }
+      escalonamento_execucoes: {
+        Row: {
+          erro: string | null
+          executado_por: string | null
+          finalizado_em: string | null
+          id: string
+          iniciado_em: string
+          notificacoes_geradas: number
+          origem: string
+          processados: number
+          status: string
+        }
+        Insert: {
+          erro?: string | null
+          executado_por?: string | null
+          finalizado_em?: string | null
+          id?: string
+          iniciado_em?: string
+          notificacoes_geradas?: number
+          origem?: string
+          processados?: number
+          status?: string
+        }
+        Update: {
+          erro?: string | null
+          executado_por?: string | null
+          finalizado_em?: string | null
+          id?: string
+          iniciado_em?: string
+          notificacoes_geradas?: number
+          origem?: string
+          processados?: number
+          status?: string
+        }
+        Relationships: []
+      }
       go_live_checklist: {
         Row: {
           categoria: string
@@ -706,6 +742,142 @@ export type Database = {
           total_linhas?: number
           updated_at?: string
           usuario_id?: string
+        }
+        Relationships: []
+      }
+      notificacao_eventos: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          evento: Database["public"]["Enums"]["notif_evento"]
+          id: string
+          metadata: Json
+          notificacao_id: string
+          usuario_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          evento: Database["public"]["Enums"]["notif_evento"]
+          id?: string
+          metadata?: Json
+          notificacao_id: string
+          usuario_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          evento?: Database["public"]["Enums"]["notif_evento"]
+          id?: string
+          metadata?: Json
+          notificacao_id?: string
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificacao_eventos_notificacao_id_fkey"
+            columns: ["notificacao_id"]
+            isOneToOne: false
+            referencedRelation: "notificacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notificacao_usuarios: {
+        Row: {
+          arquivada_em: string | null
+          created_at: string
+          id: string
+          lida_em: string | null
+          notificacao_id: string
+          status: Database["public"]["Enums"]["notif_status_usuario"]
+          usuario_id: string
+        }
+        Insert: {
+          arquivada_em?: string | null
+          created_at?: string
+          id?: string
+          lida_em?: string | null
+          notificacao_id: string
+          status?: Database["public"]["Enums"]["notif_status_usuario"]
+          usuario_id: string
+        }
+        Update: {
+          arquivada_em?: string | null
+          created_at?: string
+          id?: string
+          lida_em?: string | null
+          notificacao_id?: string
+          status?: Database["public"]["Enums"]["notif_status_usuario"]
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificacao_usuarios_notificacao_id_fkey"
+            columns: ["notificacao_id"]
+            isOneToOne: false
+            referencedRelation: "notificacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notificacoes: {
+        Row: {
+          ambiente: string
+          created_at: string
+          created_by: string | null
+          destinatario_papel: Database["public"]["Enums"]["app_role"] | null
+          destinatario_usuario_id: string | null
+          expira_em: string | null
+          id: string
+          idempotency_key: string | null
+          mensagem: string
+          metadata: Json
+          modulo: string | null
+          origem: Database["public"]["Enums"]["notif_origem"]
+          origem_id: string | null
+          rota_destino: string | null
+          severidade: Database["public"]["Enums"]["notif_severidade"]
+          tipo: Database["public"]["Enums"]["notif_tipo"]
+          titulo: string
+        }
+        Insert: {
+          ambiente?: string
+          created_at?: string
+          created_by?: string | null
+          destinatario_papel?: Database["public"]["Enums"]["app_role"] | null
+          destinatario_usuario_id?: string | null
+          expira_em?: string | null
+          id?: string
+          idempotency_key?: string | null
+          mensagem: string
+          metadata?: Json
+          modulo?: string | null
+          origem?: Database["public"]["Enums"]["notif_origem"]
+          origem_id?: string | null
+          rota_destino?: string | null
+          severidade?: Database["public"]["Enums"]["notif_severidade"]
+          tipo: Database["public"]["Enums"]["notif_tipo"]
+          titulo: string
+        }
+        Update: {
+          ambiente?: string
+          created_at?: string
+          created_by?: string | null
+          destinatario_papel?: Database["public"]["Enums"]["app_role"] | null
+          destinatario_usuario_id?: string | null
+          expira_em?: string | null
+          id?: string
+          idempotency_key?: string | null
+          mensagem?: string
+          metadata?: Json
+          modulo?: string | null
+          origem?: Database["public"]["Enums"]["notif_origem"]
+          origem_id?: string | null
+          rota_destino?: string | null
+          severidade?: Database["public"]["Enums"]["notif_severidade"]
+          tipo?: Database["public"]["Enums"]["notif_tipo"]
+          titulo?: string
         }
         Relationships: []
       }
@@ -1180,6 +1352,36 @@ export type Database = {
         }
         Relationships: []
       }
+      preferencias_notificacao: {
+        Row: {
+          created_at: string
+          habilitada: boolean
+          id: string
+          silenciar_info: boolean
+          tipo: Database["public"]["Enums"]["notif_tipo"]
+          updated_at: string
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          habilitada?: boolean
+          id?: string
+          silenciar_info?: boolean
+          tipo: Database["public"]["Enums"]["notif_tipo"]
+          updated_at?: string
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string
+          habilitada?: boolean
+          id?: string
+          silenciar_info?: boolean
+          tipo?: Database["public"]["Enums"]["notif_tipo"]
+          updated_at?: string
+          usuario_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           ativo: boolean
@@ -1244,6 +1446,76 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      regras_escalonamento: {
+        Row: {
+          ambiente: string
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          descricao: string | null
+          id: string
+          intervalo_repeticao_minutos: number | null
+          maximo_repeticoes: number | null
+          minutos_para_escalonamento: number | null
+          minutos_para_primeiro_alerta: number
+          nome: string
+          origem: Database["public"]["Enums"]["notif_origem"]
+          papel_destino_escalado: Database["public"]["Enums"]["app_role"] | null
+          papel_destino_inicial: Database["public"]["Enums"]["app_role"] | null
+          prioridade: number
+          repetir_alerta: boolean
+          severidade_minima: Database["public"]["Enums"]["notif_severidade"]
+          tipo_evento: Database["public"]["Enums"]["notif_tipo"]
+          updated_at: string
+        }
+        Insert: {
+          ambiente?: string
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          intervalo_repeticao_minutos?: number | null
+          maximo_repeticoes?: number | null
+          minutos_para_escalonamento?: number | null
+          minutos_para_primeiro_alerta?: number
+          nome: string
+          origem?: Database["public"]["Enums"]["notif_origem"]
+          papel_destino_escalado?:
+            | Database["public"]["Enums"]["app_role"]
+            | null
+          papel_destino_inicial?: Database["public"]["Enums"]["app_role"] | null
+          prioridade?: number
+          repetir_alerta?: boolean
+          severidade_minima?: Database["public"]["Enums"]["notif_severidade"]
+          tipo_evento: Database["public"]["Enums"]["notif_tipo"]
+          updated_at?: string
+        }
+        Update: {
+          ambiente?: string
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          intervalo_repeticao_minutos?: number | null
+          maximo_repeticoes?: number | null
+          minutos_para_escalonamento?: number | null
+          minutos_para_primeiro_alerta?: number
+          nome?: string
+          origem?: Database["public"]["Enums"]["notif_origem"]
+          papel_destino_escalado?:
+            | Database["public"]["Enums"]["app_role"]
+            | null
+          papel_destino_inicial?: Database["public"]["Enums"]["app_role"] | null
+          prioridade?: number
+          repetir_alerta?: boolean
+          severidade_minima?: Database["public"]["Enums"]["notif_severidade"]
+          tipo_evento?: Database["public"]["Enums"]["notif_tipo"]
+          updated_at?: string
+        }
+        Relationships: []
       }
       tipo_ausencia_opcoes_periodo: {
         Row: {
@@ -1378,8 +1650,32 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      arquivar_notificacao: {
+        Args: { _notificacao_id: string }
+        Returns: undefined
+      }
       audit_kpis: { Args: { _inicio?: string }; Returns: Json }
       bootstrap_first_super_admin: { Args: never; Returns: string }
+      contar_notificacoes_nao_lidas: { Args: never; Returns: number }
+      criar_notificacao: {
+        Args: {
+          _ambiente?: string
+          _destinatario_papel?: Database["public"]["Enums"]["app_role"]
+          _destinatario_usuario_id?: string
+          _expira_em?: string
+          _idempotency_key?: string
+          _mensagem: string
+          _metadata?: Json
+          _modulo?: string
+          _origem?: Database["public"]["Enums"]["notif_origem"]
+          _origem_id?: string
+          _rota_destino?: string
+          _severidade?: Database["public"]["Enums"]["notif_severidade"]
+          _tipo: Database["public"]["Enums"]["notif_tipo"]
+          _titulo: string
+        }
+        Returns: string
+      }
       dashboard_metrics:
         | {
             Args: {
@@ -1448,6 +1744,28 @@ export type Database = {
         Returns: Json
       }
       is_active_user: { Args: { _user_id: string }; Returns: boolean }
+      listar_notificacoes_usuario: {
+        Args: {
+          _limit?: number
+          _offset?: number
+          _status?: Database["public"]["Enums"]["notif_status_usuario"]
+        }
+        Returns: {
+          created_at: string
+          id: string
+          lida_em: string
+          mensagem: string
+          metadata: Json
+          modulo: string
+          origem: Database["public"]["Enums"]["notif_origem"]
+          origem_id: string
+          rota_destino: string
+          severidade: Database["public"]["Enums"]["notif_severidade"]
+          status: Database["public"]["Enums"]["notif_status_usuario"]
+          tipo: Database["public"]["Enums"]["notif_tipo"]
+          titulo: string
+        }[]
+      }
       log_audit_event: {
         Args: {
           _acao: Database["public"]["Enums"]["audit_action"]
@@ -1465,6 +1783,14 @@ export type Database = {
           _user_agent?: string
         }
         Returns: string
+      }
+      marcar_notificacao_como_lida: {
+        Args: { _notificacao_id: string }
+        Returns: undefined
+      }
+      materializar_destinatarios: {
+        Args: { _notificacao_id: string }
+        Returns: number
       }
       oa_dashboard: { Args: { _periodo_id?: string }; Returns: Json }
       oa_incidente_transicionar: {
@@ -1488,6 +1814,7 @@ export type Database = {
       }
       operacoes_dashboard: { Args: never; Returns: Json }
       operacoes_health_check: { Args: never; Returns: Json }
+      processar_escalonamentos_pendentes: { Args: never; Returns: Json }
       registrar_solicitacao_backup: {
         Args: { _observacoes?: string }
         Returns: string
@@ -1620,6 +1947,41 @@ export type Database = {
         | "APROVADO"
         | "REPROVADO"
         | "NAO_APLICAVEL"
+      notif_evento:
+        | "CRIADA"
+        | "ENTREGUE"
+        | "VISUALIZADA"
+        | "MARCADA_COMO_LIDA"
+        | "ARQUIVADA"
+        | "REENVIADA_INTERNAMENTE"
+        | "ESCALADA"
+        | "EXPIRADA"
+      notif_origem:
+        | "OPERACAO_ASSISTIDA"
+        | "OPERACOES"
+        | "DEPLOY"
+        | "BACKUP"
+        | "HEALTH_CHECK"
+        | "SISTEMA"
+      notif_severidade: "INFO" | "ATENCAO" | "ALTA" | "CRITICA"
+      notif_status_usuario: "NAO_LIDA" | "LIDA" | "ARQUIVADA"
+      notif_tipo:
+        | "INCIDENTE_CRIADO"
+        | "INCIDENTE_ATRIBUIDO"
+        | "INCIDENTE_RECLASSIFICADO"
+        | "INCIDENTE_CRITICO"
+        | "INCIDENTE_P1"
+        | "SLA_PROXIMO"
+        | "SLA_VENCIDO"
+        | "VALIDACAO_PENDENTE"
+        | "INCIDENTE_RESOLVIDO"
+        | "INCIDENTE_REABERTO"
+        | "PERIODO_PROXIMO_DO_FIM"
+        | "PERIODO_PRORROGADO"
+        | "ALERTA_OPERACIONAL"
+        | "DEPLOY_COM_INCIDENTE"
+        | "BACKUP_FALHOU"
+        | "SISTEMA"
       oa_ambiente: "desenvolvimento" | "homologacao" | "preview" | "producao"
       oa_comentario_tipo: "COMENTARIO" | "ATUALIZACAO" | "VALIDACAO" | "DECISAO"
       oa_evento_tipo:
@@ -1845,6 +2207,44 @@ export const Constants = {
         "APROVADO",
         "REPROVADO",
         "NAO_APLICAVEL",
+      ],
+      notif_evento: [
+        "CRIADA",
+        "ENTREGUE",
+        "VISUALIZADA",
+        "MARCADA_COMO_LIDA",
+        "ARQUIVADA",
+        "REENVIADA_INTERNAMENTE",
+        "ESCALADA",
+        "EXPIRADA",
+      ],
+      notif_origem: [
+        "OPERACAO_ASSISTIDA",
+        "OPERACOES",
+        "DEPLOY",
+        "BACKUP",
+        "HEALTH_CHECK",
+        "SISTEMA",
+      ],
+      notif_severidade: ["INFO", "ATENCAO", "ALTA", "CRITICA"],
+      notif_status_usuario: ["NAO_LIDA", "LIDA", "ARQUIVADA"],
+      notif_tipo: [
+        "INCIDENTE_CRIADO",
+        "INCIDENTE_ATRIBUIDO",
+        "INCIDENTE_RECLASSIFICADO",
+        "INCIDENTE_CRITICO",
+        "INCIDENTE_P1",
+        "SLA_PROXIMO",
+        "SLA_VENCIDO",
+        "VALIDACAO_PENDENTE",
+        "INCIDENTE_RESOLVIDO",
+        "INCIDENTE_REABERTO",
+        "PERIODO_PROXIMO_DO_FIM",
+        "PERIODO_PRORROGADO",
+        "ALERTA_OPERACIONAL",
+        "DEPLOY_COM_INCIDENTE",
+        "BACKUP_FALHOU",
+        "SISTEMA",
       ],
       oa_ambiente: ["desenvolvimento", "homologacao", "preview", "producao"],
       oa_comentario_tipo: ["COMENTARIO", "ATUALIZACAO", "VALIDACAO", "DECISAO"],
