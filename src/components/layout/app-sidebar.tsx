@@ -63,6 +63,7 @@ const items: Item[] = [
   { title: "Deploy & Go-Live", url: "/deploy", icon: Rocket, roles: ["super_admin", "compliance"] },
   { title: "Operação Assistida", url: "/operacao-assistida", icon: ClipboardCheck, roles: ["super_admin", "compliance", "rh"] },
   { title: "Notificações", url: "/notificacoes", icon: BellRing, roles: ["super_admin", "compliance", "rh"] },
+  { title: "Roadmap", url: "/roadmap", icon: Map, roles: ["super_admin", "compliance"] },
 ];
 
 export function AppSidebar({ roles }: { roles: AppRole[] }) {
