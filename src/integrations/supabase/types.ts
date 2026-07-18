@@ -1818,6 +1818,7 @@ export type Database = {
           email: string
           id: string
           nome: string
+          telefone_whatsapp: string | null
           updated_at: string
         }
         Insert: {
@@ -1826,6 +1827,7 @@ export type Database = {
           email: string
           id: string
           nome: string
+          telefone_whatsapp?: string | null
           updated_at?: string
         }
         Update: {
@@ -1834,6 +1836,7 @@ export type Database = {
           email?: string
           id?: string
           nome?: string
+          telefone_whatsapp?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -2356,6 +2359,339 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_destinatario_config: {
+        Row: {
+          base_envio: Database["public"]["Enums"]["whatsapp_base_envio"]
+          bloqueado_em: string | null
+          canal_habilitado: boolean
+          colaborador_id: string | null
+          consentimento_origem: string | null
+          consentimento_registrado_em: string | null
+          created_at: string
+          id: string
+          motivo_bloqueio: string | null
+          telefone_hash: string
+          tipo_destinatario: Database["public"]["Enums"]["whatsapp_publico"]
+          updated_at: string
+          usuario_id: string | null
+        }
+        Insert: {
+          base_envio?: Database["public"]["Enums"]["whatsapp_base_envio"]
+          bloqueado_em?: string | null
+          canal_habilitado?: boolean
+          colaborador_id?: string | null
+          consentimento_origem?: string | null
+          consentimento_registrado_em?: string | null
+          created_at?: string
+          id?: string
+          motivo_bloqueio?: string | null
+          telefone_hash: string
+          tipo_destinatario: Database["public"]["Enums"]["whatsapp_publico"]
+          updated_at?: string
+          usuario_id?: string | null
+        }
+        Update: {
+          base_envio?: Database["public"]["Enums"]["whatsapp_base_envio"]
+          bloqueado_em?: string | null
+          canal_habilitado?: boolean
+          colaborador_id?: string | null
+          consentimento_origem?: string | null
+          consentimento_registrado_em?: string | null
+          created_at?: string
+          id?: string
+          motivo_bloqueio?: string | null
+          telefone_hash?: string
+          tipo_destinatario?: Database["public"]["Enums"]["whatsapp_publico"]
+          updated_at?: string
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_destinatario_config_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_outbox: {
+        Row: {
+          ausencia_id: string | null
+          confirmado_em: string | null
+          created_at: string
+          destinatario_colaborador_id: string | null
+          destinatario_usuario_id: string | null
+          enviado_em: string | null
+          evento_id: string
+          evento_tipo: string
+          falhou_em: string | null
+          id: string
+          idempotency_key: string
+          locked_at: string | null
+          locked_by: string | null
+          max_tentativas: number
+          payload: Json
+          prioridade: Database["public"]["Enums"]["whatsapp_prioridade"]
+          processado_em: string | null
+          provider: Database["public"]["Enums"]["whatsapp_provider"]
+          provider_instance: string | null
+          provider_message_id: string | null
+          proxima_tentativa_em: string
+          publico: Database["public"]["Enums"]["whatsapp_publico"]
+          status: Database["public"]["Enums"]["whatsapp_status"]
+          telefone_criptografado: string | null
+          telefone_hash: string
+          telefone_mascarado: string
+          template_codigo: string
+          template_id: string
+          template_versao: number
+          tentativas: number
+          ultimo_erro_codigo: string | null
+          ultimo_erro_resumido: string | null
+        }
+        Insert: {
+          ausencia_id?: string | null
+          confirmado_em?: string | null
+          created_at?: string
+          destinatario_colaborador_id?: string | null
+          destinatario_usuario_id?: string | null
+          enviado_em?: string | null
+          evento_id: string
+          evento_tipo: string
+          falhou_em?: string | null
+          id?: string
+          idempotency_key: string
+          locked_at?: string | null
+          locked_by?: string | null
+          max_tentativas?: number
+          payload?: Json
+          prioridade?: Database["public"]["Enums"]["whatsapp_prioridade"]
+          processado_em?: string | null
+          provider?: Database["public"]["Enums"]["whatsapp_provider"]
+          provider_instance?: string | null
+          provider_message_id?: string | null
+          proxima_tentativa_em?: string
+          publico: Database["public"]["Enums"]["whatsapp_publico"]
+          status?: Database["public"]["Enums"]["whatsapp_status"]
+          telefone_criptografado?: string | null
+          telefone_hash: string
+          telefone_mascarado: string
+          template_codigo: string
+          template_id: string
+          template_versao: number
+          tentativas?: number
+          ultimo_erro_codigo?: string | null
+          ultimo_erro_resumido?: string | null
+        }
+        Update: {
+          ausencia_id?: string | null
+          confirmado_em?: string | null
+          created_at?: string
+          destinatario_colaborador_id?: string | null
+          destinatario_usuario_id?: string | null
+          enviado_em?: string | null
+          evento_id?: string
+          evento_tipo?: string
+          falhou_em?: string | null
+          id?: string
+          idempotency_key?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          max_tentativas?: number
+          payload?: Json
+          prioridade?: Database["public"]["Enums"]["whatsapp_prioridade"]
+          processado_em?: string | null
+          provider?: Database["public"]["Enums"]["whatsapp_provider"]
+          provider_instance?: string | null
+          provider_message_id?: string | null
+          proxima_tentativa_em?: string
+          publico?: Database["public"]["Enums"]["whatsapp_publico"]
+          status?: Database["public"]["Enums"]["whatsapp_status"]
+          telefone_criptografado?: string | null
+          telefone_hash?: string
+          telefone_mascarado?: string
+          template_codigo?: string
+          template_id?: string
+          template_versao?: number
+          tentativas?: number
+          ultimo_erro_codigo?: string | null
+          ultimo_erro_resumido?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_outbox_ausencia_id_fkey"
+            columns: ["ausencia_id"]
+            isOneToOne: false
+            referencedRelation: "ausencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_outbox_destinatario_colaborador_id_fkey"
+            columns: ["destinatario_colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_outbox_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_outbox_eventos: {
+        Row: {
+          codigo: string | null
+          created_at: string
+          evento: string
+          id: string
+          mensagem_resumida: string | null
+          metadata_segura: Json
+          outbox_id: string
+          provider_message_id: string | null
+          status_anterior: Database["public"]["Enums"]["whatsapp_status"] | null
+          status_novo: Database["public"]["Enums"]["whatsapp_status"] | null
+        }
+        Insert: {
+          codigo?: string | null
+          created_at?: string
+          evento: string
+          id?: string
+          mensagem_resumida?: string | null
+          metadata_segura?: Json
+          outbox_id: string
+          provider_message_id?: string | null
+          status_anterior?:
+            | Database["public"]["Enums"]["whatsapp_status"]
+            | null
+          status_novo?: Database["public"]["Enums"]["whatsapp_status"] | null
+        }
+        Update: {
+          codigo?: string | null
+          created_at?: string
+          evento?: string
+          id?: string
+          mensagem_resumida?: string | null
+          metadata_segura?: Json
+          outbox_id?: string
+          provider_message_id?: string | null
+          status_anterior?:
+            | Database["public"]["Enums"]["whatsapp_status"]
+            | null
+          status_novo?: Database["public"]["Enums"]["whatsapp_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_outbox_eventos_outbox_id_fkey"
+            columns: ["outbox_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_outbox"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_provider_config: {
+        Row: {
+          base_url_public_label: string | null
+          batch_size: number
+          created_at: string
+          enabled: boolean
+          homologacao_allowlist: string[]
+          id: string
+          instance_name: string | null
+          max_tentativas: number
+          modo: Database["public"]["Enums"]["whatsapp_modo"]
+          provider: Database["public"]["Enums"]["whatsapp_provider"]
+          retry_base_segundos: number
+          retry_max_segundos: number
+          singleton: boolean
+          timeout_ms: number
+          updated_at: string
+          webhook_enabled: boolean
+        }
+        Insert: {
+          base_url_public_label?: string | null
+          batch_size?: number
+          created_at?: string
+          enabled?: boolean
+          homologacao_allowlist?: string[]
+          id?: string
+          instance_name?: string | null
+          max_tentativas?: number
+          modo?: Database["public"]["Enums"]["whatsapp_modo"]
+          provider?: Database["public"]["Enums"]["whatsapp_provider"]
+          retry_base_segundos?: number
+          retry_max_segundos?: number
+          singleton?: boolean
+          timeout_ms?: number
+          updated_at?: string
+          webhook_enabled?: boolean
+        }
+        Update: {
+          base_url_public_label?: string | null
+          batch_size?: number
+          created_at?: string
+          enabled?: boolean
+          homologacao_allowlist?: string[]
+          id?: string
+          instance_name?: string | null
+          max_tentativas?: number
+          modo?: Database["public"]["Enums"]["whatsapp_modo"]
+          provider?: Database["public"]["Enums"]["whatsapp_provider"]
+          retry_base_segundos?: number
+          retry_max_segundos?: number
+          singleton?: boolean
+          timeout_ms?: number
+          updated_at?: string
+          webhook_enabled?: boolean
+        }
+        Relationships: []
+      }
+      whatsapp_templates: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          conteudo: string
+          created_at: string
+          created_by: string | null
+          id: string
+          nome: string
+          publico: Database["public"]["Enums"]["whatsapp_publico"]
+          updated_at: string
+          variaveis_permitidas: string[]
+          versao: number
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          conteudo: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome: string
+          publico: Database["public"]["Enums"]["whatsapp_publico"]
+          updated_at?: string
+          variaveis_permitidas?: string[]
+          versao?: number
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          conteudo?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome?: string
+          publico?: Database["public"]["Enums"]["whatsapp_publico"]
+          updated_at?: string
+          variaveis_permitidas?: string[]
+          versao?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -2596,6 +2932,16 @@ export type Database = {
         Returns: Json
       }
       metricas_notificacoes: { Args: never; Returns: Json }
+      normalizar_telefone_whatsapp: {
+        Args: { p_telefone: string }
+        Returns: {
+          motivo_invalido: string
+          telefone_hash: string
+          telefone_mascarado: string
+          telefone_normalizado: string
+          valido: boolean
+        }[]
+      }
       notificacoes_motor_healthcheck: { Args: never; Returns: Json }
       oa_dashboard: { Args: { _periodo_id?: string }; Returns: Json }
       oa_incidente_transicionar: {
@@ -2783,6 +3129,11 @@ export type Database = {
         }[]
       }
       simular_regras_escalonamento: { Args: { p_evento: Json }; Returns: Json }
+      unaccent_if_available: { Args: { p: string }; Returns: string }
+      validar_template_colaborador_whatsapp: {
+        Args: { p_conteudo: string; p_variaveis: string[] }
+        Returns: undefined
+      }
     }
     Enums: {
       access_review_status: "PENDENTE" | "APROVADA" | "REVOGADA" | "PRORROGADA"
@@ -2971,6 +3322,20 @@ export type Database = {
         | "HORAS"
         | "MEIO_PERIODO"
         | "PERIODO_INTEGRAL"
+      whatsapp_base_envio: "OPERACIONAL" | "CONSENTIMENTO" | "DESABILITADO"
+      whatsapp_modo: "DESATIVADO" | "HOMOLOGACAO" | "PRODUCAO"
+      whatsapp_prioridade: "NORMAL" | "ALTA"
+      whatsapp_provider: "EVOLUTION_API"
+      whatsapp_publico: "COLABORADOR" | "RH" | "SUPERVISOR"
+      whatsapp_status:
+        | "PENDENTE"
+        | "PROCESSANDO"
+        | "ENVIADO"
+        | "ENTREGUE"
+        | "LIDO"
+        | "FALHOU_TEMPORARIO"
+        | "FALHOU_DEFINITIVO"
+        | "CANCELADO"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3294,6 +3659,21 @@ export const Constants = {
         "HORAS",
         "MEIO_PERIODO",
         "PERIODO_INTEGRAL",
+      ],
+      whatsapp_base_envio: ["OPERACIONAL", "CONSENTIMENTO", "DESABILITADO"],
+      whatsapp_modo: ["DESATIVADO", "HOMOLOGACAO", "PRODUCAO"],
+      whatsapp_prioridade: ["NORMAL", "ALTA"],
+      whatsapp_provider: ["EVOLUTION_API"],
+      whatsapp_publico: ["COLABORADOR", "RH", "SUPERVISOR"],
+      whatsapp_status: [
+        "PENDENTE",
+        "PROCESSANDO",
+        "ENVIADO",
+        "ENTREGUE",
+        "LIDO",
+        "FALHOU_TEMPORARIO",
+        "FALHOU_DEFINITIVO",
+        "CANCELADO",
       ],
     },
   },
