@@ -82,7 +82,7 @@ function Content({ isAdmin, isCompliance }: { isAdmin: boolean; isCompliance: bo
   const dashboard = useQuery({
     queryKey: ["oa-dashboard"],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("oa_dashboard", { _periodo_id: null });
+      const { data, error } = await supabase.rpc("oa_dashboard", { _periodo_id: null as any });
       if (error) throw error;
       return data as any;
     },
@@ -301,7 +301,7 @@ function NovoIncidenteForm({ periodoAtivoId, onDone }: { periodoAtivoId: string 
         ...form,
         periodo_id: periodoAtivoId,
         reportado_por: uid,
-      }).select("id").single();
+      } as any).select("id").single();
       if (error) throw error;
       // Evento CRIADO
       await supabase.from("operacao_incidente_eventos").insert({
@@ -368,7 +368,7 @@ function NovoPeriodoForm({ onDone }: { onDone: () => void }) {
   const [form, setForm] = useState({ nome: "Operação Assistida — Go-Live", ambiente: "producao", data_inicio: hoje, data_fim_prevista: em30, responsavel_principal: "", descricao: "", criterios_encerramento: "", status: "PLANEJADO" as const });
   const mut = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("operacao_assistida_periodos").insert(form);
+      const { error } = await supabase.from("operacao_assistida_periodos").insert(form as any);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Período criado"); onDone(); },
@@ -442,7 +442,7 @@ function IncidenteDetalhe({ id, isAdmin, onClose }: { id: string; isAdmin: boole
     mutationFn: async () => {
       const { error } = await supabase.rpc("oa_incidente_transicionar", {
         _incidente_id: id, _novo_status: novoStatus as any,
-        _mensagem: msg || null, _causa_raiz: causa || null, _solucao: solucao || null, _plano_prevencao: null,
+        _mensagem: (msg || null) as any, _causa_raiz: (causa || null) as any, _solucao: (solucao || null) as any, _plano_prevencao: null as any,
       });
       if (error) throw error;
     },
@@ -549,7 +549,7 @@ function EncerramentoView({ periodo, kpis, isAdmin, onChanged }: any) {
   const [obs, setObs] = useState("");
   const encerrar = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.rpc("oa_periodo_encerrar", { _periodo_id: periodo.id, _observacoes: obs || null });
+      const { error } = await supabase.rpc("oa_periodo_encerrar", { _periodo_id: periodo.id, _observacoes: (obs || null) as any });
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Período encerrado"); onChanged(); },
