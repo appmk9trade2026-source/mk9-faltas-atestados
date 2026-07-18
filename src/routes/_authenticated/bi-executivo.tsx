@@ -260,6 +260,9 @@ function BIExecutivoPage() {
               <Button variant="outline" size="sm" onClick={() => setShowMetodologia(true)}>
                 <Info className="h-4 w-4 mr-1" /> Metodologia
               </Button>
+              <Button variant="outline" size="sm" onClick={() => setShowExport(true)}>
+                <Download className="h-4 w-4 mr-1" /> Exportar
+              </Button>
               <Dialog open={showSalvar} onOpenChange={setShowSalvar}>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm"><Save className="h-4 w-4 mr-1" /> Salvar visão</Button>
