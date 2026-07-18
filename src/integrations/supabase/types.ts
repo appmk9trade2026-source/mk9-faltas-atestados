@@ -2450,6 +2450,22 @@ export type Database = {
       database_healthcheck: { Args: never; Returns: Json }
       database_indices_report: { Args: never; Returns: Json }
       database_performance: { Args: never; Returns: Json }
+      database_slow_queries: {
+        Args: { p_limit?: number; p_min_calls?: number }
+        Returns: {
+          calls: number
+          classificacao: string
+          disponivel: string
+          max_exec_time_ms: number
+          mean_exec_time_ms: number
+          query_fingerprint: string
+          rows_: number
+          shared_blks_hit: number
+          shared_blks_read: number
+          temp_blks_written: number
+          total_exec_time_ms: number
+        }[]
+      }
       gerar_campanha_revisao: {
         Args: { _dias_prazo?: number }
         Returns: number
@@ -2742,6 +2758,24 @@ export type Database = {
           total: number
           usuario_id: string
           usuario_nome: string
+        }[]
+      }
+      security_functions_inventory: {
+        Args: never
+        Returns: {
+          execute_anon: boolean
+          execute_authenticated: boolean
+          execute_public: boolean
+          execute_service_role: boolean
+          function_name: string
+          owner_name: string
+          schema_name: string
+          search_path_configurado: boolean
+          search_path_valor: string
+          security_definer: boolean
+          signature: string
+          status: string
+          volatility: string
         }[]
       }
       simular_regras_escalonamento: { Args: { p_evento: Json }; Returns: Json }

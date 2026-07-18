@@ -10,6 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { cn } from "@/lib/utils";
+import { SegurancaQueriesTabs } from "@/components/observabilidade/seguranca-queries-tabs";
+
 
 export const Route = createFileRoute("/_authenticated/observabilidade")({
   component: ObservabilidadePage,
@@ -106,7 +108,11 @@ function ObservabilidadePage() {
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="cron">Jobs pg_cron</TabsTrigger>
           <TabsTrigger value="indices">Índices</TabsTrigger>
+          <TabsTrigger value="seguranca">Segurança</TabsTrigger>
+          <TabsTrigger value="queries">Queries</TabsTrigger>
         </TabsList>
+        <SegurancaQueriesTabs />
+
 
         <TabsContent value="diagnostico" className="space-y-4 mt-4">
           <DiagList titulo="Tabelas sem RLS" itens={(db.data?.tabelas_sem_rls as Json[]) ?? []} severidade="ALTA" render={(i) => `${i.schema}.${i.tabela}`} />
