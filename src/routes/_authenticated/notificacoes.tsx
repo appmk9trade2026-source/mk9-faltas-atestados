@@ -1,8 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
-  Archive, Bell, CheckCheck, ExternalLink, Loader2, PlayCircle,
-  RefreshCw, ShieldAlert, Timer, Inbox, Filter,
+  Archive, Bell, CheckCheck, ExternalLink, RefreshCw, ShieldAlert, Timer, Inbox, Filter,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,13 +14,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useSession } from "@/hooks/use-session";
 import {
-  useNotificacoes, useMarcarLida, useArquivar, useProcessarEscalonamentos,
+  useNotificacoes, useMarcarLida, useArquivar,
   type NotifStatus, type NotifSeveridade,
 } from "@/hooks/use-notificacoes";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { AutomacaoStatusCards, MotorControls, HistoricoExecucoes } from "@/components/automacao/automacao-motor";
+
 
 export const Route = createFileRoute("/_authenticated/notificacoes")({
   head: () => ({ meta: [{ title: "Notificações · CRM MK9" }] }),
