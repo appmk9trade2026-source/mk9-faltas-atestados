@@ -2931,6 +2931,10 @@ export type Database = {
         }
         Returns: Json
       }
+      materializar_whatsapp_ausencia: {
+        Args: { p_ausencia_id: string; p_supervisor_id: string }
+        Returns: Json
+      }
       metricas_notificacoes: { Args: never; Returns: Json }
       normalizar_telefone_whatsapp: {
         Args: { p_telefone: string }
@@ -3062,6 +3066,13 @@ export type Database = {
         Returns: Json
       }
       reprocessar_escalonamentos: { Args: never; Returns: Json }
+      resolver_destinatarios_rh_ausencia: {
+        Args: { p_ausencia_id: string }
+        Returns: {
+          telefone_bruto: string
+          usuario_id: string
+        }[]
+      }
       restaurar_preferencias_padrao: { Args: never; Returns: number }
       revogar_sessao: {
         Args: { _motivo?: string; _session_id: string }
@@ -3132,6 +3143,24 @@ export type Database = {
       unaccent_if_available: { Args: { p: string }; Returns: string }
       validar_template_colaborador_whatsapp: {
         Args: { p_conteudo: string; p_variaveis: string[] }
+        Returns: undefined
+      }
+      whatsapp_idem_key_ausencia: {
+        Args: {
+          p_alvo_id: string
+          p_ausencia_id: string
+          p_publico: Database["public"]["Enums"]["whatsapp_publico"]
+        }
+        Returns: string
+      }
+      whatsapp_registrar_evento_seguro: {
+        Args: {
+          p_codigo?: string
+          p_evento: string
+          p_mensagem?: string
+          p_metadata?: Json
+          p_outbox_id: string
+        }
         Returns: undefined
       }
     }
@@ -3213,6 +3242,9 @@ export type Database = {
         | "DEPLOY_COM_INCIDENTE"
         | "BACKUP_FALHOU"
         | "SISTEMA"
+        | "WHATSAPP_AUSENCIA_COLABORADOR"
+        | "WHATSAPP_AUSENCIA_RH"
+        | "WHATSAPP_AUSENCIA_SUPERVISOR"
       oa_ambiente: "desenvolvimento" | "homologacao" | "preview" | "producao"
       oa_comentario_tipo: "COMENTARIO" | "ATUALIZACAO" | "VALIDACAO" | "DECISAO"
       oa_evento_tipo:
@@ -3546,6 +3578,9 @@ export const Constants = {
         "DEPLOY_COM_INCIDENTE",
         "BACKUP_FALHOU",
         "SISTEMA",
+        "WHATSAPP_AUSENCIA_COLABORADOR",
+        "WHATSAPP_AUSENCIA_RH",
+        "WHATSAPP_AUSENCIA_SUPERVISOR",
       ],
       oa_ambiente: ["desenvolvimento", "homologacao", "preview", "producao"],
       oa_comentario_tipo: ["COMENTARIO", "ATUALIZACAO", "VALIDACAO", "DECISAO"],
