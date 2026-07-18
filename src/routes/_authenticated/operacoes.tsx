@@ -222,6 +222,9 @@ function OperacoesContent({ canWrite }: { canWrite: boolean }) {
         <KPI icon={MinusCircle} label="Alertas ignorados" value={m?.alertas_ignorados} loading={dash.isLoading} />
       </div>
 
+      <BIHealthCard canWrite={canWrite} />
+
+
       <Tabs defaultValue="automacao">
         <TabsList>
           <TabsTrigger value="automacao">Automação de SLA</TabsTrigger>
