@@ -25,6 +25,10 @@ type InvRow = {
   owner_name: string;
   volatility: string;
   status: string;
+  grant_status?: string | null;
+  expected_roles?: string | null;
+  risk_level?: string | null;
+  categoria?: string | null;
 };
 
 type SlowRow = {
