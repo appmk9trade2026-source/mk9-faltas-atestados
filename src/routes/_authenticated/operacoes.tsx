@@ -21,6 +21,7 @@ import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { AutomacaoStatusCards, HistoricoExecucoes, MotorControls } from "@/components/automacao/automacao-motor";
+import { BIHealthCard } from "@/components/bi/bi-health-card";
 
 export const Route = createFileRoute("/_authenticated/operacoes")({
   head: () => ({ meta: [{ title: "Operações · CRM MK9" }] }),
@@ -220,6 +221,9 @@ function OperacoesContent({ canWrite }: { canWrite: boolean }) {
         <KPI icon={CheckCircle2} label="Alertas resolvidos" value={m?.alertas_resolvidos} loading={dash.isLoading} />
         <KPI icon={MinusCircle} label="Alertas ignorados" value={m?.alertas_ignorados} loading={dash.isLoading} />
       </div>
+
+      <BIHealthCard canWrite={canWrite} />
+
 
       <Tabs defaultValue="automacao">
         <TabsList>

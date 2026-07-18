@@ -5,7 +5,7 @@ import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Activity, AlertTriangle, ArrowDown, ArrowUp, BarChart3, Calendar as CalendarIcon,
-  Database, Info, RefreshCw, Save, Sparkles, TrendingDown, TrendingUp, Users,
+  Database, Download, Info, RefreshCw, Save, Sparkles, TrendingDown, TrendingUp, Users,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
@@ -31,6 +31,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { cn } from "@/lib/utils";
+import { VariacoesAtipicasTab } from "@/components/bi/variacoes-tab";
+import { RecorrenciaTab } from "@/components/bi/recorrencia-tab";
+import { exportBI, type ExportFormato } from "@/lib/bi-export";
+import { buildStamp } from "@/lib/app-meta";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const sb = supabase as any;
@@ -78,6 +82,7 @@ function BIExecutivoPage() {
   const [showMetodologia, setShowMetodologia] = useState(false);
   const [nomeVisao, setNomeVisao] = useState("");
   const [showSalvar, setShowSalvar] = useState(false);
+  const [showExport, setShowExport] = useState(false);
 
   const empresasQ = useQuery({
     queryKey: ["bi-empresas"],
@@ -255,6 +260,9 @@ function BIExecutivoPage() {
               <Button variant="outline" size="sm" onClick={() => setShowMetodologia(true)}>
                 <Info className="h-4 w-4 mr-1" /> Metodologia
               </Button>
+              <Button variant="outline" size="sm" onClick={() => setShowExport(true)}>
+                <Download className="h-4 w-4 mr-1" /> Exportar
+              </Button>
               <Dialog open={showSalvar} onOpenChange={setShowSalvar}>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="sm"><Save className="h-4 w-4 mr-1" /> Salvar visão</Button>
@@ -363,9 +371,20 @@ function BIExecutivoPage() {
             <TabsTrigger value="empresas">Empresas & Projetos</TabsTrigger>
             <TabsTrigger value="sazonalidade">Sazonalidade</TabsTrigger>
             <TabsTrigger value="concentracao">Concentração</TabsTrigger>
+            <TabsTrigger value="variacoes">Variações Atípicas</TabsTrigger>
+            <TabsTrigger value="recorrencia">Recorrência</TabsTrigger>
             <TabsTrigger value="qualidade">Qualidade</TabsTrigger>
             <TabsTrigger value="tendencia">Tendência</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="variacoes" className="mt-4">
+            <VariacoesAtipicasTab dataInicio={filtros.data_inicio} dataFim={filtros.data_fim} />
+          </TabsContent>
+
+          <TabsContent value="recorrencia" className="mt-4">
+            <RecorrenciaTab dataInicio={filtros.data_inicio} dataFim={filtros.data_fim} />
+          </TabsContent>
+
 
           <TabsContent value="evolucao" className="mt-4">
             <Card>
@@ -591,6 +610,15 @@ function BIExecutivoPage() {
           </TabsContent>
         </Tabs>
 
+        {/* Exportação */}
+        <ExportDialog
+          open={showExport}
+          onOpenChange={setShowExport}
+          dados={dados}
+          filtros={filtros}
+          ultimaAtualizacao={health?.ultima_atualizacao ?? null}
+        />
+
         {/* Metodologia */}
         <Dialog open={showMetodologia} onOpenChange={setShowMetodologia}>
           <DialogContent className="max-w-2xl">
@@ -687,5 +715,92 @@ function EmptyState() {
       <Database className="h-8 w-8 mb-2 opacity-50" />
       <div className="text-sm">Sem dados no período selecionado</div>
     </div>
+  );
+}
+
+function ExportDialog({
+  open, onOpenChange, dados, filtros, ultimaAtualizacao,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  dados: {
+    kpis?: { total_ausencias: number; colaboradores_afetados: number; dias_registrados: number; horas_estimadas: number; pendentes: number; lancados: number; };
+    serie_temporal?: Array<{ bucket: string; ausencias: number; colaboradores: number; dias: number }>;
+    por_empresa?: Array<{ empresa_nome: string; ausencias: number; dias: number; colaboradores: number }>;
+    por_projeto?: Array<{ projeto_nome: string; ausencias: number; dias: number }>;
+    por_categoria?: Array<{ categoria_nome: string; ausencias: number; dias: number }>;
+    por_tipo?: Array<{ tipo_nome: string; ausencias: number; dias: number }>;
+    qualidade_dados?: { sem_projeto: number; sem_tipo: number; sem_duracao: number; pendentes_totais: number };
+  };
+  filtros: Filtros;
+  ultimaAtualizacao: string | null;
+}) {
+  const filtrosLabel = {
+    Período: `${filtros.data_inicio} → ${filtros.data_fim}`,
+    Empresas: filtros.empresa_ids.length ? filtros.empresa_ids.join(", ") : "Todas",
+    Projetos: filtros.projeto_ids.length ? filtros.projeto_ids.join(", ") : "Todos",
+    Categorias: filtros.categoria_ids.length ? filtros.categoria_ids.join(", ") : "Todas",
+    Granularidade: filtros.granularidade,
+    "Comparação período anterior": filtros.comparar_periodo_anterior ? "Sim" : "Não",
+  };
+
+  const sections = [
+    { title: "Resumo Executivo", rows: dados.kpis ? [dados.kpis as unknown as Record<string, string | number>] : [] },
+    { title: "Série Histórica", rows: (dados.serie_temporal ?? []) as unknown as Record<string, string | number>[] },
+    { title: "Empresas", rows: (dados.por_empresa ?? []) as unknown as Record<string, string | number>[] },
+    { title: "Projetos", rows: (dados.por_projeto ?? []) as unknown as Record<string, string | number>[] },
+    { title: "Categorias", rows: (dados.por_categoria ?? []) as unknown as Record<string, string | number>[] },
+    { title: "Tipos", rows: (dados.por_tipo ?? []) as unknown as Record<string, string | number>[] },
+    { title: "Qualidade dos Dados", rows: dados.qualidade_dados ? [dados.qualidade_dados as unknown as Record<string, string | number>] : [] },
+    { title: "Metodologia", rows: [
+      { Item: "Fonte", Detalhe: "bi_absenteismo_diario (agregada, sem PII)" },
+      { Item: "Data ref.", Detalhe: "data_inicio da ausência (fallback: created_at)" },
+      { Item: "Horas estimadas", Detalhe: "dias × 8h (aproximação)" },
+      { Item: "z-score", Detalhe: "(observado − média)/desvio-padrão histórico" },
+      { Item: "Amostra mínima", Detalhe: "Configurável em bi_config.minimo_pontos_tendencia" },
+      { Item: "Privacidade", Detalhe: "Grupos abaixo de minimo_grupo_privacidade são suprimidos" },
+      { Item: "Limitações", Detalhe: "Análise descritiva. Não é previsão nem causalidade." },
+    ] },
+  ];
+
+  const handle = async (fmt: ExportFormato, csvSection?: string) => {
+    await exportBI({
+      nome: "Relatório Executivo de Absenteísmo — MK9",
+      filtros: filtrosLabel,
+      build: buildStamp(),
+      ultima_atualizacao: ultimaAtualizacao ? new Date(ultimaAtualizacao).toLocaleString("pt-BR") : "—",
+      sections,
+      csvSection,
+    }, fmt);
+    onOpenChange(false);
+    toast.success(`Exportado (${fmt})`);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader><DialogTitle>Exportar BI Executivo</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Os arquivos usam apenas dados agregados. Grupos abaixo do limite de privacidade são suprimidos automaticamente.
+          </p>
+          <div className="grid gap-2">
+            <Button onClick={() => handle("PDF")}><Download className="h-4 w-4 mr-2" /> PDF Executivo</Button>
+            <Button variant="outline" onClick={() => handle("XLSX")}><Download className="h-4 w-4 mr-2" /> XLSX Analítico</Button>
+          </div>
+          <div className="border-t pt-3">
+            <Label className="text-xs mb-2 block">CSV da visualização atual</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {sections.filter((s) => s.rows.length).map((s) => (
+                <Button key={s.title} size="sm" variant="ghost" className="justify-start"
+                  onClick={() => handle("CSV", s.title)}>
+                  <Download className="h-3.5 w-3.5 mr-2" /> {s.title}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

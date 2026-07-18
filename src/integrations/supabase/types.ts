@@ -498,31 +498,52 @@ export type Database = {
           id: string
           janela_recorrencia_dias: number
           limite_recorrencia: number
+          minimo_grupo_privacidade: number
           minimo_periodos_sazonalidade: number
           minimo_pontos_tendencia: number
+          refresh_habilitado: boolean
+          refresh_intervalo_minutos: number
+          refresh_timeout_minutos: number
+          refresh_tolerancia_minutos: number
           singleton: boolean
           updated_at: string
           updated_by: string | null
+          zscore_atencao: number
+          zscore_atipico: number
         }
         Insert: {
           id?: string
           janela_recorrencia_dias?: number
           limite_recorrencia?: number
+          minimo_grupo_privacidade?: number
           minimo_periodos_sazonalidade?: number
           minimo_pontos_tendencia?: number
+          refresh_habilitado?: boolean
+          refresh_intervalo_minutos?: number
+          refresh_timeout_minutos?: number
+          refresh_tolerancia_minutos?: number
           singleton?: boolean
           updated_at?: string
           updated_by?: string | null
+          zscore_atencao?: number
+          zscore_atipico?: number
         }
         Update: {
           id?: string
           janela_recorrencia_dias?: number
           limite_recorrencia?: number
+          minimo_grupo_privacidade?: number
           minimo_periodos_sazonalidade?: number
           minimo_pontos_tendencia?: number
+          refresh_habilitado?: boolean
+          refresh_intervalo_minutos?: number
+          refresh_timeout_minutos?: number
+          refresh_tolerancia_minutos?: number
           singleton?: boolean
           updated_at?: string
           updated_by?: string | null
+          zscore_atencao?: number
+          zscore_atipico?: number
         }
         Relationships: []
       }
@@ -2368,8 +2389,13 @@ export type Database = {
       }
       automacao_status: { Args: never; Returns: Json }
       bi_analisar_tendencias: { Args: { p_filtros?: Json }; Returns: Json }
+      bi_detectar_variacoes_atipicas: {
+        Args: { p_filtros?: Json }
+        Returns: Json
+      }
       bi_executivo_consultar: { Args: { p_filtros?: Json }; Returns: Json }
       bi_healthcheck: { Args: never; Returns: Json }
+      bi_recorrencia_consultar: { Args: { p_filtros?: Json }; Returns: Json }
       bootstrap_first_super_admin: { Args: never; Returns: string }
       contar_notificacoes_nao_lidas: { Args: never; Returns: number }
       criar_notificacao: {
@@ -2391,6 +2417,7 @@ export type Database = {
         }
         Returns: string
       }
+      cron_refresh_bi_absenteismo_tick: { Args: never; Returns: Json }
       cron_run_escalonamentos_tick: { Args: never; Returns: undefined }
       dashboard_metrics:
         | {
