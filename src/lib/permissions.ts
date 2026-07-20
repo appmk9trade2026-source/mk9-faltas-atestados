@@ -25,7 +25,9 @@ export type PermissionCode =
   | "configuracao.visualizar"
   | "assistente.consultar"
   | "whatsapp.visualizar"
-  | "alerta.visualizar";
+  | "alerta.visualizar"
+  | "permissao.visualizar"
+  | "permissao.editar";
 
 export const ALL_PERMISSIONS: PermissionCode[] = [
   "dashboard.visualizar",
@@ -42,6 +44,8 @@ export const ALL_PERMISSIONS: PermissionCode[] = [
   "assistente.consultar",
   "whatsapp.visualizar",
   "alerta.visualizar",
+  "permissao.visualizar",
+  "permissao.editar",
 ];
 
 export type PermissionSet = Set<string>;

@@ -18,8 +18,10 @@ describe("RBAC — helper hasPermission", () => {
     expect(hasPermission(s, "ausencia.excluir")).toBe(false);
   });
 
-  it("ALL_PERMISSIONS cobre os 31 códigos da matriz", () => {
-    expect(ALL_PERMISSIONS.length).toBe(31);
-    expect(new Set(ALL_PERMISSIONS).size).toBe(31);
+  it("ALL_PERMISSIONS cobre os 33 códigos da matriz (Fase 2 inclui permissao.*)", () => {
+    expect(ALL_PERMISSIONS.length).toBe(33);
+    expect(new Set(ALL_PERMISSIONS).size).toBe(33);
+    expect(ALL_PERMISSIONS).toContain("permissao.visualizar");
+    expect(ALL_PERMISSIONS).toContain("permissao.editar");
   });
 });
