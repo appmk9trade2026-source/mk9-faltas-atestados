@@ -781,6 +781,30 @@ function FormSectionsCreate({
                 <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
               </FormItem>
             )} />
+            <FormField control={form.control} name="enviar_whatsapp" render={({ field }) => {
+              const tel = (form.watch("telefone") ?? "").toString();
+              const digits = tel.replace(/\D+/g, "");
+              const telValido = digits.length >= 10 && digits.length <= 15;
+              return (
+                <FormItem className="rounded-md border p-3 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <Label>Enviar convite por WhatsApp</Label>
+                    <FormControl>
+                      <Switch
+                        checked={field.value && telValido}
+                        disabled={!telValido}
+                        onCheckedChange={(v) => field.onChange(v && telValido)}
+                      />
+                    </FormControl>
+                  </div>
+                  {!telValido && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Informe um telefone válido (formato E.164, 10–15 dígitos) para habilitar o envio por WhatsApp.
+                    </p>
+                  )}
+                </FormItem>
+              );
+            }} />
             <FormField control={form.control} name="ativo" render={({ field }) => (
               <FormItem className="flex items-center justify-between rounded-md border p-3">
                 <div><Label>Ativo</Label></div>
@@ -788,6 +812,7 @@ function FormSectionsCreate({
               </FormItem>
             )} />
           </div>
+
         </div>
       </div>
 
