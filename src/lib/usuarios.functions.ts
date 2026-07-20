@@ -512,16 +512,8 @@ export const encerrarSessoesUsuario = createServerFn({ method: "POST" })
     return { ok: true, scope };
   });
 
-// ---------------- WhatsApp: reenviar boas-vindas ----------------
-async function requireSuperAdmin(ctx: {
-  supabase: typeof import("@/integrations/supabase/client").supabase;
-  userId: string;
-}) {
-  const sa = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "super_admin" });
-  if (sa.data !== true) {
-    throw new Error("Apenas Super Admin pode reenviar boas-vindas por WhatsApp.");
-  }
-}
+// ---------------- WhatsApp: reenviar boas-vindas (apenas Super Admin) ----------------
+
 
 export const reenviarBoasVindasWhatsapp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
