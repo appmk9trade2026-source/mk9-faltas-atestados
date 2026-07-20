@@ -4105,6 +4105,12 @@ export type Database = {
         | "PROJETO_ACESSO_NEGADO"
         | "COLABORADOR_ACESSO_NEGADO"
         | "PERMISSAO_NEGADA"
+        | "ROLE_PERMISSION_CREATED"
+        | "ROLE_PERMISSION_UPDATED"
+        | "ROLE_PERMISSION_REMOVED"
+        | "ROLE_PERMISSION_BULK_UPDATED"
+        | "USER_PERMISSION_UPDATED"
+        | "USER_PERMISSION_REMOVED"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       changelog_tipo:
         | "NOVA_FUNCIONALIDADE"
@@ -4479,6 +4485,12 @@ export const Constants = {
         "PROJETO_ACESSO_NEGADO",
         "COLABORADOR_ACESSO_NEGADO",
         "PERMISSAO_NEGADA",
+        "ROLE_PERMISSION_CREATED",
+        "ROLE_PERMISSION_UPDATED",
+        "ROLE_PERMISSION_REMOVED",
+        "ROLE_PERMISSION_BULK_UPDATED",
+        "USER_PERMISSION_UPDATED",
+        "USER_PERMISSION_REMOVED",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       changelog_tipo: [
