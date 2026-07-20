@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/sidebar";
 import type { AppRole } from "@/hooks/use-session";
 import { WHATSAPP_ADMIN_ROLES } from "@/lib/whatsapp-admin-access";
+import { useAlertasBadge, formatBadge } from "@/hooks/use-alertas-badge";
 
 type Item = {
   title: string;
@@ -110,6 +111,9 @@ export function AppSidebar({ roles }: { roles: AppRole[] }) {
   const router = useRouter();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const visible = items.filter((it) => it.roles.some((r) => roles.includes(r)));
+  const alertasBadge = useAlertasBadge();
+  const badgeCount = (alertasBadge.data?.novos ?? 0) + (alertasBadge.data?.criticos_abertos ?? 0);
+  const badgeText = formatBadge(badgeCount);
 
   return (
     <Sidebar collapsible="icon">
@@ -164,6 +168,11 @@ export function AppSidebar({ roles }: { roles: AppRole[] }) {
                         <Link to={item.url} preload="intent">
                           <item.icon className="h-4 w-4" />
                           <span>{item.title}</span>
+                          {item.url === "/alertas" && badgeText && (
+                            <span className="ml-auto inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] min-w-[18px] h-[18px] px-1 font-semibold group-data-[collapsible=icon]:hidden">
+                              {badgeText}
+                            </span>
+                          )}
                         </Link>
                       )}
                     </SidebarMenuButton>
