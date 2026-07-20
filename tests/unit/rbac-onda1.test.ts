@@ -15,7 +15,7 @@ describe("RBAC Onda 1 — friendlyRbacError", () => {
     expect(f.title.toLowerCase()).toMatch(/inválid|dado/);
   });
   it("mapeia AUTH_REQUIRED", () => {
-    const f = friendlyRbacError(new Error("AUTH_REQUIRED"));
+    const f = friendlyRbacError(new Error("AUTH_REQUIRED: sessão expirada"));
     expect(f.title.toLowerCase()).toMatch(/autentic|sess/);
   });
   it("fallback genérico", () => {
