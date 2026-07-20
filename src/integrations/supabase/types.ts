@@ -3035,6 +3035,7 @@ export type Database = {
       get_projetos_ativos_por_empresa: {
         Args: { _empresa_id: string }
         Returns: {
+          codigo_protocolo: string
           id: string
           nome: string
         }[]
