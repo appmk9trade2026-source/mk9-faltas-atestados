@@ -965,6 +965,7 @@ function ColaboradorDialog({
   empresasTodas,
   onSubmit,
   submitting,
+  onViewExisting,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -973,6 +974,7 @@ function ColaboradorDialog({
   empresasTodas: Empresa[];
   onSubmit: (values: ColabForm) => void;
   submitting: boolean;
+  onViewExisting: (id: string) => void;
 }) {
   const form = useForm<ColabForm>({
     resolver: zodResolver(colabSchema),
@@ -994,7 +996,12 @@ function ColaboradorDialog({
   });
 
   const empresaId = form.watch("empresa_id");
+  const matriculaInput = form.watch("matricula");
   const projetosQ = useProjetosAtivosPorEmpresa(empresaId || null);
+  const duplicadoQ = useColaboradorDuplicado(empresaId || null, matriculaInput, editing?.id ?? null);
+  const duplicado = duplicadoQ.data ?? null;
+  const checando = duplicadoQ.isFetching && !!empresaId && !!matriculaInput?.trim();
+
 
   const empresasSelect = useMemo(() => {
     if (editing?.empresa && !editing.empresa.ativo) {
