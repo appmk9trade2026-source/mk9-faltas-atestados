@@ -1011,8 +1011,10 @@ function ColaboradorDialog({
   const matriculaInput = form.watch("matricula");
   const projetosQ = useProjetosAtivosPorEmpresa(empresaId || null);
   const duplicadoQ = useColaboradorDuplicado(empresaId || null, matriculaInput, editing?.id ?? null);
-  const duplicado = duplicadoQ.data ?? null;
-  const checando = duplicadoQ.isFetching && !!empresaId && !!matriculaInput?.trim();
+  const duplicado = duplicadoQ.duplicado;
+  const checando = duplicadoQ.checking;
+  const erroDup = duplicadoQ.errorMessage;
+
 
 
   const empresasSelect = useMemo(() => {
