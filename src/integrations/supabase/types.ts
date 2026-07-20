@@ -2159,6 +2159,30 @@ export type Database = {
         }
         Relationships: []
       }
+      permissions: {
+        Row: {
+          action: string
+          code: string
+          created_at: string
+          description: string | null
+          module: string
+        }
+        Insert: {
+          action: string
+          code: string
+          created_at?: string
+          description?: string | null
+          module: string
+        }
+        Update: {
+          action?: string
+          code?: string
+          created_at?: string
+          description?: string | null
+          module?: string
+        }
+        Relationships: []
+      }
       preferencias_notificacao: {
         Row: {
           canal: string
@@ -2587,6 +2611,32 @@ export type Database = {
           },
         ]
       }
+      role_permissions: {
+        Row: {
+          created_at: string
+          permission_code: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          created_at?: string
+          permission_code: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          created_at?: string
+          permission_code?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_code_fkey"
+            columns: ["permission_code"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       tipo_ausencia_opcoes_periodo: {
         Row: {
           ativo: boolean
@@ -2691,6 +2741,38 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "categorias_ausencia"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_permissions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          effect: Database["public"]["Enums"]["permission_effect"]
+          permission_code: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          effect: Database["public"]["Enums"]["permission_effect"]
+          permission_code: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          effect?: Database["public"]["Enums"]["permission_effect"]
+          permission_code?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_permissions_permission_code_fkey"
+            columns: ["permission_code"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["code"]
           },
         ]
       }
@@ -3466,6 +3548,10 @@ export type Database = {
           nome: string
         }[]
       }
+      has_permission: {
+        Args: { _code: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3534,6 +3620,16 @@ export type Database = {
         }
         Returns: string
       }
+      log_permission_denied: {
+        Args: {
+          _code: string
+          _empresa_id?: string
+          _observacoes?: string
+          _projeto_id?: string
+          _rota?: string
+        }
+        Returns: undefined
+      }
       marcar_notificacao_como_lida: {
         Args: { _notificacao_id: string }
         Returns: undefined
@@ -3575,6 +3671,12 @@ export type Database = {
         Returns: Json
       }
       metricas_notificacoes: { Args: never; Returns: Json }
+      my_permissions: {
+        Args: never
+        Returns: {
+          permission_code: string
+        }[]
+      }
       normalizar_telefone_whatsapp: {
         Args: { p_telefone: string }
         Returns: {
@@ -4125,6 +4227,7 @@ export type Database = {
       oa_severidade: "BAIXA" | "MEDIA" | "ALTA" | "CRITICA"
       op_assist_prioridade: "BAIXA" | "MEDIA" | "ALTA" | "CRITICA"
       op_assist_status: "ABERTO" | "EM_ANDAMENTO" | "RESOLVIDO" | "CANCELADO"
+      permission_effect: "allow" | "deny"
       release_status: "PLANEJADA" | "EM_EXECUCAO" | "PUBLICADA" | "CANCELADA"
       release_tipo: "HOTFIX" | "PATCH" | "MINOR" | "MAJOR"
       roadmap_categoria:
@@ -4510,6 +4613,7 @@ export const Constants = {
       oa_severidade: ["BAIXA", "MEDIA", "ALTA", "CRITICA"],
       op_assist_prioridade: ["BAIXA", "MEDIA", "ALTA", "CRITICA"],
       op_assist_status: ["ABERTO", "EM_ANDAMENTO", "RESOLVIDO", "CANCELADO"],
+      permission_effect: ["allow", "deny"],
       release_status: ["PLANEJADA", "EM_EXECUCAO", "PUBLICADA", "CANCELADA"],
       release_tipo: ["HOTFIX", "PATCH", "MINOR", "MAJOR"],
       roadmap_categoria: [
