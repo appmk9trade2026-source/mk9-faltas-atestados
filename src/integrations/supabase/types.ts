@@ -1814,6 +1814,8 @@ export type Database = {
       profiles: {
         Row: {
           ativo: boolean
+          avatar_url: string | null
+          cargo: string | null
           created_at: string
           email: string
           id: string
@@ -1823,6 +1825,8 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          avatar_url?: string | null
+          cargo?: string | null
           created_at?: string
           email: string
           id: string
@@ -1832,6 +1836,8 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          avatar_url?: string | null
+          cargo?: string | null
           created_at?: string
           email?: string
           id?: string
@@ -2359,6 +2365,64 @@ export type Database = {
         }
         Relationships: []
       }
+      usuario_empresas: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_empresas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      usuario_projetos: {
+        Row: {
+          created_at: string
+          id: string
+          projeto_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          projeto_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          projeto_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_projetos_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_destinatario_config: {
         Row: {
           base_envio: Database["public"]["Enums"]["whatsapp_base_envio"]
@@ -2750,6 +2814,48 @@ export type Database = {
     Functions: {
       _obs_can_read: { Args: never; Returns: boolean }
       acessos_dashboard: { Args: never; Returns: Json }
+      admin_get_user_history: {
+        Args: { _limit?: number; _user_id: string }
+        Returns: {
+          acao: Database["public"]["Enums"]["audit_action"]
+          antes: Json
+          created_at: string
+          depois: Json
+          entidade: string
+          id: string
+          modulo: string
+          observacoes: string
+          usuario_nome: string
+        }[]
+      }
+      admin_list_users: {
+        Args: {
+          _ativo?: boolean
+          _empresa_id?: string
+          _limit?: number
+          _offset?: number
+          _projeto_id?: string
+          _role?: Database["public"]["Enums"]["app_role"]
+          _search?: string
+        }
+        Returns: {
+          ativo: boolean
+          avatar_url: string
+          cargo: string
+          created_at: string
+          email: string
+          empresa_ids: string[]
+          empresa_nomes: string[]
+          id: string
+          last_sign_in_at: string
+          nome: string
+          projeto_ids: string[]
+          projeto_nomes: string[]
+          roles: Database["public"]["Enums"]["app_role"][]
+          telefone_whatsapp: string
+          total_count: number
+        }[]
+      }
       analisar_conflitos_regras_escalonamento: { Args: never; Returns: Json }
       arquivar_notificacao: {
         Args: { _notificacao_id: string }
@@ -3130,6 +3236,7 @@ export type Database = {
         Args: { _motivo?: string; _session_id: string }
         Returns: undefined
       }
+      rh_pode_ver_usuario: { Args: { _user_id: string }; Returns: boolean }
       roadmap_dashboard: { Args: never; Returns: Json }
       run_escalonamentos: { Args: { p_origem?: string }; Returns: Json }
       saude_sistema: { Args: never; Returns: Json }
@@ -3297,7 +3404,13 @@ export type Database = {
     }
     Enums: {
       access_review_status: "PENDENTE" | "APROVADA" | "REVOGADA" | "PRORROGADA"
-      app_role: "super_admin" | "rh" | "supervisor" | "compliance"
+      app_role:
+        | "super_admin"
+        | "rh"
+        | "supervisor"
+        | "compliance"
+        | "operacao"
+        | "visualizador"
       audit_action:
         | "CREATE"
         | "UPDATE"
@@ -3319,6 +3432,17 @@ export type Database = {
         | "WHATSAPP_REENFILEIRADO"
         | "WHATSAPP_EXPORT_OUTBOX"
         | "WHATSAPP_EXPORT_EXECUCOES"
+        | "USUARIO_CRIADO"
+        | "USUARIO_EDITADO"
+        | "USUARIO_ATIVADO"
+        | "USUARIO_DESATIVADO"
+        | "USUARIO_ROLE_ADICIONADA"
+        | "USUARIO_ROLE_REMOVIDA"
+        | "USUARIO_EMPRESA_VINCULADA"
+        | "USUARIO_EMPRESA_REMOVIDA"
+        | "USUARIO_PROJETO_VINCULADO"
+        | "USUARIO_PROJETO_REMOVIDO"
+        | "USUARIO_RESET_SENHA"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       changelog_tipo:
         | "NOVA_FUNCIONALIDADE"
@@ -3632,7 +3756,14 @@ export const Constants = {
   public: {
     Enums: {
       access_review_status: ["PENDENTE", "APROVADA", "REVOGADA", "PRORROGADA"],
-      app_role: ["super_admin", "rh", "supervisor", "compliance"],
+      app_role: [
+        "super_admin",
+        "rh",
+        "supervisor",
+        "compliance",
+        "operacao",
+        "visualizador",
+      ],
       audit_action: [
         "CREATE",
         "UPDATE",
@@ -3654,6 +3785,17 @@ export const Constants = {
         "WHATSAPP_REENFILEIRADO",
         "WHATSAPP_EXPORT_OUTBOX",
         "WHATSAPP_EXPORT_EXECUCOES",
+        "USUARIO_CRIADO",
+        "USUARIO_EDITADO",
+        "USUARIO_ATIVADO",
+        "USUARIO_DESATIVADO",
+        "USUARIO_ROLE_ADICIONADA",
+        "USUARIO_ROLE_REMOVIDA",
+        "USUARIO_EMPRESA_VINCULADA",
+        "USUARIO_EMPRESA_REMOVIDA",
+        "USUARIO_PROJETO_VINCULADO",
+        "USUARIO_PROJETO_REMOVIDO",
+        "USUARIO_RESET_SENHA",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       changelog_tipo: [
