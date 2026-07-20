@@ -123,7 +123,7 @@ export const previewTemplateTeste = createServerFn({ method: "POST" })
       p_projeto_id: data.projeto_id,
       p_colaborador_nome: data.colaborador_nome,
       p_data_inicio: data.data_inicio,
-      p_data_fim: data.data_fim ?? null,
+      p_data_fim: data.data_fim ?? undefined,
     });
     if (error) throw new Error(error.message);
     return res as {
