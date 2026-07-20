@@ -75,7 +75,7 @@ const items: Item[] = [
   { title: "Deploy & Go-Live", url: "/deploy", icon: Rocket, roles: ["super_admin", "compliance"] },
   { title: "Operação Assistida", url: "/operacao-assistida", icon: ClipboardCheck, roles: ["super_admin", "compliance", "rh"] },
   { title: "Notificações", url: "/notificacoes", icon: BellRing, roles: ["super_admin", "compliance", "rh"] },
-  { title: "Roadmap", url: "/roadmap", icon: Map, roles: ["super_admin", "compliance"] },
+  { title: "Roadmap", url: "/roadmap", icon: MapIcon, roles: ["super_admin", "compliance"] },
   { title: "Acessos", url: "/acessos", icon: KeyRound, roles: ["super_admin", "compliance"] },
   { title: "BI Executivo", url: "/bi-executivo", icon: Sparkles, roles: ["super_admin", "compliance", "rh"] },
   { title: "Observabilidade", url: "/observabilidade", icon: Gauge, roles: ["super_admin", "compliance"] },
