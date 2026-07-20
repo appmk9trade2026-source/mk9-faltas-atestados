@@ -49,6 +49,8 @@ const createSchema = z.object({
   avatar_url: z.string().trim().max(500).optional().nullable(),
   senha_temporaria: z.string().min(8).max(72).optional().nullable(),
   enviar_convite: z.boolean().default(true),
+  enviar_whatsapp: z.boolean().default(false),
+
   ativo: z.boolean().default(true),
   roles: z
     .array(z.enum(["super_admin", "rh", "supervisor", "compliance", "operacao", "visualizador"]))
