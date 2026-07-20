@@ -1,8 +1,10 @@
-import { createFileRoute, Link, Outlet, useRouterState, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouter, useRouterState } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/app-shell";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/use-session";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/comunicacoes/whatsapp")({
   head: () => ({
@@ -12,13 +14,32 @@ export const Route = createFileRoute("/_authenticated/comunicacoes/whatsapp")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  beforeLoad: ({ location }) => {
-    if (location.pathname === "/comunicacoes/whatsapp") {
-      throw redirect({ to: "/comunicacoes/whatsapp" });
-    }
-  },
   component: WhatsappAdminLayout,
+  errorComponent: WhatsappAdminError,
+  notFoundComponent: () => (
+    <div className="p-6 text-sm text-muted-foreground">Página do WhatsApp Admin não encontrada.</div>
+  ),
 });
+
+function WhatsappAdminError({ error, reset }: { error: Error; reset: () => void }) {
+  const router = useRouter();
+  return (
+    <AppShell title="WhatsApp Admin" breadcrumb={["Comunicações", "WhatsApp"]}>
+      <div className="mx-auto max-w-md p-8 text-center">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+          <AlertTriangle className="h-6 w-6" />
+        </div>
+        <h2 className="text-lg font-semibold">Não foi possível carregar o WhatsApp Admin.</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {error.message?.slice(0, 140) || "Ocorreu um erro ao carregar o módulo."}
+        </p>
+        <Button className="mt-4" onClick={() => { router.invalidate(); reset(); }}>
+          <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
+        </Button>
+      </div>
+    </AppShell>
+  );
+}
 
 const TABS: { to: string; label: string }[] = [
   { to: "/comunicacoes/whatsapp", label: "Dashboard" },
