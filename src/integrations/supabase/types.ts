@@ -3731,6 +3731,18 @@ export type Database = {
         Returns: Json
       }
       rbac_critical_super_admin_perms: { Args: never; Returns: string[] }
+      rbac_log_deny: {
+        Args: {
+          _acao: Database["public"]["Enums"]["audit_action"]
+          _code: string
+          _corr: string
+          _empresa: string
+          _obs: string
+          _projeto: string
+          _rota: string
+        }
+        Returns: undefined
+      }
       rbac_matrix: { Args: never; Returns: Json }
       rbac_user_summary: { Args: { _user_id: string }; Returns: Json }
       refresh_bi_absenteismo: { Args: { p_origem?: string }; Returns: Json }
@@ -3816,6 +3828,18 @@ export type Database = {
         Returns: Json
       }
       reprocessar_escalonamentos: { Args: never; Returns: Json }
+      require_permission: {
+        Args: {
+          _code: string
+          _colaborador_id?: string
+          _correlation_id?: string
+          _empresa_id?: string
+          _observacoes?: string
+          _projeto_id?: string
+          _rota?: string
+        }
+        Returns: Json
+      }
       resolver_destinatarios_rh_ausencia: {
         Args: { p_ausencia_id: string }
         Returns: {
@@ -4119,6 +4143,14 @@ export type Database = {
         | "ROLE_PERMISSION_BULK_UPDATED"
         | "USER_PERMISSION_UPDATED"
         | "USER_PERMISSION_REMOVED"
+        | "AUSENCIA_CRIADA"
+        | "AUSENCIA_EDITADA"
+        | "AUSENCIA_EXCLUIDA"
+        | "AUSENCIA_STATUS_ALTERADO"
+        | "ESCOPO_EMPRESA_NEGADO"
+        | "ESCOPO_PROJETO_NEGADO"
+        | "ESCOPO_COLABORADOR_NEGADO"
+        | "MUTACAO_BLOQUEADA"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       changelog_tipo:
         | "NOVA_FUNCIONALIDADE"
@@ -4499,6 +4531,14 @@ export const Constants = {
         "ROLE_PERMISSION_BULK_UPDATED",
         "USER_PERMISSION_UPDATED",
         "USER_PERMISSION_REMOVED",
+        "AUSENCIA_CRIADA",
+        "AUSENCIA_EDITADA",
+        "AUSENCIA_EXCLUIDA",
+        "AUSENCIA_STATUS_ALTERADO",
+        "ESCOPO_EMPRESA_NEGADO",
+        "ESCOPO_PROJETO_NEGADO",
+        "ESCOPO_COLABORADOR_NEGADO",
+        "MUTACAO_BLOQUEADA",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       changelog_tipo: [

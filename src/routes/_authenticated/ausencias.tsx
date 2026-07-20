@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { alterarStatusAusencia } from "@/lib/ausencias.functions";
+import { friendlyRbacError } from "@/lib/rbac/errors";
 import {
   ArrowUpDown,
   CheckCircle2,
@@ -294,13 +297,10 @@ function AusenciasPage() {
   const currentPage = Math.min(page, totalPages);
   const pageRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
+  const alterarStatusFn = useServerFn(alterarStatusAusencia);
   const lancarMut = useMutation({
     mutationFn: async (row: Ausencia) => {
-      const { error } = await supabase
-        .from("ausencias")
-        .update({ status: "LANCADO" })
-        .eq("id", row.id);
-      if (error) throw error;
+      await alterarStatusFn({ data: { id: row.id, status: "LANCADO" } });
     },
     onSuccess: () => {
       toast.success("Lançamento concluído e WhatsApp enfileirado para o colaborador.");
@@ -308,8 +308,9 @@ function AusenciasPage() {
       setConfirmLancar(null);
     },
     onError: (err: unknown) => {
-      toast.error("Não foi possível atualizar o status.", {
-        description: err instanceof Error ? err.message : String(err),
+      const friendly = friendlyRbacError(err);
+      toast.error(friendly.title, {
+        description: friendly.description ?? (friendly.correlationId ? `ref: ${friendly.correlationId.slice(0, 8)}` : undefined),
       });
       setConfirmLancar(null);
     },

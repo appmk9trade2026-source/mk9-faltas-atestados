@@ -92,6 +92,8 @@ import {
   scoreCompliance as scoreComplianceFn,
   suggestMotivoFromCID as suggestMotivoFromCIDFn,
 } from "@/lib/ai.functions";
+import { createAusencia, updateAusencia } from "@/lib/ausencias.functions";
+import { friendlyRbacError } from "@/lib/rbac/errors";
 
 const formatPhoneBR = formatTelefone;
 
@@ -576,23 +578,18 @@ function NovaAusenciaPage() {
     cidSuggestMut.mutate(c);
   }
 
-  // ============= Submit =============
+  // ============= Submit (server functions com hardening RBAC) =============
+  const createFn = useServerFn(createAusencia);
+  const updateFn = useServerFn(updateAusencia);
+
   const salvarMut = useMutation({
     mutationFn: async (values: FormData) => {
       const dataInicioIso = values.data_inicio;
-      const tipo = tiposQ.data?.find((t) => t.id === values.tipo_ausencia_id);
-      const opcao = opcoesPorTipoQ.data?.find((o) => o.id === values.opcao_periodo_id);
-      if (!tipo) throw new Error("Selecione o tipo de ausência.");
-      if (!opcao) throw new Error("Selecione a quantidade / período.");
-      const diasNum = opcao.quantidade_dias ?? 1;
-      const dataFimIso = addDaysISO(dataInicioIso, diasNum - 1);
 
       let arquivo_url: string | null | undefined = undefined;
       let arquivo_nome: string | null | undefined = undefined;
       let arquivo_mime: string | null | undefined = undefined;
       let arquivo_tamanho: number | null | undefined = undefined;
-      let arquivo_criado_por: string | null | undefined = undefined;
-      let arquivo_criado_em: string | null | undefined = undefined;
 
       if (file) {
         const ext = file.name.split(".").pop() ?? "bin";
@@ -607,67 +604,33 @@ function NovaAusenciaPage() {
         arquivo_nome = file.name;
         arquivo_mime = file.type;
         arquivo_tamanho = file.size;
-        arquivo_criado_por = profile?.id ?? null;
-        arquivo_criado_em = new Date().toISOString();
       } else if (isEdit && removeExistingFile) {
         arquivo_url = null;
         arquivo_nome = null;
         arquivo_mime = null;
         arquivo_tamanho = null;
-        arquivo_criado_por = null;
-        arquivo_criado_em = null;
       }
 
-      const basePayload = {
-        empresa_id: values.empresa_id,
-        projeto_id: values.projeto_id,
+      const payload = {
         colaborador_id: values.colaborador_id,
-        tipo: tipoBaseFromDetalhe(tipo.nome),
-        tipo_detalhe: tipo.nome,
-        dias_label: opcao.nome,
-        tipo_ausencia_id: tipo.id,
-        opcao_periodo_id: opcao.id,
-        motivo: values.motivo.trim(),
+        tipo_ausencia_id: values.tipo_ausencia_id,
+        opcao_periodo_id: values.opcao_periodo_id,
         data_inicio: dataInicioIso,
-        data_fim: dataFimIso,
         localidade: values.localidade.trim(),
         loja_codigo_nome: values.loja_codigo_nome.trim(),
         cid: values.cid && values.cid.trim() ? values.cid.trim().toUpperCase() : null,
         acidente_trabalho_trajeto: values.acidente_trabalho_trajeto === "sim",
+        motivo: values.motivo.trim(),
+        arquivo_url: arquivo_url ?? null,
+        arquivo_nome: arquivo_nome ?? null,
+        arquivo_mime: arquivo_mime ?? null,
+        arquivo_tamanho: arquivo_tamanho ?? null,
       };
 
-
       if (isEdit && editId) {
-        const updatePayload =
-          arquivo_url !== undefined
-            ? {
-                ...basePayload,
-                arquivo_url,
-                arquivo_nome,
-                arquivo_mime,
-                arquivo_tamanho,
-                arquivo_criado_por,
-                arquivo_criado_em,
-              }
-            : basePayload;
-        const { error } = await supabase
-          .from("ausencias")
-          .update(updatePayload as never)
-          .eq("id", editId)
-          .eq("status", "PENDENTE");
-        if (error) throw error;
+        await updateFn({ data: { ...payload, id: editId } });
       } else {
-        const insertPayload = {
-          ...basePayload,
-          arquivo_url: arquivo_url ?? null,
-          arquivo_nome: arquivo_nome ?? null,
-          arquivo_mime: arquivo_mime ?? null,
-          arquivo_tamanho: arquivo_tamanho ?? null,
-          arquivo_criado_por: file ? profile?.id ?? null : null,
-          arquivo_criado_em: file ? new Date().toISOString() : null,
-        };
-        const { error } = await supabase.from("ausencias").insert(insertPayload as never);
-        if (error) throw error;
+        await createFn({ data: payload });
       }
     },
     onSuccess: () => {
@@ -679,20 +642,10 @@ function NovaAusenciaPage() {
       navigate({ to: "/ausencias" });
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (/PROJETO_SEM_CODIGO_PROTOCOLO|codigo_protocolo/i.test(msg)) {
-        toast.error(
-          "O projeto do colaborador está sem código de protocolo. Cadastre-o em Configurações → Projetos.",
-        );
-      } else if (/não pertence à empresa/i.test(msg)) {
-        toast.error("O projeto/colaborador não pertence à empresa selecionada.");
-      } else if (/inativ/i.test(msg)) {
-        toast.error("Empresa, projeto ou colaborador está inativo.");
-      } else if (/data final/i.test(msg)) {
-        toast.error("A data final não pode ser anterior à data inicial.");
-      } else {
-        toast.error("Não foi possível salvar a ausência.", { description: msg });
-      }
+      const friendly = friendlyRbacError(err);
+      toast.error(friendly.title, {
+        description: friendly.description ?? (friendly.correlationId ? `ref: ${friendly.correlationId.slice(0, 8)}` : undefined),
+      });
     },
   });
 
