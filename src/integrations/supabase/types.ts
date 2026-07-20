@@ -2935,32 +2935,19 @@ export type Database = {
       cron_healthcheck: { Args: never; Returns: Json }
       cron_refresh_bi_absenteismo_tick: { Args: never; Returns: Json }
       cron_run_escalonamentos_tick: { Args: never; Returns: undefined }
-      dashboard_metrics:
-        | {
-            Args: {
-              _empresa_id?: string
-              _fim: string
-              _inicio: string
-              _projeto_id?: string
-              _status?: Database["public"]["Enums"]["status_ausencia"]
-              _supervisor?: string
-              _tipo?: Database["public"]["Enums"]["tipo_ausencia"]
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              _categoria_id?: string
-              _empresa_id?: string
-              _fim: string
-              _inicio: string
-              _projeto_id?: string
-              _status?: Database["public"]["Enums"]["status_ausencia"]
-              _supervisor?: string
-              _tipo?: Database["public"]["Enums"]["tipo_ausencia"]
-            }
-            Returns: Json
-          }
+      dashboard_metrics: {
+        Args: {
+          _categoria_id?: string
+          _empresa_id?: string
+          _fim: string
+          _inicio: string
+          _projeto_id?: string
+          _status?: Database["public"]["Enums"]["status_ausencia"]
+          _supervisor?: string
+          _tipo?: Database["public"]["Enums"]["tipo_ausencia"]
+        }
+        Returns: Json
+      }
       database_healthcheck: { Args: never; Returns: Json }
       database_indices_report: { Args: never; Returns: Json }
       database_performance: { Args: never; Returns: Json }
