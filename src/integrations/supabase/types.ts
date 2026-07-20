@@ -3392,6 +3392,39 @@ export type Database = {
           tentativas: number
         }[]
       }
+      whatsapp_provider_sync: {
+        Args: {
+          p_base_url_public_label?: string
+          p_enabled: boolean
+          p_instance_name: string
+          p_modo: Database["public"]["Enums"]["whatsapp_modo"]
+          p_webhook_enabled?: boolean
+        }
+        Returns: {
+          base_url_public_label: string | null
+          batch_size: number
+          created_at: string
+          enabled: boolean
+          homologacao_allowlist: string[]
+          id: string
+          instance_name: string | null
+          max_tentativas: number
+          modo: Database["public"]["Enums"]["whatsapp_modo"]
+          provider: Database["public"]["Enums"]["whatsapp_provider"]
+          retry_base_segundos: number
+          retry_max_segundos: number
+          singleton: boolean
+          timeout_ms: number
+          updated_at: string
+          webhook_enabled: boolean
+        }
+        SetofOptions: {
+          from: "*"
+          to: "whatsapp_provider_config"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       whatsapp_registrar_evento_seguro: {
         Args: {
           p_codigo?: string
