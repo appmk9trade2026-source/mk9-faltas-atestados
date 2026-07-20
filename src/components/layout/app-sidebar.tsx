@@ -19,7 +19,7 @@ import {
   ClipboardCheck,
   Rocket,
   BellRing,
-  Map,
+  Map as MapIcon,
   KeyRound,
   Sparkles,
   Gauge,
