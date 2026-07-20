@@ -87,7 +87,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { useProjetosAtivosPorEmpresa } from "@/hooks/use-projetos";
 import { useColaboradorDuplicado } from "@/hooks/use-colaborador-duplicado";
+import { normalizeMatricula } from "@/lib/matricula";
 import { formatTelefone, onlyDigits } from "@/lib/br-format";
+
 
 
 export const Route = createFileRoute("/_authenticated/colaboradores")({
@@ -304,7 +306,7 @@ function ColaboradoresPage() {
       const payload = {
         empresa_id: values.empresa_id,
         projeto_id: values.projeto_id,
-        matricula: values.matricula.trim(),
+        matricula: normalizeMatricula(values.matricula),
         nome_completo: values.nome_completo.trim(),
         telefone: values.telefone?.trim() ? onlyDigits(values.telefone) : null,
         whatsapp: values.whatsapp?.trim() ? onlyDigits(values.whatsapp) : null,
@@ -342,18 +344,28 @@ function ColaboradoresPage() {
       const isDup = /colaboradores_empresa_matricula_uidx|duplicate|unique/i.test(msg);
       if (isDup) {
         toast.error("Já existe um colaborador com esta matrícula nesta empresa.");
-        // Registrar tentativa de cadastro duplicado (best-effort — não bloqueia UX).
+        // Auditoria dedicada de tentativa de duplicidade (best-effort).
+        const matInformada = wrapped?.payload?.matricula ?? vars.matricula;
+        const matNormalizada = normalizeMatricula(matInformada);
         void supabase.from("audit_logs").insert({
           modulo: "colaboradores",
-          acao: "ACESSO_NEGADO",
+          acao: "COLABORADOR_DUPLICIDADE_BLOQUEADA",
           entidade: "colaborador",
+          entidade_id: vars.id ?? null,
           empresa_id: wrapped?.payload?.empresa_id ?? vars.empresa_id,
+          projeto_id: vars.projeto_id ?? null,
           sucesso: false,
-          origem: "manual",
-          observacoes: `Tentativa de cadastro duplicado (matrícula: ${wrapped?.payload?.matricula ?? vars.matricula})`,
-          depois: { empresa_id: vars.empresa_id, matricula: vars.matricula, origem: vars.id ? "edicao" : "cadastro" },
+          origem: vars.id ? "edicao" : "manual",
+          observacoes: `Cadastro/edição bloqueado por duplicidade (empresa + matrícula): ${matNormalizada}`,
+          depois: {
+            empresa_id: vars.empresa_id,
+            matricula_informada: matInformada,
+            matricula_normalizada: matNormalizada,
+            origem: vars.id ? "edicao" : "cadastro",
+          },
         } as never);
       } else if (/não pertence à empresa/i.test(msg)) {
+
         toast.error("O projeto selecionado não pertence à empresa informada.");
       } else if (/empresa está inativa|empresa inativa/i.test(msg)) {
         toast.error("A empresa está inativa. Ative a empresa antes de manter o colaborador ativo.");
@@ -1161,25 +1173,55 @@ function ColaboradorDialog({
                                 <Loader2 className="h-3 w-3 animate-spin" /> Verificando disponibilidade…
                               </span>
                             ) : duplicado ? (
-                              <>
-                                <Badge className="bg-red-500/15 text-red-600 dark:text-red-400">
-                                  <AlertCircle className="mr-1 h-3 w-3" /> Matrícula já cadastrada
-                                </Badge>
-                                <span className="text-muted-foreground">
-                                  {duplicado.nome_completo}
-                                  {duplicado.empresa?.nome ? ` · ${duplicado.empresa.nome}` : ""}
-                                  {duplicado.projeto?.nome ? ` / ${duplicado.projeto.nome}` : ""}
-                                </span>
-                                <Button
-                                  type="button"
-                                  variant="link"
-                                  size="sm"
-                                  className="h-auto px-0 py-0 text-xs"
-                                  onClick={() => onViewExisting(duplicado.id)}
-                                >
-                                  <Eye className="mr-1 h-3 w-3" /> Visualizar colaborador
-                                </Button>
-                              </>
+                              <div className="flex w-full flex-col gap-2 rounded-md border border-red-500/30 bg-red-500/5 p-2.5">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <Badge className="bg-red-500/15 text-red-600 dark:text-red-400">
+                                    <AlertCircle className="mr-1 h-3 w-3" /> Matrícula já cadastrada
+                                  </Badge>
+                                  <Badge
+                                    variant="outline"
+                                    className={
+                                      duplicado.ativo
+                                        ? "border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
+                                        : "border-muted-foreground/30 text-muted-foreground"
+                                    }
+                                  >
+                                    {duplicado.ativo ? "Ativo" : "Inativo"}
+                                  </Badge>
+                                  <Button
+                                    type="button"
+                                    variant="link"
+                                    size="sm"
+                                    className="ml-auto h-auto px-0 py-0 text-xs"
+                                    onClick={() => onViewExisting(duplicado.id)}
+                                  >
+                                    <Eye className="mr-1 h-3 w-3" /> Visualizar colaborador
+                                  </Button>
+                                </div>
+                                <dl className="grid grid-cols-1 gap-x-4 gap-y-1 text-[11px] text-muted-foreground sm:grid-cols-2">
+                                  <div>
+                                    <dt className="inline font-medium text-foreground">Nome:</dt>{" "}
+                                    <dd className="inline">{duplicado.nome_completo}</dd>
+                                  </div>
+                                  <div>
+                                    <dt className="inline font-medium text-foreground">Matrícula:</dt>{" "}
+                                    <dd className="inline font-mono">{duplicado.matricula}</dd>
+                                  </div>
+                                  <div>
+                                    <dt className="inline font-medium text-foreground">Empresa:</dt>{" "}
+                                    <dd className="inline">{duplicado.empresa?.nome ?? "—"}</dd>
+                                  </div>
+                                  <div>
+                                    <dt className="inline font-medium text-foreground">Projeto:</dt>{" "}
+                                    <dd className="inline">{duplicado.projeto?.nome ?? "—"}</dd>
+                                  </div>
+                                  <div className="sm:col-span-2">
+                                    <dt className="inline font-medium text-foreground">Supervisor:</dt>{" "}
+                                    <dd className="inline">{duplicado.supervisor_nome ?? "—"}</dd>
+                                  </div>
+                                </dl>
+                              </div>
+
                             ) : (
                               <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
                                 <CheckCircle2 className="mr-1 h-3 w-3" /> Matrícula disponível

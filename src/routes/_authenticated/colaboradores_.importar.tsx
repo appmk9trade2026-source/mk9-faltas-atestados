@@ -31,6 +31,8 @@ import {
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { normalizeMatricula } from "@/lib/matricula";
+
 
 export const Route = createFileRoute("/_authenticated/colaboradores_/importar")({
   component: ImportarPage,
@@ -172,7 +174,7 @@ function ImportarPage() {
     return raw
       .map((r, idx) => {
         const linha = idx + 2;
-        const matricula = digitsOnly(norm(r["Matrícula"] ?? r["Matricula"])) || norm(r["Matrícula"] ?? r["Matricula"]);
+        const matricula = normalizeMatricula(norm(r["Matrícula"] ?? r["Matricula"]));
         const nome_completo = norm(r["Nome Completo"]);
         const projeto = norm(r["Projeto"]);
         const empresa = norm(r["Empresa"]);
