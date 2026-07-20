@@ -60,7 +60,7 @@ const items: Item[] = [
   { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: ["super_admin", "rh", "compliance"] },
   { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["super_admin", "rh"] },
   { title: "Auditoria", url: "/auditoria", icon: ScrollText, roles: ["super_admin", "compliance", "rh"] },
-  { title: "Usuários", url: "/usuarios", icon: UserCog, roles: ["super_admin"] },
+  { title: "Usuários", url: "/usuarios", icon: UserCog, roles: ["super_admin", "compliance", "rh"] },
   { title: "Homologação", url: "/homologacao", icon: ClipboardCheck, roles: ["super_admin", "compliance", "rh"] },
   { title: "Saúde do Sistema", url: "/saude", icon: Activity, roles: ["super_admin"] },
   { title: "Operações", url: "/operacoes", icon: HardDrive, roles: ["super_admin", "compliance"] },

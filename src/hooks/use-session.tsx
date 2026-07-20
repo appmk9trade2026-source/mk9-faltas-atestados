@@ -23,7 +23,7 @@ async function tryBootstrapSuperAdmin(): Promise<boolean> {
   return false;
 }
 
-export type AppRole = "super_admin" | "rh" | "supervisor" | "compliance";
+export type AppRole = "super_admin" | "rh" | "supervisor" | "compliance" | "operacao" | "visualizador";
 
 export type ProfileRow = {
   id: string;
