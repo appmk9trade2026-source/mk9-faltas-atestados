@@ -1087,30 +1087,30 @@ function HistoryDrawer({ usuario, onClose }: { usuario: UsuarioRow | null; onClo
 
 
 function WhatsappStatusCell({ status }: { status: BoasVindasStatus | null }) {
-  if (!status || !status.outbox_id) {
-    return <span className="text-[10px] text-muted-foreground">—</span>;
-  }
-  const s = status.status ?? "PENDENTE";
+  const notSent = !status || !status.outbox_id;
+  const s = status?.status ?? "NAO_ENVIADO";
   const map: Record<string, { label: string; cls: string }> = {
-    LIDA: { label: "Lido", cls: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
+    NAO_ENVIADO: { label: "Não enviado", cls: "text-muted-foreground" },
+    LIDA: { label: "Entregue", cls: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
     ENTREGUE: { label: "Entregue", cls: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
-    ENVIADO: { label: "Enviado", cls: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
+    ENVIADO: { label: "Enviado", cls: "bg-sky-500/15 text-sky-700 border-sky-500/30" },
     PENDENTE: { label: "Pendente", cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
-    PROCESSANDO: { label: "Processando", cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
-    FALHOU_TEMPORARIO: { label: "Tentando novamente", cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
+    PROCESSANDO: { label: "Pendente", cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
+    FALHOU_TEMPORARIO: { label: "Pendente", cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
     FALHOU_DEFINITIVO: { label: "Falhou", cls: "bg-red-500/15 text-red-700 border-red-500/30" },
-    CANCELADO: { label: "Cancelado", cls: "text-muted-foreground" },
+    CANCELADO: { label: "Falhou", cls: "bg-red-500/15 text-red-700 border-red-500/30" },
   };
-  const meta = map[s] ?? { label: s, cls: "text-muted-foreground" };
+  const meta = map[notSent ? "NAO_ENVIADO" : s] ?? { label: s, cls: "text-muted-foreground" };
   return (
-    <div className="flex flex-col gap-0.5" title={status.ultimo_erro ?? undefined}>
+    <div className="flex flex-col gap-0.5" title={status?.ultimo_erro ?? undefined}>
       <Badge variant="outline" className={`text-[10px] ${meta.cls}`}>
         <MessageCircle className="mr-1 h-3 w-3" />{meta.label}
       </Badge>
-      {status.atualizado_em && (
+      {status?.atualizado_em && !notSent && (
         <span className="text-[10px] text-muted-foreground">{fmtDate(status.atualizado_em)}</span>
       )}
     </div>
   );
 }
+
 
