@@ -2997,6 +2997,7 @@ export type Database = {
           valido: boolean
         }[]
       }
+      normalize_matricula: { Args: { _v: string }; Returns: string }
       notificacoes_motor_healthcheck: { Args: never; Returns: Json }
       oa_dashboard: { Args: { _periodo_id?: string }; Returns: Json }
       oa_incidente_transicionar: {
@@ -3313,6 +3314,7 @@ export type Database = {
         | "MUDANCA_STATUS"
         | "SIMULACAO"
         | "ANALISE_CONFLITOS"
+        | "COLABORADOR_DUPLICIDADE_BLOQUEADA"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       changelog_tipo:
         | "NOVA_FUNCIONALIDADE"
@@ -3643,6 +3645,7 @@ export const Constants = {
         "MUDANCA_STATUS",
         "SIMULACAO",
         "ANALISE_CONFLITOS",
+        "COLABORADOR_DUPLICIDADE_BLOQUEADA",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       changelog_tipo: [
