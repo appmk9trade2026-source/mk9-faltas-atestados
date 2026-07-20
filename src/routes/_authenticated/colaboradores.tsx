@@ -306,7 +306,7 @@ function ColaboradoresPage() {
       const payload = {
         empresa_id: values.empresa_id,
         projeto_id: values.projeto_id,
-        matricula: values.matricula.trim(),
+        matricula: normalizeMatricula(values.matricula),
         nome_completo: values.nome_completo.trim(),
         telefone: values.telefone?.trim() ? onlyDigits(values.telefone) : null,
         whatsapp: values.whatsapp?.trim() ? onlyDigits(values.whatsapp) : null,
