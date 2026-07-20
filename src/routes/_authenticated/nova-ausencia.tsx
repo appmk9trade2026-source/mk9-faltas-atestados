@@ -658,7 +658,11 @@ function NovaAusenciaPage() {
     },
     onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : String(err);
-      if (/não pertence à empresa/i.test(msg)) {
+      if (/PROJETO_SEM_CODIGO_PROTOCOLO|codigo_protocolo/i.test(msg)) {
+        toast.error(
+          "O projeto do colaborador está sem código de protocolo. Cadastre-o em Configurações → Projetos.",
+        );
+      } else if (/não pertence à empresa/i.test(msg)) {
         toast.error("O projeto/colaborador não pertence à empresa selecionada.");
       } else if (/inativ/i.test(msg)) {
         toast.error("Empresa, projeto ou colaborador está inativo.");
