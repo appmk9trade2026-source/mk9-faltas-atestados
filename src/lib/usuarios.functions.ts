@@ -1,8 +1,32 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { requirePermission } from "@/lib/rbac/guards.server";
+import { PERMISSION_MAP } from "@/lib/permissions-map";
+import type { PermissionCode } from "@/lib/permissions";
 
 type AppRole = "super_admin" | "rh" | "supervisor" | "compliance" | "operacao" | "visualizador";
+
+/**
+ * Gate padronizado para operações de usuários (RBAC Fase 3 — Onda 1).
+ * Combina PermissionCode (has_permission + audit + correlation_id) com a
+ * exigência histórica de Super Admin (defesa em profundidade).
+ */
+async function gateUsuario(
+  ctx: { supabase: typeof import("@/integrations/supabase/client").supabase; userId: string },
+  permission: PermissionCode,
+  route: string,
+) {
+  const gate = await requirePermission({ ctx, permission, route });
+  const { data, error } = await ctx.supabase.rpc("has_role", {
+    _user_id: ctx.userId,
+    _role: "super_admin",
+  });
+  if (error || data !== true) {
+    throw new Error("PERMISSION_DENIED: apenas Super Admin pode executar esta ação");
+  }
+  return gate;
+}
 
 async function requireSuperAdmin(ctx: {
   supabase: typeof import("@/integrations/supabase/client").supabase;
@@ -12,7 +36,7 @@ async function requireSuperAdmin(ctx: {
     _user_id: ctx.userId,
     _role: "super_admin",
   });
-  if (error || data !== true) throw new Error("Apenas Super Admin pode executar esta ação.");
+  if (error || data !== true) throw new Error("PERMISSION_DENIED: apenas Super Admin pode executar esta ação.");
 }
 
 async function audit(
@@ -63,7 +87,7 @@ export const createUsuario = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => createSchema.parse(data))
   .handler(async ({ data, context }) => {
-    await requireSuperAdmin(context);
+    await gateUsuario(context, PERMISSION_MAP.createUser, "/usuarios#create");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Duplicate email check via profiles
@@ -256,7 +280,7 @@ export const updateUsuario = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => updateSchema.parse(data))
   .handler(async ({ data, context }) => {
-    await requireSuperAdmin(context);
+    await gateUsuario(context, PERMISSION_MAP.updateUser, "/usuarios#update");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const isSelf = data.id === context.userId;
@@ -384,7 +408,7 @@ export const toggleUsuarioAtivo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid(), ativo: z.boolean() }).parse(data))
   .handler(async ({ data, context }) => {
-    await requireSuperAdmin(context);
+    await gateUsuario(context, PERMISSION_MAP.updateUser, "/usuarios#toggle-ativo");
     if (data.id === context.userId && !data.ativo) {
       await audit(context.supabase, "USUARIO_AUTOALTERACAO_BLOQUEADA", data.id,
         "Tentativa de autodesativação");
@@ -426,7 +450,7 @@ export const resetUsuarioSenha = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await requireSuperAdmin(context);
+    await gateUsuario(context, PERMISSION_MAP.updateUser, "/usuarios#reset-senha");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const prof = await supabaseAdmin.from("profiles").select("email").eq("id", data.id).maybeSingle();
     if (!prof.data?.email) throw new Error("E-mail do usuário não encontrado.");
@@ -444,7 +468,7 @@ export const reenviarConviteUsuario = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await requireSuperAdmin(context);
+    await gateUsuario(context, PERMISSION_MAP.updateUser, "/usuarios#reenviar-convite");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const prof = await supabaseAdmin
       .from("profiles")
@@ -473,7 +497,7 @@ export const encerrarSessoesUsuario = createServerFn({ method: "POST" })
     z.object({ id: z.string().uuid(), manter_atual: z.boolean().default(true) }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await requireSuperAdmin(context);
+    await gateUsuario(context, PERMISSION_MAP.updateUser, "/usuarios#sessoes");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const isSelf = data.id === context.userId;
@@ -524,7 +548,7 @@ export const reenviarBoasVindasWhatsapp = createServerFn({ method: "POST" })
     }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await requireSuperAdmin(context);
+    await gateUsuario(context, PERMISSION_MAP.updateUser, "/usuarios#reenviar-whatsapp");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
