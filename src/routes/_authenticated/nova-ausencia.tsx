@@ -120,7 +120,7 @@ type ColabMatch = {
   empresa_id: string;
   projeto_id: string;
   empresa: { id: string; nome: string; ativo: boolean } | null;
-  projeto: { id: string; nome: string; ativo: boolean } | null;
+  projeto: { id: string; nome: string; ativo: boolean; codigo_protocolo: string | null } | null;
 };
 
 type AusenciaEdit = {
@@ -348,7 +348,7 @@ function NovaAusenciaPage() {
       const { data } = await supabase
         .from("colaboradores")
         .select(
-          "id, nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email, ativo, empresa_id, projeto_id, empresa:empresas(id, nome, ativo), projeto:projetos(id, nome, ativo)",
+          "id, nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email, ativo, empresa_id, projeto_id, empresa:empresas(id, nome, ativo), projeto:projetos(id, nome, ativo, codigo_protocolo)",
         )
         .eq("id", ausencia.colaborador_id)
         .maybeSingle();
@@ -425,7 +425,7 @@ function NovaAusenciaPage() {
       const { data, error } = await supabase
         .from("colaboradores")
         .select(
-          "id, nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email, ativo, empresa_id, projeto_id, empresa:empresas(id, nome, ativo), projeto:projetos(id, nome, ativo)",
+          "id, nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email, ativo, empresa_id, projeto_id, empresa:empresas(id, nome, ativo), projeto:projetos(id, nome, ativo, codigo_protocolo)",
         )
         .eq("matricula", val)
         .eq("ativo", true);
@@ -658,7 +658,11 @@ function NovaAusenciaPage() {
     },
     onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : String(err);
-      if (/não pertence à empresa/i.test(msg)) {
+      if (/PROJETO_SEM_CODIGO_PROTOCOLO|codigo_protocolo/i.test(msg)) {
+        toast.error(
+          "O projeto do colaborador está sem código de protocolo. Cadastre-o em Configurações → Projetos.",
+        );
+      } else if (/não pertence à empresa/i.test(msg)) {
         toast.error("O projeto/colaborador não pertence à empresa selecionada.");
       } else if (/inativ/i.test(msg)) {
         toast.error("Empresa, projeto ou colaborador está inativo.");
@@ -759,6 +763,12 @@ function NovaAusenciaPage() {
                     if (salvarMut.isPending || bloqueado) return;
                     if (!colab && !isEdit) {
                       toast.error("Busque um colaborador pela matrícula.");
+                      return;
+                    }
+                    if (colab && !colab.projeto?.codigo_protocolo) {
+                      toast.error(
+                        "O projeto do colaborador está sem código de protocolo. Peça a um administrador para cadastrar em Configurações → Projetos.",
+                      );
                       return;
                     }
                     salvarMut.mutate(v);
@@ -917,6 +927,21 @@ function NovaAusenciaPage() {
                         placeholder="Selecione..."
                       />
                     </div>
+
+                    {colab && colab.projeto && !colab.projeto.codigo_protocolo && (
+                      <div
+                        role="alert"
+                        className="mt-3 flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200"
+                      >
+                        <span className="font-semibold">Atenção:</span>
+                        <span>
+                          O projeto <strong>{colab.projeto.nome}</strong> não possui{" "}
+                          <strong>código de protocolo</strong>. Peça a um administrador
+                          para cadastrá-lo em Configurações → Projetos antes de lançar
+                          esta ausência.
+                        </span>
+                      </div>
+                    )}
 
                     {colab && colab.supervisor_email && (
                       <p className="mt-3 text-xs text-muted-foreground">
@@ -1447,7 +1472,10 @@ function NovaAusenciaPage() {
                       <Button
                         type="submit"
                         size="lg"
-                        disabled={salvarMut.isPending}
+                        disabled={
+                          salvarMut.isPending ||
+                          (!isEdit && !!colab && !colab.projeto?.codigo_protocolo)
+                        }
                         className="min-w-[220px] bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:from-blue-700 hover:to-indigo-800"
                       >
                         {salvarMut.isPending ? (

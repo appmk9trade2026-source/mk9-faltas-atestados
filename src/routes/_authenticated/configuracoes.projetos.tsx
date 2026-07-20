@@ -92,6 +92,7 @@ type Projeto = {
   empresa_id: string;
   nome: string;
   descricao: string | null;
+  codigo_protocolo: string | null;
   ativo: boolean;
   created_at: string;
   empresa?: { id: string; nome: string; ativo: boolean } | null;
@@ -105,6 +106,15 @@ const projetoSchema = z.object({
     .min(1, "Informe o nome do projeto.")
     .max(120, "Máximo de 120 caracteres."),
   descricao: z.string().trim().max(500, "Máximo de 500 caracteres.").optional().or(z.literal("")),
+  codigo_protocolo: z
+    .string()
+    .trim()
+    .transform((v) => v.toUpperCase())
+    .refine((v) => v === "" || /^[A-Z0-9]{2,10}$/.test(v), {
+      message: "Use 2–10 caracteres — apenas letras maiúsculas e números, sem espaços ou acentos.",
+    })
+    .optional()
+    .or(z.literal("")),
   ativo: z.boolean(),
 });
 
@@ -147,7 +157,7 @@ function ProjetosPage() {
       const { data, error } = await supabase
         .from("projetos")
         .select(
-          "id, empresa_id, nome, descricao, ativo, created_at, empresa:empresas(id, nome, ativo)",
+          "id, empresa_id, nome, descricao, codigo_protocolo, ativo, created_at, empresa:empresas(id, nome, ativo)",
         );
       if (error) throw error;
       return (data ?? []) as Projeto[];
@@ -190,10 +200,12 @@ function ProjetosPage() {
 
   const upsertMut = useMutation({
     mutationFn: async (values: ProjetoForm & { id?: string }) => {
+      const codigo = (values.codigo_protocolo ?? "").trim().toUpperCase();
       const payload = {
         empresa_id: values.empresa_id,
         nome: values.nome.trim(),
         descricao: values.descricao?.trim() ? values.descricao.trim() : null,
+        codigo_protocolo: codigo ? codigo : null,
         ativo: values.ativo,
       };
       if (values.id) {
@@ -212,7 +224,11 @@ function ProjetosPage() {
     },
     onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : String(err);
-      if (/projetos_empresa_nome_uidx|duplicate|unique/i.test(msg)) {
+      if (/projetos_codigo_protocolo_uidx/i.test(msg)) {
+        toast.error("Este código de protocolo já está em uso por outro projeto.");
+      } else if (/projetos_codigo_protocolo_formato_chk/i.test(msg)) {
+        toast.error("Código de protocolo inválido — use 2 a 10 caracteres (A–Z, 0–9).");
+      } else if (/projetos_empresa_nome_uidx|duplicate|unique/i.test(msg)) {
         toast.error("Já existe um projeto com este nome nesta empresa.");
       } else if (/empresa está inativa|empresa inativa/i.test(msg)) {
         toast.error("A empresa selecionada está inativa. Ative-a antes de manter o projeto ativo.");
@@ -354,6 +370,7 @@ function ProjetosPage() {
                     Empresa <ArrowUpDown className="h-3.5 w-3.5" />
                   </button>
                 </TableHead>
+                <TableHead>Código</TableHead>
                 <TableHead className="hidden md:table-cell">Descrição</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="hidden sm:table-cell">
@@ -371,7 +388,7 @@ function ProjetosPage() {
               {projetosQ.isLoading &&
                 Array.from({ length: 3 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell colSpan={6}>
+                    <TableCell colSpan={7}>
                       <Skeleton className="h-6 w-full" />
                     </TableCell>
                   </TableRow>
@@ -379,7 +396,7 @@ function ProjetosPage() {
 
               {projetosQ.isError && (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-10 text-center text-sm text-destructive">
+                  <TableCell colSpan={7} className="py-10 text-center text-sm text-destructive">
                     Erro ao carregar projetos: {(projetosQ.error as Error)?.message}
                   </TableCell>
                 </TableRow>
@@ -387,7 +404,7 @@ function ProjetosPage() {
 
               {!projetosQ.isLoading && !projetosQ.isError && pageRows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-14">
+                  <TableCell colSpan={7} className="py-14">
                     <div className="flex flex-col items-center gap-2 text-center">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
                         <FolderKanban className="h-5 w-5 text-muted-foreground" />
@@ -409,6 +426,17 @@ function ProjetosPage() {
                     {row.empresa && !row.empresa.ativo && (
                       <span className="ml-1 text-[10px] uppercase tracking-wide text-amber-600 dark:text-amber-400">
                         (inativa)
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {row.codigo_protocolo ? (
+                      <span className="inline-flex items-center rounded-md border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 font-mono text-xs font-semibold tracking-wider text-blue-700 dark:text-blue-300">
+                        {row.codigo_protocolo}
+                      </span>
+                    ) : (
+                      <span className="text-xs italic text-amber-600 dark:text-amber-400">
+                        não configurado
                       </span>
                     )}
                   </TableCell>
@@ -520,6 +548,8 @@ function ProjetosPage() {
           <dl className="grid grid-cols-3 gap-2 text-sm">
             <dt className="text-muted-foreground">Empresa</dt>
             <dd className="col-span-2">{viewing?.empresa?.nome ?? "—"}</dd>
+            <dt className="text-muted-foreground">Código</dt>
+            <dd className="col-span-2 font-mono">{viewing?.codigo_protocolo ?? "—"}</dd>
             <dt className="text-muted-foreground">Status</dt>
             <dd className="col-span-2">{viewing?.ativo ? "Ativo" : "Inativo"}</dd>
             <dt className="text-muted-foreground">Cadastro</dt>
@@ -588,6 +618,7 @@ function ProjetoDialog({
       empresa_id: editing?.empresa_id ?? "",
       nome: editing?.nome ?? "",
       descricao: editing?.descricao ?? "",
+      codigo_protocolo: editing?.codigo_protocolo ?? "",
       ativo: editing?.ativo ?? true,
     },
   });
@@ -666,6 +697,32 @@ function ProjetoDialog({
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="codigo_protocolo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Código de protocolo *</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Ex.: ARMT"
+                        maxLength={10}
+                        className="font-mono uppercase tracking-wider"
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Prefixo usado no protocolo dos lançamentos deste projeto
+                      (ex.: <span className="font-mono">ARMT-20260720-000001</span>).
+                      2–10 caracteres, apenas letras maiúsculas e números.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
 
               <FormField
                 control={form.control}

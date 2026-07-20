@@ -87,6 +87,7 @@ type Ausencia = {
   empresa_id: string;
   projeto_id: string;
   colaborador_id: string;
+  protocolo: string | null;
   tipo: TipoAusencia;
   motivo: string | null;
   data_inicio: string;
@@ -471,6 +472,7 @@ function AusenciasPage() {
                 </TableHead>
                 <TableHead className="hidden md:table-cell">Empresa</TableHead>
                 <TableHead className="hidden lg:table-cell">Projeto</TableHead>
+                <TableHead className="hidden xl:table-cell">Protocolo</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>
                   <button
@@ -546,6 +548,15 @@ function AusenciasPage() {
                   </TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground">
                     {row.projeto?.nome ?? "—"}
+                  </TableCell>
+                  <TableCell className="hidden xl:table-cell font-mono text-xs">
+                    {row.protocolo ? (
+                      <span className="inline-flex items-center rounded-md border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 tracking-wider text-blue-700 dark:text-blue-300">
+                        {row.protocolo}
+                      </span>
+                    ) : (
+                      <span className="italic text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">{TIPO_LABEL[row.tipo]}</Badge>
