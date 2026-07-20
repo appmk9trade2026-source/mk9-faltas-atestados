@@ -323,10 +323,10 @@ function ColaboradoresPage() {
           .from("colaboradores")
           .update(payload as never)
           .eq("id", values.id);
-        if (error) throw error;
+        if (error) throw { error, payload };
       } else {
         const { error } = await supabase.from("colaboradores").insert(payload as never);
-        if (error) throw error;
+        if (error) throw { error, payload };
       }
     },
     onSuccess: (_d, vars) => {
@@ -335,10 +335,24 @@ function ColaboradoresPage() {
       setDialogOpen(false);
       setEditing(null);
     },
-    onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (/colaboradores_empresa_matricula_uidx|duplicate|unique/i.test(msg)) {
+    onError: (raw: unknown, vars) => {
+      const wrapped = raw as { error?: { message?: string }; payload?: { empresa_id: string; matricula: string } };
+      const err = wrapped?.error ?? (raw as { message?: string });
+      const msg = (err && "message" in err && err.message) || String(raw);
+      const isDup = /colaboradores_empresa_matricula_uidx|duplicate|unique/i.test(msg);
+      if (isDup) {
         toast.error("Já existe um colaborador com esta matrícula nesta empresa.");
+        // Registrar tentativa de cadastro duplicado (best-effort — não bloqueia UX).
+        void supabase.from("audit_logs").insert({
+          modulo: "colaboradores",
+          acao: "ACESSO_NEGADO",
+          entidade: "colaborador",
+          empresa_id: wrapped?.payload?.empresa_id ?? vars.empresa_id,
+          sucesso: false,
+          origem: "manual",
+          observacoes: `Tentativa de cadastro duplicado (matrícula: ${wrapped?.payload?.matricula ?? vars.matricula})`,
+          depois: { empresa_id: vars.empresa_id, matricula: vars.matricula, origem: vars.id ? "edicao" : "cadastro" },
+        } as never);
       } else if (/não pertence à empresa/i.test(msg)) {
         toast.error("O projeto selecionado não pertence à empresa informada.");
       } else if (/empresa está inativa|empresa inativa/i.test(msg)) {
@@ -350,6 +364,7 @@ function ColaboradoresPage() {
       }
     },
   });
+
 
   const toggleMut = useMutation({
     mutationFn: async (row: Colaborador) => {
