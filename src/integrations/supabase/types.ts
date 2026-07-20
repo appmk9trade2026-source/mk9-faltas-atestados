@@ -65,6 +65,224 @@ export type Database = {
         }
         Relationships: []
       }
+      alertas: {
+        Row: {
+          acao_recurso_id: string | null
+          acao_tipo: string | null
+          acao_url: string | null
+          assumido_em: string | null
+          assumido_por: string | null
+          ausencia_id: string | null
+          categoria: string
+          chave_idempotencia: string
+          colaborador_id: string | null
+          created_at: string
+          descricao: string
+          detectado_em: string
+          dispensado_em: string | null
+          dispensado_por: string | null
+          empresa_id: string | null
+          id: string
+          justificativa: string | null
+          lido_em: string | null
+          lido_por: string | null
+          metadata: Json
+          prazo_em: string | null
+          projeto_id: string | null
+          regra_codigo: string
+          resolucao_automatica: boolean
+          resolvido_em: string | null
+          resolvido_por: string | null
+          severidade: string
+          status: string
+          titulo: string
+          updated_at: string
+          whatsapp_outbox_id: string | null
+        }
+        Insert: {
+          acao_recurso_id?: string | null
+          acao_tipo?: string | null
+          acao_url?: string | null
+          assumido_em?: string | null
+          assumido_por?: string | null
+          ausencia_id?: string | null
+          categoria: string
+          chave_idempotencia: string
+          colaborador_id?: string | null
+          created_at?: string
+          descricao: string
+          detectado_em?: string
+          dispensado_em?: string | null
+          dispensado_por?: string | null
+          empresa_id?: string | null
+          id?: string
+          justificativa?: string | null
+          lido_em?: string | null
+          lido_por?: string | null
+          metadata?: Json
+          prazo_em?: string | null
+          projeto_id?: string | null
+          regra_codigo: string
+          resolucao_automatica?: boolean
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          severidade: string
+          status?: string
+          titulo: string
+          updated_at?: string
+          whatsapp_outbox_id?: string | null
+        }
+        Update: {
+          acao_recurso_id?: string | null
+          acao_tipo?: string | null
+          acao_url?: string | null
+          assumido_em?: string | null
+          assumido_por?: string | null
+          ausencia_id?: string | null
+          categoria?: string
+          chave_idempotencia?: string
+          colaborador_id?: string | null
+          created_at?: string
+          descricao?: string
+          detectado_em?: string
+          dispensado_em?: string | null
+          dispensado_por?: string | null
+          empresa_id?: string | null
+          id?: string
+          justificativa?: string | null
+          lido_em?: string | null
+          lido_por?: string | null
+          metadata?: Json
+          prazo_em?: string | null
+          projeto_id?: string | null
+          regra_codigo?: string
+          resolucao_automatica?: boolean
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          severidade?: string
+          status?: string
+          titulo?: string
+          updated_at?: string
+          whatsapp_outbox_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alertas_ausencia_id_fkey"
+            columns: ["ausencia_id"]
+            isOneToOne: false
+            referencedRelation: "ausencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alertas_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alertas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alertas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alertas_whatsapp_outbox_id_fkey"
+            columns: ["whatsapp_outbox_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_outbox"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alertas_configuracoes: {
+        Row: {
+          habilitada: boolean
+          janela_minutos: number | null
+          limite_horas: number | null
+          limite_minutos: number | null
+          quantidade_limite: number | null
+          regra_codigo: string
+          severidade: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          habilitada?: boolean
+          janela_minutos?: number | null
+          limite_horas?: number | null
+          limite_minutos?: number | null
+          quantidade_limite?: number | null
+          regra_codigo: string
+          severidade?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          habilitada?: boolean
+          janela_minutos?: number | null
+          limite_horas?: number | null
+          limite_minutos?: number | null
+          quantidade_limite?: number | null
+          regra_codigo?: string
+          severidade?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      alertas_eventos: {
+        Row: {
+          alerta_id: string
+          created_at: string
+          evento: string
+          id: string
+          justificativa: string | null
+          metadata: Json
+          status_anterior: string | null
+          status_novo: string | null
+          usuario_id: string | null
+        }
+        Insert: {
+          alerta_id: string
+          created_at?: string
+          evento: string
+          id?: string
+          justificativa?: string | null
+          metadata?: Json
+          status_anterior?: string | null
+          status_novo?: string | null
+          usuario_id?: string | null
+        }
+        Update: {
+          alerta_id?: string
+          created_at?: string
+          evento?: string
+          id?: string
+          justificativa?: string | null
+          metadata?: Json
+          status_anterior?: string | null
+          status_novo?: string | null
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alertas_eventos_alerta_id_fkey"
+            columns: ["alerta_id"]
+            isOneToOne: false
+            referencedRelation: "alertas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           acao: Database["public"]["Enums"]["audit_action"]
@@ -2941,6 +3159,13 @@ export type Database = {
           total_count: number
         }[]
       }
+      alerta_visivel_para: {
+        Args: {
+          _alerta: Database["public"]["Tables"]["alertas"]["Row"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       analisar_conflitos_regras_escalonamento: { Args: never; Returns: Json }
       arquivar_notificacao: {
         Args: { _notificacao_id: string }
@@ -2980,6 +3205,7 @@ export type Database = {
       bi_healthcheck: { Args: never; Returns: Json }
       bi_recorrencia_consultar: { Args: { p_filtros?: Json }; Returns: Json }
       bootstrap_first_super_admin: { Args: never; Returns: string }
+      contagem_alertas_menu: { Args: never; Returns: Json }
       contar_notificacoes_nao_lidas: { Args: never; Returns: number }
       count_active_super_admins: { Args: never; Returns: number }
       criar_notificacao: {
@@ -3036,6 +3262,7 @@ export type Database = {
           total_exec_time_ms: number
         }[]
       }
+      gerar_alertas_do_sistema: { Args: never; Returns: Json }
       gerar_campanha_revisao: {
         Args: { _dias_prazo?: number }
         Returns: number
