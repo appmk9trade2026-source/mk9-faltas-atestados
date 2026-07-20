@@ -1,10 +1,23 @@
-import { createFileRoute, Link, Outlet, useRouter, useRouterState } from "@tanstack/react-router";
+// Rota-layout do módulo WhatsApp Admin.
+//
+// NÃO usar `beforeLoad: () => redirect({ to: "/comunicacoes/whatsapp" })` aqui
+// nem em nenhuma subrota — isso causa loop infinito de navegação (a rota
+// redireciona para si mesma). O gating de sessão é feito pelo layout pai
+// `_authenticated`; a autorização por papel é resolvida no componente via
+// `canAccessWhatsappAdmin`.
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/app-shell";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/use-session";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { ShieldAlert, Home } from "lucide-react";
+import {
+  WhatsappRouteError,
+  WhatsappRouteLoading,
+  WhatsappRouteNotFound,
+} from "@/components/whatsapp/route-boundaries";
+import { canAccessWhatsappAdmin } from "@/lib/whatsapp-admin-access";
 
 export const Route = createFileRoute("/_authenticated/comunicacoes/whatsapp")({
   head: () => ({
@@ -15,31 +28,25 @@ export const Route = createFileRoute("/_authenticated/comunicacoes/whatsapp")({
     ],
   }),
   component: WhatsappAdminLayout,
-  errorComponent: WhatsappAdminError,
-  notFoundComponent: () => (
-    <div className="p-6 text-sm text-muted-foreground">Página do WhatsApp Admin não encontrada.</div>
-  ),
-});
-
-function WhatsappAdminError({ error, reset }: { error: Error; reset: () => void }) {
-  const router = useRouter();
-  return (
+  errorComponent: ({ error, reset }) => (
     <AppShell title="WhatsApp Admin" breadcrumb={["Comunicações", "WhatsApp"]}>
-      <div className="mx-auto max-w-md p-8 text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-          <AlertTriangle className="h-6 w-6" />
-        </div>
-        <h2 className="text-lg font-semibold">Não foi possível carregar o WhatsApp Admin.</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {error.message?.slice(0, 140) || "Ocorreu um erro ao carregar o módulo."}
-        </p>
-        <Button className="mt-4" onClick={() => { router.invalidate(); reset(); }}>
-          <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
-        </Button>
+      <div className="p-4 md:p-6">
+        <WhatsappRouteError
+          error={error}
+          reset={reset}
+          title="Não foi possível carregar o WhatsApp Admin."
+        />
       </div>
     </AppShell>
-  );
-}
+  ),
+  notFoundComponent: () => (
+    <AppShell title="WhatsApp Admin" breadcrumb={["Comunicações", "WhatsApp"]}>
+      <div className="p-4 md:p-6">
+        <WhatsappRouteNotFound />
+      </div>
+    </AppShell>
+  ),
+});
 
 const TABS: { to: string; label: string }[] = [
   { to: "/comunicacoes/whatsapp", label: "Dashboard" },
@@ -53,13 +60,12 @@ const TABS: { to: string; label: string }[] = [
 function WhatsappAdminLayout() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const { loading, roles } = useSession();
-  const canAccess =
-    roles.includes("super_admin") || roles.includes("compliance") || roles.includes("rh");
+  const canAccess = canAccessWhatsappAdmin(roles);
 
   return (
     <AppShell title="WhatsApp Admin" breadcrumb={["Comunicações", "WhatsApp"]}>
       <div className="border-b bg-background/70 backdrop-blur">
-        <nav className="flex gap-1 overflow-x-auto px-4 py-2 md:px-6">
+        <nav className="flex gap-1 overflow-x-auto px-4 py-2 md:px-6" aria-label="Seções do WhatsApp Admin">
           {TABS.map((t) => {
             const active =
               t.to === "/comunicacoes/whatsapp"
@@ -69,6 +75,7 @@ function WhatsappAdminLayout() {
               <Link
                 key={t.to}
                 to={t.to}
+                aria-current={active ? "page" : undefined}
                 className={cn(
                   "whitespace-nowrap rounded-md px-3 py-1.5 text-sm transition-colors",
                   active
@@ -84,14 +91,24 @@ function WhatsappAdminLayout() {
       </div>
       <div className="p-4 md:p-6">
         {loading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-8 w-64" />
-            <Skeleton className="h-32 w-full" />
-          </div>
+          <WhatsappRouteLoading />
         ) : !canAccess ? (
-          <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-6 text-sm">
-            Você não tem permissão para acessar o módulo WhatsApp Admin.
-          </div>
+          <Card className="mx-auto max-w-lg p-8 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <ShieldAlert className="h-6 w-6" aria-hidden />
+            </div>
+            <h2 className="text-lg font-semibold text-foreground">Acesso negado</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Você não tem permissão para acessar o módulo WhatsApp Admin.
+            </p>
+            <div className="mt-5">
+              <Button variant="outline" asChild>
+                <Link to="/dashboard">
+                  <Home className="mr-2 h-4 w-4" /> Voltar ao Dashboard
+                </Link>
+              </Button>
+            </div>
+          </Card>
         ) : (
           <Outlet />
         )}

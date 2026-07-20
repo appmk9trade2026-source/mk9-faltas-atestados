@@ -1,3 +1,4 @@
+import { WhatsappRouteError, WhatsappRouteLoading, WhatsappRouteNotFound } from "@/components/whatsapp/route-boundaries";
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -18,6 +19,9 @@ import { useSession } from "@/hooks/use-session";
 
 export const Route = createFileRoute("/_authenticated/comunicacoes/whatsapp/dead-letter")({
   component: DeadLetterPage,
+  errorComponent: ({ error, reset }) => <WhatsappRouteError error={error} reset={reset} />,
+  notFoundComponent: () => <WhatsappRouteNotFound />,
+  pendingComponent: () => <WhatsappRouteLoading />,
 });
 
 type Row = {
