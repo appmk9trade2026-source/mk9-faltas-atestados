@@ -10,7 +10,6 @@ import { describe, it, expect } from "vitest";
  * Any change on the SQL side MUST be reflected here.
  */
 
-type Role = "super_admin" | "rh" | "supervisor" | "compliance";
 type Categoria = "FALTA" | "ATESTADO" | "LICENCA" | "OUTROS";
 type Op = "INSERT" | "UPDATE" | "DELETE";
 
