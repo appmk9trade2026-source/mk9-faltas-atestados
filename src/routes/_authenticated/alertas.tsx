@@ -1,4 +1,5 @@
 // Central de Alertas Operacionais — Onda 3
+import * as React from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -72,7 +73,7 @@ export const Route = createFileRoute("/_authenticated/alertas")({
   component: AlertasPage,
 });
 
-const SEV_STYLES: Record<AlertaSeveridade, { bg: string; text: string; border: string; icon: JSX.Element; label: string }> = {
+const SEV_STYLES: Record<AlertaSeveridade, { bg: string; text: string; border: string; icon: React.ReactNode; label: string }> = {
   INFORMATIVO: {
     bg: "bg-blue-500/10", text: "text-blue-700 dark:text-blue-300", border: "border-blue-500/40",
     icon: <Info className="h-3.5 w-3.5" aria-hidden />, label: "Informativo",
@@ -158,7 +159,7 @@ function AlertasPage() {
   });
 
   function setSearch(patch: Partial<z.infer<typeof searchSchema>>) {
-    navigate({ search: (prev) => ({ ...prev, ...patch, page: patch.page ?? 0 }) });
+    navigate({ search: (prev: z.infer<typeof searchSchema>) => ({ ...prev, ...patch, page: patch.page ?? 0 }) });
   }
 
   function limparFiltros() {

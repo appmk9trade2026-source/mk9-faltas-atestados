@@ -357,5 +357,5 @@ export const executarGeracaoAlertas = createServerFn({ method: "POST" })
     }
     const { data, error } = await context.supabase.rpc("gerar_alertas_do_sistema");
     if (error) throw new Error(error.message);
-    return data as Record<string, unknown>;
+    return { ok: true, resultado: JSON.stringify(data ?? {}) };
   });
