@@ -195,10 +195,32 @@ function NovaAusenciaPage() {
   const { profile, roles } = useSession();
   const podeCadastrar =
     roles.includes("super_admin") || roles.includes("rh") || roles.includes("supervisor");
+  const isSupervisorOnly =
+    roles.includes("supervisor") &&
+    !roles.includes("super_admin") &&
+    !roles.includes("rh");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { id: editId } = Route.useSearch();
   const isEdit = !!editId;
+
+  // Escopo do supervisor: projetos vinculados
+  const supervisorProjetosQ = useQuery({
+    queryKey: ["supervisor-projetos-escopo", profile?.id ?? "anon"],
+    enabled: !!profile?.id && isSupervisorOnly,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projetos")
+        .select("id, nome, ativo")
+        .eq("ativo", true);
+      if (error) throw error;
+      // RLS já filtra apenas vinculados ao supervisor
+      return (data ?? []) as Array<{ id: string; nome: string; ativo: boolean }>;
+    },
+  });
+  const supervisorSemProjetos =
+    isSupervisorOnly && supervisorProjetosQ.isSuccess && (supervisorProjetosQ.data?.length ?? 0) === 0;
+
 
   // Anexo
   const [file, setFile] = useState<File | null>(null);
@@ -756,11 +778,33 @@ function NovaAusenciaPage() {
               </div>
             ) : null}
 
+            {supervisorSemProjetos && !isEdit ? (
+              <div
+                role="alert"
+                className="flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm"
+              >
+                <ShieldCheck className="mt-0.5 h-5 w-5 text-destructive" />
+                <div className="space-y-1">
+                  <p className="font-medium text-destructive">
+                    Você ainda não possui projetos vinculados. Procure um administrador.
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    O cadastro de ausências está indisponível até que o vínculo seja realizado.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+
             <Form {...form}>
-              <fieldset disabled={bloqueado} className="contents">
+              <fieldset disabled={bloqueado || (supervisorSemProjetos && !isEdit)} className="contents">
                 <form
                   onSubmit={form.handleSubmit((v) => {
                     if (salvarMut.isPending || bloqueado) return;
+                    if (supervisorSemProjetos && !isEdit) {
+                      toast.error("Sem projetos vinculados. Procure um administrador.");
+                      return;
+                    }
                     if (!colab && !isEdit) {
                       toast.error("Busque um colaborador pela matrícula.");
                       return;

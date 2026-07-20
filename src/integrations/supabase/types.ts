@@ -3782,6 +3782,10 @@ export type Database = {
       }
       simular_regras_escalonamento: { Args: { p_evento: Json }; Returns: Json }
       unaccent_if_available: { Args: { p: string }; Returns: string }
+      user_has_projeto: {
+        Args: { _projeto_id: string; _user_id: string }
+        Returns: boolean
+      }
       validar_template_colaborador_whatsapp: {
         Args: { p_conteudo: string; p_variaveis: string[] }
         Returns: undefined
@@ -3994,6 +3998,11 @@ export type Database = {
         | "ALERTA_RESOLVIDO"
         | "ALERTA_DISPENSADO"
         | "ALERTA_REABERTO"
+        | "AUSENCIA_CRIADA_POR_SUPERVISOR"
+        | "AUSENCIA_TENTATIVA_FORA_DO_ESCOPO"
+        | "PROJETO_ACESSO_NEGADO"
+        | "COLABORADOR_ACESSO_NEGADO"
+        | "PERMISSAO_NEGADA"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       changelog_tipo:
         | "NOVA_FUNCIONALIDADE"
@@ -4362,6 +4371,11 @@ export const Constants = {
         "ALERTA_RESOLVIDO",
         "ALERTA_DISPENSADO",
         "ALERTA_REABERTO",
+        "AUSENCIA_CRIADA_POR_SUPERVISOR",
+        "AUSENCIA_TENTATIVA_FORA_DO_ESCOPO",
+        "PROJETO_ACESSO_NEGADO",
+        "COLABORADOR_ACESSO_NEGADO",
+        "PERMISSAO_NEGADA",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       changelog_tipo: [
