@@ -1057,7 +1057,7 @@ function HistoryDrawer({ usuario, onClose }: { usuario: UsuarioRow | null; onClo
 
 
 function WhatsappStatusCell({ status }: { status: BoasVindasStatus | null }) {
-  if (!status || !status.enfileirado_em) {
+  if (!status || !status.outbox_id) {
     return <span className="text-[10px] text-muted-foreground">—</span>;
   }
   const s = status.status ?? "PENDENTE";
@@ -1073,13 +1073,14 @@ function WhatsappStatusCell({ status }: { status: BoasVindasStatus | null }) {
   };
   const meta = map[s] ?? { label: s, cls: "text-muted-foreground" };
   return (
-    <div className="flex flex-col gap-0.5" title={status.motivo_falha ?? undefined}>
+    <div className="flex flex-col gap-0.5" title={status.ultimo_erro ?? undefined}>
       <Badge variant="outline" className={`text-[10px] ${meta.cls}`}>
         <MessageCircle className="mr-1 h-3 w-3" />{meta.label}
       </Badge>
-      {status.enfileirado_em && (
-        <span className="text-[10px] text-muted-foreground">{fmtDate(status.enfileirado_em)}</span>
+      {status.atualizado_em && (
+        <span className="text-[10px] text-muted-foreground">{fmtDate(status.atualizado_em)}</span>
       )}
     </div>
   );
 }
+
