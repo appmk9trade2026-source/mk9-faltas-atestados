@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validarProjetosPertencemAEmpresas } from "@/lib/usuarios.functions";
+import { validarProjetosPertencemAEmpresas, computeAcessoStatus } from "@/lib/usuarios-helpers";
 
 const projetos = [
   { id: "p1", empresa_id: "e1" },
