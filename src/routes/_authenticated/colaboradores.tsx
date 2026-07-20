@@ -1154,10 +1154,44 @@ function ColaboradorDialog({
                         <FormControl>
                           <Input placeholder="Ex.: 12345" {...field} />
                         </FormControl>
+                        {empresaId && field.value?.trim() && (
+                          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
+                            {checando ? (
+                              <span className="flex items-center gap-1 text-muted-foreground">
+                                <Loader2 className="h-3 w-3 animate-spin" /> Verificando disponibilidade…
+                              </span>
+                            ) : duplicado ? (
+                              <>
+                                <Badge className="bg-red-500/15 text-red-600 dark:text-red-400">
+                                  <AlertCircle className="mr-1 h-3 w-3" /> Matrícula já cadastrada
+                                </Badge>
+                                <span className="text-muted-foreground">
+                                  {duplicado.nome_completo}
+                                  {duplicado.empresa?.nome ? ` · ${duplicado.empresa.nome}` : ""}
+                                  {duplicado.projeto?.nome ? ` / ${duplicado.projeto.nome}` : ""}
+                                </span>
+                                <Button
+                                  type="button"
+                                  variant="link"
+                                  size="sm"
+                                  className="h-auto px-0 py-0 text-xs"
+                                  onClick={() => onViewExisting(duplicado.id)}
+                                >
+                                  <Eye className="mr-1 h-3 w-3" /> Visualizar colaborador
+                                </Button>
+                              </>
+                            ) : (
+                              <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                                <CheckCircle2 className="mr-1 h-3 w-3" /> Matrícula disponível
+                              </Badge>
+                            )}
+                          </div>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="nome_completo"
