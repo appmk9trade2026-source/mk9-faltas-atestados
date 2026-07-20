@@ -199,11 +199,11 @@ function UsuariosPage() {
     queryKey: ["usuarios", { search, filterRole, filterEmpresa, filterProjeto, filterAtivo, page }],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("admin_list_users", {
-        _search: search || null,
-        _role: filterRole === "all" ? null : (filterRole as AppRole),
-        _empresa_id: filterEmpresa === "all" ? null : filterEmpresa,
-        _projeto_id: filterProjeto === "all" ? null : filterProjeto,
-        _ativo: filterAtivo === "all" ? null : filterAtivo === "1",
+        _search: search || undefined,
+        _role: filterRole === "all" ? undefined : (filterRole as AppRole),
+        _empresa_id: filterEmpresa === "all" ? undefined : filterEmpresa,
+        _projeto_id: filterProjeto === "all" ? undefined : filterProjeto,
+        _ativo: filterAtivo === "all" ? undefined : filterAtivo === "1",
         _limit: PAGE_SIZE,
         _offset: page * PAGE_SIZE,
       });
