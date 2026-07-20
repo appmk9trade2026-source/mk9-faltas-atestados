@@ -1011,8 +1011,10 @@ function ColaboradorDialog({
   const matriculaInput = form.watch("matricula");
   const projetosQ = useProjetosAtivosPorEmpresa(empresaId || null);
   const duplicadoQ = useColaboradorDuplicado(empresaId || null, matriculaInput, editing?.id ?? null);
-  const duplicado = duplicadoQ.data ?? null;
-  const checando = duplicadoQ.isFetching && !!empresaId && !!matriculaInput?.trim();
+  const duplicado = duplicadoQ.duplicado;
+  const checando = duplicadoQ.checking;
+  const erroDup = duplicadoQ.errorMessage;
+
 
 
   const empresasSelect = useMemo(() => {
@@ -1222,11 +1224,16 @@ function ColaboradorDialog({
                                 </dl>
                               </div>
 
+                            ) : erroDup ? (
+                              <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                                <AlertCircle className="mr-1 h-3 w-3" /> {erroDup}
+                              </Badge>
                             ) : (
                               <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
                                 <CheckCircle2 className="mr-1 h-3 w-3" /> Matrícula disponível
                               </Badge>
                             )}
+
                           </div>
                         )}
                         <FormMessage />
@@ -1392,7 +1399,7 @@ function ColaboradorDialog({
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={submitting || !!duplicado || checando}>
+                <Button type="submit" disabled={submitting || !!duplicado || checando || !!erroDup}>
                   {submitting ? "Salvando..." : editing ? "Salvar alterações" : "Cadastrar"}
                 </Button>
               </DialogFooter>
