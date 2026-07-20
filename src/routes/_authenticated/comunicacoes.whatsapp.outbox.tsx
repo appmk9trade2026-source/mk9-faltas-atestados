@@ -60,7 +60,7 @@ function OutboxPage() {
 
   const q = useQuery({
     queryKey: ["wa-outbox", statusFilter, templateFilter, publicoFilter, search, page],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       let query = supabase
         .from("whatsapp_outbox")
         .select(
@@ -68,7 +68,8 @@ function OutboxPage() {
           { count: "exact" },
         )
         .order("created_at", { ascending: false })
-        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1)
+        .abortSignal(signal);
 
       if (statusFilter !== "ALL") query = query.eq("status", statusFilter as "PENDENTE");
       if (publicoFilter !== "ALL") query = query.eq("publico", publicoFilter as "COLABORADOR");
@@ -213,6 +214,15 @@ function OutboxPage() {
           <Download className="mr-2 h-4 w-4" /> Exportar CSV
         </Button>
       </div>
+
+      {q.error ? (
+        <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
+          <div className="mb-2">Erro ao carregar Outbox: {(q.error as Error).message}</div>
+          <Button size="sm" variant="outline" onClick={() => q.refetch()}>
+            <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
+          </Button>
+        </div>
+      ) : null}
 
       <div className="rounded-lg border bg-card">
         <div className="overflow-x-auto">

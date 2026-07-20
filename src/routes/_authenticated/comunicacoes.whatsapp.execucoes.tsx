@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { fmtDate, fmtDuration } from "@/lib/whatsapp-format";
+import { execRowTone, fmtDate, fmtDuration } from "@/lib/whatsapp-format";
+import { HealthDot } from "@/components/whatsapp/status-badge";
 import { logWhatsappAdminEvent } from "@/lib/whatsapp-admin.functions";
 import { toast } from "sonner";
 
@@ -58,7 +59,7 @@ function ExecPage() {
 
   const q = useQuery({
     queryKey: ["wa-exec", statusFilter, workerFilter, page],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       let query = supabase
         .from("whatsapp_worker_execucoes")
         .select(
@@ -66,7 +67,8 @@ function ExecPage() {
           { count: "exact" },
         )
         .order("inicio", { ascending: false })
-        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1)
+        .abortSignal(signal);
       if (statusFilter !== "ALL") query = query.eq("status", statusFilter);
       if (workerFilter.trim()) query = query.ilike("worker", `%${workerFilter.trim()}%`);
       const { data, count, error } = await query;
@@ -128,11 +130,21 @@ function ExecPage() {
         </Button>
       </div>
 
+      {q.error ? (
+        <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
+          <div className="mb-2">Erro ao carregar execuções: {(q.error as Error).message}</div>
+          <Button size="sm" variant="outline" onClick={() => q.refetch()}>
+            <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
+          </Button>
+        </div>
+      ) : null}
+
       <div className="rounded-lg border bg-card">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Resultado</TableHead>
                 <TableHead>Execution ID</TableHead>
                 <TableHead>Worker</TableHead>
                 <TableHead>Início</TableHead>
@@ -150,33 +162,42 @@ function ExecPage() {
               {q.isLoading ? (
                 Array.from({ length: 6 }).map((_, i) => (
                   <TableRow key={i}>
-                    {Array.from({ length: 11 }).map((__, j) => (
+                    {Array.from({ length: 12 }).map((__, j) => (
                       <TableCell key={j}><Skeleton className="h-4 w-16" /></TableCell>
                     ))}
                   </TableRow>
                 ))
               ) : rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="py-10 text-center text-sm text-muted-foreground">
-                    Nenhuma execução registrada.
+                  <TableCell colSpan={12} className="py-10 text-center text-sm text-muted-foreground">
+                    Nenhuma execução registrada com os filtros atuais.
                   </TableCell>
                 </TableRow>
               ) : (
-                rows.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell className="max-w-[160px] truncate font-mono text-xs">{r.execution_id}</TableCell>
-                    <TableCell className="text-xs">{r.worker}</TableCell>
-                    <TableCell className="whitespace-nowrap text-xs">{fmtDate(r.inicio)}</TableCell>
-                    <TableCell className="whitespace-nowrap text-xs">{fmtDate(r.fim)}</TableCell>
-                    <TableCell className="text-xs tabular-nums">{fmtDuration(r.duracao_ms)}</TableCell>
-                    <TableCell className="text-xs tabular-nums">{r.selecionadas}</TableCell>
-                    <TableCell className="text-xs tabular-nums text-emerald-600 dark:text-emerald-400">{r.enviadas}</TableCell>
-                    <TableCell className="text-xs tabular-nums text-amber-600 dark:text-amber-400">{r.falhas_temporarias}</TableCell>
-                    <TableCell className="text-xs tabular-nums text-red-600 dark:text-red-400">{r.falhas_definitivas}</TableCell>
-                    <TableCell className="text-xs tabular-nums">{r.ignoradas}</TableCell>
-                    <TableCell>{statusBadge(r.status)}</TableCell>
-                  </TableRow>
-                ))
+                rows.map((r) => {
+                  const t = execRowTone(r);
+                  return (
+                    <TableRow key={r.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-xs">
+                          <HealthDot tone={t.tone} />
+                          <span className="font-medium">{t.label}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-[160px] truncate font-mono text-xs">{r.execution_id}</TableCell>
+                      <TableCell className="text-xs">{r.worker}</TableCell>
+                      <TableCell className="whitespace-nowrap text-xs">{fmtDate(r.inicio)}</TableCell>
+                      <TableCell className="whitespace-nowrap text-xs">{fmtDate(r.fim)}</TableCell>
+                      <TableCell className="text-xs tabular-nums">{fmtDuration(r.duracao_ms)}</TableCell>
+                      <TableCell className="text-xs tabular-nums">{r.selecionadas}</TableCell>
+                      <TableCell className="text-xs tabular-nums text-emerald-600 dark:text-emerald-400">{r.enviadas}</TableCell>
+                      <TableCell className="text-xs tabular-nums text-amber-600 dark:text-amber-400">{r.falhas_temporarias}</TableCell>
+                      <TableCell className="text-xs tabular-nums text-red-600 dark:text-red-400">{r.falhas_definitivas}</TableCell>
+                      <TableCell className="text-xs tabular-nums">{r.ignoradas}</TableCell>
+                      <TableCell>{statusBadge(r.status)}</TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
