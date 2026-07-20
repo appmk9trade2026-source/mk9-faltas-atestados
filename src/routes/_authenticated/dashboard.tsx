@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { format, subDays, startOfMonth, endOfMonth, subMonths, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -118,6 +118,7 @@ function delta(curr: number, prev: number): { pct: number; up: boolean } {
 
 // ---------- Page
 function DashboardPage() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [filters, setFilters] = useState<Filters>(() => {
     const r = presetRange("30d");
     return { preset: "30d", inicio: r.i, fim: r.f };
@@ -250,6 +251,22 @@ function DashboardPage() {
   useEffect(() => {
     if (query.isError) toast.error("Falha ao carregar métricas.");
   }, [query.isError]);
+
+  if (pathname !== "/dashboard") {
+    return (
+      <AppShell title="WhatsApp Admin" breadcrumb={["Comunicações", "WhatsApp"]}>
+        <div className="space-y-4">
+          <Skeleton className="h-9 w-full max-w-2xl" />
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Skeleton key={index} className="h-28 w-full" />
+            ))}
+          </div>
+          <Skeleton className="h-56 w-full" />
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell title="Dashboard" breadcrumb={["Dashboard"]}>

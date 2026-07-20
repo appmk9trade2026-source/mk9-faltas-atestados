@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { useSession } from "@/hooks/use-session";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ShieldAlert, Home } from "lucide-react";
+import { ArrowLeft, ShieldAlert } from "lucide-react";
 import {
   WhatsappRouteError,
   WhatsappRouteLoading,
@@ -28,6 +28,13 @@ export const Route = createFileRoute("/_authenticated/comunicacoes/whatsapp")({
     ],
   }),
   component: WhatsappAdminLayout,
+  pendingComponent: () => (
+    <AppShell title="WhatsApp Admin" breadcrumb={["Comunicações", "WhatsApp"]}>
+      <div className="p-4 md:p-6">
+        <WhatsappRouteLoading />
+      </div>
+    </AppShell>
+  ),
   errorComponent: ({ error, reset }) => (
     <AppShell title="WhatsApp Admin" breadcrumb={["Comunicações", "WhatsApp"]}>
       <div className="p-4 md:p-6">
@@ -103,8 +110,8 @@ function WhatsappAdminLayout() {
             </p>
             <div className="mt-5">
               <Button variant="outline" asChild>
-                <Link to="/dashboard">
-                  <Home className="mr-2 h-4 w-4" /> Voltar ao Dashboard
+                <Link to="/comunicacoes">
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para Comunicações
                 </Link>
               </Button>
             </div>

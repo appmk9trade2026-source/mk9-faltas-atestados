@@ -27,6 +27,12 @@ const CRITICAL_URLS = [
   "/ausencias",
   "/nova-ausencia",
   "/comunicacoes",
+  "/comunicacoes/whatsapp",
+  "/comunicacoes/whatsapp/outbox",
+  "/comunicacoes/whatsapp/dead-letter",
+  "/comunicacoes/whatsapp/execucoes",
+  "/comunicacoes/whatsapp/health",
+  "/comunicacoes/whatsapp/configuracao",
   "/painel-rh",
   "/relatorios",
   "/auditoria",
@@ -63,5 +69,11 @@ describe("route registry", () => {
     // The _authenticated layout must not claim '/', which would collide with index.tsx.
     const gateIndex = TREE.match(/_authenticated\/index/);
     expect(gateIndex).toBeNull();
+  });
+
+  it("/comunicacoes/whatsapp resolve no módulo WhatsApp Admin, não no Dashboard principal", () => {
+    expect(TREE).toMatch(/'\/comunicacoes\/whatsapp': typeof AuthenticatedComunicacoesWhatsappRouteWithChildren/);
+    expect(TREE).toMatch(/getParentRoute: \(\) => AuthenticatedComunicacoesRoute/);
+    expect(TREE).not.toMatch(/'\/comunicacoes\/whatsapp': typeof AuthenticatedDashboardRoute/);
   });
 });

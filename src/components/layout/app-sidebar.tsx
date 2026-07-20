@@ -1,4 +1,5 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouter, useRouterState } from "@tanstack/react-router";
+import { flushSync } from "react-dom";
 import {
   LayoutDashboard,
   FilePlus2,
@@ -75,7 +76,14 @@ const items: Item[] = [
   { title: "Observabilidade", url: "/observabilidade", icon: Gauge, roles: ["super_admin", "compliance"] },
 ];
 
-export function AppSidebar({ roles }: { roles: AppRole[] }) {
+export function AppSidebar({
+  roles,
+  onNavigateStart,
+}: {
+  roles: AppRole[];
+  onNavigateStart?: (path: string) => void;
+}) {
+  const router = useRouter();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const visible = items.filter((it) => it.roles.some((r) => roles.includes(r)));
 
@@ -103,10 +111,36 @@ export function AppSidebar({ roles }: { roles: AppRole[] }) {
                 return (
                   <SidebarMenuItem key={item.url}>
                     <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
-                      <Link to={item.url}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </Link>
+                      {item.url === "/comunicacoes/whatsapp" ? (
+                        <a
+                          href={item.url}
+                          onClick={async (event) => {
+                            if (
+                              event.defaultPrevented ||
+                              event.button !== 0 ||
+                              event.metaKey ||
+                              event.ctrlKey ||
+                              event.shiftKey ||
+                              event.altKey
+                            ) {
+                              return;
+                            }
+                            event.preventDefault();
+                            flushSync(() => onNavigateStart?.("/comunicacoes/whatsapp"));
+                            await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+                            await router.preloadRoute({ to: "/comunicacoes/whatsapp" });
+                            await router.navigate({ to: "/comunicacoes/whatsapp" });
+                          }}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </a>
+                      ) : (
+                        <Link to={item.url} preload="intent">
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
