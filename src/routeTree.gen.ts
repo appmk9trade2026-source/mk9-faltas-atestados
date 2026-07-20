@@ -44,9 +44,11 @@ import { Route as AuthenticatedConfiguracoesEmpresasRouteImport } from './routes
 import { Route as AuthenticatedComunicacoesWhatsappRouteImport } from './routes/_authenticated/comunicacoes.whatsapp'
 import { Route as AuthenticatedColaboradoresImportarRouteImport } from './routes/_authenticated/colaboradores_.importar'
 import { Route as AuthenticatedColaboradoresImportacoesRouteImport } from './routes/_authenticated/colaboradores_.importacoes'
+import { Route as AuthenticatedAdministracaoPermissoesRouteImport } from './routes/_authenticated/administracao.permissoes'
 import { Route as AuthenticatedComunicacoesWhatsappIndexRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.index'
 import { Route as ApiPublicHooksProcessWhatsappOutboxRouteImport } from './routes/api/public/hooks/process-whatsapp-outbox'
 import { Route as ApiPublicHooksEvolutionWhatsappWebhookRouteImport } from './routes/api/public/hooks/evolution-whatsapp-webhook'
+import { Route as AuthenticatedUsuariosIdPermissoesRouteImport } from './routes/_authenticated/usuarios.$id.permissoes'
 import { Route as AuthenticatedComunicacoesWhatsappTestesRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.testes'
 import { Route as AuthenticatedComunicacoesWhatsappOutboxRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.outbox'
 import { Route as AuthenticatedComunicacoesWhatsappHealthRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.health'
@@ -246,6 +248,12 @@ const AuthenticatedColaboradoresImportacoesRoute =
     path: '/colaboradores/importacoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdministracaoPermissoesRoute =
+  AuthenticatedAdministracaoPermissoesRouteImport.update({
+    id: '/administracao/permissoes',
+    path: '/administracao/permissoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedComunicacoesWhatsappIndexRoute =
   AuthenticatedComunicacoesWhatsappIndexRouteImport.update({
     id: '/',
@@ -263,6 +271,12 @@ const ApiPublicHooksEvolutionWhatsappWebhookRoute =
     id: '/api/public/hooks/evolution-whatsapp-webhook',
     path: '/api/public/hooks/evolution-whatsapp-webhook',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedUsuariosIdPermissoesRoute =
+  AuthenticatedUsuariosIdPermissoesRouteImport.update({
+    id: '/$id/permissoes',
+    path: '/$id/permissoes',
+    getParentRoute: () => AuthenticatedUsuariosRoute,
   } as any)
 const AuthenticatedComunicacoesWhatsappTestesRoute =
   AuthenticatedComunicacoesWhatsappTestesRouteImport.update({
@@ -327,7 +341,8 @@ export interface FileRoutesByFullPath {
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/roadmap': typeof AuthenticatedRoadmapRoute
   '/saude': typeof AuthenticatedSaudeRoute
-  '/usuarios': typeof AuthenticatedUsuariosRoute
+  '/usuarios': typeof AuthenticatedUsuariosRouteWithChildren
+  '/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/colaboradores/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/colaboradores/importar': typeof AuthenticatedColaboradoresImportarRoute
   '/comunicacoes/whatsapp': typeof AuthenticatedComunicacoesWhatsappRouteWithChildren
@@ -342,6 +357,7 @@ export interface FileRoutesByFullPath {
   '/comunicacoes/whatsapp/health': typeof AuthenticatedComunicacoesWhatsappHealthRoute
   '/comunicacoes/whatsapp/outbox': typeof AuthenticatedComunicacoesWhatsappOutboxRoute
   '/comunicacoes/whatsapp/testes': typeof AuthenticatedComunicacoesWhatsappTestesRoute
+  '/usuarios/$id/permissoes': typeof AuthenticatedUsuariosIdPermissoesRoute
   '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   '/api/public/hooks/process-whatsapp-outbox': typeof ApiPublicHooksProcessWhatsappOutboxRoute
   '/comunicacoes/whatsapp/': typeof AuthenticatedComunicacoesWhatsappIndexRoute
@@ -371,7 +387,8 @@ export interface FileRoutesByTo {
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/roadmap': typeof AuthenticatedRoadmapRoute
   '/saude': typeof AuthenticatedSaudeRoute
-  '/usuarios': typeof AuthenticatedUsuariosRoute
+  '/usuarios': typeof AuthenticatedUsuariosRouteWithChildren
+  '/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/colaboradores/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/colaboradores/importar': typeof AuthenticatedColaboradoresImportarRoute
   '/configuracoes/empresas': typeof AuthenticatedConfiguracoesEmpresasRoute
@@ -385,6 +402,7 @@ export interface FileRoutesByTo {
   '/comunicacoes/whatsapp/health': typeof AuthenticatedComunicacoesWhatsappHealthRoute
   '/comunicacoes/whatsapp/outbox': typeof AuthenticatedComunicacoesWhatsappOutboxRoute
   '/comunicacoes/whatsapp/testes': typeof AuthenticatedComunicacoesWhatsappTestesRoute
+  '/usuarios/$id/permissoes': typeof AuthenticatedUsuariosIdPermissoesRoute
   '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   '/api/public/hooks/process-whatsapp-outbox': typeof ApiPublicHooksProcessWhatsappOutboxRoute
   '/comunicacoes/whatsapp': typeof AuthenticatedComunicacoesWhatsappIndexRoute
@@ -417,7 +435,8 @@ export interface FileRoutesById {
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/roadmap': typeof AuthenticatedRoadmapRoute
   '/_authenticated/saude': typeof AuthenticatedSaudeRoute
-  '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
+  '/_authenticated/usuarios': typeof AuthenticatedUsuariosRouteWithChildren
+  '/_authenticated/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/_authenticated/colaboradores_/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/_authenticated/colaboradores_/importar': typeof AuthenticatedColaboradoresImportarRoute
   '/_authenticated/comunicacoes/whatsapp': typeof AuthenticatedComunicacoesWhatsappRouteWithChildren
@@ -432,6 +451,7 @@ export interface FileRoutesById {
   '/_authenticated/comunicacoes/whatsapp/health': typeof AuthenticatedComunicacoesWhatsappHealthRoute
   '/_authenticated/comunicacoes/whatsapp/outbox': typeof AuthenticatedComunicacoesWhatsappOutboxRoute
   '/_authenticated/comunicacoes/whatsapp/testes': typeof AuthenticatedComunicacoesWhatsappTestesRoute
+  '/_authenticated/usuarios/$id/permissoes': typeof AuthenticatedUsuariosIdPermissoesRoute
   '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   '/api/public/hooks/process-whatsapp-outbox': typeof ApiPublicHooksProcessWhatsappOutboxRoute
   '/_authenticated/comunicacoes/whatsapp/': typeof AuthenticatedComunicacoesWhatsappIndexRoute
@@ -465,6 +485,7 @@ export interface FileRouteTypes {
     | '/roadmap'
     | '/saude'
     | '/usuarios'
+    | '/administracao/permissoes'
     | '/colaboradores/importacoes'
     | '/colaboradores/importar'
     | '/comunicacoes/whatsapp'
@@ -479,6 +500,7 @@ export interface FileRouteTypes {
     | '/comunicacoes/whatsapp/health'
     | '/comunicacoes/whatsapp/outbox'
     | '/comunicacoes/whatsapp/testes'
+    | '/usuarios/$id/permissoes'
     | '/api/public/hooks/evolution-whatsapp-webhook'
     | '/api/public/hooks/process-whatsapp-outbox'
     | '/comunicacoes/whatsapp/'
@@ -509,6 +531,7 @@ export interface FileRouteTypes {
     | '/roadmap'
     | '/saude'
     | '/usuarios'
+    | '/administracao/permissoes'
     | '/colaboradores/importacoes'
     | '/colaboradores/importar'
     | '/configuracoes/empresas'
@@ -522,6 +545,7 @@ export interface FileRouteTypes {
     | '/comunicacoes/whatsapp/health'
     | '/comunicacoes/whatsapp/outbox'
     | '/comunicacoes/whatsapp/testes'
+    | '/usuarios/$id/permissoes'
     | '/api/public/hooks/evolution-whatsapp-webhook'
     | '/api/public/hooks/process-whatsapp-outbox'
     | '/comunicacoes/whatsapp'
@@ -554,6 +578,7 @@ export interface FileRouteTypes {
     | '/_authenticated/roadmap'
     | '/_authenticated/saude'
     | '/_authenticated/usuarios'
+    | '/_authenticated/administracao/permissoes'
     | '/_authenticated/colaboradores_/importacoes'
     | '/_authenticated/colaboradores_/importar'
     | '/_authenticated/comunicacoes/whatsapp'
@@ -568,6 +593,7 @@ export interface FileRouteTypes {
     | '/_authenticated/comunicacoes/whatsapp/health'
     | '/_authenticated/comunicacoes/whatsapp/outbox'
     | '/_authenticated/comunicacoes/whatsapp/testes'
+    | '/_authenticated/usuarios/$id/permissoes'
     | '/api/public/hooks/evolution-whatsapp-webhook'
     | '/api/public/hooks/process-whatsapp-outbox'
     | '/_authenticated/comunicacoes/whatsapp/'
@@ -828,6 +854,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedColaboradoresImportacoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/administracao/permissoes': {
+      id: '/_authenticated/administracao/permissoes'
+      path: '/administracao/permissoes'
+      fullPath: '/administracao/permissoes'
+      preLoaderRoute: typeof AuthenticatedAdministracaoPermissoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/comunicacoes/whatsapp/': {
       id: '/_authenticated/comunicacoes/whatsapp/'
       path: '/'
@@ -848,6 +881,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/hooks/evolution-whatsapp-webhook'
       preLoaderRoute: typeof ApiPublicHooksEvolutionWhatsappWebhookRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/usuarios/$id/permissoes': {
+      id: '/_authenticated/usuarios/$id/permissoes'
+      path: '/$id/permissoes'
+      fullPath: '/usuarios/$id/permissoes'
+      preLoaderRoute: typeof AuthenticatedUsuariosIdPermissoesRouteImport
+      parentRoute: typeof AuthenticatedUsuariosRoute
     }
     '/_authenticated/comunicacoes/whatsapp/testes': {
       id: '/_authenticated/comunicacoes/whatsapp/testes'
@@ -968,6 +1008,20 @@ const AuthenticatedConfiguracoesRouteWithChildren =
     AuthenticatedConfiguracoesRouteChildren,
   )
 
+interface AuthenticatedUsuariosRouteChildren {
+  AuthenticatedUsuariosIdPermissoesRoute: typeof AuthenticatedUsuariosIdPermissoesRoute
+}
+
+const AuthenticatedUsuariosRouteChildren: AuthenticatedUsuariosRouteChildren = {
+  AuthenticatedUsuariosIdPermissoesRoute:
+    AuthenticatedUsuariosIdPermissoesRoute,
+}
+
+const AuthenticatedUsuariosRouteWithChildren =
+  AuthenticatedUsuariosRoute._addFileChildren(
+    AuthenticatedUsuariosRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAcessosRoute: typeof AuthenticatedAcessosRoute
   AuthenticatedAlertasRoute: typeof AuthenticatedAlertasRoute
@@ -992,7 +1046,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedRoadmapRoute: typeof AuthenticatedRoadmapRoute
   AuthenticatedSaudeRoute: typeof AuthenticatedSaudeRoute
-  AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
+  AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRouteWithChildren
+  AuthenticatedAdministracaoPermissoesRoute: typeof AuthenticatedAdministracaoPermissoesRoute
   AuthenticatedColaboradoresImportacoesRoute: typeof AuthenticatedColaboradoresImportacoesRoute
   AuthenticatedColaboradoresImportarRoute: typeof AuthenticatedColaboradoresImportarRoute
 }
@@ -1021,7 +1076,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedRoadmapRoute: AuthenticatedRoadmapRoute,
   AuthenticatedSaudeRoute: AuthenticatedSaudeRoute,
-  AuthenticatedUsuariosRoute: AuthenticatedUsuariosRoute,
+  AuthenticatedUsuariosRoute: AuthenticatedUsuariosRouteWithChildren,
+  AuthenticatedAdministracaoPermissoesRoute:
+    AuthenticatedAdministracaoPermissoesRoute,
   AuthenticatedColaboradoresImportacoesRoute:
     AuthenticatedColaboradoresImportacoesRoute,
   AuthenticatedColaboradoresImportarRoute:
