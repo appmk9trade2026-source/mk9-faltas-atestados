@@ -1,15 +1,18 @@
 import { WhatsappRouteError, WhatsappRouteLoading, WhatsappRouteNotFound } from "@/components/whatsapp/route-boundaries";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, CheckCheck, Clock, Eye, MessageSquare, RefreshCw, Send, XOctagon } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Activity, AlertTriangle, CheckCheck, Clock, Eye, Inbox, MessageSquare, RefreshCw, Send, Server, XOctagon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { KpiCard } from "@/components/whatsapp/kpi-card";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { fmtSeconds, avgSeconds } from "@/lib/whatsapp-format";
+import { getWhatsappHealth } from "@/lib/whatsapp-admin.functions";
 
 export const Route = createFileRoute("/_authenticated/comunicacoes/whatsapp/")({
   component: DashboardPage,
