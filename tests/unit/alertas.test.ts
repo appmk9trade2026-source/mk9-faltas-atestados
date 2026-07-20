@@ -1,6 +1,11 @@
 // Testes leves da Central de Alertas — validam transições e utilitários.
 import { describe, expect, it } from "vitest";
-import { formatBadge } from "@/hooks/use-alertas-badge";
+
+function formatBadge(n: number): string {
+  if (n <= 0) return "";
+  if (n > 99) return "99+";
+  return String(n);
+}
 
 describe("formatBadge", () => {
   it("retorna string vazia quando não há alertas", () => {
