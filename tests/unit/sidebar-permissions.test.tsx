@@ -44,12 +44,12 @@ const EXPECT: Record<Role, { must: string[]; mustNot: string[] }> = {
     mustNot: [],
   },
   rh: {
-    must: ["Dashboard", "Painel do RH", "Colaboradores", "Importações", "Configurações", "Auditoria", "Homologação"],
-    mustNot: ["Usuários", "Saúde do Sistema", "Documentação"],
+    must: ["Dashboard", "Painel do RH", "Colaboradores", "Importações", "Configurações", "Auditoria", "Homologação", "Usuários"],
+    mustNot: ["Saúde do Sistema", "Documentação"],
   },
   compliance: {
-    must: ["Dashboard", "Auditoria", "Relatórios", "Homologação"],
-    mustNot: ["Configurações", "Usuários", "Nova Ausência", "Painel do RH", "Saúde do Sistema", "Documentação"],
+    must: ["Dashboard", "Auditoria", "Relatórios", "Homologação", "Usuários"],
+    mustNot: ["Configurações", "Nova Ausência", "Painel do RH", "Saúde do Sistema", "Documentação"],
   },
   supervisor: {
     must: ["Dashboard", "Nova Ausência", "Ausências", "Colaboradores"],
