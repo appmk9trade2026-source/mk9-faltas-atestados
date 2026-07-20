@@ -797,10 +797,14 @@ function NovaAusenciaPage() {
 
 
             <Form {...form}>
-              <fieldset disabled={bloqueado} className="contents">
+              <fieldset disabled={bloqueado || (supervisorSemProjetos && !isEdit)} className="contents">
                 <form
                   onSubmit={form.handleSubmit((v) => {
                     if (salvarMut.isPending || bloqueado) return;
+                    if (supervisorSemProjetos && !isEdit) {
+                      toast.error("Sem projetos vinculados. Procure um administrador.");
+                      return;
+                    }
                     if (!colab && !isEdit) {
                       toast.error("Busque um colaborador pela matrícula.");
                       return;
