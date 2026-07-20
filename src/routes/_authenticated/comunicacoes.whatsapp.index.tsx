@@ -1,15 +1,18 @@
 import { WhatsappRouteError, WhatsappRouteLoading, WhatsappRouteNotFound } from "@/components/whatsapp/route-boundaries";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, CheckCheck, Clock, Eye, MessageSquare, RefreshCw, Send, XOctagon } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Activity, AlertTriangle, CheckCheck, Clock, Eye, Inbox, MessageSquare, RefreshCw, Send, Server, XOctagon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { KpiCard } from "@/components/whatsapp/kpi-card";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { fmtSeconds, avgSeconds } from "@/lib/whatsapp-format";
+import { getWhatsappHealth } from "@/lib/whatsapp-admin.functions";
 
 export const Route = createFileRoute("/_authenticated/comunicacoes/whatsapp/")({
   component: DashboardPage,
@@ -35,16 +38,18 @@ function DashboardPage() {
   const [days, setDays] = useState<number>(7);
   const [templateFilter, setTemplateFilter] = useState("");
   const [autoRefresh, setAutoRefresh] = useState(false);
+  const getHealth = useServerFn(getWhatsappHealth);
 
   const q = useQuery({
     queryKey: ["wa-admin-kpis", days, templateFilter],
     refetchInterval: autoRefresh ? 30_000 : false,
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       let query = supabase
         .from("whatsapp_outbox")
         .select("status, created_at, enviado_em, confirmado_em, processado_em, template_codigo")
         .gte("created_at", daysAgoISO(days))
-        .limit(10000);
+        .limit(10000)
+        .abortSignal(signal);
       if (templateFilter.trim()) {
         query = query.ilike("template_codigo", `%${templateFilter.trim()}%`);
       }
@@ -52,6 +57,13 @@ function DashboardPage() {
       if (error) throw error;
       return (data ?? []) as Row[];
     },
+  });
+
+  const health = useQuery({
+    queryKey: ["wa-admin-health"],
+    queryFn: () => getHealth(),
+    refetchInterval: autoRefresh ? 30_000 : false,
+    staleTime: 15_000,
   });
 
   const kpis = useMemo(() => {
@@ -79,14 +91,8 @@ function DashboardPage() {
       avgSeconds(rows.map((r) => ({ seconds: mapper(r) })));
 
     return {
-      pend,
-      proc,
-      enviado,
-      entregue,
-      lido,
-      ft,
-      fd,
-      canc,
+      total: rows.length,
+      pend, proc, enviado, entregue, lido, ft, fd, canc,
       taxaEntrega,
       taxaLeitura,
       tempoEnvio: tMed((r) => secondsBetween(r.created_at, r.enviado_em)),
@@ -94,6 +100,21 @@ function DashboardPage() {
       tempoLeitura: tMed((r) => secondsBetween(r.enviado_em, r.confirmado_em)),
     };
   }, [q.data]);
+
+  const workerLabel = !health.data
+    ? "—"
+    : health.data.worker.ok
+      ? "OK"
+      : health.data.worker.age_minutes == null
+        ? "Sem execução"
+        : `Atrasado (${health.data.worker.age_minutes}min)`;
+  const workerTone: "success" | "warn" | "danger" | "default" = !health.data
+    ? "default"
+    : health.data.worker.ok
+      ? "success"
+      : (health.data.worker.age_minutes ?? 999) < 15
+        ? "warn"
+        : "danger";
 
   return (
     <div className="space-y-6">
@@ -131,10 +152,44 @@ function DashboardPage() {
               Auto-refresh 30s
             </Label>
           </div>
-          <Button variant="outline" size="sm" onClick={() => q.refetch()}>
+          <Button variant="outline" size="sm" onClick={() => { q.refetch(); health.refetch(); }}>
             <RefreshCw className="mr-2 h-4 w-4" /> Atualizar
           </Button>
         </div>
+      </div>
+
+      {/* Linha operacional — vem do backend (getWhatsappHealth) */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard
+          label="Fila atual"
+          value={health.data?.queue.stuck_over_10min ?? "—"}
+          hint="Travadas em PROCESSANDO > 10min"
+          tone={(health.data?.queue.stuck_over_10min ?? 0) > 0 ? "warn" : "success"}
+          icon={<Inbox className="h-5 w-5" />}
+          loading={health.isLoading}
+        />
+        <KpiCard
+          label="Dead Letter (24h)"
+          value={health.data?.queue.dead_letter_last_24h ?? "—"}
+          tone={(health.data?.queue.dead_letter_last_24h ?? 0) > 0 ? "danger" : "success"}
+          icon={<AlertTriangle className="h-5 w-5" />}
+          loading={health.isLoading}
+        />
+        <KpiCard
+          label="Worker"
+          value={workerLabel}
+          hint={health.data?.worker.last_started_at ? `Última execução há ${health.data.worker.age_minutes ?? 0}min` : "Aguardando"}
+          tone={workerTone}
+          icon={<Server className="h-5 w-5" />}
+          loading={health.isLoading}
+        />
+        <KpiCard
+          label="Provider"
+          value={health.data?.provider.enabled ? "Habilitado" : "Desabilitado"}
+          hint={health.data?.provider.provider}
+          tone={health.data?.provider.enabled ? "success" : "danger"}
+          loading={health.isLoading}
+        />
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -166,14 +221,22 @@ function DashboardPage() {
         <KpiCard label="Tempo médio até entrega" value={fmtSeconds(kpis.tempoEntrega)} loading={q.isLoading} />
       </div>
 
+      {!q.isLoading && !q.error && kpis.total === 0 ? (
+        <Card className="p-8 text-center text-sm text-muted-foreground">
+          <Inbox className="mx-auto mb-2 h-6 w-6 opacity-60" aria-hidden />
+          Nenhuma mensagem no período selecionado.
+          <div className="mt-1 text-xs">Ajuste o período ou o filtro de template.</div>
+        </Card>
+      ) : null}
+
       {q.error ? (
         <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
-          Erro ao carregar KPIs: {(q.error as Error).message}
+          <div className="mb-2">Erro ao carregar KPIs: {(q.error as Error).message}</div>
+          <Button size="sm" variant="outline" onClick={() => q.refetch()}>
+            <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
+          </Button>
         </div>
       ) : null}
     </div>
   );
 }
-
-// Keep useEffect import used (auto-refresh could be extended later).
-useEffect;

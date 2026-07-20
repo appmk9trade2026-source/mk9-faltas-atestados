@@ -67,7 +67,14 @@ function HealthPage() {
         </div>
       </div>
 
-      {q.isLoading || !h ? (
+      {q.error ? (
+        <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
+          <div className="mb-2">Erro ao carregar Health: {(q.error as Error).message}</div>
+          <Button size="sm" variant="outline" onClick={() => q.refetch()}>
+            <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
+          </Button>
+        </div>
+      ) : q.isLoading || !h ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-32 w-full" />
@@ -89,11 +96,34 @@ function HealthPage() {
             </p>
           </Card>
           <Card className="p-4">
-            <div className="flex items-center gap-2"><HealthDot tone={providerTone} /><span className="text-sm font-medium">Provider</span></div>
+            <div className="flex items-center gap-2"><HealthDot tone={providerTone} /><span className="text-sm font-medium">Provider (Evolution)</span></div>
             <p className="mt-2 text-xs text-muted-foreground">Provedor: <span className="text-foreground">{h.provider.provider}</span></p>
             <p className="text-xs text-muted-foreground">Habilitado: <span className="text-foreground">{h.provider.enabled ? "Sim" : "Não"}</span></p>
             <p className="text-xs text-muted-foreground">Modo: <span className="text-foreground">{h.provider.modo}</span></p>
-            <p className="text-xs text-muted-foreground">Webhook: <span className="text-foreground">{h.provider.webhook_enabled ? "Ativo" : "Inativo"}</span></p>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-2"><HealthDot tone="success" /><span className="text-sm font-medium">Banco de dados</span></div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Conexão saudável (a consulta desta tela foi executada com sucesso).
+            </p>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-2"><HealthDot tone={workerTone} /><span className="text-sm font-medium">Cron (agendador)</span></div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Deriva do worker: se a última execução ocorreu nos últimos 5 min, o cron está ativo.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Última atividade: <span className="text-foreground">{fmtDate(h.worker.last_started_at)}</span>
+            </p>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-2"><HealthDot tone={h.provider.webhook_enabled ? "success" : "warn"} /><span className="text-sm font-medium">Webhook</span></div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Estado: <span className="text-foreground">{h.provider.webhook_enabled ? "Ativo" : "Inativo"}</span>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Recepção via <code>/api/public/hooks/evolution-whatsapp-webhook</code>.
+            </p>
           </Card>
           <Card className="p-4">
             <div className="flex items-center gap-2"><HealthDot tone={stuckTone} /><span className="text-sm font-medium">Mensagens travadas</span></div>
@@ -105,11 +135,11 @@ function HealthPage() {
             <p className="mt-2 text-3xl font-semibold tabular-nums">{h.queue.dead_letter_last_24h}</p>
             <p className="text-xs text-muted-foreground">mensagens em <code>FALHOU_DEFINITIVO</code> nas últimas 24h</p>
           </Card>
-          <Card className="p-4">
-            <div className="flex items-center gap-2"><HealthDot tone="success" /><span className="text-sm font-medium">Fonte dos dados</span></div>
+          <Card className="p-4 sm:col-span-2 lg:col-span-1">
+            <div className="flex items-center gap-2"><HealthDot tone="muted" /><span className="text-sm font-medium">Fonte dos dados</span></div>
             <p className="mt-2 text-xs text-muted-foreground">
               Todos os indicadores acima vêm de <code>whatsapp_outbox</code>,
-              <code> whatsapp_worker_execucoes</code> e <code>whatsapp_provider_config</code>.
+              <code> whatsapp_worker_execucoes</code> e <code>whatsapp_provider_config</code> — nenhuma chamada à Evolution API.
             </p>
           </Card>
         </div>
