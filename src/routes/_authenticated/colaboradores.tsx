@@ -5,10 +5,13 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  AlertCircle,
   ArrowUpDown,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Eye,
+  Loader2,
   Mail,
   MessageCircle,
   MoreHorizontal,
@@ -21,6 +24,7 @@ import {
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
+
 
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
@@ -82,7 +86,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { useProjetosAtivosPorEmpresa } from "@/hooks/use-projetos";
+import { useColaboradorDuplicado } from "@/hooks/use-colaborador-duplicado";
 import { formatTelefone, onlyDigits } from "@/lib/br-format";
+
 
 export const Route = createFileRoute("/_authenticated/colaboradores")({
   head: () => ({ meta: [{ title: "Colaboradores · CRM MK9" }] }),
@@ -317,10 +323,10 @@ function ColaboradoresPage() {
           .from("colaboradores")
           .update(payload as never)
           .eq("id", values.id);
-        if (error) throw error;
+        if (error) throw { error, payload };
       } else {
         const { error } = await supabase.from("colaboradores").insert(payload as never);
-        if (error) throw error;
+        if (error) throw { error, payload };
       }
     },
     onSuccess: (_d, vars) => {
@@ -329,10 +335,24 @@ function ColaboradoresPage() {
       setDialogOpen(false);
       setEditing(null);
     },
-    onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (/colaboradores_empresa_matricula_uidx|duplicate|unique/i.test(msg)) {
+    onError: (raw: unknown, vars) => {
+      const wrapped = raw as { error?: { message?: string }; payload?: { empresa_id: string; matricula: string } };
+      const err = wrapped?.error ?? (raw as { message?: string });
+      const msg = (err && "message" in err && err.message) || String(raw);
+      const isDup = /colaboradores_empresa_matricula_uidx|duplicate|unique/i.test(msg);
+      if (isDup) {
         toast.error("Já existe um colaborador com esta matrícula nesta empresa.");
+        // Registrar tentativa de cadastro duplicado (best-effort — não bloqueia UX).
+        void supabase.from("audit_logs").insert({
+          modulo: "colaboradores",
+          acao: "ACESSO_NEGADO",
+          entidade: "colaborador",
+          empresa_id: wrapped?.payload?.empresa_id ?? vars.empresa_id,
+          sucesso: false,
+          origem: "manual",
+          observacoes: `Tentativa de cadastro duplicado (matrícula: ${wrapped?.payload?.matricula ?? vars.matricula})`,
+          depois: { empresa_id: vars.empresa_id, matricula: vars.matricula, origem: vars.id ? "edicao" : "cadastro" },
+        } as never);
       } else if (/não pertence à empresa/i.test(msg)) {
         toast.error("O projeto selecionado não pertence à empresa informada.");
       } else if (/empresa está inativa|empresa inativa/i.test(msg)) {
@@ -344,6 +364,7 @@ function ColaboradoresPage() {
       }
     },
   });
+
 
   const toggleMut = useMutation({
     mutationFn: async (row: Colaborador) => {
@@ -738,7 +759,16 @@ function ColaboradoresPage() {
         empresasTodas={empresas}
         onSubmit={(values) => upsertMut.mutate({ ...values, id: editing?.id })}
         submitting={upsertMut.isPending}
+        onViewExisting={(id) => {
+          const found = (colabQ.data ?? []).find((c) => c.id === id);
+          if (found) {
+            setDialogOpen(false);
+            setEditing(null);
+            setViewing(found);
+          }
+        }}
       />
+
 
       <ColaboradorViewDialog viewing={viewing} onClose={() => setViewing(null)} />
 
@@ -935,6 +965,7 @@ function ColaboradorDialog({
   empresasTodas,
   onSubmit,
   submitting,
+  onViewExisting,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -943,6 +974,7 @@ function ColaboradorDialog({
   empresasTodas: Empresa[];
   onSubmit: (values: ColabForm) => void;
   submitting: boolean;
+  onViewExisting: (id: string) => void;
 }) {
   const form = useForm<ColabForm>({
     resolver: zodResolver(colabSchema),
@@ -964,7 +996,12 @@ function ColaboradorDialog({
   });
 
   const empresaId = form.watch("empresa_id");
+  const matriculaInput = form.watch("matricula");
   const projetosQ = useProjetosAtivosPorEmpresa(empresaId || null);
+  const duplicadoQ = useColaboradorDuplicado(empresaId || null, matriculaInput, editing?.id ?? null);
+  const duplicado = duplicadoQ.data ?? null;
+  const checando = duplicadoQ.isFetching && !!empresaId && !!matriculaInput?.trim();
+
 
   const empresasSelect = useMemo(() => {
     if (editing?.empresa && !editing.empresa.ativo) {
@@ -1117,10 +1154,44 @@ function ColaboradorDialog({
                         <FormControl>
                           <Input placeholder="Ex.: 12345" {...field} />
                         </FormControl>
+                        {empresaId && field.value?.trim() && (
+                          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
+                            {checando ? (
+                              <span className="flex items-center gap-1 text-muted-foreground">
+                                <Loader2 className="h-3 w-3 animate-spin" /> Verificando disponibilidade…
+                              </span>
+                            ) : duplicado ? (
+                              <>
+                                <Badge className="bg-red-500/15 text-red-600 dark:text-red-400">
+                                  <AlertCircle className="mr-1 h-3 w-3" /> Matrícula já cadastrada
+                                </Badge>
+                                <span className="text-muted-foreground">
+                                  {duplicado.nome_completo}
+                                  {duplicado.empresa?.nome ? ` · ${duplicado.empresa.nome}` : ""}
+                                  {duplicado.projeto?.nome ? ` / ${duplicado.projeto.nome}` : ""}
+                                </span>
+                                <Button
+                                  type="button"
+                                  variant="link"
+                                  size="sm"
+                                  className="h-auto px-0 py-0 text-xs"
+                                  onClick={() => onViewExisting(duplicado.id)}
+                                >
+                                  <Eye className="mr-1 h-3 w-3" /> Visualizar colaborador
+                                </Button>
+                              </>
+                            ) : (
+                              <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                                <CheckCircle2 className="mr-1 h-3 w-3" /> Matrícula disponível
+                              </Badge>
+                            )}
+                          </div>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="nome_completo"
@@ -1279,7 +1350,7 @@ function ColaboradorDialog({
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={submitting}>
+                <Button type="submit" disabled={submitting || !!duplicado || checando}>
                   {submitting ? "Salvando..." : editing ? "Salvar alterações" : "Cadastrar"}
                 </Button>
               </DialogFooter>
