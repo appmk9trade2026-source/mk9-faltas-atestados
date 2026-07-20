@@ -370,6 +370,7 @@ function ProjetosPage() {
                     Empresa <ArrowUpDown className="h-3.5 w-3.5" />
                   </button>
                 </TableHead>
+                <TableHead>Código</TableHead>
                 <TableHead className="hidden md:table-cell">Descrição</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="hidden sm:table-cell">
@@ -425,6 +426,17 @@ function ProjetosPage() {
                     {row.empresa && !row.empresa.ativo && (
                       <span className="ml-1 text-[10px] uppercase tracking-wide text-amber-600 dark:text-amber-400">
                         (inativa)
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {row.codigo_protocolo ? (
+                      <span className="inline-flex items-center rounded-md border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 font-mono text-xs font-semibold tracking-wider text-blue-700 dark:text-blue-300">
+                        {row.codigo_protocolo}
+                      </span>
+                    ) : (
+                      <span className="text-xs italic text-amber-600 dark:text-amber-400">
+                        não configurado
                       </span>
                     )}
                   </TableCell>
