@@ -138,7 +138,7 @@ function HistoricoPage() {
   useEffect(() => {
     if (qLocal === search.q) return;
     const t = setTimeout(() => {
-      navigate({ search: (s) => ({ ...s, q: qLocal, page: 0 }) });
+      navigate({ search: (s: SearchState) => ({ ...s, q: qLocal, page: 0 }) });
     }, 400);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -192,10 +192,10 @@ function HistoricoPage() {
   const parsedEvento = useMemo(() => parseEventoRef(eventoAbertoRef), [eventoAbertoRef]);
 
   function openEvento(item: HistoricoItem) {
-    navigate({ search: (s) => ({ ...s, evento: `${item.origem}:${item.id}` }) });
+    navigate({ search: (s: SearchState) => ({ ...s, evento: `${item.origem}:${item.id}` }) });
   }
   function closeEvento() {
-    navigate({ search: (s) => ({ ...s, evento: "" }) });
+    navigate({ search: (s: SearchState) => ({ ...s, evento: "" }) });
   }
 
   return (
@@ -235,7 +235,7 @@ function HistoricoPage() {
               type="date"
               value={search.de}
               onChange={(e) =>
-                navigate({ search: (s) => ({ ...s, de: e.target.value, page: 0 }) })
+                navigate({ search: (s: SearchState) => ({ ...s, de: e.target.value, page: 0 }) })
               }
             />
           </FField>
@@ -244,7 +244,7 @@ function HistoricoPage() {
               type="date"
               value={search.ate}
               onChange={(e) =>
-                navigate({ search: (s) => ({ ...s, ate: e.target.value, page: 0 }) })
+                navigate({ search: (s: SearchState) => ({ ...s, ate: e.target.value, page: 0 }) })
               }
             />
           </FField>
@@ -254,7 +254,7 @@ function HistoricoPage() {
               value={search.empresa || "all"}
               onValueChange={(v) =>
                 navigate({
-                  search: (s) => ({ ...s, empresa: v === "all" ? "" : v, projeto: "", page: 0 }),
+                  search: (s: SearchState) => ({ ...s, empresa: v === "all" ? "" : v, projeto: "", page: 0 }),
                 })
               }
             >
@@ -272,7 +272,7 @@ function HistoricoPage() {
             <Select
               value={search.projeto || "all"}
               onValueChange={(v) =>
-                navigate({ search: (s) => ({ ...s, projeto: v === "all" ? "" : v, page: 0 }) })
+                navigate({ search: (s: SearchState) => ({ ...s, projeto: v === "all" ? "" : v, page: 0 }) })
               }
             >
               <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
@@ -291,7 +291,7 @@ function HistoricoPage() {
             <Select
               value={search.origem}
               onValueChange={(v) =>
-                navigate({ search: (s) => ({ ...s, origem: v, page: 0 }) })
+                navigate({ search: (s: SearchState) => ({ ...s, origem: v, page: 0 }) })
               }
             >
               <SelectTrigger><SelectValue /></SelectTrigger>
@@ -307,7 +307,7 @@ function HistoricoPage() {
             <Select
               value={search.modulo || "all"}
               onValueChange={(v) =>
-                navigate({ search: (s) => ({ ...s, modulo: v === "all" ? "" : v, page: 0 }) })
+                navigate({ search: (s: SearchState) => ({ ...s, modulo: v === "all" ? "" : v, page: 0 }) })
               }
             >
               <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
@@ -325,7 +325,7 @@ function HistoricoPage() {
               placeholder="Ex.: CREATE, MUDANCA_STATUS…"
               value={search.acao}
               onChange={(e) =>
-                navigate({ search: (s) => ({ ...s, acao: e.target.value.toUpperCase().slice(0, 40), page: 0 }) })
+                navigate({ search: (s: SearchState) => ({ ...s, acao: e.target.value.toUpperCase().slice(0, 40), page: 0 }) })
               }
             />
           </FField>
@@ -335,7 +335,7 @@ function HistoricoPage() {
               placeholder="Ex.: ADM-20260720"
               value={search.protocolo}
               onChange={(e) =>
-                navigate({ search: (s) => ({ ...s, protocolo: e.target.value.slice(0, 40), page: 0 }) })
+                navigate({ search: (s: SearchState) => ({ ...s, protocolo: e.target.value.slice(0, 40), page: 0 }) })
               }
             />
           </FField>
@@ -410,7 +410,7 @@ function HistoricoPage() {
                 variant="outline"
                 disabled={search.page <= 0}
                 onClick={() =>
-                  navigate({ search: (s) => ({ ...s, page: Math.max(0, s.page - 1) }) })
+                  navigate({ search: (s: SearchState) => ({ ...s, page: Math.max(0, s.page - 1) }) })
                 }
               >
                 <ChevronLeft className="mr-1 h-4 w-4" /> Anterior
@@ -420,7 +420,7 @@ function HistoricoPage() {
                 variant="outline"
                 disabled={!historicoQ.data?.hasMore}
                 onClick={() =>
-                  navigate({ search: (s) => ({ ...s, page: s.page + 1 }) })
+                  navigate({ search: (s: SearchState) => ({ ...s, page: s.page + 1 }) })
                 }
               >
                 Próxima <ChevronRight className="ml-1 h-4 w-4" />
@@ -718,13 +718,13 @@ function Metric({ label, value }: { label: string; value: number | null | undefi
 }
 
 function DiffBlock({ antes, depois }: { antes: unknown; depois: unknown }) {
-  const hasAntes = antes && !isEmpty(antes);
-  const hasDepois = depois && !isEmpty(depois);
+  const hasAntes = !!antes && !isEmpty(antes);
+  const hasDepois = !!depois && !isEmpty(depois);
   if (!hasAntes && !hasDepois) return null;
   return (
     <div className="space-y-3">
-      {hasAntes && <JsonBlock title="Antes" value={antes} />}
-      {hasDepois && <JsonBlock title="Depois" value={depois} />}
+      {hasAntes ? <JsonBlock title="Antes" value={antes} /> : null}
+      {hasDepois ? <JsonBlock title="Depois" value={depois} /> : null}
     </div>
   );
 }
