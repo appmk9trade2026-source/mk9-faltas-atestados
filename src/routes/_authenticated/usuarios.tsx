@@ -396,7 +396,7 @@ function UsuariosPage() {
                 <TableHead>Perfis</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Último acesso</TableHead>
-                {canSeeWhatsapp && <TableHead>WhatsApp</TableHead>}
+                {canSeeWhatsapp && <TableHead>Convite</TableHead>}
                 <TableHead className="w-[60px]"></TableHead>
               </TableRow>
             </TableHeader>
