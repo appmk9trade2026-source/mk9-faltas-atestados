@@ -1,7 +1,837 @@
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { PlaceholderPage } from "@/components/layout/placeholder-page";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  ChevronLeft,
+  ChevronRight,
+  History as HistoryIcon,
+  KeyRound,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Power,
+  PowerOff,
+  Search,
+  UserCog,
+} from "lucide-react";
+import { toast } from "sonner";
+
+import { AppShell } from "@/components/layout/app-shell";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+
+import { supabase } from "@/integrations/supabase/client";
+import { useSession, type AppRole } from "@/hooks/use-session";
+import {
+  createUsuario,
+  updateUsuario,
+  toggleUsuarioAtivo,
+  resetUsuarioSenha,
+} from "@/lib/usuarios.functions";
 
 export const Route = createFileRoute("/_authenticated/usuarios")({
   head: () => ({ meta: [{ title: "Usuários · CRM MK9" }] }),
-  component: () => <PlaceholderPage title="Usuários" description="Gestão de usuários e papéis (Super Admin)." />,
+  component: UsuariosPage,
 });
+
+const ROLE_OPTIONS: { value: AppRole; label: string }[] = [
+  { value: "super_admin", label: "Super Admin" },
+  { value: "rh", label: "RH" },
+  { value: "supervisor", label: "Supervisor" },
+  { value: "compliance", label: "Compliance" },
+  { value: "operacao", label: "Operação" },
+  { value: "visualizador", label: "Visualizador" },
+];
+const roleLabel = (r: AppRole) => ROLE_OPTIONS.find((o) => o.value === r)?.label ?? r;
+
+const PAGE_SIZE = 25;
+
+type UsuarioRow = {
+  id: string;
+  nome: string;
+  email: string;
+  telefone_whatsapp: string | null;
+  cargo: string | null;
+  avatar_url: string | null;
+  ativo: boolean;
+  created_at: string;
+  last_sign_in_at: string | null;
+  roles: AppRole[];
+  empresa_ids: string[];
+  empresa_nomes: string[];
+  projeto_ids: string[];
+  projeto_nomes: string[];
+  total_count: number;
+};
+
+function initials(name: string) {
+  return name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? "").join("") || "?";
+}
+function fmtDate(d: string | null) {
+  if (!d) return "—";
+  return new Date(d).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+}
+
+// -------------------- Schemas --------------------
+const rolesEnum = z.enum(["super_admin", "rh", "supervisor", "compliance", "operacao", "visualizador"]);
+const createFormSchema = z.object({
+  email: z.string().trim().email("E-mail inválido"),
+  nome: z.string().trim().min(2, "Nome obrigatório"),
+  telefone: z.string().trim().optional(),
+  cargo: z.string().trim().optional(),
+  avatar_url: z.string().trim().url().optional().or(z.literal("")),
+  senha_temporaria: z.string().min(8).max(72).optional().or(z.literal("")),
+  enviar_convite: z.boolean(),
+  ativo: z.boolean(),
+  roles: z.array(rolesEnum).min(1, "Selecione ao menos um perfil"),
+  empresa_ids: z.array(z.string().uuid()),
+  projeto_ids: z.array(z.string().uuid()),
+});
+type CreateForm = z.infer<typeof createFormSchema>;
+
+const editFormSchema = z.object({
+  id: z.string().uuid(),
+  nome: z.string().trim().min(2),
+  telefone: z.string().trim().optional(),
+  cargo: z.string().trim().optional(),
+  avatar_url: z.string().trim().url().optional().or(z.literal("")),
+  roles: z.array(rolesEnum).min(1, "Selecione ao menos um perfil"),
+  empresa_ids: z.array(z.string().uuid()),
+  projeto_ids: z.array(z.string().uuid()),
+});
+type EditForm = z.infer<typeof editFormSchema>;
+
+// -------------------- Page --------------------
+function UsuariosPage() {
+  const { user, roles } = useSession();
+  const qc = useQueryClient();
+  const canWrite = roles.includes("super_admin");
+
+  const [search, setSearch] = useState("");
+  const [filterRole, setFilterRole] = useState<string>("all");
+  const [filterEmpresa, setFilterEmpresa] = useState<string>("all");
+  const [filterProjeto, setFilterProjeto] = useState<string>("all");
+  const [filterAtivo, setFilterAtivo] = useState<string>("all");
+  const [page, setPage] = useState(0);
+
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editing, setEditing] = useState<UsuarioRow | null>(null);
+  const [historyFor, setHistoryFor] = useState<UsuarioRow | null>(null);
+
+  const empresasQ = useQuery({
+    queryKey: ["empresas-ativas"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("empresas").select("id, nome, ativo").order("nome");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const projetosQ = useQuery({
+    queryKey: ["projetos-todos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projetos")
+        .select("id, nome, empresa_id, ativo")
+        .order("nome");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const listQ = useQuery({
+    queryKey: ["usuarios", { search, filterRole, filterEmpresa, filterProjeto, filterAtivo, page }],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_list_users", {
+        _search: search || undefined,
+        _role: filterRole === "all" ? undefined : (filterRole as AppRole),
+        _empresa_id: filterEmpresa === "all" ? undefined : filterEmpresa,
+        _projeto_id: filterProjeto === "all" ? undefined : filterProjeto,
+        _ativo: filterAtivo === "all" ? undefined : filterAtivo === "1",
+        _limit: PAGE_SIZE,
+        _offset: page * PAGE_SIZE,
+      });
+      if (error) throw error;
+      return (data ?? []) as unknown as UsuarioRow[];
+    },
+  });
+
+  const total = listQ.data?.[0]?.total_count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(Number(total) / PAGE_SIZE));
+
+  function invalidate() {
+    qc.invalidateQueries({ queryKey: ["usuarios"] });
+  }
+
+  const createFn = useServerFn(createUsuario);
+  const updateFn = useServerFn(updateUsuario);
+  const toggleFn = useServerFn(toggleUsuarioAtivo);
+  const resetFn = useServerFn(resetUsuarioSenha);
+
+  const toggleMut = useMutation({
+    mutationFn: async (v: { id: string; ativo: boolean }) => toggleFn({ data: v }),
+    onSuccess: (_r, v) => {
+      toast.success(v.ativo ? "Usuário reativado." : "Usuário desativado.");
+      invalidate();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const resetMut = useMutation({
+    mutationFn: async (id: string) => resetFn({ data: { id } }),
+    onSuccess: () => toast.success("Link de redefinição enviado."),
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <AppShell title="Usuários" breadcrumb={["Configurações", "Usuários"]}>
+      <Card className="p-4 md:p-6 space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <UserCog className="h-5 w-5 text-primary" />
+            <div>
+              <h2 className="text-lg font-semibold">Gestão de usuários</h2>
+              <p className="text-xs text-muted-foreground">
+                {canWrite ? "Cadastre, edite, ative/desative e envie reset de senha." : "Consulta somente leitura."}
+              </p>
+            </div>
+          </div>
+          {canWrite && (
+            <Button onClick={() => setCreateOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" /> Novo usuário
+            </Button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+          <div className="relative md:col-span-2">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              className="pl-8"
+              placeholder="Buscar por nome ou e-mail"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            />
+          </div>
+          <Select value={filterRole} onValueChange={(v) => { setFilterRole(v); setPage(0); }}>
+            <SelectTrigger><SelectValue placeholder="Perfil" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os perfis</SelectItem>
+              {ROLE_OPTIONS.map((r) => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterEmpresa} onValueChange={(v) => { setFilterEmpresa(v); setPage(0); }}>
+            <SelectTrigger><SelectValue placeholder="Empresa" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as empresas</SelectItem>
+              {(empresasQ.data ?? []).map((e) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterProjeto} onValueChange={(v) => { setFilterProjeto(v); setPage(0); }}>
+            <SelectTrigger><SelectValue placeholder="Projeto" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os projetos</SelectItem>
+              {(projetosQ.data ?? []).map((p) => <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterAtivo} onValueChange={(v) => { setFilterAtivo(v); setPage(0); }}>
+            <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="1">Ativos</SelectItem>
+              <SelectItem value="0">Desativados</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="rounded-md border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[280px]">Usuário</TableHead>
+                <TableHead>Contato</TableHead>
+                <TableHead>Empresas / Projetos</TableHead>
+                <TableHead>Perfis</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Último acesso</TableHead>
+                <TableHead className="w-[60px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {listQ.isLoading && Array.from({ length: 6 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell colSpan={7}><Skeleton className="h-10 w-full" /></TableCell>
+                </TableRow>
+              ))}
+              {!listQ.isLoading && (listQ.data ?? []).length === 0 && (
+                <TableRow><TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">
+                  Nenhum usuário encontrado.
+                </TableCell></TableRow>
+              )}
+              {(listQ.data ?? []).map((u) => (
+                <TableRow key={u.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-9 w-9">
+                        {u.avatar_url && <AvatarImage src={u.avatar_url} alt={u.nome} />}
+                        <AvatarFallback>{initials(u.nome)}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{u.nome}</div>
+                        <div className="text-xs text-muted-foreground truncate">{u.cargo || "—"}</div>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm truncate max-w-[220px]">{u.email}</div>
+                    <div className="text-xs text-muted-foreground">{u.telefone_whatsapp || "—"}</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1 max-w-[260px]">
+                      {u.empresa_nomes.length === 0 && <span className="text-xs text-muted-foreground">Sem empresas</span>}
+                      {u.empresa_nomes.slice(0, 3).map((n, i) => (
+                        <Badge key={`e-${i}`} variant="secondary" className="text-[10px]">{n}</Badge>
+                      ))}
+                      {u.empresa_nomes.length > 3 && <Badge variant="outline" className="text-[10px]">+{u.empresa_nomes.length - 3}</Badge>}
+                    </div>
+                    {u.projeto_nomes.length > 0 && (
+                      <div className="mt-1 text-[10px] text-muted-foreground truncate max-w-[260px]">
+                        {u.projeto_nomes.slice(0, 4).join(" · ")}
+                        {u.projeto_nomes.length > 4 ? ` +${u.projeto_nomes.length - 4}` : ""}
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {u.roles.length === 0 && <Badge variant="outline" className="text-[10px]">sem papel</Badge>}
+                      {u.roles.map((r) => (
+                        <Badge key={r} variant={r === "super_admin" ? "default" : "secondary"} className="text-[10px]">
+                          {roleLabel(r)}
+                        </Badge>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {u.ativo ? (
+                      <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30 hover:bg-emerald-500/20">Ativo</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-muted-foreground">Desativado</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                    {fmtDate(u.last_sign_in_at)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setHistoryFor(u)}>
+                          <HistoryIcon className="mr-2 h-4 w-4" /> Histórico
+                        </DropdownMenuItem>
+                        {canWrite && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => setEditing(u)}>
+                              <Pencil className="mr-2 h-4 w-4" /> Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => resetMut.mutate(u.id)}
+                              disabled={!u.email}
+                            >
+                              <KeyRound className="mr-2 h-4 w-4" /> Enviar reset de senha
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            {u.ativo ? (
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                disabled={u.id === user?.id}
+                                onClick={() => toggleMut.mutate({ id: u.id, ativo: false })}
+                              >
+                                <PowerOff className="mr-2 h-4 w-4" /> Desativar
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem onClick={() => toggleMut.mutate({ id: u.id, ativo: true })}>
+                                <Power className="mr-2 h-4 w-4" /> Ativar
+                              </DropdownMenuItem>
+                            )}
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div>{Number(total).toLocaleString("pt-BR")} usuário(s) · página {page + 1} de {totalPages}</div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {createOpen && (
+        <CreateDialog
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          empresas={empresasQ.data ?? []}
+          projetos={projetosQ.data ?? []}
+          onSubmit={async (values) => {
+            await createFn({
+              data: {
+                ...values,
+                telefone: values.telefone || null,
+                cargo: values.cargo || null,
+                avatar_url: values.avatar_url || null,
+                senha_temporaria: values.senha_temporaria || null,
+              },
+            });
+            toast.success("Usuário criado com sucesso.");
+            setCreateOpen(false);
+            invalidate();
+          }}
+        />
+      )}
+
+      {editing && (
+        <EditDialog
+          usuario={editing}
+          onClose={() => setEditing(null)}
+          empresas={empresasQ.data ?? []}
+          projetos={projetosQ.data ?? []}
+          onSubmit={async (values) => {
+            await updateFn({
+              data: {
+                ...values,
+                telefone: values.telefone || null,
+                cargo: values.cargo || null,
+                avatar_url: values.avatar_url || null,
+              },
+            });
+            toast.success("Usuário atualizado.");
+            setEditing(null);
+            invalidate();
+          }}
+        />
+      )}
+
+      <HistoryDrawer usuario={historyFor} onClose={() => setHistoryFor(null)} />
+    </AppShell>
+  );
+}
+
+// -------------------- Create Dialog --------------------
+function CreateDialog({
+  open,
+  onOpenChange,
+  empresas,
+  projetos,
+  onSubmit,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  empresas: { id: string; nome: string; ativo: boolean }[];
+  projetos: { id: string; nome: string; empresa_id: string; ativo: boolean }[];
+  onSubmit: (v: CreateForm) => Promise<void>;
+}) {
+  const form = useForm<CreateForm>({
+    resolver: zodResolver(createFormSchema),
+    defaultValues: {
+      email: "",
+      nome: "",
+      telefone: "",
+      cargo: "",
+      avatar_url: "",
+      senha_temporaria: "",
+      enviar_convite: true,
+      ativo: true,
+      roles: [],
+      empresa_ids: [],
+      projeto_ids: [],
+    },
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const selectedEmpresas = form.watch("empresa_ids");
+  const availableProjetos = useMemo(
+    () => projetos.filter((p) => p.ativo && selectedEmpresas.includes(p.empresa_id)),
+    [projetos, selectedEmpresas],
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Novo usuário</DialogTitle>
+          <DialogDescription>Cadastro completo com perfis, empresas e projetos.</DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(async (v) => {
+              setSubmitting(true);
+              try { await onSubmit(v); } catch (e) { toast.error((e as Error).message); }
+              finally { setSubmitting(false); }
+            })}
+            className="space-y-4"
+          >
+            <FormSectionsCreate
+              form={form}
+              empresas={empresas.filter((e) => e.ativo)}
+              availableProjetos={availableProjetos}
+            />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+              <Button type="submit" disabled={submitting}>{submitting ? "Salvando..." : "Criar usuário"}</Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function FormSectionsCreate({
+  form, empresas, availableProjetos,
+}: {
+  form: ReturnType<typeof useForm<CreateForm>>;
+  empresas: { id: string; nome: string }[];
+  availableProjetos: { id: string; nome: string }[];
+}) {
+  return (
+    <>
+      <div>
+        <h3 className="text-sm font-semibold mb-2">Dados pessoais</h3>
+        <div className="grid md:grid-cols-2 gap-3">
+          <FormField control={form.control} name="nome" render={({ field }) => (
+            <FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control} name="email" render={({ field }) => (
+            <FormItem><FormLabel>E-mail</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control} name="telefone" render={({ field }) => (
+            <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control} name="cargo" render={({ field }) => (
+            <FormItem><FormLabel>Cargo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+          <FormField control={form.control} name="avatar_url" render={({ field }) => (
+            <FormItem className="md:col-span-2"><FormLabel>Avatar (URL)</FormLabel><FormControl><Input placeholder="https://…" {...field} /></FormControl><FormMessage /></FormItem>
+          )} />
+        </div>
+      </div>
+
+      <Separator />
+      <div>
+        <h3 className="text-sm font-semibold mb-2">Acesso</h3>
+        <div className="grid md:grid-cols-2 gap-3">
+          <FormField control={form.control} name="senha_temporaria" render={({ field }) => (
+            <FormItem>
+              <FormLabel>Senha temporária (opcional)</FormLabel>
+              <FormControl><Input type="text" placeholder="Deixe vazio para enviar convite" {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+          <div className="space-y-3">
+            <FormField control={form.control} name="enviar_convite" render={({ field }) => (
+              <FormItem className="flex items-center justify-between rounded-md border p-3">
+                <div><Label>Enviar convite por e-mail</Label></div>
+                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="ativo" render={({ field }) => (
+              <FormItem className="flex items-center justify-between rounded-md border p-3">
+                <div><Label>Ativo</Label></div>
+                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+              </FormItem>
+            )} />
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+      <MultiSelectSection
+        title="Perfis"
+        options={ROLE_OPTIONS.map((r) => ({ id: r.value, label: r.label }))}
+        selected={form.watch("roles")}
+        onChange={(v) => form.setValue("roles", v as AppRole[], { shouldValidate: true })}
+      />
+      <MultiSelectSection
+        title="Empresas"
+        options={empresas.map((e) => ({ id: e.id, label: e.nome }))}
+        selected={form.watch("empresa_ids")}
+        onChange={(v) => {
+          form.setValue("empresa_ids", v);
+          // remove projetos de empresas que sumiram
+          const validProj = form.getValues("projeto_ids").filter((pid) =>
+            availableProjetos.some((p) => p.id === pid) || v.length === 0
+          );
+          form.setValue("projeto_ids", validProj);
+        }}
+      />
+      <MultiSelectSection
+        title="Projetos (dependem das empresas)"
+        options={availableProjetos.map((p) => ({ id: p.id, label: p.nome }))}
+        selected={form.watch("projeto_ids")}
+        onChange={(v) => form.setValue("projeto_ids", v)}
+        emptyLabel="Selecione empresas para liberar projetos."
+      />
+    </>
+  );
+}
+
+// -------------------- Edit Dialog --------------------
+function EditDialog({
+  usuario,
+  onClose,
+  empresas,
+  projetos,
+  onSubmit,
+}: {
+  usuario: UsuarioRow;
+  onClose: () => void;
+  empresas: { id: string; nome: string; ativo: boolean }[];
+  projetos: { id: string; nome: string; empresa_id: string; ativo: boolean }[];
+  onSubmit: (v: EditForm) => Promise<void>;
+}) {
+  const form = useForm<EditForm>({
+    resolver: zodResolver(editFormSchema),
+    defaultValues: {
+      id: usuario.id,
+      nome: usuario.nome,
+      telefone: usuario.telefone_whatsapp ?? "",
+      cargo: usuario.cargo ?? "",
+      avatar_url: usuario.avatar_url ?? "",
+      roles: usuario.roles,
+      empresa_ids: usuario.empresa_ids,
+      projeto_ids: usuario.projeto_ids,
+    },
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const selectedEmpresas = form.watch("empresa_ids");
+  const availableProjetos = useMemo(
+    () => projetos.filter((p) => p.ativo && selectedEmpresas.includes(p.empresa_id)),
+    [projetos, selectedEmpresas],
+  );
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Editar usuário</DialogTitle>
+          <DialogDescription>{usuario.email}</DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(async (v) => {
+              setSubmitting(true);
+              try { await onSubmit(v); } catch (e) { toast.error((e as Error).message); }
+              finally { setSubmitting(false); }
+            })}
+            className="space-y-4"
+          >
+            <div className="grid md:grid-cols-2 gap-3">
+              <FormField control={form.control} name="nome" render={({ field }) => (
+                <FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="cargo" render={({ field }) => (
+                <FormItem><FormLabel>Cargo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="telefone" render={({ field }) => (
+                <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="avatar_url" render={({ field }) => (
+                <FormItem><FormLabel>Avatar (URL)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+
+            <Separator />
+            <MultiSelectSection
+              title="Perfis"
+              options={ROLE_OPTIONS.map((r) => ({ id: r.value, label: r.label }))}
+              selected={form.watch("roles")}
+              onChange={(v) => form.setValue("roles", v as AppRole[], { shouldValidate: true })}
+            />
+            <MultiSelectSection
+              title="Empresas"
+              options={empresas.filter((e) => e.ativo).map((e) => ({ id: e.id, label: e.nome }))}
+              selected={form.watch("empresa_ids")}
+              onChange={(v) => {
+                form.setValue("empresa_ids", v);
+                const validProj = form.getValues("projeto_ids").filter((pid) =>
+                  availableProjetos.some((p) => p.id === pid)
+                );
+                form.setValue("projeto_ids", validProj);
+              }}
+            />
+            <MultiSelectSection
+              title="Projetos"
+              options={availableProjetos.map((p) => ({ id: p.id, label: p.nome }))}
+              selected={form.watch("projeto_ids")}
+              onChange={(v) => form.setValue("projeto_ids", v)}
+              emptyLabel="Selecione empresas para liberar projetos."
+            />
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+              <Button type="submit" disabled={submitting}>{submitting ? "Salvando..." : "Salvar alterações"}</Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// -------------------- Multi-select helper --------------------
+function MultiSelectSection({
+  title, options, selected, onChange, emptyLabel,
+}: {
+  title: string;
+  options: { id: string; label: string }[];
+  selected: string[];
+  onChange: (v: string[]) => void;
+  emptyLabel?: string;
+}) {
+  return (
+    <div>
+      <h4 className="text-sm font-semibold mb-2">{title}</h4>
+      {options.length === 0 ? (
+        <p className="text-xs text-muted-foreground border rounded-md p-3">{emptyLabel ?? "Nenhuma opção disponível."}</p>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 border rounded-md p-3 max-h-56 overflow-y-auto">
+          {options.map((o) => {
+            const checked = selected.includes(o.id);
+            return (
+              <label key={o.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                <Checkbox
+                  checked={checked}
+                  onCheckedChange={(v) => {
+                    if (v) onChange([...selected, o.id]);
+                    else onChange(selected.filter((s) => s !== o.id));
+                  }}
+                />
+                <span className="truncate">{o.label}</span>
+              </label>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// -------------------- History Drawer --------------------
+function HistoryDrawer({ usuario, onClose }: { usuario: UsuarioRow | null; onClose: () => void }) {
+  const q = useQuery({
+    queryKey: ["usuario-historico", usuario?.id],
+    enabled: !!usuario,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_get_user_history", {
+        _user_id: usuario!.id,
+        _limit: 100,
+      });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  return (
+    <Sheet open={!!usuario} onOpenChange={(o) => !o && onClose()}>
+      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>Histórico</SheetTitle>
+          <SheetDescription>{usuario?.nome} · {usuario?.email}</SheetDescription>
+        </SheetHeader>
+        <div className="mt-4 space-y-2">
+          {q.isLoading && Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
+          {!q.isLoading && (q.data ?? []).length === 0 && (
+            <p className="text-sm text-muted-foreground py-8 text-center">Sem eventos registrados.</p>
+          )}
+          {(q.data ?? []).map((ev: {
+            id: string; created_at: string; acao: string; modulo: string;
+            usuario_nome: string | null; observacoes: string | null;
+          }) => (
+            <div key={ev.id} className="border rounded-md p-3 text-sm">
+              <div className="flex items-center justify-between gap-2">
+                <Badge variant="outline" className="text-[10px]">{ev.acao}</Badge>
+                <span className="text-[10px] text-muted-foreground">{fmtDate(ev.created_at)}</span>
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {ev.observacoes || `${ev.modulo}`}
+              </div>
+              {ev.usuario_nome && (
+                <div className="text-[10px] text-muted-foreground mt-1">por {ev.usuario_nome}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}

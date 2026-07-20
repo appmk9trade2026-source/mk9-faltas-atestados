@@ -26,6 +26,8 @@ const roleLabel: Record<AppRole, string> = {
   rh: "RH",
   supervisor: "Supervisor",
   compliance: "Compliance",
+  operacao: "Operação",
+  visualizador: "Visualizador",
 };
 
 function initials(name: string) {
