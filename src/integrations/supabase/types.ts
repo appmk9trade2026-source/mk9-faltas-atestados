@@ -2828,6 +2828,23 @@ export type Database = {
           usuario_nome: string
         }[]
       }
+      admin_list_user_sessions: {
+        Args: { _user_id: string }
+        Returns: {
+          browser: string
+          cidade: string
+          created_at: string
+          device: string
+          encerrada_em: string
+          expires_at: string
+          id: string
+          last_activity: string
+          motivo_encerramento: string
+          os: string
+          pais: string
+          status: Database["public"]["Enums"]["session_status"]
+        }[]
+      }
       admin_list_users: {
         Args: {
           _ativo?: boolean
@@ -2841,12 +2858,15 @@ export type Database = {
         Returns: {
           ativo: boolean
           avatar_url: string
+          banned_until: string
           cargo: string
           created_at: string
           email: string
+          email_confirmed_at: string
           empresa_ids: string[]
           empresa_nomes: string[]
           id: string
+          invited_at: string
           last_sign_in_at: string
           nome: string
           projeto_ids: string[]
@@ -2892,6 +2912,7 @@ export type Database = {
       bi_recorrencia_consultar: { Args: { p_filtros?: Json }; Returns: Json }
       bootstrap_first_super_admin: { Args: never; Returns: string }
       contar_notificacoes_nao_lidas: { Args: never; Returns: number }
+      count_active_super_admins: { Args: never; Returns: number }
       criar_notificacao: {
         Args: {
           _ambiente?: string
@@ -3443,6 +3464,12 @@ export type Database = {
         | "USUARIO_PROJETO_VINCULADO"
         | "USUARIO_PROJETO_REMOVIDO"
         | "USUARIO_RESET_SENHA"
+        | "USUARIO_CONVITE_REENVIADO"
+        | "USUARIO_CRIACAO_REVERTIDA"
+        | "USUARIO_ULTIMO_SUPER_ADMIN_BLOQUEADO"
+        | "USUARIO_SESSOES_ENCERRADAS"
+        | "USUARIO_AUTOALTERACAO_BLOQUEADA"
+        | "USUARIO_PROJETO_EMPRESA_INCONSISTENTE"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       changelog_tipo:
         | "NOVA_FUNCIONALIDADE"
@@ -3796,6 +3823,12 @@ export const Constants = {
         "USUARIO_PROJETO_VINCULADO",
         "USUARIO_PROJETO_REMOVIDO",
         "USUARIO_RESET_SENHA",
+        "USUARIO_CONVITE_REENVIADO",
+        "USUARIO_CRIACAO_REVERTIDA",
+        "USUARIO_ULTIMO_SUPER_ADMIN_BLOQUEADO",
+        "USUARIO_SESSOES_ENCERRADAS",
+        "USUARIO_AUTOALTERACAO_BLOQUEADA",
+        "USUARIO_PROJETO_EMPRESA_INCONSISTENTE",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       changelog_tipo: [

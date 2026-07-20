@@ -10,6 +10,8 @@ import {
   ChevronRight,
   History as HistoryIcon,
   KeyRound,
+  LogOut,
+  MailPlus,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -19,6 +21,17 @@ import {
   UserCog,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
@@ -84,6 +97,8 @@ import {
   updateUsuario,
   toggleUsuarioAtivo,
   resetUsuarioSenha,
+  reenviarConviteUsuario,
+  encerrarSessoesUsuario,
 } from "@/lib/usuarios.functions";
 
 export const Route = createFileRoute("/_authenticated/usuarios")({
@@ -113,6 +128,9 @@ type UsuarioRow = {
   ativo: boolean;
   created_at: string;
   last_sign_in_at: string | null;
+  banned_until: string | null;
+  invited_at: string | null;
+  email_confirmed_at: string | null;
   roles: AppRole[];
   empresa_ids: string[];
   empresa_nomes: string[];
@@ -127,6 +145,23 @@ function initials(name: string) {
 function fmtDate(d: string | null) {
   if (!d) return "—";
   return new Date(d).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+}
+
+type AcessoBadge = { label: string; className: string; when?: string | null };
+function computeAcessoBadge(u: UsuarioRow): AcessoBadge {
+  const bannedActive =
+    !!u.banned_until && new Date(u.banned_until).getTime() > Date.now();
+  if (!u.ativo || bannedActive) {
+    return { label: "Conta bloqueada", className: "bg-rose-500/15 text-rose-700 border-rose-500/30" };
+  }
+  const invitePending = !!u.invited_at && !u.email_confirmed_at && !u.last_sign_in_at;
+  if (invitePending) {
+    return { label: "Convite pendente", className: "bg-amber-500/15 text-amber-700 border-amber-500/30", when: u.invited_at };
+  }
+  if (!u.last_sign_in_at) {
+    return { label: "Nunca acessou", className: "bg-muted text-muted-foreground border-border" };
+  }
+  return { label: fmtDate(u.last_sign_in_at), className: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30", when: u.last_sign_in_at };
 }
 
 // -------------------- Schemas --------------------
@@ -223,6 +258,11 @@ function UsuariosPage() {
   const updateFn = useServerFn(updateUsuario);
   const toggleFn = useServerFn(toggleUsuarioAtivo);
   const resetFn = useServerFn(resetUsuarioSenha);
+  const reenviarFn = useServerFn(reenviarConviteUsuario);
+  const encerrarSessoesFn = useServerFn(encerrarSessoesUsuario);
+
+  const [confirmDeactivate, setConfirmDeactivate] = useState<UsuarioRow | null>(null);
+  const [confirmEncerrarSessoes, setConfirmEncerrarSessoes] = useState<UsuarioRow | null>(null);
 
   const toggleMut = useMutation({
     mutationFn: async (v: { id: string; ativo: boolean }) => toggleFn({ data: v }),
@@ -235,6 +275,16 @@ function UsuariosPage() {
   const resetMut = useMutation({
     mutationFn: async (id: string) => resetFn({ data: { id } }),
     onSuccess: () => toast.success("Link de redefinição enviado."),
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const reenviarMut = useMutation({
+    mutationFn: async (id: string) => reenviarFn({ data: { id } }),
+    onSuccess: () => toast.success("Convite reenviado."),
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const encerrarSessoesMut = useMutation({
+    mutationFn: async (v: { id: string }) => encerrarSessoesFn({ data: { id: v.id, manter_atual: true } }),
+    onSuccess: () => { toast.success("Sessões encerradas."); invalidate(); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -373,8 +423,18 @@ function UsuariosPage() {
                       <Badge variant="outline" className="text-muted-foreground">Desativado</Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                    {fmtDate(u.last_sign_in_at)}
+                  <TableCell className="whitespace-nowrap">
+                    {(() => {
+                      const b = computeAcessoBadge(u);
+                      return (
+                        <div className="flex flex-col gap-0.5">
+                          <Badge variant="outline" className={`text-[10px] ${b.className}`}>{b.label}</Badge>
+                          {b.when && b.label !== fmtDate(b.when) && (
+                            <span className="text-[10px] text-muted-foreground">{fmtDate(b.when)}</span>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
@@ -385,7 +445,7 @@ function UsuariosPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => setHistoryFor(u)}>
-                          <HistoryIcon className="mr-2 h-4 w-4" /> Histórico
+                          <HistoryIcon className="mr-2 h-4 w-4" /> Histórico e sessões
                         </DropdownMenuItem>
                         {canWrite && (
                           <>
@@ -399,12 +459,21 @@ function UsuariosPage() {
                             >
                               <KeyRound className="mr-2 h-4 w-4" /> Enviar reset de senha
                             </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => reenviarMut.mutate(u.id)}
+                              disabled={!u.email || !u.ativo}
+                            >
+                              <MailPlus className="mr-2 h-4 w-4" /> Reenviar convite
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setConfirmEncerrarSessoes(u)}>
+                              <LogOut className="mr-2 h-4 w-4" /> Encerrar sessões
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             {u.ativo ? (
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
                                 disabled={u.id === user?.id}
-                                onClick={() => toggleMut.mutate({ id: u.id, ativo: false })}
+                                onClick={() => setConfirmDeactivate(u)}
                               >
                                 <PowerOff className="mr-2 h-4 w-4" /> Desativar
                               </DropdownMenuItem>
@@ -483,6 +552,52 @@ function UsuariosPage() {
       )}
 
       <HistoryDrawer usuario={historyFor} onClose={() => setHistoryFor(null)} />
+
+      <AlertDialog open={!!confirmDeactivate} onOpenChange={(o) => !o && setConfirmDeactivate(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desativar usuário?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDeactivate?.nome} perderá acesso imediatamente. A conta poderá ser reativada depois.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (confirmDeactivate) toggleMut.mutate({ id: confirmDeactivate.id, ativo: false });
+                setConfirmDeactivate(null);
+              }}
+            >
+              Desativar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!confirmEncerrarSessoes} onOpenChange={(o) => !o && setConfirmEncerrarSessoes(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Encerrar todas as sessões?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Todas as sessões ativas de {confirmEncerrarSessoes?.nome} serão encerradas
+              {confirmEncerrarSessoes?.id === user?.id ? ", exceto a sua sessão atual." : "."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmEncerrarSessoes) encerrarSessoesMut.mutate({ id: confirmEncerrarSessoes.id });
+                setConfirmEncerrarSessoes(null);
+              }}
+            >
+              Encerrar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppShell>
   );
 }
@@ -800,38 +915,85 @@ function HistoryDrawer({ usuario, onClose }: { usuario: UsuarioRow | null; onClo
       return data ?? [];
     },
   });
+  const sessQ = useQuery({
+    queryKey: ["usuario-sessoes", usuario?.id],
+    enabled: !!usuario,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("admin_list_user_sessions", {
+        _user_id: usuario!.id,
+      });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
   return (
     <Sheet open={!!usuario} onOpenChange={(o) => !o && onClose()}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Histórico</SheetTitle>
+          <SheetTitle>Histórico e sessões</SheetTitle>
           <SheetDescription>{usuario?.nome} · {usuario?.email}</SheetDescription>
         </SheetHeader>
-        <div className="mt-4 space-y-2">
-          {q.isLoading && Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
-          {!q.isLoading && (q.data ?? []).length === 0 && (
-            <p className="text-sm text-muted-foreground py-8 text-center">Sem eventos registrados.</p>
-          )}
-          {(q.data ?? []).map((ev: {
-            id: string; created_at: string; acao: string; modulo: string;
-            usuario_nome: string | null; observacoes: string | null;
-          }) => (
-            <div key={ev.id} className="border rounded-md p-3 text-sm">
-              <div className="flex items-center justify-between gap-2">
-                <Badge variant="outline" className="text-[10px]">{ev.acao}</Badge>
-                <span className="text-[10px] text-muted-foreground">{fmtDate(ev.created_at)}</span>
+        <Tabs defaultValue="historico" className="mt-4">
+          <TabsList className="grid grid-cols-2 w-full">
+            <TabsTrigger value="historico">Auditoria</TabsTrigger>
+            <TabsTrigger value="sessoes">Sessões</TabsTrigger>
+          </TabsList>
+          <TabsContent value="historico" className="space-y-2 mt-3">
+            {q.isLoading && Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
+            {!q.isLoading && (q.data ?? []).length === 0 && (
+              <p className="text-sm text-muted-foreground py-8 text-center">Sem eventos registrados.</p>
+            )}
+            {(q.data ?? []).map((ev: {
+              id: string; created_at: string; acao: string; modulo: string;
+              usuario_nome: string | null; observacoes: string | null;
+            }) => (
+              <div key={ev.id} className="border rounded-md p-3 text-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <Badge variant="outline" className="text-[10px]">{ev.acao}</Badge>
+                  <span className="text-[10px] text-muted-foreground">{fmtDate(ev.created_at)}</span>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {ev.observacoes || `${ev.modulo}`}
+                </div>
+                {ev.usuario_nome && (
+                  <div className="text-[10px] text-muted-foreground mt-1">por {ev.usuario_nome}</div>
+                )}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {ev.observacoes || `${ev.modulo}`}
+            ))}
+          </TabsContent>
+          <TabsContent value="sessoes" className="space-y-2 mt-3">
+            {sessQ.isLoading && Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
+            {!sessQ.isLoading && (sessQ.data ?? []).length === 0 && (
+              <p className="text-sm text-muted-foreground py-8 text-center">Nenhuma sessão registrada.</p>
+            )}
+            {(sessQ.data ?? []).map((s: {
+              id: string; device: string | null; browser: string | null; os: string | null;
+              created_at: string; last_activity: string; status: string;
+            }) => (
+              <div key={s.id} className="border rounded-md p-3 text-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="font-medium text-xs">
+                    {[s.device, s.browser, s.os].filter(Boolean).join(" · ") || "Sessão"}
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] ${s.status === "ATIVA"
+                      ? "bg-emerald-500/15 text-emerald-700 border-emerald-500/30"
+                      : "text-muted-foreground"}`}
+                  >
+                    {s.status}
+                  </Badge>
+                </div>
+                <div className="text-[10px] text-muted-foreground mt-1">
+                  Iniciada {fmtDate(s.created_at)} · Última atividade {fmtDate(s.last_activity)}
+                </div>
               </div>
-              {ev.usuario_nome && (
-                <div className="text-[10px] text-muted-foreground mt-1">por {ev.usuario_nome}</div>
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </TabsContent>
+        </Tabs>
       </SheetContent>
     </Sheet>
   );
 }
+
