@@ -275,8 +275,9 @@ function UsuariosPage() {
   const [confirmDeactivate, setConfirmDeactivate] = useState<UsuarioRow | null>(null);
   const [confirmEncerrarSessoes, setConfirmEncerrarSessoes] = useState<UsuarioRow | null>(null);
 
-  const canResendWhatsapp = roles.includes("super_admin") || roles.includes("rh");
-  const canSeeWhatsapp = canResendWhatsapp || roles.includes("compliance");
+  const canResendWhatsapp = roles.includes("super_admin");
+  const canSeeWhatsapp = roles.includes("super_admin") || roles.includes("rh") || roles.includes("compliance");
+
 
   const userIdsList = useMemo(() => (listQ.data ?? []).map((u) => u.id), [listQ.data]);
   const statusWaQ = useQuery({
