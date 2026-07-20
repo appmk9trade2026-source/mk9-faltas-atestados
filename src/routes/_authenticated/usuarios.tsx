@@ -472,6 +472,12 @@ function UsuariosPage() {
                       );
                     })()}
                   </TableCell>
+                  {canSeeWhatsapp && (
+                    <TableCell className="whitespace-nowrap">
+                      <WhatsappStatusCell status={statusWaQ.data?.get(u.id) ?? null} />
+                    </TableCell>
+                  )}
+
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
