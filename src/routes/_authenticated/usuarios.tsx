@@ -393,20 +393,22 @@ function UsuariosPage() {
                 <TableHead>Perfis</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Último acesso</TableHead>
+                {canSeeWhatsapp && <TableHead>WhatsApp</TableHead>}
                 <TableHead className="w-[60px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {listQ.isLoading && Array.from({ length: 6 }).map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell colSpan={7}><Skeleton className="h-10 w-full" /></TableCell>
+                  <TableCell colSpan={canSeeWhatsapp ? 8 : 7}><Skeleton className="h-10 w-full" /></TableCell>
                 </TableRow>
               ))}
               {!listQ.isLoading && (listQ.data ?? []).length === 0 && (
-                <TableRow><TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">
+                <TableRow><TableCell colSpan={canSeeWhatsapp ? 8 : 7} className="py-12 text-center text-sm text-muted-foreground">
                   Nenhum usuário encontrado.
                 </TableCell></TableRow>
               )}
+
               {(listQ.data ?? []).map((u) => (
                 <TableRow key={u.id}>
                   <TableCell>
