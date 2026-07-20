@@ -45,10 +45,12 @@ describe("whatsapp admin — access helper", () => {
 
 describe("whatsapp admin — hardening das rotas", () => {
   it.each(WHATSAPP_ROUTE_FILES)("nenhuma rota redireciona para si mesma (%s)", (file) => {
-    const src = readRoute(file);
-    // Nenhum uso de redirect() para caminho /comunicacoes/whatsapp*.
+    // Remove comentários de linha e de bloco antes de checar — os comentários
+    // podem legitimamente mencionar `redirect(...)` como advertência.
+    const src = readRoute(file)
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/^\s*\/\/.*$/gm, "");
     expect(src).not.toMatch(/redirect\s*\(\s*\{[^}]*to:\s*["']\/comunicacoes\/whatsapp/);
-    // Nenhum uso de window.location.
     expect(src).not.toMatch(/window\.location/);
   });
 
