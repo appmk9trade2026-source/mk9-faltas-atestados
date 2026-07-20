@@ -28,6 +28,7 @@ import { Route as AuthenticatedDocumentacaoRouteImport } from './routes/_authent
 import { Route as AuthenticatedDeployRouteImport } from './routes/_authenticated/deploy'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
+import { Route as AuthenticatedComunicacoesRouteImport } from './routes/_authenticated/comunicacoes'
 import { Route as AuthenticatedColaboradoresRouteImport } from './routes/_authenticated/colaboradores'
 import { Route as AuthenticatedBiExecutivoRouteImport } from './routes/_authenticated/bi-executivo'
 import { Route as AuthenticatedAusenciasRouteImport } from './routes/_authenticated/ausencias'
@@ -151,6 +152,12 @@ const AuthenticatedConfiguracoesRoute =
     path: '/configuracoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedComunicacoesRoute =
+  AuthenticatedComunicacoesRouteImport.update({
+    id: '/comunicacoes',
+    path: '/comunicacoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedColaboradoresRoute =
   AuthenticatedColaboradoresRouteImport.update({
     id: '/colaboradores',
@@ -185,9 +192,9 @@ const AuthenticatedAcessosRoute = AuthenticatedAcessosRouteImport.update({
 } as any)
 const AuthenticatedComunicacoesIndexRoute =
   AuthenticatedComunicacoesIndexRouteImport.update({
-    id: '/comunicacoes/',
-    path: '/comunicacoes/',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedComunicacoesRoute,
   } as any)
 const AuthenticatedConfiguracoesTiposAusenciaRoute =
   AuthenticatedConfiguracoesTiposAusenciaRouteImport.update({
@@ -209,9 +216,9 @@ const AuthenticatedConfiguracoesEmpresasRoute =
   } as any)
 const AuthenticatedComunicacoesWhatsappRoute =
   AuthenticatedComunicacoesWhatsappRouteImport.update({
-    id: '/comunicacoes/whatsapp',
-    path: '/comunicacoes/whatsapp',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/whatsapp',
+    path: '/whatsapp',
+    getParentRoute: () => AuthenticatedComunicacoesRoute,
   } as any)
 const AuthenticatedColaboradoresImportarRoute =
   AuthenticatedColaboradoresImportarRouteImport.update({
@@ -283,6 +290,7 @@ export interface FileRoutesByFullPath {
   '/ausencias': typeof AuthenticatedAusenciasRoute
   '/bi-executivo': typeof AuthenticatedBiExecutivoRoute
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
+  '/comunicacoes': typeof AuthenticatedComunicacoesRouteWithChildren
   '/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/deploy': typeof AuthenticatedDeployRoute
@@ -366,6 +374,7 @@ export interface FileRoutesById {
   '/_authenticated/ausencias': typeof AuthenticatedAusenciasRoute
   '/_authenticated/bi-executivo': typeof AuthenticatedBiExecutivoRoute
   '/_authenticated/colaboradores': typeof AuthenticatedColaboradoresRoute
+  '/_authenticated/comunicacoes': typeof AuthenticatedComunicacoesRouteWithChildren
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/deploy': typeof AuthenticatedDeployRoute
@@ -409,6 +418,7 @@ export interface FileRouteTypes {
     | '/ausencias'
     | '/bi-executivo'
     | '/colaboradores'
+    | '/comunicacoes'
     | '/configuracoes'
     | '/dashboard'
     | '/deploy'
@@ -491,6 +501,7 @@ export interface FileRouteTypes {
     | '/_authenticated/ausencias'
     | '/_authenticated/bi-executivo'
     | '/_authenticated/colaboradores'
+    | '/_authenticated/comunicacoes'
     | '/_authenticated/configuracoes'
     | '/_authenticated/dashboard'
     | '/_authenticated/deploy'
@@ -667,6 +678,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/comunicacoes': {
+      id: '/_authenticated/comunicacoes'
+      path: '/comunicacoes'
+      fullPath: '/comunicacoes'
+      preLoaderRoute: typeof AuthenticatedComunicacoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/colaboradores': {
       id: '/_authenticated/colaboradores'
       path: '/colaboradores'
@@ -711,10 +729,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/comunicacoes/': {
       id: '/_authenticated/comunicacoes/'
-      path: '/comunicacoes'
+      path: '/'
       fullPath: '/comunicacoes/'
       preLoaderRoute: typeof AuthenticatedComunicacoesIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedComunicacoesRoute
     }
     '/_authenticated/configuracoes/tipos-ausencia': {
       id: '/_authenticated/configuracoes/tipos-ausencia'
@@ -739,10 +757,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/comunicacoes/whatsapp': {
       id: '/_authenticated/comunicacoes/whatsapp'
-      path: '/comunicacoes/whatsapp'
+      path: '/whatsapp'
       fullPath: '/comunicacoes/whatsapp'
       preLoaderRoute: typeof AuthenticatedComunicacoesWhatsappRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedComunicacoesRoute
     }
     '/_authenticated/colaboradores_/importar': {
       id: '/_authenticated/colaboradores_/importar'
@@ -817,27 +835,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedConfiguracoesRouteChildren {
-  AuthenticatedConfiguracoesEmpresasRoute: typeof AuthenticatedConfiguracoesEmpresasRoute
-  AuthenticatedConfiguracoesProjetosRoute: typeof AuthenticatedConfiguracoesProjetosRoute
-  AuthenticatedConfiguracoesTiposAusenciaRoute: typeof AuthenticatedConfiguracoesTiposAusenciaRoute
-}
-
-const AuthenticatedConfiguracoesRouteChildren: AuthenticatedConfiguracoesRouteChildren =
-  {
-    AuthenticatedConfiguracoesEmpresasRoute:
-      AuthenticatedConfiguracoesEmpresasRoute,
-    AuthenticatedConfiguracoesProjetosRoute:
-      AuthenticatedConfiguracoesProjetosRoute,
-    AuthenticatedConfiguracoesTiposAusenciaRoute:
-      AuthenticatedConfiguracoesTiposAusenciaRoute,
-  }
-
-const AuthenticatedConfiguracoesRouteWithChildren =
-  AuthenticatedConfiguracoesRoute._addFileChildren(
-    AuthenticatedConfiguracoesRouteChildren,
-  )
-
 interface AuthenticatedComunicacoesWhatsappRouteChildren {
   AuthenticatedComunicacoesWhatsappConfiguracaoRoute: typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
   AuthenticatedComunicacoesWhatsappDeadLetterRoute: typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
@@ -868,6 +865,44 @@ const AuthenticatedComunicacoesWhatsappRouteWithChildren =
     AuthenticatedComunicacoesWhatsappRouteChildren,
   )
 
+interface AuthenticatedComunicacoesRouteChildren {
+  AuthenticatedComunicacoesWhatsappRoute: typeof AuthenticatedComunicacoesWhatsappRouteWithChildren
+  AuthenticatedComunicacoesIndexRoute: typeof AuthenticatedComunicacoesIndexRoute
+}
+
+const AuthenticatedComunicacoesRouteChildren: AuthenticatedComunicacoesRouteChildren =
+  {
+    AuthenticatedComunicacoesWhatsappRoute:
+      AuthenticatedComunicacoesWhatsappRouteWithChildren,
+    AuthenticatedComunicacoesIndexRoute: AuthenticatedComunicacoesIndexRoute,
+  }
+
+const AuthenticatedComunicacoesRouteWithChildren =
+  AuthenticatedComunicacoesRoute._addFileChildren(
+    AuthenticatedComunicacoesRouteChildren,
+  )
+
+interface AuthenticatedConfiguracoesRouteChildren {
+  AuthenticatedConfiguracoesEmpresasRoute: typeof AuthenticatedConfiguracoesEmpresasRoute
+  AuthenticatedConfiguracoesProjetosRoute: typeof AuthenticatedConfiguracoesProjetosRoute
+  AuthenticatedConfiguracoesTiposAusenciaRoute: typeof AuthenticatedConfiguracoesTiposAusenciaRoute
+}
+
+const AuthenticatedConfiguracoesRouteChildren: AuthenticatedConfiguracoesRouteChildren =
+  {
+    AuthenticatedConfiguracoesEmpresasRoute:
+      AuthenticatedConfiguracoesEmpresasRoute,
+    AuthenticatedConfiguracoesProjetosRoute:
+      AuthenticatedConfiguracoesProjetosRoute,
+    AuthenticatedConfiguracoesTiposAusenciaRoute:
+      AuthenticatedConfiguracoesTiposAusenciaRoute,
+  }
+
+const AuthenticatedConfiguracoesRouteWithChildren =
+  AuthenticatedConfiguracoesRoute._addFileChildren(
+    AuthenticatedConfiguracoesRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAcessosRoute: typeof AuthenticatedAcessosRoute
   AuthenticatedAlertasRoute: typeof AuthenticatedAlertasRoute
@@ -875,6 +910,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAusenciasRoute: typeof AuthenticatedAusenciasRoute
   AuthenticatedBiExecutivoRoute: typeof AuthenticatedBiExecutivoRoute
   AuthenticatedColaboradoresRoute: typeof AuthenticatedColaboradoresRoute
+  AuthenticatedComunicacoesRoute: typeof AuthenticatedComunicacoesRouteWithChildren
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDeployRoute: typeof AuthenticatedDeployRoute
@@ -893,8 +929,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRoute
   AuthenticatedColaboradoresImportacoesRoute: typeof AuthenticatedColaboradoresImportacoesRoute
   AuthenticatedColaboradoresImportarRoute: typeof AuthenticatedColaboradoresImportarRoute
-  AuthenticatedComunicacoesWhatsappRoute: typeof AuthenticatedComunicacoesWhatsappRouteWithChildren
-  AuthenticatedComunicacoesIndexRoute: typeof AuthenticatedComunicacoesIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -904,6 +938,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAusenciasRoute: AuthenticatedAusenciasRoute,
   AuthenticatedBiExecutivoRoute: AuthenticatedBiExecutivoRoute,
   AuthenticatedColaboradoresRoute: AuthenticatedColaboradoresRoute,
+  AuthenticatedComunicacoesRoute: AuthenticatedComunicacoesRouteWithChildren,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDeployRoute: AuthenticatedDeployRoute,
@@ -924,9 +959,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedColaboradoresImportacoesRoute,
   AuthenticatedColaboradoresImportarRoute:
     AuthenticatedColaboradoresImportarRoute,
-  AuthenticatedComunicacoesWhatsappRoute:
-    AuthenticatedComunicacoesWhatsappRouteWithChildren,
-  AuthenticatedComunicacoesIndexRoute: AuthenticatedComunicacoesIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
