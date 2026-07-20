@@ -146,3 +146,23 @@ export function fmtSeconds(sec: number | null): string {
   const rm = m - h * 60;
   return `${h}h ${rm}m`;
 }
+
+/**
+ * Classifica visualmente uma execução do worker (não altera o banco).
+ * SUCESSO: status OK e sem falhas.
+ * PARCIAL: status OK mas com falhas temporárias ou definitivas.
+ * FALHA:   status ERRO.
+ * NEUTRO:  demais status (PROVIDER_DESATIVADO, SEM_ITENS, etc.).
+ */
+export function execRowTone(row: {
+  status: string;
+  falhas_temporarias?: number | null;
+  falhas_definitivas?: number | null;
+}): { tone: "success" | "warn" | "danger" | "muted"; label: string } {
+  const ft = row.falhas_temporarias ?? 0;
+  const fd = row.falhas_definitivas ?? 0;
+  if (row.status === "ERRO") return { tone: "danger", label: "FALHA" };
+  if (row.status === "OK" && (ft > 0 || fd > 0)) return { tone: "warn", label: "PARCIAL" };
+  if (row.status === "OK") return { tone: "success", label: "SUCESSO" };
+  return { tone: "muted", label: row.status };
+}
