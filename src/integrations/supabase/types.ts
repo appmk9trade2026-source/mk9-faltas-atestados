@@ -3585,6 +3585,15 @@ export type Database = {
         | "USUARIO_SESSOES_ENCERRADAS"
         | "USUARIO_AUTOALTERACAO_BLOQUEADA"
         | "USUARIO_PROJETO_EMPRESA_INCONSISTENTE"
+        | "HISTORICO_VISUALIZADO"
+        | "RELATORIO_VISUALIZADO"
+        | "RELATORIO_EXPORTADO"
+        | "ALERTA_CRIADO"
+        | "ALERTA_LIDO"
+        | "ALERTA_ASSUMIDO"
+        | "ALERTA_RESOLVIDO"
+        | "ALERTA_DISPENSADO"
+        | "ALERTA_REABERTO"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       changelog_tipo:
         | "NOVA_FUNCIONALIDADE"
@@ -3944,6 +3953,15 @@ export const Constants = {
         "USUARIO_SESSOES_ENCERRADAS",
         "USUARIO_AUTOALTERACAO_BLOQUEADA",
         "USUARIO_PROJETO_EMPRESA_INCONSISTENTE",
+        "HISTORICO_VISUALIZADO",
+        "RELATORIO_VISUALIZADO",
+        "RELATORIO_EXPORTADO",
+        "ALERTA_CRIADO",
+        "ALERTA_LIDO",
+        "ALERTA_ASSUMIDO",
+        "ALERTA_RESOLVIDO",
+        "ALERTA_DISPENSADO",
+        "ALERTA_REABERTO",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       changelog_tipo: [
