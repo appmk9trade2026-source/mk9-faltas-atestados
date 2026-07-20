@@ -383,9 +383,9 @@ export function AppSidebar({ roles }: { roles: AppRole[] }) {
             <Circle
               className={cn(
                 "h-2 w-2 fill-current",
-                APP_ENV === "production"
+                (APP_ENV as string) === "production"
                   ? "text-emerald-500"
-                  : APP_ENV === "staging"
+                  : (APP_ENV as string) === "homologacao"
                     ? "text-amber-500"
                     : "text-sky-500",
               )}
@@ -397,9 +397,9 @@ export function AppSidebar({ roles }: { roles: AppRole[] }) {
           <Circle
             className={cn(
               "h-2 w-2 fill-current",
-              APP_ENV === "production"
+              (APP_ENV as string) === "production"
                 ? "text-emerald-500"
-                : APP_ENV === "staging"
+                : (APP_ENV as string) === "homologacao"
                   ? "text-amber-500"
                   : "text-sky-500",
             )}
