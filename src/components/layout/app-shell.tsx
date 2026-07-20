@@ -57,6 +57,7 @@ export function AppShell({ title, breadcrumb, children }: { title: string; bread
 
   return (
     <SidebarProvider>
+      <CommandPaletteProvider>
       <AppSidebar roles={roles} />
       <SidebarInset>
         <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/80 px-3 backdrop-blur">
@@ -74,6 +75,7 @@ export function AppShell({ title, breadcrumb, children }: { title: string; bread
             </nav>
           </div>
           <div className="flex items-center gap-1.5">
+            <CommandPaletteButton />
             <NotificationBell />
             <ThemeToggle />
             <DropdownMenu>
