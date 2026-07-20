@@ -19,6 +19,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useSession, type AppRole } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationBell } from "@/components/layout/notification-bell";
+import { CommandPaletteProvider } from "@/components/command-palette/command-palette";
+import { CommandPaletteButton } from "@/components/command-palette/search-button";
 import { toast } from "sonner";
 
 const roleLabel: Record<AppRole, string> = {
@@ -55,6 +57,7 @@ export function AppShell({ title, breadcrumb, children }: { title: string; bread
 
   return (
     <SidebarProvider>
+      <CommandPaletteProvider>
       <AppSidebar roles={roles} />
       <SidebarInset>
         <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/80 px-3 backdrop-blur">
@@ -72,6 +75,7 @@ export function AppShell({ title, breadcrumb, children }: { title: string; bread
             </nav>
           </div>
           <div className="flex items-center gap-1.5">
+            <CommandPaletteButton />
             <NotificationBell />
             <ThemeToggle />
             <DropdownMenu>
@@ -117,6 +121,7 @@ export function AppShell({ title, breadcrumb, children }: { title: string; bread
           </div>
         </main>
       </SidebarInset>
+      </CommandPaletteProvider>
     </SidebarProvider>
   );
 }
