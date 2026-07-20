@@ -759,7 +759,16 @@ function ColaboradoresPage() {
         empresasTodas={empresas}
         onSubmit={(values) => upsertMut.mutate({ ...values, id: editing?.id })}
         submitting={upsertMut.isPending}
+        onViewExisting={(id) => {
+          const found = (colabQ.data ?? []).find((c) => c.id === id);
+          if (found) {
+            setDialogOpen(false);
+            setEditing(null);
+            setViewing(found);
+          }
+        }}
       />
+
 
       <ColaboradorViewDialog viewing={viewing} onClose={() => setViewing(null)} />
 
