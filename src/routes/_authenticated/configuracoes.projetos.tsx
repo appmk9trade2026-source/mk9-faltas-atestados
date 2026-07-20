@@ -700,6 +700,32 @@ function ProjetoDialog({
 
               <FormField
                 control={form.control}
+                name="codigo_protocolo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Código de protocolo *</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Ex.: ARMT"
+                        maxLength={10}
+                        className="font-mono uppercase tracking-wider"
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Prefixo usado no protocolo dos lançamentos deste projeto
+                      (ex.: <span className="font-mono">ARMT-20260720-000001</span>).
+                      2–10 caracteres, apenas letras maiúsculas e números.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+
+              <FormField
+                control={form.control}
                 name="descricao"
                 render={({ field }) => (
                   <FormItem>
