@@ -3401,6 +3401,14 @@ export type Database = {
         Args: { p_ausencia_id: string; p_supervisor_id: string }
         Returns: Json
       }
+      materializar_whatsapp_usuario_boas_vindas: {
+        Args: {
+          p_link_sistema: string
+          p_senha_temporaria?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       metricas_notificacoes: { Args: never; Returns: Json }
       normalizar_telefone_whatsapp: {
         Args: { p_telefone: string }
