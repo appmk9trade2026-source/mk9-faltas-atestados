@@ -267,9 +267,27 @@ function UsuariosPage() {
   const resetFn = useServerFn(resetUsuarioSenha);
   const reenviarFn = useServerFn(reenviarConviteUsuario);
   const encerrarSessoesFn = useServerFn(encerrarSessoesUsuario);
+  const reenviarWaFn = useServerFn(reenviarBoasVindasWhatsapp);
+  const listarStatusWaFn = useServerFn(listarStatusBoasVindas);
 
   const [confirmDeactivate, setConfirmDeactivate] = useState<UsuarioRow | null>(null);
   const [confirmEncerrarSessoes, setConfirmEncerrarSessoes] = useState<UsuarioRow | null>(null);
+
+  const canResendWhatsapp = roles.includes("super_admin") || roles.includes("rh");
+  const canSeeWhatsapp = canResendWhatsapp || roles.includes("compliance");
+
+  const userIdsList = useMemo(() => (listQ.data ?? []).map((u) => u.id), [listQ.data]);
+  const statusWaQ = useQuery({
+    queryKey: ["usuarios-whatsapp-status", userIdsList.join(",")],
+    enabled: canSeeWhatsapp && userIdsList.length > 0,
+    refetchInterval: 30_000,
+    queryFn: async () => {
+      const r = await listarStatusWaFn({ data: { user_ids: userIdsList } });
+      const map = new Map<string, BoasVindasStatus>();
+      for (const it of r.itens ?? []) map.set(it.user_id, it);
+      return map;
+    },
+  });
 
   const toggleMut = useMutation({
     mutationFn: async (v: { id: string; ativo: boolean }) => toggleFn({ data: v }),
@@ -289,11 +307,20 @@ function UsuariosPage() {
     onSuccess: () => toast.success("Convite reenviado."),
     onError: (e: Error) => toast.error(e.message),
   });
+  const reenviarWaMut = useMutation({
+    mutationFn: async (id: string) => reenviarWaFn({ data: { id } }),
+    onSuccess: () => {
+      toast.success("WhatsApp de boas-vindas enfileirado.");
+      qc.invalidateQueries({ queryKey: ["usuarios-whatsapp-status"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
   const encerrarSessoesMut = useMutation({
     mutationFn: async (v: { id: string }) => encerrarSessoesFn({ data: { id: v.id, manter_atual: true } }),
     onSuccess: () => { toast.success("Sessões encerradas."); invalidate(); },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   return (
     <AppShell title="Usuários" breadcrumb={["Configurações", "Usuários"]}>
