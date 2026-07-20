@@ -40,20 +40,20 @@ function visibleFor(role: Role): string[] {
 
 const EXPECT: Record<Role, { must: string[]; mustNot: string[] }> = {
   super_admin: {
-    must: ["Dashboard", "Configurações", "Auditoria", "Usuários", "Homologação", "Saúde do Sistema", "Documentação"],
+    must: ["Dashboard", "Configurações", "Auditoria", "Usuários", "Homologação", "Saúde do Sistema", "Documentação", "Permissões"],
     mustNot: [],
   },
   rh: {
     must: ["Dashboard", "Painel do RH", "Colaboradores", "Importações", "Configurações", "Auditoria", "Homologação", "Usuários"],
-    mustNot: ["Saúde do Sistema", "Documentação"],
+    mustNot: ["Saúde do Sistema", "Documentação", "Permissões"],
   },
   compliance: {
     must: ["Dashboard", "Auditoria", "Relatórios", "Homologação", "Usuários"],
-    mustNot: ["Configurações", "Nova Ausência", "Painel do RH", "Saúde do Sistema", "Documentação"],
+    mustNot: ["Configurações", "Nova Ausência", "Painel do RH", "Saúde do Sistema", "Documentação", "Permissões"],
   },
   supervisor: {
     must: ["Dashboard", "Nova Ausência", "Ausências", "Colaboradores", "Alertas", "Notificações"],
-    mustNot: ["Configurações", "Auditoria", "Usuários", "Homologação", "Painel do RH", "Relatórios", "Saúde do Sistema", "Documentação", "Importações", "Comunicações", "WhatsApp Admin"],
+    mustNot: ["Configurações", "Auditoria", "Usuários", "Homologação", "Painel do RH", "Relatórios", "Saúde do Sistema", "Documentação", "Importações", "Comunicações", "WhatsApp Admin", "Permissões"],
   },
 };
 
