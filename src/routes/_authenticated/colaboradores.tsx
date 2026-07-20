@@ -1399,7 +1399,7 @@ function ColaboradorDialog({
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={submitting || !!duplicado || checando}>
+                <Button type="submit" disabled={submitting || !!duplicado || checando || !!erroDup}>
                   {submitting ? "Salvando..." : editing ? "Salvar alterações" : "Cadastrar"}
                 </Button>
               </DialogFooter>
