@@ -302,7 +302,7 @@ function AusenciasPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Ausência marcada como lançada.");
+      toast.success("Lançamento concluído e WhatsApp enfileirado para o colaborador.");
       queryClient.invalidateQueries({ queryKey: ["ausencias"] });
       setConfirmLancar(null);
     },
