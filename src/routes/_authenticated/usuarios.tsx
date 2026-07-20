@@ -1055,3 +1055,31 @@ function HistoryDrawer({ usuario, onClose }: { usuario: UsuarioRow | null; onClo
   );
 }
 
+
+function WhatsappStatusCell({ status }: { status: BoasVindasStatus | null }) {
+  if (!status || !status.enfileirado_em) {
+    return <span className="text-[10px] text-muted-foreground">—</span>;
+  }
+  const s = status.status ?? "PENDENTE";
+  const map: Record<string, { label: string; cls: string }> = {
+    LIDA: { label: "Lido", cls: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
+    ENTREGUE: { label: "Entregue", cls: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
+    ENVIADO: { label: "Enviado", cls: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
+    PENDENTE: { label: "Pendente", cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
+    PROCESSANDO: { label: "Processando", cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
+    FALHOU_TEMPORARIO: { label: "Tentando novamente", cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
+    FALHOU_DEFINITIVO: { label: "Falhou", cls: "bg-red-500/15 text-red-700 border-red-500/30" },
+    CANCELADO: { label: "Cancelado", cls: "text-muted-foreground" },
+  };
+  const meta = map[s] ?? { label: s, cls: "text-muted-foreground" };
+  return (
+    <div className="flex flex-col gap-0.5" title={status.motivo_falha ?? undefined}>
+      <Badge variant="outline" className={`text-[10px] ${meta.cls}`}>
+        <MessageCircle className="mr-1 h-3 w-3" />{meta.label}
+      </Badge>
+      {status.enfileirado_em && (
+        <span className="text-[10px] text-muted-foreground">{fmtDate(status.enfileirado_em)}</span>
+      )}
+    </div>
+  );
+}
