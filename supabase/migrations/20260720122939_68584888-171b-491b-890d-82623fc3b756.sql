@@ -1,0 +1,20 @@
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumtypid='audit_action'::regtype AND enumlabel='WHATSAPP_DEAD_LETTER_VISUALIZADA') THEN
+    ALTER TYPE audit_action ADD VALUE 'WHATSAPP_DEAD_LETTER_VISUALIZADA';
+  END IF;
+END $$;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumtypid='audit_action'::regtype AND enumlabel='WHATSAPP_REENFILEIRADO') THEN
+    ALTER TYPE audit_action ADD VALUE 'WHATSAPP_REENFILEIRADO';
+  END IF;
+END $$;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumtypid='audit_action'::regtype AND enumlabel='WHATSAPP_EXPORT_OUTBOX') THEN
+    ALTER TYPE audit_action ADD VALUE 'WHATSAPP_EXPORT_OUTBOX';
+  END IF;
+END $$;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumtypid='audit_action'::regtype AND enumlabel='WHATSAPP_EXPORT_EXECUCOES') THEN
+    ALTER TYPE audit_action ADD VALUE 'WHATSAPP_EXPORT_EXECUCOES';
+  END IF;
+END $$;

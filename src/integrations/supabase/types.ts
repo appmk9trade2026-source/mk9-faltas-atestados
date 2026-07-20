@@ -3315,6 +3315,10 @@ export type Database = {
         | "SIMULACAO"
         | "ANALISE_CONFLITOS"
         | "COLABORADOR_DUPLICIDADE_BLOQUEADA"
+        | "WHATSAPP_DEAD_LETTER_VISUALIZADA"
+        | "WHATSAPP_REENFILEIRADO"
+        | "WHATSAPP_EXPORT_OUTBOX"
+        | "WHATSAPP_EXPORT_EXECUCOES"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       changelog_tipo:
         | "NOVA_FUNCIONALIDADE"
@@ -3646,6 +3650,10 @@ export const Constants = {
         "SIMULACAO",
         "ANALISE_CONFLITOS",
         "COLABORADOR_DUPLICIDADE_BLOQUEADA",
+        "WHATSAPP_DEAD_LETTER_VISUALIZADA",
+        "WHATSAPP_REENFILEIRADO",
+        "WHATSAPP_EXPORT_OUTBOX",
+        "WHATSAPP_EXPORT_EXECUCOES",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       changelog_tipo: [
