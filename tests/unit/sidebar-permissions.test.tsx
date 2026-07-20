@@ -52,8 +52,8 @@ const EXPECT: Record<Role, { must: string[]; mustNot: string[] }> = {
     mustNot: ["Configurações", "Nova Ausência", "Painel do RH", "Saúde do Sistema", "Documentação"],
   },
   supervisor: {
-    must: ["Dashboard", "Nova Ausência", "Ausências", "Colaboradores"],
-    mustNot: ["Configurações", "Auditoria", "Usuários", "Homologação", "Painel do RH", "Relatórios", "Saúde do Sistema", "Documentação"],
+    must: ["Dashboard", "Nova Ausência", "Ausências", "Colaboradores", "Alertas", "Notificações"],
+    mustNot: ["Configurações", "Auditoria", "Usuários", "Homologação", "Painel do RH", "Relatórios", "Saúde do Sistema", "Documentação", "Importações", "Comunicações", "WhatsApp Admin"],
   },
 };
 
