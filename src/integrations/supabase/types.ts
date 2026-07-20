@@ -2791,6 +2791,36 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_test_recipients: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          nome: string
+          telefone_e164: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome: string
+          telefone_e164: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome?: string
+          telefone_e164?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       whatsapp_worker_execucoes: {
         Row: {
           created_at: string
@@ -3360,6 +3390,17 @@ export type Database = {
         Args: { p_base_seg: number; p_max_seg: number; p_tentativas: number }
         Returns: string
       }
+      whatsapp_enfileirar_template_teste: {
+        Args: {
+          p_colaborador_nome: string
+          p_data_fim?: string
+          p_data_inicio: string
+          p_projeto_id: string
+          p_recipient_id: string
+          p_tipo_lancamento: string
+        }
+        Returns: Json
+      }
       whatsapp_idem_key_ausencia: {
         Args: {
           p_alvo_id: string
@@ -3435,6 +3476,16 @@ export type Database = {
           template_versao: number
           tentativas: number
         }[]
+      }
+      whatsapp_preview_template_teste: {
+        Args: {
+          p_colaborador_nome: string
+          p_data_fim?: string
+          p_data_inicio: string
+          p_projeto_id: string
+          p_tipo_lancamento: string
+        }
+        Returns: Json
       }
       whatsapp_provider_sync: {
         Args: {
