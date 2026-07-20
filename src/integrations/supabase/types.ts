@@ -158,6 +158,7 @@ export type Database = {
           opcao_periodo_nome: string | null
           possui_anexo: boolean
           projeto_id: string
+          protocolo: string | null
           quantidade_dias_calculada: number | null
           registrado_em: string
           registrado_por: string | null
@@ -198,6 +199,7 @@ export type Database = {
           opcao_periodo_nome?: string | null
           possui_anexo?: boolean
           projeto_id: string
+          protocolo?: string | null
           quantidade_dias_calculada?: number | null
           registrado_em?: string
           registrado_por?: string | null
@@ -238,6 +240,7 @@ export type Database = {
           opcao_periodo_nome?: string | null
           possui_anexo?: boolean
           projeto_id?: string
+          protocolo?: string | null
           quantidade_dias_calculada?: number | null
           registrado_em?: string
           registrado_por?: string | null
@@ -1847,9 +1850,39 @@ export type Database = {
         }
         Relationships: []
       }
+      projeto_protocolo_sequencias: {
+        Row: {
+          ano: number
+          projeto_id: string
+          ultimo_numero: number
+          updated_at: string
+        }
+        Insert: {
+          ano: number
+          projeto_id: string
+          ultimo_numero?: number
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          projeto_id?: string
+          ultimo_numero?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projeto_protocolo_sequencias_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projetos: {
         Row: {
           ativo: boolean
+          codigo_protocolo: string | null
           created_at: string
           descricao: string | null
           empresa_id: string
@@ -1859,6 +1892,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          codigo_protocolo?: string | null
           created_at?: string
           descricao?: string | null
           empresa_id: string
@@ -1868,6 +1902,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          codigo_protocolo?: string | null
           created_at?: string
           descricao?: string | null
           empresa_id?: string
@@ -2970,6 +3005,10 @@ export type Database = {
       gerar_campanha_revisao: {
         Args: { _dias_prazo?: number }
         Returns: number
+      }
+      gerar_protocolo_ausencia: {
+        Args: { p_data: string; p_projeto_id: string }
+        Returns: string
       }
       get_colaboradores_ativos: {
         Args: { _busca?: string; _empresa_id?: string; _projeto_id?: string }
