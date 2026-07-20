@@ -92,7 +92,7 @@ function showWhatsappNavigationOverlay() {
   overlay.style.padding = "24px";
   overlay.innerHTML = `
     <div style="width:min(720px,100%);display:grid;gap:18px">
-      <div style="font-size:24px;font-weight:600">WhatsApp Admin</div>
+      <h1 style="font-size:24px;font-weight:600;margin:0">WhatsApp Admin</h1>
       <div style="height:36px;border-radius:8px;background:hsl(var(--muted))"></div>
       <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px">
         <div style="height:112px;border-radius:8px;background:hsl(var(--muted))"></div>
