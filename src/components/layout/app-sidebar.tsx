@@ -37,6 +37,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import type { AppRole } from "@/hooks/use-session";
+import { WHATSAPP_ADMIN_ROLES } from "@/lib/whatsapp-admin-access";
 
 type Item = {
   title: string;
