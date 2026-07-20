@@ -19,6 +19,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useSession, type AppRole } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationBell } from "@/components/layout/notification-bell";
+import { CommandPaletteProvider } from "@/components/command-palette/command-palette";
+import { CommandPaletteButton } from "@/components/command-palette/search-button";
 import { toast } from "sonner";
 
 const roleLabel: Record<AppRole, string> = {
