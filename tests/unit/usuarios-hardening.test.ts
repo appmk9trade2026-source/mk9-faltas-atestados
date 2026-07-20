@@ -32,6 +32,25 @@ describe("validarProjetosPertencemAEmpresas", () => {
   });
 });
 
+describe("computeAcessoStatus", () => {
+  const base = { ativo: true, banned_until: null, invited_at: null, email_confirmed_at: null, last_sign_in_at: null };
+  it("bloqueado quando ativo=false", () => {
+    expect(computeAcessoStatus({ ...base, ativo: false })).toBe("conta_bloqueada");
+  });
+  it("bloqueado quando banned_until no futuro", () => {
+    expect(computeAcessoStatus({ ...base, banned_until: new Date(Date.now() + 60_000).toISOString() })).toBe("conta_bloqueada");
+  });
+  it("convite pendente quando convidado sem confirmação/login", () => {
+    expect(computeAcessoStatus({ ...base, invited_at: new Date().toISOString() })).toBe("convite_pendente");
+  });
+  it("nunca acessou quando sem last_sign_in_at", () => {
+    expect(computeAcessoStatus({ ...base, email_confirmed_at: new Date().toISOString() })).toBe("nunca_acessou");
+  });
+  it("ativo quando já fez login", () => {
+    expect(computeAcessoStatus({ ...base, last_sign_in_at: new Date().toISOString() })).toBe("ativo");
+  });
+});
+
 /**
  * Cenários protegidos (documentação executável — validados por triggers em DB):
  *
