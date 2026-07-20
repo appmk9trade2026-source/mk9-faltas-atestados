@@ -505,3 +505,125 @@ export const encerrarSessoesUsuario = createServerFn({ method: "POST" })
         : "Todas as sessões encerradas");
     return { ok: true, scope };
   });
+
+// ---------------- WhatsApp: reenviar boas-vindas ----------------
+async function requireSuperAdminOrRH(ctx: {
+  supabase: typeof import("@/integrations/supabase/client").supabase;
+  userId: string;
+}) {
+  const [sa, rh] = await Promise.all([
+    ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "super_admin" }),
+    ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "rh" }),
+  ]);
+  if (sa.data !== true && rh.data !== true) {
+    throw new Error("Apenas Super Admin ou RH podem reenviar boas-vindas.");
+  }
+}
+
+export const reenviarBoasVindasWhatsapp = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({
+      id: z.string().uuid(),
+      senha_temporaria: z.string().min(8).max(72).optional().nullable(),
+    }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await requireSuperAdminOrRH(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const idem = `usuario:${data.id}:boas_vindas:v1`;
+    // Se a mensagem já existe, cancela para permitir reenvio (idempotência preservada por nova chave versionada).
+    const existing = await supabaseAdmin
+      .from("whatsapp_outbox")
+      .select("id, status")
+      .eq("idempotency_key", idem)
+      .maybeSingle();
+
+    if (existing.data) {
+      // Regera com uma nova versão de chave para forçar nova materialização.
+      // Marcamos a idempotency_key antiga para preservar histórico.
+      const carimbo = `:reenviada:${Date.now()}`;
+      const upd = await supabaseAdmin
+        .from("whatsapp_outbox")
+        .update({ idempotency_key: idem + carimbo })
+        .eq("id", existing.data.id);
+      if (upd.error) throw new Error(upd.error.message);
+    }
+
+    const link = process.env.APP_PUBLIC_URL || "https://mk9-staff-hub.lovable.app";
+    const { data: matData, error: matErr } = await supabaseAdmin.rpc(
+      "materializar_whatsapp_usuario_boas_vindas",
+      {
+        p_user_id: data.id,
+        p_link_sistema: link,
+        p_senha_temporaria: data.senha_temporaria || null,
+      } as never,
+    );
+    if (matErr) throw new Error(matErr.message);
+    const res = (matData ?? {}) as { ok?: boolean; motivo?: string; outbox_id?: string };
+    if (!res.ok) {
+      await audit(context.supabase, "ENVIO_COMUNICACAO", data.id,
+        `Reenvio WhatsApp boas-vindas bloqueado: ${res.motivo}`,
+        null, { canal: "whatsapp", template: "USUARIO_CRIADO_V1", motivo: res.motivo });
+      throw new Error(`Não foi possível enfileirar: ${res.motivo}`);
+    }
+    await audit(context.supabase, "ENVIO_COMUNICACAO", data.id,
+      `Reenvio WhatsApp boas-vindas (outbox ${res.outbox_id})`,
+      null, { canal: "whatsapp", template: "USUARIO_CRIADO_V1", outbox_id: res.outbox_id });
+    return { ok: true, outbox_id: res.outbox_id };
+  });
+
+// ---------------- WhatsApp: status por usuário ----------------
+export type BoasVindasStatus = {
+  user_id: string;
+  outbox_id: string | null;
+  status: string | null;
+  ultimo_erro: string | null;
+  telefone_mascarado: string | null;
+  atualizado_em: string | null;
+  provider_message_id: string | null;
+};
+
+export const listarStatusBoasVindas = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ user_ids: z.array(z.string().uuid()).max(200) }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    // Qualquer role autenticado que já veja a lista de usuários pode ver o status.
+    // Restringimos a super_admin/rh/compliance (mesmas roles que enxergam a outbox).
+    const [sa, rh, cp] = await Promise.all([
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "super_admin" }),
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "rh" }),
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "compliance" }),
+    ]);
+    if (sa.data !== true && rh.data !== true && cp.data !== true) {
+      return { itens: [] as BoasVindasStatus[] };
+    }
+    if (!data.user_ids.length) return { itens: [] as BoasVindasStatus[] };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from("whatsapp_outbox")
+      .select("id, destinatario_usuario_id, status, telefone_mascarado, ultimo_erro_resumido, provider_message_id, created_at, enviado_em, confirmado_em, falhou_em")
+      .eq("evento_tipo", "USUARIO_CRIADO")
+      .in("destinatario_usuario_id", data.user_ids)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+
+    const byUser = new Map<string, BoasVindasStatus>();
+    for (const r of rows ?? []) {
+      const uid = (r.destinatario_usuario_id as string) ?? "";
+      if (!uid || byUser.has(uid)) continue;
+      byUser.set(uid, {
+        user_id: uid,
+        outbox_id: (r.id as string) ?? null,
+        status: (r.status as string) ?? null,
+        ultimo_erro: (r.ultimo_erro_resumido as string) ?? null,
+        telefone_mascarado: (r.telefone_mascarado as string) ?? null,
+        provider_message_id: (r.provider_message_id as string) ?? null,
+        atualizado_em: ((r.confirmado_em as string) ?? (r.enviado_em as string) ?? (r.falhou_em as string) ?? (r.created_at as string)) ?? null,
+      });
+    }
+    return { itens: Array.from(byUser.values()) };
+  });
