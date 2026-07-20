@@ -1,3 +1,4 @@
+import { WhatsappRouteError, WhatsappRouteLoading, WhatsappRouteNotFound } from "@/components/whatsapp/route-boundaries";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -14,6 +15,9 @@ import { getWhatsappHealth } from "@/lib/whatsapp-admin.functions";
 
 export const Route = createFileRoute("/_authenticated/comunicacoes/whatsapp/health")({
   component: HealthPage,
+  errorComponent: ({ error, reset }) => <WhatsappRouteError error={error} reset={reset} />,
+  notFoundComponent: () => <WhatsappRouteNotFound />,
+  pendingComponent: () => <WhatsappRouteLoading />,
 });
 
 function HealthPage() {
