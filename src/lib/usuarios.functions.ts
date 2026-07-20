@@ -37,20 +37,8 @@ async function audit(
     .then(() => {}, () => {});
 }
 
-/** Business helpers */
-export function validarProjetosPertencemAEmpresas(
-  projetos: { id: string; empresa_id: string }[],
-  projetoIds: string[],
-  empresaIds: string[],
-): { ok: boolean; invalidos: string[] } {
-  const empresasSet = new Set(empresaIds);
-  const invalidos: string[] = [];
-  for (const pid of projetoIds) {
-    const p = projetos.find((x) => x.id === pid);
-    if (!p || !empresasSet.has(p.empresa_id)) invalidos.push(pid);
-  }
-  return { ok: invalidos.length === 0, invalidos };
-}
+import { validarProjetosPertencemAEmpresas } from "@/lib/usuarios-helpers";
+export { validarProjetosPertencemAEmpresas } from "@/lib/usuarios-helpers";
 
 // ---------------- CREATE ----------------
 const createSchema = z.object({
