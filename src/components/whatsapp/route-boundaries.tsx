@@ -1,5 +1,5 @@
 import { Link, useRouter } from "@tanstack/react-router";
-import { AlertTriangle, RefreshCw, Home, Compass } from "lucide-react";
+import { AlertTriangle, RefreshCw, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
  * — mensagem amigável
  * — nunca exibe stack trace
  * — botão "Tentar novamente" (router.invalidate + reset)
- * — botão para voltar ao Dashboard
+ * — sem redirect/fallback para o Dashboard principal
  * — respeita tema claro/escuro/sistema (tokens semânticos)
  */
 export function WhatsappRouteError({
@@ -43,11 +43,6 @@ export function WhatsappRouteError({
         >
           <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
         </Button>
-        <Button variant="outline" asChild>
-          <Link to="/dashboard">
-            <Home className="mr-2 h-4 w-4" /> Voltar ao Dashboard
-          </Link>
-        </Button>
       </div>
     </Card>
   );
@@ -74,11 +69,6 @@ export function WhatsappRouteNotFound({
         <Button asChild>
           <Link to="/comunicacoes/whatsapp">
             <RefreshCw className="mr-2 h-4 w-4" /> Ir para WhatsApp Admin
-          </Link>
-        </Button>
-        <Button variant="outline" asChild>
-          <Link to="/dashboard">
-            <Home className="mr-2 h-4 w-4" /> Voltar ao Dashboard
           </Link>
         </Button>
       </div>

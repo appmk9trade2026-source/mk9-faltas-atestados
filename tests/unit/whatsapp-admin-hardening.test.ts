@@ -22,6 +22,12 @@ function readRoute(file: string) {
   return fs.readFileSync(path.join(ROUTES_DIR, file), "utf8");
 }
 
+function stripComments(src: string) {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^\s*\/\/.*$/gm, "");
+}
+
 describe("whatsapp admin — access helper", () => {
   it("permite super_admin, compliance e rh", () => {
     expect(canAccessWhatsappAdmin(["super_admin"])).toBe(true);
@@ -45,13 +51,26 @@ describe("whatsapp admin — access helper", () => {
 
 describe("whatsapp admin — hardening das rotas", () => {
   it.each(WHATSAPP_ROUTE_FILES)("nenhuma rota redireciona para si mesma (%s)", (file) => {
-    // Remove comentários de linha e de bloco antes de checar — os comentários
-    // podem legitimamente mencionar `redirect(...)` como advertência.
-    const src = readRoute(file)
-      .replace(/\/\*[\s\S]*?\*\//g, "")
-      .replace(/^\s*\/\/.*$/gm, "");
+    const src = stripComments(readRoute(file));
     expect(src).not.toMatch(/redirect\s*\(\s*\{[^}]*to:\s*["']\/comunicacoes\/whatsapp/);
     expect(src).not.toMatch(/window\.location/);
+  });
+
+  it.each(WHATSAPP_ROUTE_FILES)("não possui redirect, Navigate ou fallback para o Dashboard principal (%s)", (file) => {
+    const src = stripComments(readRoute(file));
+    expect(src).not.toMatch(/redirect\s*\(/);
+    expect(src).not.toMatch(/<Navigate\b/);
+    expect(src).not.toMatch(/navigate\s*\(\s*\{[^}]*to:\s*["']\/(dashboard|home|)["']/);
+    expect(src).not.toMatch(/to=\{?["']\/(dashboard|home)["']/);
+  });
+
+  it("boundaries do WhatsApp Admin não apontam para o Dashboard principal", () => {
+    const src = stripComments(
+      fs.readFileSync(path.resolve(__dirname, "../../src/components/whatsapp/route-boundaries.tsx"), "utf8"),
+    );
+    expect(src).not.toMatch(/redirect\s*\(/);
+    expect(src).not.toMatch(/<Navigate\b/);
+    expect(src).not.toMatch(/to=\{?["']\/(dashboard|home)["']/);
   });
 
   it.each(WHATSAPP_ROUTE_FILES)("possui errorComponent e notFoundComponent (%s)", (file) => {
@@ -74,5 +93,8 @@ describe("whatsapp admin — hardening das rotas", () => {
     expect(src).toMatch(/WHATSAPP_ADMIN_ROLES/);
     // Item da sidebar aponta para a rota correta.
     expect(src).toMatch(/\/comunicacoes\/whatsapp/);
+    // Evita tela antiga sob a URL nova durante o carregamento do chunk da rota.
+    expect(src).toMatch(/router\.preloadRoute\(\{ to: "\/comunicacoes\/whatsapp" \}\)/);
+    expect(src).toMatch(/router\.navigate\(\{ to: "\/comunicacoes\/whatsapp" \}\)/);
   });
 });

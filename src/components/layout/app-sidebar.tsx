@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   FilePlus2,
@@ -75,7 +75,39 @@ const items: Item[] = [
   { title: "Observabilidade", url: "/observabilidade", icon: Gauge, roles: ["super_admin", "compliance"] },
 ];
 
+function showWhatsappNavigationOverlay() {
+  if (document.getElementById("wa-admin-navigation-overlay")) return;
+
+  const overlay = document.createElement("div");
+  overlay.id = "wa-admin-navigation-overlay";
+  overlay.setAttribute("role", "status");
+  overlay.setAttribute("aria-live", "polite");
+  overlay.style.position = "fixed";
+  overlay.style.inset = "0";
+  overlay.style.zIndex = "2147483647";
+  overlay.style.background = "hsl(var(--background))";
+  overlay.style.color = "hsl(var(--foreground))";
+  overlay.style.display = "grid";
+  overlay.style.placeItems = "center";
+  overlay.style.padding = "24px";
+  overlay.innerHTML = `
+    <div style="width:min(720px,100%);display:grid;gap:18px">
+      <h1 style="font-size:24px;font-weight:600;margin:0">WhatsApp Admin</h1>
+      <div style="height:36px;border-radius:8px;background:hsl(var(--muted))"></div>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px">
+        <div style="height:112px;border-radius:8px;background:hsl(var(--muted))"></div>
+        <div style="height:112px;border-radius:8px;background:hsl(var(--muted))"></div>
+        <div style="height:112px;border-radius:8px;background:hsl(var(--muted))"></div>
+        <div style="height:112px;border-radius:8px;background:hsl(var(--muted))"></div>
+      </div>
+      <div style="height:220px;border-radius:8px;background:hsl(var(--muted))"></div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
 export function AppSidebar({ roles }: { roles: AppRole[] }) {
+  const router = useRouter();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const visible = items.filter((it) => it.roles.some((r) => roles.includes(r)));
 
@@ -103,10 +135,37 @@ export function AppSidebar({ roles }: { roles: AppRole[] }) {
                 return (
                   <SidebarMenuItem key={item.url}>
                     <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
-                      <Link to={item.url}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </Link>
+                      {item.url === "/comunicacoes/whatsapp" ? (
+                        <a
+                          href={item.url}
+                          onClick={async (event) => {
+                            if (
+                              event.defaultPrevented ||
+                              event.button !== 0 ||
+                              event.metaKey ||
+                              event.ctrlKey ||
+                              event.shiftKey ||
+                              event.altKey
+                            ) {
+                              return;
+                            }
+                            event.preventDefault();
+                            showWhatsappNavigationOverlay();
+                            await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+                            await router.preloadRoute({ to: "/comunicacoes/whatsapp" });
+                            await router.navigate({ to: "/comunicacoes/whatsapp" });
+                            document.getElementById("wa-admin-navigation-overlay")?.remove();
+                          }}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </a>
+                      ) : (
+                        <Link to={item.url} preload="intent">
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );

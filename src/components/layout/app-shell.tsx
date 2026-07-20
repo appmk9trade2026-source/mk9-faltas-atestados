@@ -51,6 +51,7 @@ export function AppShell({ title, breadcrumb, children }: { title: string; bread
 
   const nome = profile?.nome ?? "Usuário";
   const email = profile?.email ?? "";
+  const displayBreadcrumb = breadcrumb ?? [title];
 
   return (
     <SidebarProvider>
@@ -62,10 +63,10 @@ export function AppShell({ title, breadcrumb, children }: { title: string; bread
           <div className="flex flex-1 items-center gap-2 min-w-0">
             <nav aria-label="Breadcrumb" className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
               <span>MK9</span>
-              {(breadcrumb ?? [title]).map((b, i) => (
+              {displayBreadcrumb.map((b, i) => (
                 <span key={i} className="flex items-center gap-1.5 min-w-0">
                   <span aria-hidden>/</span>
-                  <span className={i === (breadcrumb?.length ?? 1) - 1 ? "text-foreground truncate" : "truncate"}>{b}</span>
+                  <span className={i === displayBreadcrumb.length - 1 ? "text-foreground truncate" : "truncate"}>{b}</span>
                 </span>
               ))}
             </nav>
