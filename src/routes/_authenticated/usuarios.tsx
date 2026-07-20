@@ -686,6 +686,8 @@ function CreateDialog({
       avatar_url: "",
       senha_temporaria: "",
       enviar_convite: true,
+      enviar_whatsapp: false,
+
       ativo: true,
       roles: [],
       empresa_ids: [],
