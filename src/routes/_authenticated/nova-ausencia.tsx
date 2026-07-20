@@ -778,6 +778,24 @@ function NovaAusenciaPage() {
               </div>
             ) : null}
 
+            {supervisorSemProjetos && !isEdit ? (
+              <div
+                role="alert"
+                className="flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm"
+              >
+                <ShieldCheck className="mt-0.5 h-5 w-5 text-destructive" />
+                <div className="space-y-1">
+                  <p className="font-medium text-destructive">
+                    Você ainda não possui projetos vinculados. Procure um administrador.
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    O cadastro de ausências está indisponível até que o vínculo seja realizado.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+
             <Form {...form}>
               <fieldset disabled={bloqueado} className="contents">
                 <form
