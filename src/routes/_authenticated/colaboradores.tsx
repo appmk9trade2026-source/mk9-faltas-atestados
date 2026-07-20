@@ -1224,11 +1224,16 @@ function ColaboradorDialog({
                                 </dl>
                               </div>
 
+                            ) : erroDup ? (
+                              <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                                <AlertCircle className="mr-1 h-3 w-3" /> {erroDup}
+                              </Badge>
                             ) : (
                               <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
                                 <CheckCircle2 className="mr-1 h-3 w-3" /> Matrícula disponível
                               </Badge>
                             )}
+
                           </div>
                         )}
                         <FormMessage />
