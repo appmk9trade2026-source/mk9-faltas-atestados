@@ -195,10 +195,32 @@ function NovaAusenciaPage() {
   const { profile, roles } = useSession();
   const podeCadastrar =
     roles.includes("super_admin") || roles.includes("rh") || roles.includes("supervisor");
+  const isSupervisorOnly =
+    roles.includes("supervisor") &&
+    !roles.includes("super_admin") &&
+    !roles.includes("rh");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { id: editId } = Route.useSearch();
   const isEdit = !!editId;
+
+  // Escopo do supervisor: projetos vinculados
+  const supervisorProjetosQ = useQuery({
+    queryKey: ["supervisor-projetos-escopo", profile?.id ?? "anon"],
+    enabled: !!profile?.id && isSupervisorOnly,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projetos")
+        .select("id, nome, ativo")
+        .eq("ativo", true);
+      if (error) throw error;
+      // RLS já filtra apenas vinculados ao supervisor
+      return (data ?? []) as Array<{ id: string; nome: string; ativo: boolean }>;
+    },
+  });
+  const supervisorSemProjetos =
+    isSupervisorOnly && supervisorProjetosQ.isSuccess && (supervisorProjetosQ.data?.length ?? 0) === 0;
+
 
   // Anexo
   const [file, setFile] = useState<File | null>(null);
