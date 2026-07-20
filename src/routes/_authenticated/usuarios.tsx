@@ -12,14 +12,17 @@ import {
   KeyRound,
   LogOut,
   MailPlus,
+  MessageCircle,
   MoreHorizontal,
   Pencil,
   Plus,
   Power,
   PowerOff,
   Search,
+  Send,
   UserCog,
 } from "lucide-react";
+
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -99,7 +102,11 @@ import {
   resetUsuarioSenha,
   reenviarConviteUsuario,
   encerrarSessoesUsuario,
+  reenviarBoasVindasWhatsapp,
+  listarStatusBoasVindas,
+  type BoasVindasStatus,
 } from "@/lib/usuarios.functions";
+
 
 export const Route = createFileRoute("/_authenticated/usuarios")({
   head: () => ({ meta: [{ title: "Usuários · CRM MK9" }] }),
@@ -260,9 +267,27 @@ function UsuariosPage() {
   const resetFn = useServerFn(resetUsuarioSenha);
   const reenviarFn = useServerFn(reenviarConviteUsuario);
   const encerrarSessoesFn = useServerFn(encerrarSessoesUsuario);
+  const reenviarWaFn = useServerFn(reenviarBoasVindasWhatsapp);
+  const listarStatusWaFn = useServerFn(listarStatusBoasVindas);
 
   const [confirmDeactivate, setConfirmDeactivate] = useState<UsuarioRow | null>(null);
   const [confirmEncerrarSessoes, setConfirmEncerrarSessoes] = useState<UsuarioRow | null>(null);
+
+  const canResendWhatsapp = roles.includes("super_admin") || roles.includes("rh");
+  const canSeeWhatsapp = canResendWhatsapp || roles.includes("compliance");
+
+  const userIdsList = useMemo(() => (listQ.data ?? []).map((u) => u.id), [listQ.data]);
+  const statusWaQ = useQuery({
+    queryKey: ["usuarios-whatsapp-status", userIdsList.join(",")],
+    enabled: canSeeWhatsapp && userIdsList.length > 0,
+    refetchInterval: 30_000,
+    queryFn: async () => {
+      const r = await listarStatusWaFn({ data: { user_ids: userIdsList } });
+      const map = new Map<string, BoasVindasStatus>();
+      for (const it of r.itens ?? []) map.set(it.user_id, it);
+      return map;
+    },
+  });
 
   const toggleMut = useMutation({
     mutationFn: async (v: { id: string; ativo: boolean }) => toggleFn({ data: v }),
@@ -282,11 +307,20 @@ function UsuariosPage() {
     onSuccess: () => toast.success("Convite reenviado."),
     onError: (e: Error) => toast.error(e.message),
   });
+  const reenviarWaMut = useMutation({
+    mutationFn: async (id: string) => reenviarWaFn({ data: { id } }),
+    onSuccess: () => {
+      toast.success("WhatsApp de boas-vindas enfileirado.");
+      qc.invalidateQueries({ queryKey: ["usuarios-whatsapp-status"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
   const encerrarSessoesMut = useMutation({
     mutationFn: async (v: { id: string }) => encerrarSessoesFn({ data: { id: v.id, manter_atual: true } }),
     onSuccess: () => { toast.success("Sessões encerradas."); invalidate(); },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   return (
     <AppShell title="Usuários" breadcrumb={["Configurações", "Usuários"]}>
@@ -359,20 +393,22 @@ function UsuariosPage() {
                 <TableHead>Perfis</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Último acesso</TableHead>
+                {canSeeWhatsapp && <TableHead>WhatsApp</TableHead>}
                 <TableHead className="w-[60px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {listQ.isLoading && Array.from({ length: 6 }).map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell colSpan={7}><Skeleton className="h-10 w-full" /></TableCell>
+                  <TableCell colSpan={canSeeWhatsapp ? 8 : 7}><Skeleton className="h-10 w-full" /></TableCell>
                 </TableRow>
               ))}
               {!listQ.isLoading && (listQ.data ?? []).length === 0 && (
-                <TableRow><TableCell colSpan={7} className="py-12 text-center text-sm text-muted-foreground">
+                <TableRow><TableCell colSpan={canSeeWhatsapp ? 8 : 7} className="py-12 text-center text-sm text-muted-foreground">
                   Nenhum usuário encontrado.
                 </TableCell></TableRow>
               )}
+
               {(listQ.data ?? []).map((u) => (
                 <TableRow key={u.id}>
                   <TableCell>
@@ -436,6 +472,12 @@ function UsuariosPage() {
                       );
                     })()}
                   </TableCell>
+                  {canSeeWhatsapp && (
+                    <TableCell className="whitespace-nowrap">
+                      <WhatsappStatusCell status={statusWaQ.data?.get(u.id) ?? null} />
+                    </TableCell>
+                  )}
+
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -468,6 +510,22 @@ function UsuariosPage() {
                             <DropdownMenuItem onClick={() => setConfirmEncerrarSessoes(u)}>
                               <LogOut className="mr-2 h-4 w-4" /> Encerrar sessões
                             </DropdownMenuItem>
+                          </>
+                        )}
+                        {canResendWhatsapp && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => reenviarWaMut.mutate(u.id)}
+                              disabled={!u.telefone_whatsapp || !u.ativo || reenviarWaMut.isPending}
+                            >
+                              <Send className="mr-2 h-4 w-4" /> Reenviar WhatsApp de boas-vindas
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        {canWrite && (
+                          <>
+
                             <DropdownMenuSeparator />
                             {u.ativo ? (
                               <DropdownMenuItem
@@ -997,3 +1055,31 @@ function HistoryDrawer({ usuario, onClose }: { usuario: UsuarioRow | null; onClo
   );
 }
 
+
+function WhatsappStatusCell({ status }: { status: BoasVindasStatus | null }) {
+  if (!status || !status.enfileirado_em) {
+    return <span className="text-[10px] text-muted-foreground">—</span>;
+  }
+  const s = status.status ?? "PENDENTE";
+  const map: Record<string, { label: string; cls: string }> = {
+    LIDA: { label: "Lido", cls: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
+    ENTREGUE: { label: "Entregue", cls: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
+    ENVIADO: { label: "Enviado", cls: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
+    PENDENTE: { label: "Pendente", cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
+    PROCESSANDO: { label: "Processando", cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
+    FALHOU_TEMPORARIO: { label: "Tentando novamente", cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
+    FALHOU_DEFINITIVO: { label: "Falhou", cls: "bg-red-500/15 text-red-700 border-red-500/30" },
+    CANCELADO: { label: "Cancelado", cls: "text-muted-foreground" },
+  };
+  const meta = map[s] ?? { label: s, cls: "text-muted-foreground" };
+  return (
+    <div className="flex flex-col gap-0.5" title={status.motivo_falha ?? undefined}>
+      <Badge variant="outline" className={`text-[10px] ${meta.cls}`}>
+        <MessageCircle className="mr-1 h-3 w-3" />{meta.label}
+      </Badge>
+      {status.enfileirado_em && (
+        <span className="text-[10px] text-muted-foreground">{fmtDate(status.enfileirado_em)}</span>
+      )}
+    </div>
+  );
+}
