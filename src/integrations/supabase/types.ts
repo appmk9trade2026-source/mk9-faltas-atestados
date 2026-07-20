@@ -2937,6 +2937,10 @@ export type Database = {
         Returns: Json
       }
       automacao_status: { Args: never; Returns: Json }
+      backfill_protocolos_pendentes: {
+        Args: { p_limite?: number }
+        Returns: Json
+      }
       bi_analisar_tendencias: { Args: { p_filtros?: Json }; Returns: Json }
       bi_detectar_variacoes_atipicas: {
         Args: { p_filtros?: Json }
