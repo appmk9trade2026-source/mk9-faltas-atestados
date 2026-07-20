@@ -344,18 +344,28 @@ function ColaboradoresPage() {
       const isDup = /colaboradores_empresa_matricula_uidx|duplicate|unique/i.test(msg);
       if (isDup) {
         toast.error("Já existe um colaborador com esta matrícula nesta empresa.");
-        // Registrar tentativa de cadastro duplicado (best-effort — não bloqueia UX).
+        // Auditoria dedicada de tentativa de duplicidade (best-effort).
+        const matInformada = wrapped?.payload?.matricula ?? vars.matricula;
+        const matNormalizada = normalizeMatricula(matInformada);
         void supabase.from("audit_logs").insert({
           modulo: "colaboradores",
-          acao: "ACESSO_NEGADO",
+          acao: "COLABORADOR_DUPLICIDADE_BLOQUEADA",
           entidade: "colaborador",
+          entidade_id: vars.id ?? null,
           empresa_id: wrapped?.payload?.empresa_id ?? vars.empresa_id,
+          projeto_id: vars.projeto_id ?? null,
           sucesso: false,
-          origem: "manual",
-          observacoes: `Tentativa de cadastro duplicado (matrícula: ${wrapped?.payload?.matricula ?? vars.matricula})`,
-          depois: { empresa_id: vars.empresa_id, matricula: vars.matricula, origem: vars.id ? "edicao" : "cadastro" },
+          origem: vars.id ? "edicao" : "manual",
+          observacoes: `Cadastro/edição bloqueado por duplicidade (empresa + matrícula): ${matNormalizada}`,
+          depois: {
+            empresa_id: vars.empresa_id,
+            matricula_informada: matInformada,
+            matricula_normalizada: matNormalizada,
+            origem: vars.id ? "edicao" : "cadastro",
+          },
         } as never);
       } else if (/não pertence à empresa/i.test(msg)) {
+
         toast.error("O projeto selecionado não pertence à empresa informada.");
       } else if (/empresa está inativa|empresa inativa/i.test(msg)) {
         toast.error("A empresa está inativa. Ative a empresa antes de manter o colaborador ativo.");
