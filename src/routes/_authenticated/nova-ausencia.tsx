@@ -918,6 +918,21 @@ function NovaAusenciaPage() {
                       />
                     </div>
 
+                    {colab && colab.projeto && !colab.projeto.codigo_protocolo && (
+                      <div
+                        role="alert"
+                        className="mt-3 flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200"
+                      >
+                        <span className="font-semibold">Atenção:</span>
+                        <span>
+                          O projeto <strong>{colab.projeto.nome}</strong> não possui{" "}
+                          <strong>código de protocolo</strong>. Peça a um administrador
+                          para cadastrá-lo em Configurações → Projetos antes de lançar
+                          esta ausência.
+                        </span>
+                      </div>
+                    )}
+
                     {colab && colab.supervisor_email && (
                       <p className="mt-3 text-xs text-muted-foreground">
                         E-mail do supervisor:{" "}
