@@ -513,16 +513,13 @@ export const encerrarSessoesUsuario = createServerFn({ method: "POST" })
   });
 
 // ---------------- WhatsApp: reenviar boas-vindas ----------------
-async function requireSuperAdminOrRH(ctx: {
+async function requireSuperAdmin(ctx: {
   supabase: typeof import("@/integrations/supabase/client").supabase;
   userId: string;
 }) {
-  const [sa, rh] = await Promise.all([
-    ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "super_admin" }),
-    ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "rh" }),
-  ]);
-  if (sa.data !== true && rh.data !== true) {
-    throw new Error("Apenas Super Admin ou RH podem reenviar boas-vindas.");
+  const sa = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "super_admin" });
+  if (sa.data !== true) {
+    throw new Error("Apenas Super Admin pode reenviar boas-vindas por WhatsApp.");
   }
 }
 
@@ -535,7 +532,8 @@ export const reenviarBoasVindasWhatsapp = createServerFn({ method: "POST" })
     }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await requireSuperAdminOrRH(context);
+    await requireSuperAdmin(context);
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const idem = `usuario:${data.id}:boas_vindas:v1`;
