@@ -31,6 +31,8 @@ import {
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { normalizeMatricula } from "@/lib/matricula";
+
 
 export const Route = createFileRoute("/_authenticated/colaboradores_/importar")({
   component: ImportarPage,
