@@ -214,7 +214,7 @@ function TestesPage() {
     refetchInterval: (q) => {
       const d = q.state.data as Awaited<ReturnType<typeof getTesteStatus>> | null | undefined;
       if (!d) return 3000;
-      if (d.status === "ENVIADO" || d.status === "CONFIRMADO" || d.status === "FALHOU_DEFINITIVO")
+      if (d.status === "ENVIADO" || d.status === "ENTREGUE" || d.status === "LIDO" || d.status === "FALHOU_DEFINITIVO" || d.status === "CANCELADO")
         return false;
       return 3000;
     },

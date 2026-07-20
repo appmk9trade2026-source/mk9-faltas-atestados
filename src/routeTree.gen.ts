@@ -45,6 +45,7 @@ import { Route as AuthenticatedColaboradoresImportacoesRouteImport } from './rou
 import { Route as AuthenticatedComunicacoesWhatsappIndexRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.index'
 import { Route as ApiPublicHooksProcessWhatsappOutboxRouteImport } from './routes/api/public/hooks/process-whatsapp-outbox'
 import { Route as ApiPublicHooksEvolutionWhatsappWebhookRouteImport } from './routes/api/public/hooks/evolution-whatsapp-webhook'
+import { Route as AuthenticatedComunicacoesWhatsappTestesRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.testes'
 import { Route as AuthenticatedComunicacoesWhatsappOutboxRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.outbox'
 import { Route as AuthenticatedComunicacoesWhatsappHealthRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.health'
 import { Route as AuthenticatedComunicacoesWhatsappExecucoesRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.execucoes'
@@ -250,6 +251,12 @@ const ApiPublicHooksEvolutionWhatsappWebhookRoute =
     path: '/api/public/hooks/evolution-whatsapp-webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedComunicacoesWhatsappTestesRoute =
+  AuthenticatedComunicacoesWhatsappTestesRouteImport.update({
+    id: '/testes',
+    path: '/testes',
+    getParentRoute: () => AuthenticatedComunicacoesWhatsappRoute,
+  } as any)
 const AuthenticatedComunicacoesWhatsappOutboxRoute =
   AuthenticatedComunicacoesWhatsappOutboxRouteImport.update({
     id: '/outbox',
@@ -319,6 +326,7 @@ export interface FileRoutesByFullPath {
   '/comunicacoes/whatsapp/execucoes': typeof AuthenticatedComunicacoesWhatsappExecucoesRoute
   '/comunicacoes/whatsapp/health': typeof AuthenticatedComunicacoesWhatsappHealthRoute
   '/comunicacoes/whatsapp/outbox': typeof AuthenticatedComunicacoesWhatsappOutboxRoute
+  '/comunicacoes/whatsapp/testes': typeof AuthenticatedComunicacoesWhatsappTestesRoute
   '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   '/api/public/hooks/process-whatsapp-outbox': typeof ApiPublicHooksProcessWhatsappOutboxRoute
   '/comunicacoes/whatsapp/': typeof AuthenticatedComunicacoesWhatsappIndexRoute
@@ -359,6 +367,7 @@ export interface FileRoutesByTo {
   '/comunicacoes/whatsapp/execucoes': typeof AuthenticatedComunicacoesWhatsappExecucoesRoute
   '/comunicacoes/whatsapp/health': typeof AuthenticatedComunicacoesWhatsappHealthRoute
   '/comunicacoes/whatsapp/outbox': typeof AuthenticatedComunicacoesWhatsappOutboxRoute
+  '/comunicacoes/whatsapp/testes': typeof AuthenticatedComunicacoesWhatsappTestesRoute
   '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   '/api/public/hooks/process-whatsapp-outbox': typeof ApiPublicHooksProcessWhatsappOutboxRoute
   '/comunicacoes/whatsapp': typeof AuthenticatedComunicacoesWhatsappIndexRoute
@@ -403,6 +412,7 @@ export interface FileRoutesById {
   '/_authenticated/comunicacoes/whatsapp/execucoes': typeof AuthenticatedComunicacoesWhatsappExecucoesRoute
   '/_authenticated/comunicacoes/whatsapp/health': typeof AuthenticatedComunicacoesWhatsappHealthRoute
   '/_authenticated/comunicacoes/whatsapp/outbox': typeof AuthenticatedComunicacoesWhatsappOutboxRoute
+  '/_authenticated/comunicacoes/whatsapp/testes': typeof AuthenticatedComunicacoesWhatsappTestesRoute
   '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   '/api/public/hooks/process-whatsapp-outbox': typeof ApiPublicHooksProcessWhatsappOutboxRoute
   '/_authenticated/comunicacoes/whatsapp/': typeof AuthenticatedComunicacoesWhatsappIndexRoute
@@ -447,6 +457,7 @@ export interface FileRouteTypes {
     | '/comunicacoes/whatsapp/execucoes'
     | '/comunicacoes/whatsapp/health'
     | '/comunicacoes/whatsapp/outbox'
+    | '/comunicacoes/whatsapp/testes'
     | '/api/public/hooks/evolution-whatsapp-webhook'
     | '/api/public/hooks/process-whatsapp-outbox'
     | '/comunicacoes/whatsapp/'
@@ -487,6 +498,7 @@ export interface FileRouteTypes {
     | '/comunicacoes/whatsapp/execucoes'
     | '/comunicacoes/whatsapp/health'
     | '/comunicacoes/whatsapp/outbox'
+    | '/comunicacoes/whatsapp/testes'
     | '/api/public/hooks/evolution-whatsapp-webhook'
     | '/api/public/hooks/process-whatsapp-outbox'
     | '/comunicacoes/whatsapp'
@@ -530,6 +542,7 @@ export interface FileRouteTypes {
     | '/_authenticated/comunicacoes/whatsapp/execucoes'
     | '/_authenticated/comunicacoes/whatsapp/health'
     | '/_authenticated/comunicacoes/whatsapp/outbox'
+    | '/_authenticated/comunicacoes/whatsapp/testes'
     | '/api/public/hooks/evolution-whatsapp-webhook'
     | '/api/public/hooks/process-whatsapp-outbox'
     | '/_authenticated/comunicacoes/whatsapp/'
@@ -797,6 +810,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksEvolutionWhatsappWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/comunicacoes/whatsapp/testes': {
+      id: '/_authenticated/comunicacoes/whatsapp/testes'
+      path: '/testes'
+      fullPath: '/comunicacoes/whatsapp/testes'
+      preLoaderRoute: typeof AuthenticatedComunicacoesWhatsappTestesRouteImport
+      parentRoute: typeof AuthenticatedComunicacoesWhatsappRoute
+    }
     '/_authenticated/comunicacoes/whatsapp/outbox': {
       id: '/_authenticated/comunicacoes/whatsapp/outbox'
       path: '/outbox'
@@ -841,6 +861,7 @@ interface AuthenticatedComunicacoesWhatsappRouteChildren {
   AuthenticatedComunicacoesWhatsappExecucoesRoute: typeof AuthenticatedComunicacoesWhatsappExecucoesRoute
   AuthenticatedComunicacoesWhatsappHealthRoute: typeof AuthenticatedComunicacoesWhatsappHealthRoute
   AuthenticatedComunicacoesWhatsappOutboxRoute: typeof AuthenticatedComunicacoesWhatsappOutboxRoute
+  AuthenticatedComunicacoesWhatsappTestesRoute: typeof AuthenticatedComunicacoesWhatsappTestesRoute
   AuthenticatedComunicacoesWhatsappIndexRoute: typeof AuthenticatedComunicacoesWhatsappIndexRoute
 }
 
@@ -856,6 +877,8 @@ const AuthenticatedComunicacoesWhatsappRouteChildren: AuthenticatedComunicacoesW
       AuthenticatedComunicacoesWhatsappHealthRoute,
     AuthenticatedComunicacoesWhatsappOutboxRoute:
       AuthenticatedComunicacoesWhatsappOutboxRoute,
+    AuthenticatedComunicacoesWhatsappTestesRoute:
+      AuthenticatedComunicacoesWhatsappTestesRoute,
     AuthenticatedComunicacoesWhatsappIndexRoute:
       AuthenticatedComunicacoesWhatsappIndexRoute,
   }
