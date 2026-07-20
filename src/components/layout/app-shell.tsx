@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { CommandPaletteProvider } from "@/components/command-palette/command-palette";
 import { CommandPaletteButton } from "@/components/command-palette/search-button";
+import { PwaInstallPrompt } from "@/components/pwa/pwa-install-prompt";
 import { toast } from "sonner";
 
 const roleLabel: Record<AppRole, string> = {
@@ -120,6 +121,7 @@ export function AppShell({ title, breadcrumb, children }: { title: string; bread
             {children}
           </div>
         </main>
+        <PwaInstallPrompt />
       </SidebarInset>
       </CommandPaletteProvider>
     </SidebarProvider>
