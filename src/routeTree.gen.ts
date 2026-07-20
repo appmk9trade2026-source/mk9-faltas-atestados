@@ -41,8 +41,14 @@ import { Route as AuthenticatedConfiguracoesEmpresasRouteImport } from './routes
 import { Route as AuthenticatedComunicacoesWhatsappRouteImport } from './routes/_authenticated/comunicacoes.whatsapp'
 import { Route as AuthenticatedColaboradoresImportarRouteImport } from './routes/_authenticated/colaboradores_.importar'
 import { Route as AuthenticatedColaboradoresImportacoesRouteImport } from './routes/_authenticated/colaboradores_.importacoes'
+import { Route as AuthenticatedComunicacoesWhatsappIndexRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.index'
 import { Route as ApiPublicHooksProcessWhatsappOutboxRouteImport } from './routes/api/public/hooks/process-whatsapp-outbox'
 import { Route as ApiPublicHooksEvolutionWhatsappWebhookRouteImport } from './routes/api/public/hooks/evolution-whatsapp-webhook'
+import { Route as AuthenticatedComunicacoesWhatsappOutboxRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.outbox'
+import { Route as AuthenticatedComunicacoesWhatsappHealthRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.health'
+import { Route as AuthenticatedComunicacoesWhatsappExecucoesRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.execucoes'
+import { Route as AuthenticatedComunicacoesWhatsappDeadLetterRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.dead-letter'
+import { Route as AuthenticatedComunicacoesWhatsappConfiguracaoRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.configuracao'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -219,6 +225,12 @@ const AuthenticatedColaboradoresImportacoesRoute =
     path: '/colaboradores/importacoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedComunicacoesWhatsappIndexRoute =
+  AuthenticatedComunicacoesWhatsappIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedComunicacoesWhatsappRoute,
+  } as any)
 const ApiPublicHooksProcessWhatsappOutboxRoute =
   ApiPublicHooksProcessWhatsappOutboxRouteImport.update({
     id: '/api/public/hooks/process-whatsapp-outbox',
@@ -230,6 +242,36 @@ const ApiPublicHooksEvolutionWhatsappWebhookRoute =
     id: '/api/public/hooks/evolution-whatsapp-webhook',
     path: '/api/public/hooks/evolution-whatsapp-webhook',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedComunicacoesWhatsappOutboxRoute =
+  AuthenticatedComunicacoesWhatsappOutboxRouteImport.update({
+    id: '/outbox',
+    path: '/outbox',
+    getParentRoute: () => AuthenticatedComunicacoesWhatsappRoute,
+  } as any)
+const AuthenticatedComunicacoesWhatsappHealthRoute =
+  AuthenticatedComunicacoesWhatsappHealthRouteImport.update({
+    id: '/health',
+    path: '/health',
+    getParentRoute: () => AuthenticatedComunicacoesWhatsappRoute,
+  } as any)
+const AuthenticatedComunicacoesWhatsappExecucoesRoute =
+  AuthenticatedComunicacoesWhatsappExecucoesRouteImport.update({
+    id: '/execucoes',
+    path: '/execucoes',
+    getParentRoute: () => AuthenticatedComunicacoesWhatsappRoute,
+  } as any)
+const AuthenticatedComunicacoesWhatsappDeadLetterRoute =
+  AuthenticatedComunicacoesWhatsappDeadLetterRouteImport.update({
+    id: '/dead-letter',
+    path: '/dead-letter',
+    getParentRoute: () => AuthenticatedComunicacoesWhatsappRoute,
+  } as any)
+const AuthenticatedComunicacoesWhatsappConfiguracaoRoute =
+  AuthenticatedComunicacoesWhatsappConfiguracaoRouteImport.update({
+    id: '/configuracao',
+    path: '/configuracao',
+    getParentRoute: () => AuthenticatedComunicacoesWhatsappRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -260,12 +302,18 @@ export interface FileRoutesByFullPath {
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/colaboradores/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/colaboradores/importar': typeof AuthenticatedColaboradoresImportarRoute
-  '/comunicacoes/whatsapp': typeof AuthenticatedComunicacoesWhatsappRoute
+  '/comunicacoes/whatsapp': typeof AuthenticatedComunicacoesWhatsappRouteWithChildren
   '/configuracoes/empresas': typeof AuthenticatedConfiguracoesEmpresasRoute
   '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
+  '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
+  '/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
+  '/comunicacoes/whatsapp/execucoes': typeof AuthenticatedComunicacoesWhatsappExecucoesRoute
+  '/comunicacoes/whatsapp/health': typeof AuthenticatedComunicacoesWhatsappHealthRoute
+  '/comunicacoes/whatsapp/outbox': typeof AuthenticatedComunicacoesWhatsappOutboxRoute
   '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   '/api/public/hooks/process-whatsapp-outbox': typeof ApiPublicHooksProcessWhatsappOutboxRoute
+  '/comunicacoes/whatsapp/': typeof AuthenticatedComunicacoesWhatsappIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -295,12 +343,17 @@ export interface FileRoutesByTo {
   '/usuarios': typeof AuthenticatedUsuariosRoute
   '/colaboradores/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/colaboradores/importar': typeof AuthenticatedColaboradoresImportarRoute
-  '/comunicacoes/whatsapp': typeof AuthenticatedComunicacoesWhatsappRoute
   '/configuracoes/empresas': typeof AuthenticatedConfiguracoesEmpresasRoute
   '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
+  '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
+  '/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
+  '/comunicacoes/whatsapp/execucoes': typeof AuthenticatedComunicacoesWhatsappExecucoesRoute
+  '/comunicacoes/whatsapp/health': typeof AuthenticatedComunicacoesWhatsappHealthRoute
+  '/comunicacoes/whatsapp/outbox': typeof AuthenticatedComunicacoesWhatsappOutboxRoute
   '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   '/api/public/hooks/process-whatsapp-outbox': typeof ApiPublicHooksProcessWhatsappOutboxRoute
+  '/comunicacoes/whatsapp': typeof AuthenticatedComunicacoesWhatsappIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -332,12 +385,18 @@ export interface FileRoutesById {
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRoute
   '/_authenticated/colaboradores_/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/_authenticated/colaboradores_/importar': typeof AuthenticatedColaboradoresImportarRoute
-  '/_authenticated/comunicacoes/whatsapp': typeof AuthenticatedComunicacoesWhatsappRoute
+  '/_authenticated/comunicacoes/whatsapp': typeof AuthenticatedComunicacoesWhatsappRouteWithChildren
   '/_authenticated/configuracoes/empresas': typeof AuthenticatedConfiguracoesEmpresasRoute
   '/_authenticated/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/_authenticated/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
+  '/_authenticated/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
+  '/_authenticated/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
+  '/_authenticated/comunicacoes/whatsapp/execucoes': typeof AuthenticatedComunicacoesWhatsappExecucoesRoute
+  '/_authenticated/comunicacoes/whatsapp/health': typeof AuthenticatedComunicacoesWhatsappHealthRoute
+  '/_authenticated/comunicacoes/whatsapp/outbox': typeof AuthenticatedComunicacoesWhatsappOutboxRoute
   '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   '/api/public/hooks/process-whatsapp-outbox': typeof ApiPublicHooksProcessWhatsappOutboxRoute
+  '/_authenticated/comunicacoes/whatsapp/': typeof AuthenticatedComunicacoesWhatsappIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -373,8 +432,14 @@ export interface FileRouteTypes {
     | '/configuracoes/empresas'
     | '/configuracoes/projetos'
     | '/configuracoes/tipos-ausencia'
+    | '/comunicacoes/whatsapp/configuracao'
+    | '/comunicacoes/whatsapp/dead-letter'
+    | '/comunicacoes/whatsapp/execucoes'
+    | '/comunicacoes/whatsapp/health'
+    | '/comunicacoes/whatsapp/outbox'
     | '/api/public/hooks/evolution-whatsapp-webhook'
     | '/api/public/hooks/process-whatsapp-outbox'
+    | '/comunicacoes/whatsapp/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -404,12 +469,17 @@ export interface FileRouteTypes {
     | '/usuarios'
     | '/colaboradores/importacoes'
     | '/colaboradores/importar'
-    | '/comunicacoes/whatsapp'
     | '/configuracoes/empresas'
     | '/configuracoes/projetos'
     | '/configuracoes/tipos-ausencia'
+    | '/comunicacoes/whatsapp/configuracao'
+    | '/comunicacoes/whatsapp/dead-letter'
+    | '/comunicacoes/whatsapp/execucoes'
+    | '/comunicacoes/whatsapp/health'
+    | '/comunicacoes/whatsapp/outbox'
     | '/api/public/hooks/evolution-whatsapp-webhook'
     | '/api/public/hooks/process-whatsapp-outbox'
+    | '/comunicacoes/whatsapp'
   id:
     | '__root__'
     | '/'
@@ -444,8 +514,14 @@ export interface FileRouteTypes {
     | '/_authenticated/configuracoes/empresas'
     | '/_authenticated/configuracoes/projetos'
     | '/_authenticated/configuracoes/tipos-ausencia'
+    | '/_authenticated/comunicacoes/whatsapp/configuracao'
+    | '/_authenticated/comunicacoes/whatsapp/dead-letter'
+    | '/_authenticated/comunicacoes/whatsapp/execucoes'
+    | '/_authenticated/comunicacoes/whatsapp/health'
+    | '/_authenticated/comunicacoes/whatsapp/outbox'
     | '/api/public/hooks/evolution-whatsapp-webhook'
     | '/api/public/hooks/process-whatsapp-outbox'
+    | '/_authenticated/comunicacoes/whatsapp/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -682,6 +758,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedColaboradoresImportacoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/comunicacoes/whatsapp/': {
+      id: '/_authenticated/comunicacoes/whatsapp/'
+      path: '/'
+      fullPath: '/comunicacoes/whatsapp/'
+      preLoaderRoute: typeof AuthenticatedComunicacoesWhatsappIndexRouteImport
+      parentRoute: typeof AuthenticatedComunicacoesWhatsappRoute
+    }
     '/api/public/hooks/process-whatsapp-outbox': {
       id: '/api/public/hooks/process-whatsapp-outbox'
       path: '/api/public/hooks/process-whatsapp-outbox'
@@ -696,17 +779,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksEvolutionWhatsappWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/comunicacoes/whatsapp/outbox': {
+      id: '/_authenticated/comunicacoes/whatsapp/outbox'
+      path: '/outbox'
+      fullPath: '/comunicacoes/whatsapp/outbox'
+      preLoaderRoute: typeof AuthenticatedComunicacoesWhatsappOutboxRouteImport
+      parentRoute: typeof AuthenticatedComunicacoesWhatsappRoute
+    }
+    '/_authenticated/comunicacoes/whatsapp/health': {
+      id: '/_authenticated/comunicacoes/whatsapp/health'
+      path: '/health'
+      fullPath: '/comunicacoes/whatsapp/health'
+      preLoaderRoute: typeof AuthenticatedComunicacoesWhatsappHealthRouteImport
+      parentRoute: typeof AuthenticatedComunicacoesWhatsappRoute
+    }
+    '/_authenticated/comunicacoes/whatsapp/execucoes': {
+      id: '/_authenticated/comunicacoes/whatsapp/execucoes'
+      path: '/execucoes'
+      fullPath: '/comunicacoes/whatsapp/execucoes'
+      preLoaderRoute: typeof AuthenticatedComunicacoesWhatsappExecucoesRouteImport
+      parentRoute: typeof AuthenticatedComunicacoesWhatsappRoute
+    }
+    '/_authenticated/comunicacoes/whatsapp/dead-letter': {
+      id: '/_authenticated/comunicacoes/whatsapp/dead-letter'
+      path: '/dead-letter'
+      fullPath: '/comunicacoes/whatsapp/dead-letter'
+      preLoaderRoute: typeof AuthenticatedComunicacoesWhatsappDeadLetterRouteImport
+      parentRoute: typeof AuthenticatedComunicacoesWhatsappRoute
+    }
+    '/_authenticated/comunicacoes/whatsapp/configuracao': {
+      id: '/_authenticated/comunicacoes/whatsapp/configuracao'
+      path: '/configuracao'
+      fullPath: '/comunicacoes/whatsapp/configuracao'
+      preLoaderRoute: typeof AuthenticatedComunicacoesWhatsappConfiguracaoRouteImport
+      parentRoute: typeof AuthenticatedComunicacoesWhatsappRoute
+    }
   }
 }
 
+interface AuthenticatedComunicacoesWhatsappRouteChildren {
+  AuthenticatedComunicacoesWhatsappConfiguracaoRoute: typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
+  AuthenticatedComunicacoesWhatsappDeadLetterRoute: typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
+  AuthenticatedComunicacoesWhatsappExecucoesRoute: typeof AuthenticatedComunicacoesWhatsappExecucoesRoute
+  AuthenticatedComunicacoesWhatsappHealthRoute: typeof AuthenticatedComunicacoesWhatsappHealthRoute
+  AuthenticatedComunicacoesWhatsappOutboxRoute: typeof AuthenticatedComunicacoesWhatsappOutboxRoute
+  AuthenticatedComunicacoesWhatsappIndexRoute: typeof AuthenticatedComunicacoesWhatsappIndexRoute
+}
+
+const AuthenticatedComunicacoesWhatsappRouteChildren: AuthenticatedComunicacoesWhatsappRouteChildren =
+  {
+    AuthenticatedComunicacoesWhatsappConfiguracaoRoute:
+      AuthenticatedComunicacoesWhatsappConfiguracaoRoute,
+    AuthenticatedComunicacoesWhatsappDeadLetterRoute:
+      AuthenticatedComunicacoesWhatsappDeadLetterRoute,
+    AuthenticatedComunicacoesWhatsappExecucoesRoute:
+      AuthenticatedComunicacoesWhatsappExecucoesRoute,
+    AuthenticatedComunicacoesWhatsappHealthRoute:
+      AuthenticatedComunicacoesWhatsappHealthRoute,
+    AuthenticatedComunicacoesWhatsappOutboxRoute:
+      AuthenticatedComunicacoesWhatsappOutboxRoute,
+    AuthenticatedComunicacoesWhatsappIndexRoute:
+      AuthenticatedComunicacoesWhatsappIndexRoute,
+  }
+
+const AuthenticatedComunicacoesWhatsappRouteWithChildren =
+  AuthenticatedComunicacoesWhatsappRoute._addFileChildren(
+    AuthenticatedComunicacoesWhatsappRouteChildren,
+  )
+
 interface AuthenticatedComunicacoesRouteChildren {
-  AuthenticatedComunicacoesWhatsappRoute: typeof AuthenticatedComunicacoesWhatsappRoute
+  AuthenticatedComunicacoesWhatsappRoute: typeof AuthenticatedComunicacoesWhatsappRouteWithChildren
 }
 
 const AuthenticatedComunicacoesRouteChildren: AuthenticatedComunicacoesRouteChildren =
   {
     AuthenticatedComunicacoesWhatsappRoute:
-      AuthenticatedComunicacoesWhatsappRoute,
+      AuthenticatedComunicacoesWhatsappRouteWithChildren,
   }
 
 const AuthenticatedComunicacoesRouteWithChildren =
