@@ -761,6 +761,12 @@ function NovaAusenciaPage() {
                       toast.error("Busque um colaborador pela matrícula.");
                       return;
                     }
+                    if (colab && !colab.projeto?.codigo_protocolo) {
+                      toast.error(
+                        "O projeto do colaborador está sem código de protocolo. Peça a um administrador para cadastrar em Configurações → Projetos.",
+                      );
+                      return;
+                    }
                     salvarMut.mutate(v);
                   })}
                   className="space-y-6"
@@ -1462,7 +1468,10 @@ function NovaAusenciaPage() {
                       <Button
                         type="submit"
                         size="lg"
-                        disabled={salvarMut.isPending}
+                        disabled={
+                          salvarMut.isPending ||
+                          (!isEdit && !!colab && !colab.projeto?.codigo_protocolo)
+                        }
                         className="min-w-[220px] bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:from-blue-700 hover:to-indigo-800"
                       >
                         {salvarMut.isPending ? (
