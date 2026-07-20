@@ -54,6 +54,8 @@ const items: Item[] = [
   { title: "Colaboradores", url: "/colaboradores", icon: Users, roles: ["super_admin", "rh", "supervisor", "compliance"] },
   { title: "Importações", url: "/colaboradores/importacoes", icon: History, roles: ["super_admin", "rh", "supervisor", "compliance"] },
   { title: "Comunicações", url: "/comunicacoes", icon: MessageSquare, roles: ["super_admin", "rh", "supervisor", "compliance"] },
+  { title: "WhatsApp Admin", url: "/comunicacoes/whatsapp", icon: MessageSquare, roles: ["super_admin", "compliance", "rh"] },
+
   { title: "Alertas", url: "/alertas", icon: Bell, roles: ["super_admin", "rh", "compliance"] },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: ["super_admin", "rh", "compliance"] },
   { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["super_admin", "rh"] },
