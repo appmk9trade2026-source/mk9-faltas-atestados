@@ -25,6 +25,7 @@ import {
   Gauge,
   ChevronDown,
   Circle,
+  Bot,
 } from "lucide-react";
 import { APP_VERSION, APP_ENV, APP_ENV_LABEL } from "@/lib/app-meta";
 import {
@@ -55,6 +56,7 @@ type Item = {
 // Manter o formato `{ title: "...", url: "...", icon: X, roles: [...] }` intacto.
 const items: Item[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, roles: ["super_admin", "rh", "supervisor", "compliance"] },
+  { title: "Assistente IA", url: "/assistente", icon: Bot, roles: ["super_admin", "rh", "supervisor", "compliance", "operacao", "visualizador"] },
   { title: "Nova Ausência", url: "/nova-ausencia", icon: FilePlus2, roles: ["super_admin", "rh", "supervisor"] },
   { title: "Ausências", url: "/ausencias", icon: History, roles: ["super_admin", "rh", "supervisor", "compliance"] },
   { title: "Painel do RH", url: "/painel-rh", icon: ClipboardList, roles: ["super_admin", "rh"] },
@@ -86,7 +88,7 @@ const itemByUrl = new Map(items.map((i) => [i.url, i]));
 type Section = { id: string; label: string | null; urls: string[] };
 
 const SECTIONS: Section[] = [
-  { id: "principal", label: null, urls: ["/dashboard"] },
+  { id: "principal", label: null, urls: ["/dashboard", "/assistente"] },
   {
     id: "operacao",
     label: "Operação",

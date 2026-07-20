@@ -65,6 +65,166 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_conversations: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          empresa_id: string | null
+          id: string
+          projeto_id: string | null
+          titulo: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          projeto_id?: string | null
+          titulo?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          projeto_id?: string | null
+          titulo?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_conversations_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_conversations_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_feedback: {
+        Row: {
+          comentario: string | null
+          created_at: string
+          id: string
+          message_id: string
+          motivo: string | null
+          rating: string
+          user_id: string
+        }
+        Insert: {
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          message_id: string
+          motivo?: string | null
+          rating: string
+          user_id: string
+        }
+        Update: {
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          message_id?: string
+          motivo?: string | null
+          rating?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_feedback_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "ai_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          error_code: string | null
+          id: string
+          input_tokens: number | null
+          latency_ms: number | null
+          model_identifier: string | null
+          output_tokens: number | null
+          provider_identifier: string | null
+          role: string
+          status: string
+          structured_content: Json | null
+        }
+        Insert: {
+          content?: string
+          conversation_id: string
+          created_at?: string
+          error_code?: string | null
+          id?: string
+          input_tokens?: number | null
+          latency_ms?: number | null
+          model_identifier?: string | null
+          output_tokens?: number | null
+          provider_identifier?: string | null
+          role: string
+          status?: string
+          structured_content?: Json | null
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          error_code?: string | null
+          id?: string
+          input_tokens?: number | null
+          latency_ms?: number | null
+          model_identifier?: string | null
+          output_tokens?: number | null
+          provider_identifier?: string | null
+          role?: string
+          status?: string
+          structured_content?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_rate_limits: {
+        Row: {
+          contador: number
+          janela_inicio: string
+          user_id: string
+        }
+        Insert: {
+          contador?: number
+          janela_inicio: string
+          user_id: string
+        }
+        Update: {
+          contador?: number
+          janela_inicio?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       alertas: {
         Row: {
           acao_recurso_id: string | null
@@ -3159,6 +3319,11 @@ export type Database = {
           total_count: number
         }[]
       }
+      ai_assistente_consumir_rate_limit: {
+        Args: { _user_id: string }
+        Returns: Json
+      }
+      ai_assistente_saude: { Args: { _janela_horas?: number }; Returns: Json }
       alerta_visivel_para: {
         Args: {
           _alerta: Database["public"]["Tables"]["alertas"]["Row"]

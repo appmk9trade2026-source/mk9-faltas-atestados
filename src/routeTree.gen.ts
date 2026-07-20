@@ -33,6 +33,7 @@ import { Route as AuthenticatedColaboradoresRouteImport } from './routes/_authen
 import { Route as AuthenticatedBiExecutivoRouteImport } from './routes/_authenticated/bi-executivo'
 import { Route as AuthenticatedAusenciasRouteImport } from './routes/_authenticated/ausencias'
 import { Route as AuthenticatedAuditoriaRouteImport } from './routes/_authenticated/auditoria'
+import { Route as AuthenticatedAssistenteRouteImport } from './routes/_authenticated/assistente'
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
 import { Route as AuthenticatedAcessosRouteImport } from './routes/_authenticated/acessos'
 import { Route as AuthenticatedComunicacoesIndexRouteImport } from './routes/_authenticated/comunicacoes.index'
@@ -181,6 +182,11 @@ const AuthenticatedAuditoriaRoute = AuthenticatedAuditoriaRouteImport.update({
   path: '/auditoria',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAssistenteRoute = AuthenticatedAssistenteRouteImport.update({
+  id: '/assistente',
+  path: '/assistente',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAlertasRoute = AuthenticatedAlertasRouteImport.update({
   id: '/alertas',
   path: '/alertas',
@@ -293,6 +299,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/acessos': typeof AuthenticatedAcessosRoute
   '/alertas': typeof AuthenticatedAlertasRoute
+  '/assistente': typeof AuthenticatedAssistenteRoute
   '/auditoria': typeof AuthenticatedAuditoriaRoute
   '/ausencias': typeof AuthenticatedAusenciasRoute
   '/bi-executivo': typeof AuthenticatedBiExecutivoRoute
@@ -336,6 +343,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/acessos': typeof AuthenticatedAcessosRoute
   '/alertas': typeof AuthenticatedAlertasRoute
+  '/assistente': typeof AuthenticatedAssistenteRoute
   '/auditoria': typeof AuthenticatedAuditoriaRoute
   '/ausencias': typeof AuthenticatedAusenciasRoute
   '/bi-executivo': typeof AuthenticatedBiExecutivoRoute
@@ -379,6 +387,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/acessos': typeof AuthenticatedAcessosRoute
   '/_authenticated/alertas': typeof AuthenticatedAlertasRoute
+  '/_authenticated/assistente': typeof AuthenticatedAssistenteRoute
   '/_authenticated/auditoria': typeof AuthenticatedAuditoriaRoute
   '/_authenticated/ausencias': typeof AuthenticatedAusenciasRoute
   '/_authenticated/bi-executivo': typeof AuthenticatedBiExecutivoRoute
@@ -424,6 +433,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/acessos'
     | '/alertas'
+    | '/assistente'
     | '/auditoria'
     | '/ausencias'
     | '/bi-executivo'
@@ -467,6 +477,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/acessos'
     | '/alertas'
+    | '/assistente'
     | '/auditoria'
     | '/ausencias'
     | '/bi-executivo'
@@ -509,6 +520,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/acessos'
     | '/_authenticated/alertas'
+    | '/_authenticated/assistente'
     | '/_authenticated/auditoria'
     | '/_authenticated/ausencias'
     | '/_authenticated/bi-executivo'
@@ -726,6 +738,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAuditoriaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/assistente': {
+      id: '/_authenticated/assistente'
+      path: '/assistente'
+      fullPath: '/assistente'
+      preLoaderRoute: typeof AuthenticatedAssistenteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/alertas': {
       id: '/_authenticated/alertas'
       path: '/alertas'
@@ -929,6 +948,7 @@ const AuthenticatedConfiguracoesRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAcessosRoute: typeof AuthenticatedAcessosRoute
   AuthenticatedAlertasRoute: typeof AuthenticatedAlertasRoute
+  AuthenticatedAssistenteRoute: typeof AuthenticatedAssistenteRoute
   AuthenticatedAuditoriaRoute: typeof AuthenticatedAuditoriaRoute
   AuthenticatedAusenciasRoute: typeof AuthenticatedAusenciasRoute
   AuthenticatedBiExecutivoRoute: typeof AuthenticatedBiExecutivoRoute
@@ -957,6 +977,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAcessosRoute: AuthenticatedAcessosRoute,
   AuthenticatedAlertasRoute: AuthenticatedAlertasRoute,
+  AuthenticatedAssistenteRoute: AuthenticatedAssistenteRoute,
   AuthenticatedAuditoriaRoute: AuthenticatedAuditoriaRoute,
   AuthenticatedAusenciasRoute: AuthenticatedAusenciasRoute,
   AuthenticatedBiExecutivoRoute: AuthenticatedBiExecutivoRoute,
@@ -999,13 +1020,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
