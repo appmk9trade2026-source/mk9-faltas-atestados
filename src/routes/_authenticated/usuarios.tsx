@@ -510,6 +510,22 @@ function UsuariosPage() {
                             <DropdownMenuItem onClick={() => setConfirmEncerrarSessoes(u)}>
                               <LogOut className="mr-2 h-4 w-4" /> Encerrar sessões
                             </DropdownMenuItem>
+                          </>
+                        )}
+                        {canResendWhatsapp && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => reenviarWaMut.mutate(u.id)}
+                              disabled={!u.telefone_whatsapp || !u.ativo || reenviarWaMut.isPending}
+                            >
+                              <Send className="mr-2 h-4 w-4" /> Reenviar WhatsApp de boas-vindas
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        {canWrite && (
+                          <>
+
                             <DropdownMenuSeparator />
                             {u.ativo ? (
                               <DropdownMenuItem
