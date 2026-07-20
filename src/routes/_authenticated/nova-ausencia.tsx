@@ -120,7 +120,7 @@ type ColabMatch = {
   empresa_id: string;
   projeto_id: string;
   empresa: { id: string; nome: string; ativo: boolean } | null;
-  projeto: { id: string; nome: string; ativo: boolean } | null;
+  projeto: { id: string; nome: string; ativo: boolean; codigo_protocolo: string | null } | null;
 };
 
 type AusenciaEdit = {
