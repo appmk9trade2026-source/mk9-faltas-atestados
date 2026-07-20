@@ -506,9 +506,11 @@ function StatusRow(props: {
     PENDENTE: { icon: <Clock className="h-4 w-4" />, label: "Pendente", tone: "text-muted-foreground" },
     PROCESSANDO: { icon: <Loader2 className="h-4 w-4 animate-spin" />, label: "Processando", tone: "text-muted-foreground" },
     ENVIADO: { icon: <CheckCircle2 className="h-4 w-4" />, label: "Enviado", tone: "text-emerald-600" },
-    CONFIRMADO: { icon: <CheckCircle2 className="h-4 w-4" />, label: "Entregue", tone: "text-emerald-600" },
+    ENTREGUE: { icon: <CheckCircle2 className="h-4 w-4" />, label: "Entregue", tone: "text-emerald-600" },
+    LIDO: { icon: <CheckCircle2 className="h-4 w-4" />, label: "Lido", tone: "text-emerald-600" },
     FALHOU_TEMPORARIO: { icon: <XCircle className="h-4 w-4" />, label: "Falha temporária", tone: "text-amber-600" },
     FALHOU_DEFINITIVO: { icon: <XCircle className="h-4 w-4" />, label: "Falhou", tone: "text-destructive" },
+    CANCELADO: { icon: <XCircle className="h-4 w-4" />, label: "Cancelado", tone: "text-muted-foreground" },
   };
   const info = map[props.status] ?? { icon: null, label: props.status, tone: "" };
   return (
