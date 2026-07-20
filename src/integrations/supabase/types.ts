@@ -3725,6 +3725,14 @@ export type Database = {
         Returns: Json
       }
       processar_escalonamentos_pendentes: { Args: never; Returns: Json }
+      rbac_apply_role_matrix: { Args: { _changes: Json }; Returns: Json }
+      rbac_apply_user_permission: {
+        Args: { _code: string; _mode: string; _user_id: string }
+        Returns: Json
+      }
+      rbac_critical_super_admin_perms: { Args: never; Returns: string[] }
+      rbac_matrix: { Args: never; Returns: Json }
+      rbac_user_summary: { Args: { _user_id: string }; Returns: Json }
       refresh_bi_absenteismo: { Args: { p_origem?: string }; Returns: Json }
       registrar_login_event: {
         Args: {
@@ -4105,6 +4113,12 @@ export type Database = {
         | "PROJETO_ACESSO_NEGADO"
         | "COLABORADOR_ACESSO_NEGADO"
         | "PERMISSAO_NEGADA"
+        | "ROLE_PERMISSION_CREATED"
+        | "ROLE_PERMISSION_UPDATED"
+        | "ROLE_PERMISSION_REMOVED"
+        | "ROLE_PERMISSION_BULK_UPDATED"
+        | "USER_PERMISSION_UPDATED"
+        | "USER_PERMISSION_REMOVED"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       changelog_tipo:
         | "NOVA_FUNCIONALIDADE"
@@ -4479,6 +4493,12 @@ export const Constants = {
         "PROJETO_ACESSO_NEGADO",
         "COLABORADOR_ACESSO_NEGADO",
         "PERMISSAO_NEGADA",
+        "ROLE_PERMISSION_CREATED",
+        "ROLE_PERMISSION_UPDATED",
+        "ROLE_PERMISSION_REMOVED",
+        "ROLE_PERMISSION_BULK_UPDATED",
+        "USER_PERMISSION_UPDATED",
+        "USER_PERMISSION_REMOVED",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       changelog_tipo: [
