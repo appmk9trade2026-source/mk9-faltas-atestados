@@ -38,7 +38,7 @@ export const logPwaInstallEvent = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.from("audit_logs").insert({
       modulo: "pwa",
-      acao: data.acao,
+      acao: data.acao as never,
       entidade: "pwa_install",
       registro_id: null,
       sucesso: true,

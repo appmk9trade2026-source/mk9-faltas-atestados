@@ -81,7 +81,8 @@ async function safeLog(acao: Parameters<typeof logPwaInstallEvent>[0]["data"]["a
 }
 
 export function PwaInstallPrompt() {
-  const { userId } = useSession();
+  const { user } = useSession();
+  const userId = user?.id ?? null;
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const [supported, setSupported] = useState(false);
