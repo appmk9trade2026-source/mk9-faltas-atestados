@@ -181,6 +181,8 @@ const createFormSchema = z.object({
   avatar_url: z.string().trim().url().optional().or(z.literal("")),
   senha_temporaria: z.string().min(8).max(72).optional().or(z.literal("")),
   enviar_convite: z.boolean(),
+  enviar_whatsapp: z.boolean(),
+
   ativo: z.boolean(),
   roles: z.array(rolesEnum).min(1, "Selecione ao menos um perfil"),
   empresa_ids: z.array(z.string().uuid()),
@@ -273,8 +275,9 @@ function UsuariosPage() {
   const [confirmDeactivate, setConfirmDeactivate] = useState<UsuarioRow | null>(null);
   const [confirmEncerrarSessoes, setConfirmEncerrarSessoes] = useState<UsuarioRow | null>(null);
 
-  const canResendWhatsapp = roles.includes("super_admin") || roles.includes("rh");
-  const canSeeWhatsapp = canResendWhatsapp || roles.includes("compliance");
+  const canResendWhatsapp = roles.includes("super_admin");
+  const canSeeWhatsapp = roles.includes("super_admin") || roles.includes("rh") || roles.includes("compliance");
+
 
   const userIdsList = useMemo(() => (listQ.data ?? []).map((u) => u.id), [listQ.data]);
   const statusWaQ = useQuery({
@@ -393,7 +396,7 @@ function UsuariosPage() {
                 <TableHead>Perfis</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Último acesso</TableHead>
-                {canSeeWhatsapp && <TableHead>WhatsApp</TableHead>}
+                {canSeeWhatsapp && <TableHead>Convite</TableHead>}
                 <TableHead className="w-[60px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -684,6 +687,8 @@ function CreateDialog({
       avatar_url: "",
       senha_temporaria: "",
       enviar_convite: true,
+      enviar_whatsapp: false,
+
       ativo: true,
       roles: [],
       empresa_ids: [],
@@ -777,6 +782,30 @@ function FormSectionsCreate({
                 <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
               </FormItem>
             )} />
+            <FormField control={form.control} name="enviar_whatsapp" render={({ field }) => {
+              const tel = (form.watch("telefone") ?? "").toString();
+              const digits = tel.replace(/\D+/g, "");
+              const telValido = digits.length >= 10 && digits.length <= 15;
+              return (
+                <FormItem className="rounded-md border p-3 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <Label>Enviar convite por WhatsApp</Label>
+                    <FormControl>
+                      <Switch
+                        checked={field.value && telValido}
+                        disabled={!telValido}
+                        onCheckedChange={(v) => field.onChange(v && telValido)}
+                      />
+                    </FormControl>
+                  </div>
+                  {!telValido && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Informe um telefone válido (formato E.164, 10–15 dígitos) para habilitar o envio por WhatsApp.
+                    </p>
+                  )}
+                </FormItem>
+              );
+            }} />
             <FormField control={form.control} name="ativo" render={({ field }) => (
               <FormItem className="flex items-center justify-between rounded-md border p-3">
                 <div><Label>Ativo</Label></div>
@@ -784,6 +813,7 @@ function FormSectionsCreate({
               </FormItem>
             )} />
           </div>
+
         </div>
       </div>
 
@@ -1057,30 +1087,30 @@ function HistoryDrawer({ usuario, onClose }: { usuario: UsuarioRow | null; onClo
 
 
 function WhatsappStatusCell({ status }: { status: BoasVindasStatus | null }) {
-  if (!status || !status.outbox_id) {
-    return <span className="text-[10px] text-muted-foreground">—</span>;
-  }
-  const s = status.status ?? "PENDENTE";
+  const notSent = !status || !status.outbox_id;
+  const s = status?.status ?? "NAO_ENVIADO";
   const map: Record<string, { label: string; cls: string }> = {
-    LIDA: { label: "Lido", cls: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
+    NAO_ENVIADO: { label: "Não enviado", cls: "text-muted-foreground" },
+    LIDA: { label: "Entregue", cls: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
     ENTREGUE: { label: "Entregue", cls: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
-    ENVIADO: { label: "Enviado", cls: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
+    ENVIADO: { label: "Enviado", cls: "bg-sky-500/15 text-sky-700 border-sky-500/30" },
     PENDENTE: { label: "Pendente", cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
-    PROCESSANDO: { label: "Processando", cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
-    FALHOU_TEMPORARIO: { label: "Tentando novamente", cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
+    PROCESSANDO: { label: "Pendente", cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
+    FALHOU_TEMPORARIO: { label: "Pendente", cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
     FALHOU_DEFINITIVO: { label: "Falhou", cls: "bg-red-500/15 text-red-700 border-red-500/30" },
-    CANCELADO: { label: "Cancelado", cls: "text-muted-foreground" },
+    CANCELADO: { label: "Falhou", cls: "bg-red-500/15 text-red-700 border-red-500/30" },
   };
-  const meta = map[s] ?? { label: s, cls: "text-muted-foreground" };
+  const meta = map[notSent ? "NAO_ENVIADO" : s] ?? { label: s, cls: "text-muted-foreground" };
   return (
-    <div className="flex flex-col gap-0.5" title={status.ultimo_erro ?? undefined}>
+    <div className="flex flex-col gap-0.5" title={status?.ultimo_erro ?? undefined}>
       <Badge variant="outline" className={`text-[10px] ${meta.cls}`}>
         <MessageCircle className="mr-1 h-3 w-3" />{meta.label}
       </Badge>
-      {status.atualizado_em && (
+      {status?.atualizado_em && !notSent && (
         <span className="text-[10px] text-muted-foreground">{fmtDate(status.atualizado_em)}</span>
       )}
     </div>
   );
 }
+
 

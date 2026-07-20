@@ -49,6 +49,8 @@ const createSchema = z.object({
   avatar_url: z.string().trim().max(500).optional().nullable(),
   senha_temporaria: z.string().min(8).max(72).optional().nullable(),
   enviar_convite: z.boolean().default(true),
+  enviar_whatsapp: z.boolean().default(false),
+
   ativo: z.boolean().default(true),
   roles: z
     .array(z.enum(["super_admin", "rh", "supervisor", "compliance", "operacao", "visualizador"]))
@@ -164,43 +166,47 @@ export const createUsuario = createServerFn({ method: "POST" })
     });
 
     // WhatsApp de boas-vindas — usa o pipeline oficial (outbox + worker + Evolution API).
+    // Só materializa se o admin marcou "Enviar convite por WhatsApp".
     // Falha aqui NÃO reverte a criação: o admin pode reenviar depois pela UI.
     let whatsapp_outbox_id: string | null = null;
     let whatsapp_motivo: string | null = null;
-    try {
-      const link = process.env.APP_PUBLIC_URL || "https://mk9-staff-hub.lovable.app";
-      const { data: matData, error: matErr } = await supabaseAdmin.rpc(
-        "materializar_whatsapp_usuario_boas_vindas",
-        {
-          p_user_id: userId,
-          p_link_sistema: link,
-          p_senha_temporaria: data.senha_temporaria || null,
-        } as never,
-      );
-      if (matErr) {
-        whatsapp_motivo = matErr.message;
-      } else {
-        const res = (matData ?? {}) as { ok?: boolean; motivo?: string; outbox_id?: string };
-        whatsapp_outbox_id = res.outbox_id ?? null;
-        whatsapp_motivo = res.ok ? null : (res.motivo ?? "DESCONHECIDO");
-        if (res.ok) {
-          await audit(context.supabase, "ENVIO_COMUNICACAO", userId,
-            `WhatsApp de boas-vindas enfileirado (outbox ${res.outbox_id})`,
-            null,
-            { canal: "whatsapp", template: "USUARIO_CRIADO_V1", outbox_id: res.outbox_id, possui_senha_temporaria: !!data.senha_temporaria });
+    if (data.enviar_whatsapp) {
+      try {
+        const link = process.env.APP_PUBLIC_URL || "https://mk9-staff-hub.lovable.app";
+        const { data: matData, error: matErr } = await supabaseAdmin.rpc(
+          "materializar_whatsapp_usuario_boas_vindas",
+          {
+            p_user_id: userId,
+            p_link_sistema: link,
+            p_senha_temporaria: data.senha_temporaria || null,
+          } as never,
+        );
+        if (matErr) {
+          whatsapp_motivo = matErr.message;
         } else {
-          await audit(context.supabase, "ENVIO_COMUNICACAO", userId,
-            `WhatsApp de boas-vindas não enfileirado: ${res.motivo}`,
-            null,
-            { canal: "whatsapp", template: "USUARIO_CRIADO_V1", motivo: res.motivo });
+          const res = (matData ?? {}) as { ok?: boolean; motivo?: string; outbox_id?: string };
+          whatsapp_outbox_id = res.outbox_id ?? null;
+          whatsapp_motivo = res.ok ? null : (res.motivo ?? "DESCONHECIDO");
+          if (res.ok) {
+            await audit(context.supabase, "ENVIO_COMUNICACAO", userId,
+              `WhatsApp de boas-vindas enfileirado (outbox ${res.outbox_id})`,
+              null,
+              { canal: "whatsapp", template: "USUARIO_CRIADO_V1", outbox_id: res.outbox_id, possui_senha_temporaria: !!data.senha_temporaria });
+          } else {
+            await audit(context.supabase, "ENVIO_COMUNICACAO", userId,
+              `WhatsApp de boas-vindas não enfileirado: ${res.motivo}`,
+              null,
+              { canal: "whatsapp", template: "USUARIO_CRIADO_V1", motivo: res.motivo });
+          }
         }
+      } catch (e) {
+        whatsapp_motivo = e instanceof Error ? e.message : "erro desconhecido";
       }
-    } catch (e) {
-      whatsapp_motivo = e instanceof Error ? e.message : "erro desconhecido";
     }
 
     return { id: userId, whatsapp_outbox_id, whatsapp_motivo };
   });
+
 
 
 // ---------------- UPDATE ----------------
@@ -506,19 +512,8 @@ export const encerrarSessoesUsuario = createServerFn({ method: "POST" })
     return { ok: true, scope };
   });
 
-// ---------------- WhatsApp: reenviar boas-vindas ----------------
-async function requireSuperAdminOrRH(ctx: {
-  supabase: typeof import("@/integrations/supabase/client").supabase;
-  userId: string;
-}) {
-  const [sa, rh] = await Promise.all([
-    ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "super_admin" }),
-    ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "rh" }),
-  ]);
-  if (sa.data !== true && rh.data !== true) {
-    throw new Error("Apenas Super Admin ou RH podem reenviar boas-vindas.");
-  }
-}
+// ---------------- WhatsApp: reenviar boas-vindas (apenas Super Admin) ----------------
+
 
 export const reenviarBoasVindasWhatsapp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -529,7 +524,8 @@ export const reenviarBoasVindasWhatsapp = createServerFn({ method: "POST" })
     }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await requireSuperAdminOrRH(context);
+    await requireSuperAdmin(context);
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const idem = `usuario:${data.id}:boas_vindas:v1`;
