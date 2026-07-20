@@ -1,5 +1,4 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
-import { flushSync } from "react-dom";
 import {
   LayoutDashboard,
   FilePlus2,
@@ -76,13 +75,38 @@ const items: Item[] = [
   { title: "Observabilidade", url: "/observabilidade", icon: Gauge, roles: ["super_admin", "compliance"] },
 ];
 
-export function AppSidebar({
-  roles,
-  onNavigateStart,
-}: {
-  roles: AppRole[];
-  onNavigateStart?: (path: string) => void;
-}) {
+function showWhatsappNavigationOverlay() {
+  if (document.getElementById("wa-admin-navigation-overlay")) return;
+
+  const overlay = document.createElement("div");
+  overlay.id = "wa-admin-navigation-overlay";
+  overlay.setAttribute("role", "status");
+  overlay.setAttribute("aria-live", "polite");
+  overlay.style.position = "fixed";
+  overlay.style.inset = "0";
+  overlay.style.zIndex = "2147483647";
+  overlay.style.background = "hsl(var(--background))";
+  overlay.style.color = "hsl(var(--foreground))";
+  overlay.style.display = "grid";
+  overlay.style.placeItems = "center";
+  overlay.style.padding = "24px";
+  overlay.innerHTML = `
+    <div style="width:min(720px,100%);display:grid;gap:18px">
+      <div style="font-size:24px;font-weight:600">WhatsApp Admin</div>
+      <div style="height:36px;border-radius:8px;background:hsl(var(--muted))"></div>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px">
+        <div style="height:112px;border-radius:8px;background:hsl(var(--muted))"></div>
+        <div style="height:112px;border-radius:8px;background:hsl(var(--muted))"></div>
+        <div style="height:112px;border-radius:8px;background:hsl(var(--muted))"></div>
+        <div style="height:112px;border-radius:8px;background:hsl(var(--muted))"></div>
+      </div>
+      <div style="height:220px;border-radius:8px;background:hsl(var(--muted))"></div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+export function AppSidebar({ roles }: { roles: AppRole[] }) {
   const router = useRouter();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const visible = items.filter((it) => it.roles.some((r) => roles.includes(r)));
@@ -126,10 +150,11 @@ export function AppSidebar({
                               return;
                             }
                             event.preventDefault();
-                            flushSync(() => onNavigateStart?.("/comunicacoes/whatsapp"));
+                            showWhatsappNavigationOverlay();
                             await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
                             await router.preloadRoute({ to: "/comunicacoes/whatsapp" });
                             await router.navigate({ to: "/comunicacoes/whatsapp" });
+                            document.getElementById("wa-admin-navigation-overlay")?.remove();
                           }}
                         >
                           <item.icon className="h-4 w-4" />

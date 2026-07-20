@@ -1,12 +1,11 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { type ReactNode } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { LogOut } from "lucide-react";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,14 +42,6 @@ function initials(name: string) {
 export function AppShell({ title, breadcrumb, children }: { title: string; breadcrumb?: string[]; children: ReactNode }) {
   const { profile, roles, primaryRole } = useSession();
   const navigate = useNavigate();
-  const pathname = useRouterState({ select: (state) => state.location.pathname });
-  const [pendingRoute, setPendingRoute] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!pendingRoute) return;
-    const timeout = window.setTimeout(() => setPendingRoute(null), 5000);
-    return () => window.clearTimeout(timeout);
-  }, [pendingRoute]);
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -60,13 +51,11 @@ export function AppShell({ title, breadcrumb, children }: { title: string; bread
 
   const nome = profile?.nome ?? "Usuário";
   const email = profile?.email ?? "";
-  const isWhatsappTransition = pendingRoute === "/comunicacoes/whatsapp" && title === "Dashboard";
-  const displayTitle = isWhatsappTransition ? "WhatsApp Admin" : title;
-  const displayBreadcrumb = isWhatsappTransition ? ["Comunicações", "WhatsApp"] : (breadcrumb ?? [title]);
+  const displayBreadcrumb = breadcrumb ?? [title];
 
   return (
     <SidebarProvider>
-      <AppSidebar roles={roles} onNavigateStart={setPendingRoute} />
+      <AppSidebar roles={roles} />
       <SidebarInset>
         <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/80 px-3 backdrop-blur">
           <SidebarTrigger />
@@ -122,21 +111,9 @@ export function AppShell({ title, breadcrumb, children }: { title: string; bread
         <main className="flex-1 p-6">
           <div className="mx-auto w-full max-w-6xl space-y-6">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight">{displayTitle}</h1>
+              <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
             </div>
-            {isWhatsappTransition ? (
-              <div className="space-y-4">
-                <Skeleton className="h-9 w-full max-w-2xl" />
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  {Array.from({ length: 4 }).map((_, index) => (
-                    <Skeleton key={index} className="h-28 w-full" />
-                  ))}
-                </div>
-                <Skeleton className="h-56 w-full" />
-              </div>
-            ) : (
-              children
-            )}
+            {children}
           </div>
         </main>
       </SidebarInset>
