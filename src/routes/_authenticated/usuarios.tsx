@@ -12,14 +12,17 @@ import {
   KeyRound,
   LogOut,
   MailPlus,
+  MessageCircle,
   MoreHorizontal,
   Pencil,
   Plus,
   Power,
   PowerOff,
   Search,
+  Send,
   UserCog,
 } from "lucide-react";
+
 import { toast } from "sonner";
 import {
   AlertDialog,
