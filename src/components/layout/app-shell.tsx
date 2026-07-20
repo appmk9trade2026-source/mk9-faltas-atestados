@@ -121,6 +121,7 @@ export function AppShell({ title, breadcrumb, children }: { title: string; bread
           </div>
         </main>
       </SidebarInset>
+      </CommandPaletteProvider>
     </SidebarProvider>
   );
 }
