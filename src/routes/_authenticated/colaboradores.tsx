@@ -1173,25 +1173,55 @@ function ColaboradorDialog({
                                 <Loader2 className="h-3 w-3 animate-spin" /> Verificando disponibilidade…
                               </span>
                             ) : duplicado ? (
-                              <>
-                                <Badge className="bg-red-500/15 text-red-600 dark:text-red-400">
-                                  <AlertCircle className="mr-1 h-3 w-3" /> Matrícula já cadastrada
-                                </Badge>
-                                <span className="text-muted-foreground">
-                                  {duplicado.nome_completo}
-                                  {duplicado.empresa?.nome ? ` · ${duplicado.empresa.nome}` : ""}
-                                  {duplicado.projeto?.nome ? ` / ${duplicado.projeto.nome}` : ""}
-                                </span>
-                                <Button
-                                  type="button"
-                                  variant="link"
-                                  size="sm"
-                                  className="h-auto px-0 py-0 text-xs"
-                                  onClick={() => onViewExisting(duplicado.id)}
-                                >
-                                  <Eye className="mr-1 h-3 w-3" /> Visualizar colaborador
-                                </Button>
-                              </>
+                              <div className="flex w-full flex-col gap-2 rounded-md border border-red-500/30 bg-red-500/5 p-2.5">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <Badge className="bg-red-500/15 text-red-600 dark:text-red-400">
+                                    <AlertCircle className="mr-1 h-3 w-3" /> Matrícula já cadastrada
+                                  </Badge>
+                                  <Badge
+                                    variant="outline"
+                                    className={
+                                      duplicado.ativo
+                                        ? "border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
+                                        : "border-muted-foreground/30 text-muted-foreground"
+                                    }
+                                  >
+                                    {duplicado.ativo ? "Ativo" : "Inativo"}
+                                  </Badge>
+                                  <Button
+                                    type="button"
+                                    variant="link"
+                                    size="sm"
+                                    className="ml-auto h-auto px-0 py-0 text-xs"
+                                    onClick={() => onViewExisting(duplicado.id)}
+                                  >
+                                    <Eye className="mr-1 h-3 w-3" /> Visualizar colaborador
+                                  </Button>
+                                </div>
+                                <dl className="grid grid-cols-1 gap-x-4 gap-y-1 text-[11px] text-muted-foreground sm:grid-cols-2">
+                                  <div>
+                                    <dt className="inline font-medium text-foreground">Nome:</dt>{" "}
+                                    <dd className="inline">{duplicado.nome_completo}</dd>
+                                  </div>
+                                  <div>
+                                    <dt className="inline font-medium text-foreground">Matrícula:</dt>{" "}
+                                    <dd className="inline font-mono">{duplicado.matricula}</dd>
+                                  </div>
+                                  <div>
+                                    <dt className="inline font-medium text-foreground">Empresa:</dt>{" "}
+                                    <dd className="inline">{duplicado.empresa?.nome ?? "—"}</dd>
+                                  </div>
+                                  <div>
+                                    <dt className="inline font-medium text-foreground">Projeto:</dt>{" "}
+                                    <dd className="inline">{duplicado.projeto?.nome ?? "—"}</dd>
+                                  </div>
+                                  <div className="sm:col-span-2">
+                                    <dt className="inline font-medium text-foreground">Supervisor:</dt>{" "}
+                                    <dd className="inline">{duplicado.supervisor_nome ?? "—"}</dd>
+                                  </div>
+                                </dl>
+                              </div>
+
                             ) : (
                               <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
                                 <CheckCircle2 className="mr-1 h-3 w-3" /> Matrícula disponível
