@@ -348,7 +348,7 @@ function NovaAusenciaPage() {
       const { data } = await supabase
         .from("colaboradores")
         .select(
-          "id, nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email, ativo, empresa_id, projeto_id, empresa:empresas(id, nome, ativo), projeto:projetos(id, nome, ativo)",
+          "id, nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email, ativo, empresa_id, projeto_id, empresa:empresas(id, nome, ativo), projeto:projetos(id, nome, ativo, codigo_protocolo)",
         )
         .eq("id", ausencia.colaborador_id)
         .maybeSingle();
@@ -425,7 +425,7 @@ function NovaAusenciaPage() {
       const { data, error } = await supabase
         .from("colaboradores")
         .select(
-          "id, nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email, ativo, empresa_id, projeto_id, empresa:empresas(id, nome, ativo), projeto:projetos(id, nome, ativo)",
+          "id, nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email, ativo, empresa_id, projeto_id, empresa:empresas(id, nome, ativo), projeto:projetos(id, nome, ativo, codigo_protocolo)",
         )
         .eq("matricula", val)
         .eq("ativo", true);
