@@ -86,7 +86,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { useProjetosAtivosPorEmpresa } from "@/hooks/use-projetos";
+import { useColaboradorDuplicado } from "@/hooks/use-colaborador-duplicado";
 import { formatTelefone, onlyDigits } from "@/lib/br-format";
+
 
 export const Route = createFileRoute("/_authenticated/colaboradores")({
   head: () => ({ meta: [{ title: "Colaboradores · CRM MK9" }] }),
