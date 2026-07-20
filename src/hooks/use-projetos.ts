@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type ProjetoOption = { id: string; nome: string };
+export type ProjetoOption = { id: string; nome: string; codigo_protocolo: string | null };
 
 /**
  * Hook reutilizável para dropdown dependente de Projeto x Empresa.

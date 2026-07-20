@@ -92,6 +92,7 @@ type Projeto = {
   empresa_id: string;
   nome: string;
   descricao: string | null;
+  codigo_protocolo: string | null;
   ativo: boolean;
   created_at: string;
   empresa?: { id: string; nome: string; ativo: boolean } | null;
@@ -105,6 +106,15 @@ const projetoSchema = z.object({
     .min(1, "Informe o nome do projeto.")
     .max(120, "Máximo de 120 caracteres."),
   descricao: z.string().trim().max(500, "Máximo de 500 caracteres.").optional().or(z.literal("")),
+  codigo_protocolo: z
+    .string()
+    .trim()
+    .transform((v) => v.toUpperCase())
+    .refine((v) => v === "" || /^[A-Z0-9]{2,10}$/.test(v), {
+      message: "Use 2–10 caracteres — apenas letras maiúsculas e números, sem espaços ou acentos.",
+    })
+    .optional()
+    .or(z.literal("")),
   ativo: z.boolean(),
 });
 
@@ -147,7 +157,7 @@ function ProjetosPage() {
       const { data, error } = await supabase
         .from("projetos")
         .select(
-          "id, empresa_id, nome, descricao, ativo, created_at, empresa:empresas(id, nome, ativo)",
+          "id, empresa_id, nome, descricao, codigo_protocolo, ativo, created_at, empresa:empresas(id, nome, ativo)",
         );
       if (error) throw error;
       return (data ?? []) as Projeto[];
@@ -190,10 +200,12 @@ function ProjetosPage() {
 
   const upsertMut = useMutation({
     mutationFn: async (values: ProjetoForm & { id?: string }) => {
+      const codigo = (values.codigo_protocolo ?? "").trim().toUpperCase();
       const payload = {
         empresa_id: values.empresa_id,
         nome: values.nome.trim(),
         descricao: values.descricao?.trim() ? values.descricao.trim() : null,
+        codigo_protocolo: codigo ? codigo : null,
         ativo: values.ativo,
       };
       if (values.id) {
@@ -212,7 +224,11 @@ function ProjetosPage() {
     },
     onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : String(err);
-      if (/projetos_empresa_nome_uidx|duplicate|unique/i.test(msg)) {
+      if (/projetos_codigo_protocolo_uidx/i.test(msg)) {
+        toast.error("Este código de protocolo já está em uso por outro projeto.");
+      } else if (/projetos_codigo_protocolo_formato_chk/i.test(msg)) {
+        toast.error("Código de protocolo inválido — use 2 a 10 caracteres (A–Z, 0–9).");
+      } else if (/projetos_empresa_nome_uidx|duplicate|unique/i.test(msg)) {
         toast.error("Já existe um projeto com este nome nesta empresa.");
       } else if (/empresa está inativa|empresa inativa/i.test(msg)) {
         toast.error("A empresa selecionada está inativa. Ative-a antes de manter o projeto ativo.");
