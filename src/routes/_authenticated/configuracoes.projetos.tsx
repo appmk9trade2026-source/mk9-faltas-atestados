@@ -388,7 +388,7 @@ function ProjetosPage() {
               {projetosQ.isLoading &&
                 Array.from({ length: 3 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell colSpan={6}>
+                    <TableCell colSpan={7}>
                       <Skeleton className="h-6 w-full" />
                     </TableCell>
                   </TableRow>
@@ -396,7 +396,7 @@ function ProjetosPage() {
 
               {projetosQ.isError && (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-10 text-center text-sm text-destructive">
+                  <TableCell colSpan={7} className="py-10 text-center text-sm text-destructive">
                     Erro ao carregar projetos: {(projetosQ.error as Error)?.message}
                   </TableCell>
                 </TableRow>
@@ -404,7 +404,7 @@ function ProjetosPage() {
 
               {!projetosQ.isLoading && !projetosQ.isError && pageRows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-14">
+                  <TableCell colSpan={7} className="py-14">
                     <div className="flex flex-col items-center gap-2 text-center">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
                         <FolderKanban className="h-5 w-5 text-muted-foreground" />
