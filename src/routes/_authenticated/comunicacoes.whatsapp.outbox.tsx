@@ -66,8 +66,9 @@ function OutboxPage() {
         .order("created_at", { ascending: false })
         .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 
-      if (statusFilter !== "ALL") query = query.eq("status", statusFilter);
-      if (publicoFilter !== "ALL") query = query.eq("publico", publicoFilter);
+      if (statusFilter !== "ALL") query = query.eq("status", statusFilter as "PENDENTE");
+      if (publicoFilter !== "ALL") query = query.eq("publico", publicoFilter as "COLABORADOR");
+
       if (templateFilter.trim()) query = query.ilike("template_codigo", `%${templateFilter.trim()}%`);
       if (search.trim()) {
         const s = search.trim();
