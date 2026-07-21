@@ -263,14 +263,15 @@ export const setProjetoAtivo = createServerFn({ method: "POST" })
 
 // ==================== IMPORTAÇÃO POR PLANILHA ====================
 //
-// Modelo: 6 colunas — Projeto, Empresa, Código, Descrição, Status,
-// Data cadastro. Empresa é localizada por nome (case-insensitive, trim).
+// Modelo: 5 colunas — Projeto, Empresa, Descrição, Status, Data cadastro.
+// Chave lógica = Empresa + Projeto (nome), normalizada (trim + espaços
+// colapsados + case-insensitive). O código interno (PRJ-000001) é gerado
+// automaticamente pelo banco e nunca informado pelo usuário.
 // Nunca confiamos em empresa_id / projeto_id enviados pelo cliente.
 
 export type ProjetoImportRow = {
   linha: number;
   empresa_nome: string;
-  codigo_projeto: string;
   nome_projeto: string;
   descricao?: string | null;
   status: string;
@@ -281,7 +282,7 @@ export type ProjetoImportAcao =
   | "CRIAR" | "ATUALIZAR" | "ATIVAR" | "DESATIVAR" | "SEM_ALTERACAO" | "ERRO";
 
 export type ProjetoImportFieldDiff = {
-  campo: "nome_projeto" | "status" | "descricao";
+  campo: "status" | "descricao";
   atual: string | null;
   novo: string | null;
 };
@@ -291,12 +292,12 @@ export type ProjetoImportPreviewRow = {
   empresa_original: string;
   empresa_nome: string | null;
   empresa_id: string | null;
-  codigo_normalizado: string;
   nome_projeto: string;
   descricao: string | null;
   status_normalizado: "ATIVO" | "INATIVO" | null;
   data_cadastro: string | null;
   projeto_id: string | null;
+  codigo_interno_atual: string | null;
   acao: ProjetoImportAcao;
   erros: string[];
   diff: ProjetoImportFieldDiff[];
@@ -318,7 +319,6 @@ export type ProjetoImportPreview = {
 const importRowSchema = z.object({
   linha: z.number().int().min(1),
   empresa_nome: z.string().max(200),
-  codigo_projeto: z.string().max(30),
   nome_projeto: z.string().max(200),
   descricao: z.string().max(500).nullable().optional(),
   status: z.string().max(20),
@@ -338,9 +338,6 @@ const confirmInputSchema = importInputSchema.extend({
 function normalizeEmpresaNome(v: string): string {
   return (v ?? "").trim().toLowerCase();
 }
-function normalizeCodigoProjeto(v: string): string {
-  return (v ?? "").trim().toUpperCase();
-}
 /** Normaliza nome do projeto para COMPARAÇÃO (case-insensitive, espaços colapsados). */
 function normalizeNomeProjeto(v: string): string {
   return (v ?? "").trim().replace(/\s+/g, " ").toLowerCase();
@@ -351,10 +348,7 @@ function normalizeStatus(v: string): "ATIVO" | "INATIVO" | null {
   if (s === "INATIVO" || s === "0" || s === "INATIVA" || s === "FALSE") return "INATIVO";
   return null;
 }
-/**
- * O cliente já normaliza a data via parseSpreadsheetDate (serial Excel, Date,
- * DD/MM/YYYY, YYYY-MM-DD, ISO). Aqui aceitamos YYYY-MM-DD ou DD/MM/YYYY.
- */
+/** Aceita YYYY-MM-DD ou DD/MM/YYYY (cliente já normaliza serial/Date). */
 function normalizeDate(v: string | null | undefined): string | null | "INVALID" {
   if (v == null) return null;
   const s = String(v).trim();
@@ -371,7 +365,6 @@ async function buildPreview(
   correlationId: string,
   rows: z.infer<typeof importRowSchema>[],
 ): Promise<ProjetoImportPreview> {
-  // Localiza empresas por nome normalizado (case-insensitive). Detecta ambiguidade.
   const empresasBucket = new Map<string, Array<{ id: string; nome: string; ativo: boolean }>>();
   const { data: emps } = await supabase.from("empresas").select("id, nome, ativo");
   for (const e of (emps ?? []) as Array<{ id: string; nome: string; ativo: boolean }>) {
@@ -382,8 +375,6 @@ async function buildPreview(
     empresasBucket.set(key, arr);
   }
 
-  // Projetos existentes por empresa+nome+codigo (nova chave lógica).
-  // Mesma Empresa + mesmo Código pode aparecer em vários Projetos distintos.
   const empresaIds = new Set<string>();
   for (const r of rows) {
     const key = normalizeEmpresaNome(r.empresa_nome);
@@ -392,37 +383,35 @@ async function buildPreview(
   }
   type ExistingProjeto = {
     id: string; ativo: boolean; nome: string; descricao: string | null;
+    codigo_interno: string | null;
   };
-  // key = empresa_id::nome_norm::codigo_norm; valor = lista (para detectar ambiguidade no banco)
   const projetoKey = new Map<string, ExistingProjeto[]>();
   if (empresaIds.size > 0) {
     const { data: projs } = await supabase
       .from("projetos")
-      .select("id, empresa_id, codigo_projeto, codigo_protocolo, nome, ativo, descricao")
+      .select("id, empresa_id, nome, ativo, descricao, codigo_interno")
       .in("empresa_id", [...empresaIds]);
     for (const p of (projs ?? []) as Array<{
-      id: string; empresa_id: string;
-      codigo_projeto: string | null; codigo_protocolo: string | null;
-      nome: string; ativo: boolean; descricao: string | null;
+      id: string; empresa_id: string; nome: string;
+      ativo: boolean; descricao: string | null; codigo_interno: string | null;
     }>) {
-      const codigoEfetivo = (p.codigo_projeto ?? p.codigo_protocolo ?? "").toUpperCase().trim();
-      if (!codigoEfetivo) continue;
       const nomeNorm = normalizeNomeProjeto(p.nome);
-      const k = `${p.empresa_id}::${nomeNorm}::${codigoEfetivo}`;
+      const k = `${p.empresa_id}::${nomeNorm}`;
       const arr = projetoKey.get(k) ?? [];
-      arr.push({ id: p.id, ativo: p.ativo, nome: p.nome, descricao: p.descricao });
+      arr.push({
+        id: p.id, ativo: p.ativo, nome: p.nome,
+        descricao: p.descricao, codigo_interno: p.codigo_interno,
+      });
       projetoKey.set(k, arr);
     }
   }
 
-  // Duplicidade dentro do arquivo: mesma Empresa + mesmo Nome + mesmo Código
   const arquivoKeyCount = new Map<string, number[]>();
   for (const r of rows) {
     const en = normalizeEmpresaNome(r.empresa_nome);
     const nn = normalizeNomeProjeto(r.nome_projeto);
-    const cod = normalizeCodigoProjeto(r.codigo_projeto);
-    if (en && nn && cod) {
-      const k = `${en}::${nn}::${cod}`;
+    if (en && nn) {
+      const k = `${en}::${nn}`;
       const arr = arquivoKeyCount.get(k) ?? [];
       arr.push(r.linha);
       arquivoKeyCount.set(k, arr);
@@ -437,7 +426,6 @@ async function buildPreview(
 
   const linhas: ProjetoImportPreviewRow[] = rows.map((r) => {
     const enNorm = normalizeEmpresaNome(r.empresa_nome);
-    const codNorm = normalizeCodigoProjeto(r.codigo_projeto);
     const nome = (r.nome_projeto ?? "").trim().replace(/\s+/g, " ");
     const nomeNorm = normalizeNomeProjeto(nome);
     const descricao = nullIfBlank(r.descricao);
@@ -446,9 +434,6 @@ async function buildPreview(
     const erros: string[] = [];
 
     if (!enNorm) erros.push("Empresa obrigatória");
-    if (!codNorm) erros.push("Código obrigatório");
-    else if (!/^[A-Z0-9]{2,10}$/.test(codNorm))
-      erros.push("Código deve conter 2-10 caracteres A-Z/0-9");
     if (!nome) erros.push("Projeto (nome) obrigatório");
     if (nome.length > 120) erros.push("Projeto acima de 120 caracteres");
     if (!status) erros.push("Status inválido (use ATIVO ou INATIVO)");
@@ -458,7 +443,7 @@ async function buildPreview(
     let emp: { id: string; nome: string; ativo: boolean } | undefined;
     if (enNorm) {
       if (!bucket || bucket.length === 0) {
-        erros.push("Empresa não encontrada ou fora do seu escopo");
+        erros.push("Empresa não encontrada");
       } else if (bucket.length > 1) {
         erros.push(`Empresa ambígua — ${bucket.length} cadastros com este nome`);
       } else {
@@ -467,26 +452,28 @@ async function buildPreview(
       }
     }
 
-    if (enNorm && nomeNorm && codNorm) {
-      const dup = arquivoKeyCount.get(`${enNorm}::${nomeNorm}::${codNorm}`) ?? [];
+    if (enNorm && nomeNorm) {
+      const dup = arquivoKeyCount.get(`${enNorm}::${nomeNorm}`) ?? [];
       if (dup.length > 1) erros.push(`Linha duplicada no arquivo (linhas: ${dup.join(", ")})`);
     }
 
     let acao: ProjetoImportAcao = "ERRO";
     let projetoId: string | null = null;
+    let codigoInternoAtual: string | null = null;
     const diff: ProjetoImportFieldDiff[] = [];
 
     if (erros.length === 0 && emp && status) {
-      const key = `${emp.id}::${nomeNorm}::${codNorm}`;
+      const key = `${emp.id}::${nomeNorm}`;
       const existingList = projetoKey.get(key) ?? [];
       const wantAtivo = status === "ATIVO";
       if (existingList.length === 0) {
         acao = "CRIAR";
       } else if (existingList.length > 1) {
-        erros.push("Ambiguidade no banco — múltiplos projetos com este nome e código nesta empresa");
+        erros.push("Ambiguidade no banco — múltiplos projetos com este nome nesta empresa");
       } else {
         const existing = existingList[0];
         projetoId = existing.id;
+        codigoInternoAtual = existing.codigo_interno;
         const atualStatus = existing.ativo ? "ATIVO" : "INATIVO";
         const novoStatus: "ATIVO" | "INATIVO" = wantAtivo ? "ATIVO" : "INATIVO";
 
@@ -508,12 +495,12 @@ async function buildPreview(
       empresa_original: r.empresa_nome,
       empresa_nome: emp?.nome ?? null,
       empresa_id: emp?.id ?? null,
-      codigo_normalizado: codNorm,
       nome_projeto: nome,
       descricao,
       status_normalizado: status,
       data_cadastro: typeof dtCad === "string" ? dtCad : null,
       projeto_id: projetoId,
+      codigo_interno_atual: codigoInternoAtual,
       acao,
       erros,
       diff,
@@ -582,7 +569,6 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
     const rowsJson = data.rows.map((r) => ({
       row_number: r.linha,
       empresa_nome: r.empresa_nome,
-      codigo_projeto: r.codigo_projeto,
       nome_projeto: r.nome_projeto,
       descricao: r.descricao ?? null,
       status: r.status,
@@ -674,33 +660,18 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
         phase = "rpc_write";
       }
 
-      let conflictHint: { row_number?: number; codigo_projeto?: string; empresa_nome?: string } | undefined;
-      if (userCode === "IMPORT_CONFLICT" && rpcErrorDetails) {
-        const m = /\(codigo_protocolo\)=\(([^)]+)\)/i.exec(rpcErrorDetails);
-        if (m) {
-          const codigo = m[1].toUpperCase();
-          const row = data.rows.find(
-            (r) => (r.codigo_projeto ?? "").trim().toUpperCase() === codigo,
-          );
-          conflictHint = row
-            ? { row_number: row.linha, codigo_projeto: codigo, empresa_nome: row.empresa_nome }
-            : { codigo_projeto: codigo };
-        }
-      }
-
       failurePhase = phase;
       await audit(context.supabase, "PROJETOS_IMPORTACAO_FALHOU", null, correlationId,
         null, { error_code: userCode, failure_phase: failurePhase,
           duration_ms: Date.now() - startedAt, total_rows: data.rows.length,
-          correlation_id: correlationId, conflict_hint: conflictHint ?? null },
+          correlation_id: correlationId, rpc_details: rpcErrorDetails ?? null },
         `${userCode} — importação abortada`, null, null, false);
 
       const err = new Error(`${userCode}: ${userMessage}`) as Error & {
-        code: string; correlationId: string; conflictHint?: typeof conflictHint;
+        code: string; correlationId: string;
       };
       err.code = userCode;
       err.correlationId = correlationId;
-      if (conflictHint) err.conflictHint = conflictHint;
       throw err;
     }
 
@@ -741,6 +712,7 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
       duration_ms: rpcResult.duration_ms,
     };
   });
+
 
 
 
