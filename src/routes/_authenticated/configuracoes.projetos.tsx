@@ -130,10 +130,11 @@ const PAGE_SIZE = 10;
 
 function ProjetosPage() {
   const { roles } = useSession();
-  const { has } = usePermissions();
+  const { has, loading: permsLoading } = usePermissions();
   const canManage = roles.includes("super_admin") || roles.includes("rh");
-  const canImport = has("projeto.criar") || has("projeto.editar");
-  const canDownloadTemplate = canImport || has("projeto.visualizar") || canManage;
+  const canImport = canManage || has("projeto.criar") || has("projeto.editar");
+  const canDownloadTemplate = canImport || has("projeto.visualizar");
+
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
@@ -276,24 +277,39 @@ function ProjetosPage() {
           apenas desativados quando deixam de operar.
         </p>
         <div className="flex flex-wrap gap-2">
-          {canDownloadTemplate && (
-            <Button variant="outline" onClick={() => downloadProjetosTemplate()}>
-              <Download className="mr-2 h-4 w-4" /> Baixar modelo
-            </Button>
-          )}
-          {canImport && (
-            <Button asChild variant="outline">
-              <Link to="/configuracoes/projetos/importar">
-                <Upload className="mr-2 h-4 w-4" /> Importar / Atualizar planilha
-              </Link>
-            </Button>
-          )}
-          {canManage && (
-            <Button onClick={openCreate}>
-              <Plus className="mr-2 h-4 w-4" /> Novo projeto
-            </Button>
+          {permsLoading ? (
+            <>
+              <Skeleton className="h-9 w-36" />
+              <Skeleton className="h-9 w-56" />
+              <Skeleton className="h-9 w-36" />
+            </>
+          ) : (
+            <>
+              {canDownloadTemplate && (
+                <Button variant="outline" onClick={() => downloadProjetosTemplate()}>
+                  <Download className="mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Baixar modelo</span>
+                  <span className="sm:hidden">Modelo</span>
+                </Button>
+              )}
+              {canImport && (
+                <Button asChild variant="outline">
+                  <Link to="/configuracoes/projetos/importar">
+                    <Upload className="mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Importar / Atualizar planilha</span>
+                    <span className="sm:hidden">Importar planilha</span>
+                  </Link>
+                </Button>
+              )}
+              {canManage && (
+                <Button onClick={openCreate}>
+                  <Plus className="mr-2 h-4 w-4" /> Novo projeto
+                </Button>
+              )}
+            </>
           )}
         </div>
+
       </div>
 
       <Card className="overflow-hidden">
