@@ -432,6 +432,8 @@ function ImportarPage() {
           status,
           erros,
           sugestoes_projeto,
+          projeto_localizado_nome,
+          projeto_por_normalizacao,
         } as ParsedRow;
       })
       .filter((r): r is ParsedRow => r !== null);
