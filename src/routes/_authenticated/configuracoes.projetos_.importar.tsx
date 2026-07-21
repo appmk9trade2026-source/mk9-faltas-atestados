@@ -218,10 +218,11 @@ function ImportarProjetosPage() {
       .filter((l) => l.erros.length > 0)
       .map((l) => ({
         linha: l.linha,
-        cnpj: l.cnpj_original,
+        empresa: l.empresa_original,
         codigo: l.codigo_normalizado,
         problema: l.erros.join("; "),
       }));
+
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Erros");
