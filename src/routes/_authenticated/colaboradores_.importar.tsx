@@ -750,7 +750,19 @@ function ImportarPage() {
                     <TableRow key={r.linha}>
                       <TableCell className="text-xs text-muted-foreground">{r.linha}</TableCell>
                       <TableCell className="text-sm">{r.empresa || "—"}</TableCell>
-                      <TableCell className="text-sm">{r.projeto || "—"}</TableCell>
+                      <TableCell className="text-sm">
+                        <div className="flex flex-col gap-0.5">
+                          <span>{r.projeto || "—"}</span>
+                          {r.projeto_por_normalizacao && r.projeto_localizado_nome && (
+                            <span
+                              className="text-[11px] text-emerald-600 dark:text-emerald-400"
+                              title="Localizado após normalizar espaços, acentos e hífens."
+                            >
+                              ↳ Localizado: {r.projeto_localizado_nome}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-sm font-mono">{r.matricula || "—"}</TableCell>
                       <TableCell className="text-sm">{r.nome_completo || "—"}</TableCell>
                       <TableCell>
