@@ -47,6 +47,22 @@ import { friendlyRbacError } from "@/lib/rbac/errors";
 
 
 export const Route = createFileRoute("/_authenticated/colaboradores_/importar")({
+  head: () => ({
+    meta: [
+      { title: "Importar Colaboradores · CRM MK9" },
+      {
+        name: "description",
+        content: "Importação validada de colaboradores com resolução manual de projetos ambíguos.",
+      },
+      { property: "og:title", content: "Importar Colaboradores · CRM MK9" },
+      {
+        property: "og:description",
+        content: "Importação validada de colaboradores com resolução manual de projetos ambíguos.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: ImportarPage,
 });
 
@@ -211,7 +227,7 @@ function ImportarPage() {
     return { total: rows.length, ok, err, dup };
   }, [rows]);
 
-  // Rows que precisam de resolução manual de projeto (por grupo empresa+nome informado)
+  // Grupos de resolução manual de projeto (mantém também os já resolvidos para feedback visual).
   const gruposResolucao = useMemo(() => {
     const alvos = new Set<ErrorCode>([
       "PROJETO_NAO_ENCONTRADO",
@@ -231,8 +247,9 @@ function ImportarPage() {
     for (const r of rows) {
       if (!r.empresa_id) continue;
       const err = r.erros.find((e) => alvos.has(e.code));
-      if (!err) continue;
       const key = `${r.empresa_id}::${nameKey(r.projeto)}`;
+      const resolved = Boolean(resolucoes[key]);
+      if (!err && !resolved) continue;
       const g = groups.get(key);
       if (g) {
         g.linhas.push(r.linha);
@@ -242,14 +259,21 @@ function ImportarPage() {
           empresa_id: r.empresa_id,
           empresa_nome: r.empresa,
           projeto_input: r.projeto,
-          motivo: err.code,
+          motivo: err?.code ?? "OK",
           linhas: [r.linha],
           sugestoes: r.sugestoes_projeto ?? [],
         });
       }
     }
     return Array.from(groups.values());
-  }, [rows]);
+  }, [resolucoes, rows]);
+
+  const gruposResolvidos = useMemo(
+    () => gruposResolucao.filter((g) => Boolean(resolucoes[g.key])).length,
+    [gruposResolucao, resolucoes],
+  );
+
+  const gruposPendentes = gruposResolucao.length - gruposResolvidos;
 
   function baixarModelo() {
     const ws = XLSX.utils.aoa_to_sheet([COLUNAS as unknown as string[]]);
@@ -607,6 +631,7 @@ function ImportarPage() {
         "Email Supervisor": r.supervisor_email,
       }));
       setRows(validar(raw, next));
+      toast.success("Projeto selecionado. Linhas do grupo revalidadas automaticamente.");
     }
   }
 
@@ -726,7 +751,7 @@ function ImportarPage() {
             <div>
               <h3 className="flex items-center gap-2 text-base font-semibold">
                 <Wand2 className="h-4 w-4 text-amber-500" />
-                Resolver projetos ({gruposResolucao.length} grupo{gruposResolucao.length > 1 ? "s" : ""})
+                Resolver projetos ({gruposPendentes} pendente{gruposPendentes !== 1 ? "s" : ""} · {gruposResolvidos} resolvido{gruposResolvidos !== 1 ? "s" : ""})
               </h3>
               <p className="text-sm text-muted-foreground">
                 A escolha é aplicada automaticamente a todas as linhas equivalentes e o
@@ -745,28 +770,31 @@ function ImportarPage() {
               const semelhantes = g.sugestoes;
               // Se for ambíguo, temos metadados ricos via diagnóstico.
               const equivalentes = grupoInfoByKey.get(g.key) ?? [];
-              const isAmbiguo = g.motivo === "PROJETO_AMBIGUO";
+              const hasResolucao = Boolean(resolucoes[g.key]);
+              const showEquivalentCards = equivalentes.length > 0;
               return (
                 <div key={g.key} className="rounded-lg border bg-background p-3 sm:p-4">
                   <div className="flex flex-wrap items-center gap-2 text-sm">
                     <Badge variant="outline">{g.empresa_nome}</Badge>
                     <span className="font-mono text-xs text-muted-foreground">→</span>
                     <span className="font-medium">{g.projeto_input || "(vazio)"}</span>
-                    <Badge className="bg-red-500/15 text-red-600 dark:text-red-400">
-                      {g.motivo === "PROJETO_NAO_ENCONTRADO" && "Não encontrado"}
-                      {g.motivo === "PROJETO_AMBIGUO" && "Ambíguo"}
-                      {g.motivo === "PROJETO_OUTRA_EMPRESA" && "Existe em outra empresa"}
-                      {g.motivo === "PROJETO_INATIVO" && "Inativo"}
-                    </Badge>
+                    {!hasResolucao && (
+                      <Badge className="bg-red-500/15 text-red-600 dark:text-red-400">
+                        {g.motivo === "PROJETO_NAO_ENCONTRADO" && "Não encontrado"}
+                        {g.motivo === "PROJETO_AMBIGUO" && "Ambíguo"}
+                        {g.motivo === "PROJETO_OUTRA_EMPRESA" && "Existe em outra empresa"}
+                        {g.motivo === "PROJETO_INATIVO" && "Inativo"}
+                      </Badge>
+                    )}
                     <Badge variant="secondary">{g.linhas.length} linha{g.linhas.length > 1 ? "s" : ""}</Badge>
-                    {resolucoes[g.key] && (
+                    {hasResolucao && (
                       <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
                         <CheckCircle2 className="mr-1 h-3 w-3" /> Resolvido
                       </Badge>
                     )}
                   </div>
 
-                  {isAmbiguo && equivalentes.length > 0 ? (
+                  {showEquivalentCards ? (
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">
                       {equivalentes.map((p) => {
                         const selected = resolucoes[g.key] === p.projeto_id;
@@ -774,19 +802,29 @@ function ImportarPage() {
                           <button
                             key={p.projeto_id}
                             type="button"
+                            aria-pressed={selected}
+                            aria-label={`Usar projeto ${p.codigo_interno ?? p.nome}`}
                             onClick={() => setResolucao(g.key, p.projeto_id)}
-                            className={`flex flex-col gap-1 rounded-lg border p-3 text-left text-sm transition ${
+                            className={`flex flex-col gap-3 rounded-lg border p-3 text-left text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                               selected
-                                ? "border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/40"
+                                ? "border-primary bg-primary/10 ring-2 ring-primary/30"
                                 : "hover:border-primary/40 hover:bg-muted/40"
                             }`}
                           >
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold">{p.nome}</span>
-                              {selected && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex min-w-0 items-center gap-2">
+                                <span className="text-lg leading-none" aria-hidden="true">
+                                  {selected ? "●" : "○"}
+                                </span>
+                                <div className="min-w-0">
+                                  <div className="font-semibold leading-tight">{p.nome}</div>
+                                  <div className="font-mono text-xs text-muted-foreground">{p.codigo_interno ?? p.projeto_id}</div>
+                                </div>
+                              </div>
+                              {selected && <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />}
                             </div>
+
                             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                              <span className="font-mono">{p.codigo_interno}</span>
                               {p.codigo_protocolo && (
                                 <Badge variant="outline" className="text-[10px]">{p.codigo_protocolo}</Badge>
                               )}
@@ -799,6 +837,9 @@ function ImportarPage() {
                             </div>
                             <div className="text-[11px] text-muted-foreground">
                               Cadastrado em {new Date(p.created_at).toLocaleDateString("pt-BR")}
+                            </div>
+                            <div className="mt-auto inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm">
+                              {selected ? "Projeto selecionado" : "Usar este projeto"}
                             </div>
                           </button>
                         );
@@ -855,6 +896,16 @@ function ImportarPage() {
 
       {rows.length > 0 && (
         <>
+          {summary.err === 0 && (
+            <Alert className="border-emerald-500/40 bg-emerald-500/5">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <AlertTitle>Validação concluída sem erros</AlertTitle>
+              <AlertDescription>
+                Todas as ambiguidades pendentes foram resolvidas e os <code className="rounded bg-muted px-1">projeto_id</code>s selecionados estão aplicados às linhas válidas.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <Card className="p-4">
             <div className="flex flex-wrap items-center gap-4">
               <Badge variant="outline">Total: {summary.total}</Badge>
