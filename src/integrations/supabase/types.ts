@@ -3467,6 +3467,17 @@ export type Database = {
       bi_healthcheck: { Args: never; Returns: Json }
       bi_recorrencia_consultar: { Args: { p_filtros?: Json }; Returns: Json }
       bootstrap_first_super_admin: { Args: never; Returns: string }
+      check_projeto_equivalente: {
+        Args: { _empresa_id: string; _exclude_id?: string; _nome: string }
+        Returns: {
+          ativo: boolean
+          codigo_interno: string
+          codigo_protocolo: string
+          created_at: string
+          id: string
+          nome: string
+        }[]
+      }
       consolidar_projetos: {
         Args: {
           p_duplicado_id: string
@@ -3864,6 +3875,7 @@ export type Database = {
         }
         Returns: Json
       }
+      report_projetos_colisoes_ativas: { Args: never; Returns: Json }
       reprocessar_escalonamentos: { Args: never; Returns: Json }
       require_permission: {
         Args: {
