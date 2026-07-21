@@ -290,7 +290,38 @@ function ProjetosPage() {
     }
   }
 
+  const selectedCount = selectedIds.size;
+  const pageAllSelected =
+    pageRows.length > 0 && pageRows.every((r) => selectedIds.has(r.id));
+  const pageSomeSelected = pageRows.some((r) => selectedIds.has(r.id));
+
+  function togglePageSelection(checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      for (const r of pageRows) {
+        if (checked) next.add(r.id);
+        else next.delete(r.id);
+      }
+      return next;
+    });
+  }
+  function toggleRowSelection(id: string, checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+  function selectAllFiltered() {
+    setSelectedIds(new Set(filtered.map((r) => r.id)));
+  }
+  function clearSelection() {
+    setSelectedIds(new Set());
+  }
+
   return (
+
     <AppShell title="Projetos" breadcrumb={["Configurações", "Projetos"]}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
