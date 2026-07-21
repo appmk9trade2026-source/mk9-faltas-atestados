@@ -32,6 +32,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { normalizeMatricula } from "@/lib/matricula";
+import { importColaboradoresBulk } from "@/lib/colaboradores.functions";
+import { friendlyRbacError } from "@/lib/rbac/errors";
 
 
 export const Route = createFileRoute("/_authenticated/colaboradores_/importar")({
