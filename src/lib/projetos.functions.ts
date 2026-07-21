@@ -263,29 +263,30 @@ export const setProjetoAtivo = createServerFn({ method: "POST" })
 
 // ==================== IMPORTAÇÃO POR PLANILHA ====================
 //
-// Modelo: 4 colunas — Projeto, Empresa, Descrição, Status.
+// Modelo simplificado: 2 colunas — Projeto, Empresa.
 // Chave lógica = Empresa + Projeto (nome), normalizada (trim + espaços
-// colapsados + case-insensitive). Código interno (PRJ-000001) e data de
-// cadastro (created_at) são gerados automaticamente pelo banco e nunca
-// informados pelo usuário. Nunca confiamos em empresa_id / projeto_id
-// enviados pelo cliente.
+// colapsados + case-insensitive).
+//
+// Para novos projetos, o sistema atribui automaticamente:
+//   • codigo_interno   → PRJ-000001 (sequence/trigger no banco)
+//   • descricao        → "NOVO PROJETO"
+//   • ativo            → true (Status = ATIVO)
+//   • created_at       → now()
+//   • updated_at       → now()
+//
+// Projetos já existentes NÃO são duplicados nem alterados — apenas
+// classificados como "Já existente". Empresas nunca são criadas.
+// Nunca confiamos em empresa_id / projeto_id enviados pelo cliente.
+
+const DESCRICAO_PADRAO_NOVO = "NOVO PROJETO";
 
 export type ProjetoImportRow = {
   linha: number;
   empresa_nome: string;
   nome_projeto: string;
-  descricao?: string | null;
-  status: string;
 };
 
-export type ProjetoImportAcao =
-  | "CRIAR" | "ATUALIZAR" | "ATIVAR" | "DESATIVAR" | "SEM_ALTERACAO" | "ERRO";
-
-export type ProjetoImportFieldDiff = {
-  campo: "status" | "descricao";
-  atual: string | null;
-  novo: string | null;
-};
+export type ProjetoImportAcao = "CRIAR" | "JA_EXISTENTE" | "ERRO";
 
 export type ProjetoImportPreviewRow = {
   linha: number;
@@ -293,25 +294,23 @@ export type ProjetoImportPreviewRow = {
   empresa_nome: string | null;
   empresa_id: string | null;
   nome_projeto: string;
-  descricao: string | null;
-  status_normalizado: "ATIVO" | "INATIVO" | null;
   /** Data de cadastro atual (created_at) do projeto existente; null para novos. */
   data_cadastro_atual: string | null;
   projeto_id: string | null;
   codigo_interno_atual: string | null;
+  /** Descrição atual do projeto existente; null para novos. */
+  descricao_atual: string | null;
+  /** Status atual do projeto existente; null para novos. */
+  status_atual: "ATIVO" | "INATIVO" | null;
   acao: ProjetoImportAcao;
   erros: string[];
-  diff: ProjetoImportFieldDiff[];
 };
 
 export type ProjetoImportPreview = {
   correlation_id: string;
   total: number;
   criar: number;
-  atualizar: number;
-  ativar: number;
-  desativar: number;
-  sem_alteracao: number;
+  ja_existente: number;
   erro: number;
   empresas_envolvidas: number;
   linhas: ProjetoImportPreviewRow[];
@@ -321,8 +320,6 @@ const importRowSchema = z.object({
   linha: z.number().int().min(1),
   empresa_nome: z.string().max(200),
   nome_projeto: z.string().max(200),
-  descricao: z.string().max(500).nullable().optional(),
-  status: z.string().max(20),
 });
 
 const importInputSchema = z.object({
@@ -342,12 +339,6 @@ function normalizeEmpresaNome(v: string): string {
 function normalizeNomeProjeto(v: string): string {
   return (v ?? "").trim().replace(/\s+/g, " ").toLowerCase();
 }
-function normalizeStatus(v: string): "ATIVO" | "INATIVO" | null {
-  const s = (v ?? "").trim().toUpperCase();
-  if (s === "ATIVO" || s === "1" || s === "ATIVA" || s === "TRUE") return "ATIVO";
-  if (s === "INATIVO" || s === "0" || s === "INATIVA" || s === "FALSE") return "INATIVO";
-  return null;
-}
 
 async function buildPreview(
   supabase: import("@/lib/rbac/guards.server").MiddlewareContext["supabase"],
@@ -355,7 +346,8 @@ async function buildPreview(
   rows: z.infer<typeof importRowSchema>[],
 ): Promise<ProjetoImportPreview> {
   const empresasBucket = new Map<string, Array<{ id: string; nome: string; ativo: boolean }>>();
-  const { data: emps } = await supabase.from("empresas").select("id, nome, ativo");
+  const { data: emps, error: empsErr } = await supabase.from("empresas").select("id, nome, ativo");
+  if (empsErr) throw mapSupabaseError(empsErr.message);
   for (const e of (emps ?? []) as Array<{ id: string; nome: string; ativo: boolean }>) {
     const key = normalizeEmpresaNome(e.nome);
     if (!key) continue;
@@ -376,10 +368,11 @@ async function buildPreview(
   };
   const projetoKey = new Map<string, ExistingProjeto[]>();
   if (empresaIds.size > 0) {
-    const { data: projs } = await supabase
+    const { data: projs, error: projsErr } = await supabase
       .from("projetos")
       .select("id, empresa_id, nome, ativo, descricao, codigo_interno, created_at")
       .in("empresa_id", [...empresaIds]);
+    if (projsErr) throw mapSupabaseError(projsErr.message);
     for (const p of (projs ?? []) as Array<{
       id: string; empresa_id: string; nome: string;
       ativo: boolean; descricao: string | null;
@@ -409,24 +402,15 @@ async function buildPreview(
     }
   }
 
-  const nullIfBlank = (v: string | null | undefined): string | null => {
-    if (v == null) return null;
-    const s = String(v).trim();
-    return s === "" ? null : s;
-  };
-
   const linhas: ProjetoImportPreviewRow[] = rows.map((r) => {
     const enNorm = normalizeEmpresaNome(r.empresa_nome);
     const nome = (r.nome_projeto ?? "").trim().replace(/\s+/g, " ");
     const nomeNorm = normalizeNomeProjeto(nome);
-    const descricao = nullIfBlank(r.descricao);
-    const status = normalizeStatus(r.status);
     const erros: string[] = [];
 
     if (!enNorm) erros.push("Empresa obrigatória");
     if (!nome) erros.push("Projeto (nome) obrigatório");
     if (nome.length > 120) erros.push("Projeto acima de 120 caracteres");
-    if (!status) erros.push("Status inválido (use ATIVO ou INATIVO)");
 
     const bucket = enNorm ? empresasBucket.get(enNorm) : undefined;
     let emp: { id: string; nome: string; ativo: boolean } | undefined;
@@ -450,12 +434,12 @@ async function buildPreview(
     let projetoId: string | null = null;
     let codigoInternoAtual: string | null = null;
     let dataCadastroAtual: string | null = null;
-    const diff: ProjetoImportFieldDiff[] = [];
+    let descricaoAtual: string | null = null;
+    let statusAtual: "ATIVO" | "INATIVO" | null = null;
 
-    if (erros.length === 0 && emp && status) {
+    if (erros.length === 0 && emp) {
       const key = `${emp.id}::${nomeNorm}`;
       const existingList = projetoKey.get(key) ?? [];
-      const wantAtivo = status === "ATIVO";
       if (existingList.length === 0) {
         acao = "CRIAR";
       } else if (existingList.length > 1) {
@@ -465,19 +449,9 @@ async function buildPreview(
         projetoId = existing.id;
         codigoInternoAtual = existing.codigo_interno;
         dataCadastroAtual = existing.created_at;
-        const atualStatus = existing.ativo ? "ATIVO" : "INATIVO";
-        const novoStatus: "ATIVO" | "INATIVO" = wantAtivo ? "ATIVO" : "INATIVO";
-
-        if (atualStatus !== novoStatus)
-          diff.push({ campo: "status", atual: atualStatus, novo: novoStatus });
-        if ((existing.descricao ?? null) !== descricao)
-          diff.push({ campo: "descricao", atual: existing.descricao, novo: descricao });
-
-        const statusMudou = atualStatus !== novoStatus;
-        const outrosMudaram = diff.some((d) => d.campo !== "status");
-        if (!statusMudou && !outrosMudaram) acao = "SEM_ALTERACAO";
-        else if (statusMudou && !outrosMudaram) acao = wantAtivo ? "ATIVAR" : "DESATIVAR";
-        else acao = "ATUALIZAR";
+        descricaoAtual = existing.descricao;
+        statusAtual = existing.ativo ? "ATIVO" : "INATIVO";
+        acao = "JA_EXISTENTE";
       }
     }
 
@@ -487,14 +461,13 @@ async function buildPreview(
       empresa_nome: emp?.nome ?? null,
       empresa_id: emp?.id ?? null,
       nome_projeto: nome,
-      descricao,
-      status_normalizado: status,
       data_cadastro_atual: dataCadastroAtual,
       projeto_id: projetoId,
       codigo_interno_atual: codigoInternoAtual,
+      descricao_atual: descricaoAtual,
+      status_atual: statusAtual,
       acao,
       erros,
-      diff,
     };
   });
 
@@ -503,10 +476,7 @@ async function buildPreview(
     correlation_id: correlationId,
     total: linhas.length,
     criar: contar("CRIAR"),
-    atualizar: contar("ATUALIZAR"),
-    ativar: contar("ATIVAR"),
-    desativar: contar("DESATIVAR"),
-    sem_alteracao: contar("SEM_ALTERACAO"),
+    ja_existente: contar("JA_EXISTENTE"),
     erro: contar("ERRO"),
     empresas_envolvidas: new Set(linhas.map((l) => l.empresa_id).filter(Boolean)).size,
     linhas,
@@ -557,15 +527,6 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
       });
     });
 
-    const rowsJson = data.rows.map((r) => ({
-      row_number: r.linha,
-      empresa_nome: r.empresa_nome,
-      nome_projeto: r.nome_projeto,
-      descricao: r.descricao ?? null,
-      status: r.status,
-      data_cadastro: null,
-    }));
-
     type AtomicResult = {
       success: boolean;
       correlation_id: string;
@@ -580,10 +541,67 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
       duration_ms: number;
     };
 
+    // Recomputa a prévia server-side antes de confirmar e envia à RPC APENAS
+    // as linhas classificadas como CRIAR — projetos existentes são preservados
+    // integralmente (código, data, descrição, status). Defaults automáticos:
+    // descricao='NOVO PROJETO', status='ATIVO'.
+    const previewNow = await buildPreview(context.supabase, correlationId, data.rows);
+    const rowsJson = previewNow.linhas
+      .filter((l) => l.acao === "CRIAR")
+      .map((l) => ({
+        row_number: l.linha,
+        empresa_nome: l.empresa_original,
+        nome_projeto: l.nome_projeto,
+        descricao: DESCRICAO_PADRAO_NOVO,
+        status: "ATIVO",
+        data_cadastro: null,
+      }));
+
+    // Se todas as linhas válidas são "JÁ EXISTENTE" e não há erros, não há
+    // nada para gravar — retorna sucesso vazio sem chamar a RPC.
+    if (previewNow.erro === 0 && rowsJson.length === 0) {
+      await audit(context.supabase, "PROJETOS_IMPORTACAO_CONCLUIDA", null, correlationId,
+        null, { duration_ms: 0, total_rows: previewNow.total,
+          rows_per_second: 0, created: 0, updated: 0,
+          activated: 0, deactivated: 0,
+          unchanged: previewNow.ja_existente, correlation_id: correlationId },
+        `nenhuma criação — ${previewNow.ja_existente} projeto(s) já existente(s)`,
+        null, null, true);
+      return {
+        criadas: 0,
+        atualizadas: 0,
+        ativadas: 0,
+        desativadas: 0,
+        ignoradas: previewNow.ja_existente,
+        falhas: [],
+        success: true,
+        correlation_id: correlationId,
+        total: previewNow.total,
+        rejected: 0,
+        duration_ms: 0,
+      };
+    }
+
+    // Se há erros na prévia, aborta antes de tocar no banco.
+    if (previewNow.erro > 0) {
+      const detalhes = previewNow.linhas
+        .filter((l) => l.acao === "ERRO")
+        .slice(0, 5)
+        .map((l) => `linha ${l.linha}: ${l.erros.join("; ")}`)
+        .join(" | ");
+      await audit(context.supabase, "PROJETOS_IMPORTACAO_FALHOU", null, correlationId,
+        null, { error_code: "INVALID_PAYLOAD", failure_phase: "rpc_validation",
+          duration_ms: 0, total_rows: data.rows.length,
+          correlation_id: correlationId, rejected: previewNow.erro },
+        `bloqueada — ${previewNow.erro} linha(s) com erro`, null, null, false);
+      throw new Error(`INVALID_PAYLOAD: ${previewNow.erro} linha(s) com erro. ${detalhes}`.slice(0, 480));
+    }
+
     let rpcResult: AtomicResult | null = null;
     let rpcErrorMessage: string | null = null;
     let rpcErrorCode: string | null = null;
     let rpcErrorDetails: string | null = null;
+    let rpcErrorHint: string | null = null;
     type FailurePhase = "rpc_call" | "rpc_validation" | "rpc_write" | "unknown";
     let failurePhase: FailurePhase = "unknown";
     const startedAt = Date.now();
@@ -597,6 +615,7 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
         rpcErrorMessage = error.message ?? String(error);
         rpcErrorCode = (error as { code?: string }).code ?? null;
         rpcErrorDetails = (error as { details?: string }).details ?? null;
+        rpcErrorHint = (error as { hint?: string }).hint ?? null;
       } else {
         rpcResult = out as unknown as AtomicResult;
       }
@@ -604,6 +623,7 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
       rpcErrorMessage = err instanceof Error ? err.message : String(err);
       rpcErrorCode = (err as { code?: string })?.code ?? null;
       rpcErrorDetails = (err as { details?: string })?.details ?? null;
+      rpcErrorHint = (err as { hint?: string })?.hint ?? null;
     }
 
     if (rpcErrorMessage || !rpcResult) {
@@ -652,17 +672,33 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
       }
 
       failurePhase = phase;
+      // Diagnóstico completo — nunca mascaramos message/details/hint/code
+      // vindos do Supabase. Fica no audit e no erro retornado ao cliente.
+      const diagBits = [
+        rpcErrorCode ? `code=${rpcErrorCode}` : null,
+        rpcErrorMessage ? `message=${rpcErrorMessage}` : null,
+        rpcErrorDetails ? `details=${rpcErrorDetails}` : null,
+        rpcErrorHint ? `hint=${rpcErrorHint}` : null,
+      ].filter(Boolean).join(" | ");
       await audit(context.supabase, "PROJETOS_IMPORTACAO_FALHOU", null, correlationId,
         null, { error_code: userCode, failure_phase: failurePhase,
           duration_ms: Date.now() - startedAt, total_rows: data.rows.length,
-          correlation_id: correlationId, rpc_details: rpcErrorDetails ?? null },
-        `${userCode} — importação abortada`, null, null, false);
+          correlation_id: correlationId,
+          rpc_code: rpcErrorCode, rpc_message: rpcErrorMessage,
+          rpc_details: rpcErrorDetails, rpc_hint: rpcErrorHint },
+        `${userCode} — importação abortada. ${diagBits}`.slice(0, 500), null, null, false);
 
-      const err = new Error(`${userCode}: ${userMessage}`) as Error & {
+      const fullMsg = diagBits ? `${userMessage} [${diagBits}]`.slice(0, 480) : userMessage;
+      const err = new Error(`${userCode}: ${fullMsg}`) as Error & {
         code: string; correlationId: string;
+        rpcCode?: string | null; rpcDetails?: string | null; rpcHint?: string | null; rpcMessage?: string | null;
       };
       err.code = userCode;
       err.correlationId = correlationId;
+      err.rpcCode = rpcErrorCode;
+      err.rpcDetails = rpcErrorDetails;
+      err.rpcHint = rpcErrorHint;
+      err.rpcMessage = rpcErrorMessage;
       throw err;
     }
 
