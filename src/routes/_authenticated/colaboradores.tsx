@@ -323,14 +323,9 @@ function ColaboradoresPage() {
         ativo: values.ativo,
       };
       if (values.id) {
-        const { error } = await supabase
-          .from("colaboradores")
-          .update(payload as never)
-          .eq("id", values.id);
-        if (error) throw { error, payload };
+        await updateColaborador({ data: { id: values.id, ...payload } });
       } else {
-        const { error } = await supabase.from("colaboradores").insert(payload as never);
-        if (error) throw { error, payload };
+        await createColaborador({ data: payload });
       }
     },
     onSuccess: (_d, vars) => {
@@ -339,42 +334,31 @@ function ColaboradoresPage() {
       setDialogOpen(false);
       setEditing(null);
     },
-    onError: (raw: unknown, vars) => {
-      const wrapped = raw as { error?: { message?: string }; payload?: { empresa_id: string; matricula: string } };
-      const err = wrapped?.error ?? (raw as { message?: string });
-      const msg = (err && "message" in err && err.message) || String(raw);
-      const isDup = /colaboradores_empresa_matricula_uidx|duplicate|unique/i.test(msg);
-      if (isDup) {
+    onError: (err: unknown, vars) => {
+      const f = friendlyRbacError(err);
+      const msg = err instanceof Error ? err.message : String(err);
+      if (/matrícula|matricula/i.test(msg) && /existe|duplic/i.test(msg)) {
         toast.error("Já existe um colaborador com esta matrícula nesta empresa.");
-        // Auditoria dedicada de tentativa de duplicidade (best-effort).
-        const matInformada = wrapped?.payload?.matricula ?? vars.matricula;
-        const matNormalizada = normalizeMatricula(matInformada);
+        const matNormalizada = normalizeMatricula(vars.matricula);
         void supabase.from("audit_logs").insert({
           modulo: "colaboradores",
           acao: "COLABORADOR_DUPLICIDADE_BLOQUEADA",
           entidade: "colaborador",
           entidade_id: vars.id ?? null,
-          empresa_id: wrapped?.payload?.empresa_id ?? vars.empresa_id,
+          empresa_id: vars.empresa_id,
           projeto_id: vars.projeto_id ?? null,
           sucesso: false,
           origem: vars.id ? "edicao" : "manual",
           observacoes: `Cadastro/edição bloqueado por duplicidade (empresa + matrícula): ${matNormalizada}`,
           depois: {
             empresa_id: vars.empresa_id,
-            matricula_informada: matInformada,
+            matricula_informada: vars.matricula,
             matricula_normalizada: matNormalizada,
             origem: vars.id ? "edicao" : "cadastro",
           },
         } as never);
-      } else if (/não pertence à empresa/i.test(msg)) {
-
-        toast.error("O projeto selecionado não pertence à empresa informada.");
-      } else if (/empresa está inativa|empresa inativa/i.test(msg)) {
-        toast.error("A empresa está inativa. Ative a empresa antes de manter o colaborador ativo.");
-      } else if (/projeto está inativo|projeto inativo/i.test(msg)) {
-        toast.error("O projeto está inativo. Ative o projeto antes de manter o colaborador ativo.");
       } else {
-        toast.error("Não foi possível salvar o colaborador.", { description: msg });
+        toast.error(f.title, { description: f.description });
       }
     },
   });
@@ -382,11 +366,7 @@ function ColaboradoresPage() {
 
   const toggleMut = useMutation({
     mutationFn: async (row: Colaborador) => {
-      const { error } = await supabase
-        .from("colaboradores")
-        .update({ ativo: !row.ativo } as never)
-        .eq("id", row.id);
-      if (error) throw error;
+      await setColaboradorAtivo({ data: { id: row.id, ativo: !row.ativo } });
       return !row.ativo;
     },
     onSuccess: (novoAtivo) => {
@@ -395,14 +375,8 @@ function ColaboradoresPage() {
       setConfirmToggle(null);
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (/empresa está inativa|empresa inativa/i.test(msg)) {
-        toast.error("Não é possível ativar: a empresa está inativa.");
-      } else if (/projeto está inativo|projeto inativo/i.test(msg)) {
-        toast.error("Não é possível ativar: o projeto está inativo.");
-      } else {
-        toast.error("Não foi possível alterar o status.", { description: msg });
-      }
+      const f = friendlyRbacError(err);
+      toast.error(f.title, { description: f.description });
       setConfirmToggle(null);
     },
   });
