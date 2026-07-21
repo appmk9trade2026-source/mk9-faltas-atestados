@@ -590,7 +590,24 @@ function ImportarPage() {
   }
 
   function setResolucao(key: string, projetoId: string) {
-    setResolucoes((prev) => ({ ...prev, [key]: projetoId }));
+    const next = { ...resolucoes, [key]: projetoId };
+    setResolucoes(next);
+    // Revalidação automática — o usuário não precisa clicar em "Validar novamente".
+    if (rows.length > 0) {
+      const raw = rows.map((r) => ({
+        "Matrícula": r.matricula,
+        "Nome Completo": r.nome_completo,
+        "Projeto": r.projeto,
+        "Empresa": r.empresa,
+        "Telefone do Colaborador": r.telefone,
+        "WhatsApp": r.whatsapp,
+        "Email": r.email,
+        "Supervisor(a)": r.supervisor_nome,
+        "Telefone do Supervisor": r.supervisor_telefone,
+        "Email Supervisor": r.supervisor_email,
+      }));
+      setRows(validar(raw, next));
+    }
   }
 
   return (
