@@ -107,9 +107,8 @@ type ParsedRow = {
 const digitsOnly = (v: string) => v.replace(/\D+/g, "");
 const isValidEmail = (e: string) => !e || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 const norm = (v: unknown) => String(v ?? "").trim();
-/** Normalização para chave lógica: upper + colapso de espaços (preserva acentos). */
-const nameKey = (v: string) =>
-  v.trim().replace(/\s+/g, " ").toUpperCase();
+/** Chave lógica de comparação (upper + sem acentos + hífens→espaço + colapso). */
+const nameKey = (v: string) => normalizeName(v);
 
 type Empresa = { id: string; nome: string; ativo: boolean };
 type Projeto = { id: string; nome: string; empresa_id: string; ativo: boolean };
