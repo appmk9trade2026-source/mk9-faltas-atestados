@@ -102,6 +102,10 @@ type ParsedRow = {
   erros: { code: ErrorCode; msg: string }[];
   /** Sugestões de projeto quando o nome não bateu exatamente. */
   sugestoes_projeto?: { id: string; nome: string }[];
+  /** Nome cadastrado do projeto encontrado (para exibição quando difere do informado). */
+  projeto_localizado_nome?: string | null;
+  /** true quando o vínculo foi resolvido por normalização (hífen, acento, espaços). */
+  projeto_por_normalizacao?: boolean;
 };
 
 const digitsOnly = (v: string) => v.replace(/\D+/g, "");
