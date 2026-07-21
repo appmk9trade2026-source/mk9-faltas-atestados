@@ -47,6 +47,22 @@ import { friendlyRbacError } from "@/lib/rbac/errors";
 
 
 export const Route = createFileRoute("/_authenticated/colaboradores_/importar")({
+  head: () => ({
+    meta: [
+      { title: "Importar Colaboradores · CRM MK9" },
+      {
+        name: "description",
+        content: "Importação validada de colaboradores com resolução manual de projetos ambíguos.",
+      },
+      { property: "og:title", content: "Importar Colaboradores · CRM MK9" },
+      {
+        property: "og:description",
+        content: "Importação validada de colaboradores com resolução manual de projetos ambíguos.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: ImportarPage,
 });
 
