@@ -113,6 +113,13 @@ function ImportarProjetosPage() {
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<Awaited<ReturnType<typeof confirmProjetosImport>> | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [conflict, setConflict] = useState<{
+    code: "IMPORT_CONFLICT" | "IMPORT_CONCURRENT_CHANGE" | "IMPORT_TEMPORARILY_UNAVAILABLE" | "IMPORT_FAILED";
+    message: string;
+    correlationId?: string;
+    hint?: { row_number?: number; codigo_projeto?: string; cnpj_empresa?: string };
+  } | null>(null);
+  const [revalidating, setRevalidating] = useState(false);
 
   function reset() {
     setStep(1);
