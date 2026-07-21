@@ -937,3 +937,221 @@ function ProjetoDialog({
     </Dialog>
   );
 }
+
+function DeleteProjetosDialog({
+  open,
+  onOpenChange,
+  ids,
+  onDone,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  ids: string[];
+  onDone: () => void;
+}) {
+  const [confirmText, setConfirmText] = useState("");
+  const [motivo, setMotivo] = useState("");
+
+  const vinculosQ = useQuery({
+    queryKey: ["projetos", "vinculos", ids.sort().join(",")],
+    queryFn: async () => {
+      if (ids.length === 0) return { projetos: [] as ProjetoVinculos[] };
+      return await getProjetosVinculos({ data: { ids } });
+    },
+    enabled: open && ids.length > 0,
+  });
+
+  const projetos = vinculosQ.data?.projetos ?? [];
+  const paraExcluir = projetos.filter((p) => p.pode_excluir);
+  const paraArquivar = projetos.filter((p) => !p.pode_excluir);
+
+  const deleteMut = useMutation({
+    mutationFn: async () => {
+      return await deleteProjetosSmart({
+        data: {
+          ids,
+          confirm: "EXCLUIR",
+          motivo: motivo.trim() || undefined,
+        },
+      });
+    },
+    onSuccess: (res) => {
+      const parts: string[] = [];
+      if (res.excluidos > 0) parts.push(`${res.excluidos} excluído(s)`);
+      if (res.arquivados > 0) parts.push(`${res.arquivados} arquivado(s)`);
+      toast.success(parts.join(" · ") || "Operação concluída.");
+      if (res.erros.length > 0) {
+        toast.error(`${res.erros.length} erro(s)`, {
+          description: res.erros.map((e) => `${e.nome}: ${e.erro}`).join("\n"),
+        });
+      }
+      setConfirmText("");
+      setMotivo("");
+      onDone();
+    },
+    onError: (err: unknown) => {
+      const f = friendlyRbacError(err);
+      toast.error(f.title, { description: f.description });
+    },
+  });
+
+  const canConfirm = confirmText.trim().toUpperCase() === "EXCLUIR" && projetos.length > 0;
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) {
+          setConfirmText("");
+          setMotivo("");
+        }
+        onOpenChange(o);
+      }}
+    >
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            Excluir {ids.length === 1 ? "projeto" : `${ids.length} projetos`}
+          </DialogTitle>
+          <DialogDescription>
+            Projetos sem vínculos serão <strong>excluídos definitivamente</strong>.
+            Projetos com colaboradores ou ausências serão <strong>arquivados</strong>{" "}
+            (desativados) para preservar o histórico.
+          </DialogDescription>
+        </DialogHeader>
+
+        {vinculosQ.isLoading && (
+          <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verificando vínculos...
+          </div>
+        )}
+
+        {vinculosQ.isError && (
+          <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+            Erro ao carregar vínculos: {(vinculosQ.error as Error)?.message}
+          </div>
+        )}
+
+        {!vinculosQ.isLoading && !vinculosQ.isError && projetos.length > 0 && (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
+                <div className="flex items-center gap-2 font-medium text-destructive">
+                  <Trash2 className="h-4 w-4" /> Exclusão física
+                </div>
+                <p className="mt-1 text-2xl font-bold text-destructive">
+                  {paraExcluir.length}
+                </p>
+                <p className="text-xs text-muted-foreground">sem vínculos</p>
+              </div>
+              <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
+                <div className="flex items-center gap-2 font-medium text-amber-700 dark:text-amber-400">
+                  <Archive className="h-4 w-4" /> Arquivamento
+                </div>
+                <p className="mt-1 text-2xl font-bold text-amber-700 dark:text-amber-400">
+                  {paraArquivar.length}
+                </p>
+                <p className="text-xs text-muted-foreground">com vínculos</p>
+              </div>
+            </div>
+
+            <div className="max-h-56 overflow-y-auto rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Projeto</TableHead>
+                    <TableHead>Empresa</TableHead>
+                    <TableHead className="text-right">Colab.</TableHead>
+                    <TableHead className="text-right">Ausências</TableHead>
+                    <TableHead>Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {projetos.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-medium">{p.nome}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {p.empresa_nome ?? "—"}
+                      </TableCell>
+                      <TableCell className="text-right">{p.colaboradores}</TableCell>
+                      <TableCell className="text-right">{p.ausencias}</TableCell>
+                      <TableCell>
+                        {p.pode_excluir ? (
+                          <Badge
+                            variant="outline"
+                            className="border-destructive/40 text-destructive"
+                          >
+                            Excluir
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="border-amber-500/40 text-amber-700 dark:text-amber-400"
+                          >
+                            Arquivar
+                          </Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">
+                Motivo (opcional, registrado na auditoria)
+              </label>
+              <Input
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                placeholder="Ex.: encerramento de contrato, projeto duplicado..."
+                maxLength={500}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium">
+                Digite <span className="font-mono font-bold text-destructive">EXCLUIR</span>{" "}
+                para confirmar
+              </label>
+              <Input
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="EXCLUIR"
+                autoComplete="off"
+              />
+            </div>
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={deleteMut.isPending}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="destructive"
+            disabled={!canConfirm || deleteMut.isPending}
+            onClick={() => deleteMut.mutate()}
+          >
+            {deleteMut.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processando...
+              </>
+            ) : (
+              <>
+                <Trash2 className="mr-2 h-4 w-4" /> Confirmar
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
