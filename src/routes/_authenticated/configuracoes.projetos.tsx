@@ -861,30 +861,34 @@ function ProjetoDialog({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="codigo_protocolo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Código de protocolo *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Ex.: ARMT"
-                        maxLength={10}
-                        className="font-mono uppercase tracking-wider"
-                        value={field.value ?? ""}
-                        onChange={(e) => field.onChange(e.target.value.toUpperCase())}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Prefixo usado no protocolo dos lançamentos deste projeto
-                      (ex.: <span className="font-mono">ARMT-20260720-000001</span>).
-                      2–10 caracteres, apenas letras maiúsculas e números.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {editing ? (
+                <div className="rounded-md border bg-muted/40 p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground">Código interno</p>
+                      <p className="font-mono text-sm">{editing.codigo_interno ?? "—"}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-medium text-muted-foreground">Prefixo de protocolo</p>
+                      <p className="font-mono text-sm tracking-wider">{editing.codigo_protocolo ?? "—"}</p>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Códigos gerados automaticamente pelo sistema. Não podem ser alterados por este formulário.
+                  </p>
+                </div>
+              ) : (
+                <div className="rounded-md border border-dashed border-blue-500/40 bg-blue-500/5 p-3">
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    O <span className="font-medium">código interno</span> (ex.:{" "}
+                    <span className="font-mono">PRJ-000001</span>) e o{" "}
+                    <span className="font-medium">prefixo de protocolo</span> (ex.:{" "}
+                    <span className="font-mono">ADM</span>) serão gerados automaticamente
+                    após o cadastro.
+                  </p>
+                </div>
+              )}
+
 
 
               <FormField
