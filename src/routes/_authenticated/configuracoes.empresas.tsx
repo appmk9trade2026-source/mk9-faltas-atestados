@@ -61,6 +61,8 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { createEmpresa, updateEmpresa, setEmpresaAtiva } from "@/lib/empresas.functions";
+import { friendlyRbacError } from "@/lib/rbac/errors";
 
 export const Route = createFileRoute("/_authenticated/configuracoes/empresas")({
   head: () => ({ meta: [{ title: "Empresas · Configurações · CRM MK9" }] }),
