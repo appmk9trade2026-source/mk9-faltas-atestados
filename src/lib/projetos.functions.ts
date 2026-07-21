@@ -403,16 +403,33 @@ async function buildPreview(
     const emp = empresasMap.get(c);
     if (emp) empresaIds.add(emp.id);
   }
-  const projetoKey = new Map<string, { id: string; ativo: boolean; nome: string }>();
+  type ExistingProjeto = {
+    id: string;
+    ativo: boolean;
+    nome: string;
+    descricao: string | null;
+    data_inicio: string | null;
+    data_fim: string | null;
+    observacoes: string | null;
+  };
+  const projetoKey = new Map<string, ExistingProjeto>();
   if (empresaIds.size > 0) {
     const { data: projs } = await supabase
       .from("projetos")
-      .select("id, empresa_id, codigo_protocolo, nome, ativo")
+      .select("id, empresa_id, codigo_protocolo, nome, ativo, descricao, data_inicio, data_fim, observacoes")
       .in("empresa_id", [...empresaIds]);
-    for (const p of (projs ?? []) as Array<{ id: string; empresa_id: string; codigo_protocolo: string | null; nome: string; ativo: boolean }>) {
+    for (const p of (projs ?? []) as Array<{
+      id: string; empresa_id: string; codigo_protocolo: string | null;
+      nome: string; ativo: boolean;
+      descricao: string | null; data_inicio: string | null;
+      data_fim: string | null; observacoes: string | null;
+    }>) {
       if (p.codigo_protocolo) {
-        projetoKey.set(`${p.empresa_id}::${p.codigo_protocolo.toUpperCase()}`,
-          { id: p.id, ativo: p.ativo, nome: p.nome });
+        projetoKey.set(`${p.empresa_id}::${p.codigo_protocolo.toUpperCase()}`, {
+          id: p.id, ativo: p.ativo, nome: p.nome,
+          descricao: p.descricao, data_inicio: p.data_inicio,
+          data_fim: p.data_fim, observacoes: p.observacoes,
+        });
       }
     }
   }
@@ -430,6 +447,12 @@ async function buildPreview(
     }
   }
 
+  const nullIfBlank = (v: string | null | undefined): string | null => {
+    if (v == null) return null;
+    const s = String(v).trim();
+    return s === "" ? null : s;
+  };
+
   const linhas: ProjetoImportPreviewRow[] = rows.map((r) => {
     const cnNorm = normalizeCnpj(r.cnpj_empresa);
     const codNorm = normalizeCodigoProjeto(r.codigo_projeto);
@@ -437,6 +460,8 @@ async function buildPreview(
     const status = normalizeStatus(r.status);
     const dtIni = normalizeDate(r.data_inicio ?? null);
     const dtFim = normalizeDate(r.data_fim ?? null);
+    const descricao = nullIfBlank(r.descricao);
+    const observacoes = nullIfBlank(r.observacoes);
     const erros: string[] = [];
 
     if (!cnNorm) erros.push("CNPJ obrigatório");
@@ -472,21 +497,40 @@ async function buildPreview(
 
     let acao: ProjetoImportAcao = "ERRO";
     let projetoId: string | null = null;
+    const diff: ProjetoImportFieldDiff[] = [];
 
     if (erros.length === 0 && emp && status) {
       const key = `${emp.id}::${codNorm}`;
       const existing = projetoKey.get(key);
       projetoId = existing?.id ?? null;
       const wantAtivo = status === "ATIVO";
-      if (!existing) acao = "CRIAR";
-      else {
-        // Detecta mudança de status vs alteração de campos
-        const statusMudou = existing.ativo !== wantAtivo;
-        const nomeMudou = existing.nome !== nome;
-        const dadosMudaram = nomeMudou || r.descricao != null || dtIni || dtFim || r.observacoes != null;
-        if (statusMudou && !dadosMudaram) acao = wantAtivo ? "ATIVAR" : "DESATIVAR";
-        else if (statusMudou || dadosMudaram) acao = "ATUALIZAR";
-        else acao = "SEM_ALTERACAO";
+      if (!existing) {
+        acao = "CRIAR";
+      } else {
+        // Comparação campo a campo — datas são strings YYYY-MM-DD no banco
+        const novoDtIni = typeof dtIni === "string" ? dtIni : null;
+        const novoDtFim = typeof dtFim === "string" ? dtFim : null;
+        const atualStatus = existing.ativo ? "ATIVO" : "INATIVO";
+        const novoStatus: "ATIVO" | "INATIVO" = wantAtivo ? "ATIVO" : "INATIVO";
+
+        if (existing.nome !== nome)
+          diff.push({ campo: "nome_projeto", atual: existing.nome, novo: nome });
+        if (atualStatus !== novoStatus)
+          diff.push({ campo: "status", atual: atualStatus, novo: novoStatus });
+        if ((existing.descricao ?? null) !== descricao)
+          diff.push({ campo: "descricao", atual: existing.descricao, novo: descricao });
+        if ((existing.data_inicio ?? null) !== novoDtIni)
+          diff.push({ campo: "data_inicio", atual: existing.data_inicio, novo: novoDtIni });
+        if ((existing.data_fim ?? null) !== novoDtFim)
+          diff.push({ campo: "data_fim", atual: existing.data_fim, novo: novoDtFim });
+        if ((existing.observacoes ?? null) !== observacoes)
+          diff.push({ campo: "observacoes", atual: existing.observacoes, novo: observacoes });
+
+        const statusMudou = atualStatus !== novoStatus;
+        const outrosMudaram = diff.some((d) => d.campo !== "status");
+        if (!statusMudou && !outrosMudaram) acao = "SEM_ALTERACAO";
+        else if (statusMudou && !outrosMudaram) acao = wantAtivo ? "ATIVAR" : "DESATIVAR";
+        else acao = "ATUALIZAR";
       }
     }
 
@@ -502,6 +546,7 @@ async function buildPreview(
       projeto_id: projetoId,
       acao,
       erros,
+      diff,
     };
   });
 
