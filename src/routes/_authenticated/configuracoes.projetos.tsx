@@ -700,7 +700,58 @@ function ProjetosPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {canDelete && (
+        <DeleteProjetosDialog
+          open={deleteOpen}
+          onOpenChange={(o) => {
+            setDeleteOpen(o);
+          }}
+          ids={Array.from(selectedIds)}
+          onDone={() => {
+            setDeleteOpen(false);
+            clearSelection();
+            queryClient.invalidateQueries({ queryKey: ["projetos"] });
+          }}
+        />
+      )}
+
+      {canDelete && selectedCount > 0 && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
+          <div className="pointer-events-auto flex w-full max-w-3xl items-center gap-3 rounded-lg border bg-card/95 p-3 shadow-lg backdrop-blur">
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              <span className="font-medium">
+                {selectedCount} {selectedCount === 1 ? "projeto selecionado" : "projetos selecionados"}
+              </span>
+              {selectedCount < filtered.length && (
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0 text-xs"
+                  onClick={selectAllFiltered}
+                >
+                  Selecionar todos os {filtered.length} filtrados
+                </Button>
+              )}
+            </div>
+            <div className="ml-auto flex gap-2">
+              <Button variant="outline" size="sm" onClick={clearSelection}>
+                <X className="mr-1 h-4 w-4" /> Limpar
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 className="mr-1 h-4 w-4" /> Excluir selecionados
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
+
   );
 }
 
