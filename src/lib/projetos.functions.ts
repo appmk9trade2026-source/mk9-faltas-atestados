@@ -535,6 +535,12 @@ export const previewProjetosImport = createServerFn({ method: "POST" })
     return buildPreview(context.supabase, correlationId, data.rows);
   });
 
+/**
+ * Confirmação atômica: delega toda a escrita para a RPC transacional
+ * `import_projetos_atomic`. Se qualquer erro ocorrer no banco, a transação
+ * inteira é revertida (tudo-ou-nada). Falhas técnicas são registradas fora
+ * da transação para não serem apagadas pelo rollback.
+ */
 export const confirmProjetosImport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => {
@@ -543,131 +549,120 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const correlationId = data.correlation_id ?? crypto.randomUUID();
 
-    // Auditoria de início
-    await audit(context.supabase, "PROJETOS_IMPORTACAO_INICIADA", null, correlationId,
-      null,
-      { arquivo: data.arquivo_nome ?? null, tamanho: data.arquivo_tamanho ?? null, total: data.rows.length },
-      `importação de ${data.rows.length} linha(s)`, null, null);
-
-    // Revalida do zero (nunca confiar na prévia do frontend)
-    const preview = await buildPreview(context.supabase, correlationId, data.rows);
-
-    const precisaCriar = preview.criar > 0;
-    const precisaEditar = preview.atualizar + preview.ativar + preview.desativar > 0;
-
-    // Gate de permissões — se falta qualquer permissão exigida, bloqueia tudo.
-    if (precisaCriar) {
-      await requirePermission({
-        ctx: context,
-        permission: PERMISSION_MAP.createProject,
-        route: "/configuracoes/projetos/importar",
-        correlationId,
-      });
-    }
-    if (precisaEditar) {
+    // Gate mínimo: usuário precisa poder criar OU editar projeto para chegar
+    // aqui. A RPC re-avalia o gate real (criar vs. editar) com base no plano.
+    await requirePermission({
+      ctx: context,
+      permission: PERMISSION_MAP.createProject,
+      route: "/configuracoes/projetos/importar",
+      correlationId,
+    }).catch(async () => {
       await requirePermission({
         ctx: context,
         permission: PERMISSION_MAP.updateProject,
         route: "/configuracoes/projetos/importar",
         correlationId,
       });
+    });
+
+    // Payload da RPC — nunca envia empresa_id (a RPC localiza por CNPJ).
+    const rowsJson = data.rows.map((r) => ({
+      row_number: r.linha,
+      cnpj_empresa: r.cnpj_empresa,
+      codigo_projeto: r.codigo_projeto,
+      nome_projeto: r.nome_projeto,
+      status: r.status,
+      descricao: r.descricao ?? null,
+      data_inicio: r.data_inicio ?? null,
+      data_fim: r.data_fim ?? null,
+      observacoes: r.observacoes ?? null,
+    }));
+
+    type AtomicResult = {
+      success: boolean;
+      correlation_id: string;
+      total: number;
+      created: number;
+      updated: number;
+      activated: number;
+      deactivated: number;
+      unchanged: number;
+      rejected: number;
+      errors: Array<{ row_number: number; field: string; code: string; message: string }>;
+      duration_ms: number;
+    };
+
+    let rpcResult: AtomicResult | null = null;
+    let rpcError: string | null = null;
+    try {
+      const { data: out, error } = await context.supabase.rpc(
+        "import_projetos_atomic" as never,
+        { _rows: rowsJson as never, _correlation_id: correlationId as never } as never,
+      );
+      if (error) throw new Error(error.message);
+      rpcResult = out as unknown as AtomicResult;
+    } catch (err) {
+      rpcError = err instanceof Error ? err.message : String(err);
     }
 
-    if (preview.erro > 0) {
-      await audit(context.supabase, "PROJETOS_IMPORTACAO_FALHOU", null, correlationId,
-        null, { erros: preview.erro, total: preview.total },
-        `bloqueado — ${preview.erro} linha(s) com erro`, null, null, false);
-      throw new Error(`INVALID_PAYLOAD: ${preview.erro} linha(s) contêm erros — corrija antes de confirmar`);
+    // Falha técnica: registrar auditoria FORA da transação da RPC (rollback
+    // teria descartado qualquer log interno).
+    if (rpcError || !rpcResult) {
+      await audit(
+        context.supabase,
+        "PROJETOS_IMPORTACAO_FALHOU",
+        null,
+        correlationId,
+        null,
+        { erro: rpcError ?? "sem retorno da RPC", total: data.rows.length },
+        `falha técnica — rollback: ${(rpcError ?? "").slice(0, 240)}`,
+        null,
+        null,
+        false,
+      );
+      throw new Error(
+        `IMPORT_FAILED: ${(rpcError ?? "falha desconhecida").replace(/^[A-Z_]+:\s*/, "")}`,
+      );
     }
 
-    let criadas = 0, atualizadas = 0, ativadas = 0, desativadas = 0, ignoradas = 0;
-    const falhas: Array<{ linha: number; erro: string }> = [];
-
-    for (const l of preview.linhas) {
-      try {
-        if (l.acao === "SEM_ALTERACAO") { ignoradas++; continue; }
-        if (!l.empresa_id) continue;
-        const src = data.rows.find((r) => r.linha === l.linha)!;
-        const dtIni = normalizeDate(src.data_inicio ?? null);
-        const dtFim = normalizeDate(src.data_fim ?? null);
-        const descricao = src.descricao?.trim() ? src.descricao.trim() : null;
-        const observacoes = src.observacoes?.trim() ? src.observacoes.trim() : null;
-        const wantAtivo = l.status_normalizado === "ATIVO";
-
-        if (l.acao === "CRIAR") {
-          const payload = {
-            empresa_id: l.empresa_id,
-            nome: l.nome_projeto,
-            descricao,
-            codigo_protocolo: l.codigo_normalizado,
-            ativo: wantAtivo,
-            data_inicio: dtIni === "INVALID" ? null : dtIni,
-            data_fim: dtFim === "INVALID" ? null : dtFim,
-            observacoes,
-          };
-          const { data: row, error } = await context.supabase
-            .from("projetos")
-            .insert(payload as never)
-            .select("id")
-            .single();
-          if (error) throw mapSupabaseError(error.message);
-          criadas++;
-          await audit(context.supabase, "PROJETO_CRIADO", row.id as string, correlationId,
-            null, payload, `import linha ${l.linha}`, l.empresa_id, row.id as string);
-        } else if (l.projeto_id) {
-          // Nunca alterar empresa de projeto existente nem codigo_protocolo histórico.
-          const payload: Record<string, unknown> = {
-            nome: l.nome_projeto,
-            ativo: wantAtivo,
-          };
-          if (descricao !== null) payload.descricao = descricao;
-          if (dtIni !== "INVALID" && dtIni !== null) payload.data_inicio = dtIni;
-          if (dtFim !== "INVALID" && dtFim !== null) payload.data_fim = dtFim;
-          if (observacoes !== null) payload.observacoes = observacoes;
-
-          const { error } = await context.supabase
-            .from("projetos")
-            .update(payload as never)
-            .eq("id", l.projeto_id);
-          if (error) throw mapSupabaseError(error.message);
-
-          if (l.acao === "ATIVAR") {
-            ativadas++;
-            await audit(context.supabase, "PROJETO_ATIVADO", l.projeto_id, correlationId,
-              null, { ativo: true }, `import linha ${l.linha}`, l.empresa_id, l.projeto_id);
-          } else if (l.acao === "DESATIVAR") {
-            desativadas++;
-            await audit(context.supabase, "PROJETO_DESATIVADO", l.projeto_id, correlationId,
-              null, { ativo: false }, `import linha ${l.linha}`, l.empresa_id, l.projeto_id);
-          } else {
-            atualizadas++;
-            await audit(context.supabase, "PROJETO_ATUALIZADO", l.projeto_id, correlationId,
-              null, payload, `import linha ${l.linha}`, l.empresa_id, l.projeto_id);
-          }
-        }
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        falhas.push({ linha: l.linha, erro: msg });
-      }
+    // Erro de validação retornado com success=false: registrar FALHOU externo.
+    if (!rpcResult.success) {
+      await audit(
+        context.supabase,
+        "PROJETOS_IMPORTACAO_FALHOU",
+        null,
+        correlationId,
+        null,
+        {
+          rejected: rpcResult.rejected,
+          total: rpcResult.total,
+          errors: rpcResult.errors.slice(0, 50),
+        },
+        `bloqueada — ${rpcResult.rejected} linha(s) com erro`,
+        null,
+        null,
+        false,
+      );
     }
 
-    const status = falhas.length === 0 ? "PROJETOS_IMPORTACAO_CONCLUIDA" : "PROJETOS_IMPORTACAO_FALHOU";
-    await audit(context.supabase, status, null, correlationId,
-      null,
-      { criadas, atualizadas, ativadas, desativadas, ignoradas, falhas: falhas.length, total: preview.total },
-      falhas.length === 0
-        ? `concluída`
-        : `parcial — ${falhas.length} falha(s): ${falhas.slice(0, 3).map((f) => `L${f.linha}`).join(", ")}`,
-      null, null, falhas.length === 0);
-
+    // Retorno mantém compatibilidade com o wizard existente + expõe novos campos.
     return {
-      correlation_id: correlationId,
-      total: preview.total,
-      criadas,
-      atualizadas,
-      ativadas,
-      desativadas,
-      ignoradas,
-      falhas,
+      // legado
+      criadas: rpcResult.created,
+      atualizadas: rpcResult.updated,
+      ativadas: rpcResult.activated,
+      desativadas: rpcResult.deactivated,
+      ignoradas: rpcResult.unchanged,
+      falhas: rpcResult.errors.map((e) => ({
+        linha: e.row_number,
+        erro: `${e.field}: ${e.message}`,
+      })),
+      // novos
+      success: rpcResult.success,
+      correlation_id: rpcResult.correlation_id,
+      total: rpcResult.total,
+      rejected: rpcResult.rejected,
+      duration_ms: rpcResult.duration_ms,
     };
   });
+
