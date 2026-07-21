@@ -883,6 +883,12 @@ function ProjetoDialog({
                 )}
               />
 
+              <EquivalenteCheck
+                empresaId={form.watch("empresa_id")}
+                nome={form.watch("nome")}
+                excludeId={editing?.id ?? null}
+              />
+
               {editing ? (
                 <div className="rounded-md border bg-muted/40 p-3 space-y-2">
                   <div className="flex items-center justify-between gap-3">
