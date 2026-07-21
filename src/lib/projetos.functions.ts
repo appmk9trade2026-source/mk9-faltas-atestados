@@ -620,7 +620,6 @@ function stripInvisible(v: string): string {
 // Chave lógica única (paridade com src/lib/normalize-name.ts e SQL public.normalize_name):
 // remove acentos, converte hífens/travessões em espaço, colapsa espaços e usa maiúsculas.
 // Assim "AMBEV - AS ROTA PB", "AMBEV AS ROTA PB", "ambev – as rota pb" geram a MESMA chave.
-import { normalizeName as _normalizeName } from "@/lib/normalize-name";
 function normalizeEmpresaNome(v: string): string {
   return _normalizeName(stripInvisible(v));
 }
