@@ -372,17 +372,18 @@ async function buildPreview(
   }
   type ExistingProjeto = {
     id: string; ativo: boolean; nome: string; descricao: string | null;
-    codigo_interno: string | null;
+    codigo_interno: string | null; created_at: string | null;
   };
   const projetoKey = new Map<string, ExistingProjeto[]>();
   if (empresaIds.size > 0) {
     const { data: projs } = await supabase
       .from("projetos")
-      .select("id, empresa_id, nome, ativo, descricao, codigo_interno")
+      .select("id, empresa_id, nome, ativo, descricao, codigo_interno, created_at")
       .in("empresa_id", [...empresaIds]);
     for (const p of (projs ?? []) as Array<{
       id: string; empresa_id: string; nome: string;
-      ativo: boolean; descricao: string | null; codigo_interno: string | null;
+      ativo: boolean; descricao: string | null;
+      codigo_interno: string | null; created_at: string | null;
     }>) {
       const nomeNorm = normalizeNomeProjeto(p.nome);
       const k = `${p.empresa_id}::${nomeNorm}`;
@@ -390,6 +391,7 @@ async function buildPreview(
       arr.push({
         id: p.id, ativo: p.ativo, nome: p.nome,
         descricao: p.descricao, codigo_interno: p.codigo_interno,
+        created_at: p.created_at,
       });
       projetoKey.set(k, arr);
     }
@@ -419,14 +421,12 @@ async function buildPreview(
     const nomeNorm = normalizeNomeProjeto(nome);
     const descricao = nullIfBlank(r.descricao);
     const status = normalizeStatus(r.status);
-    const dtCad = normalizeDate(r.data_cadastro ?? null);
     const erros: string[] = [];
 
     if (!enNorm) erros.push("Empresa obrigatória");
     if (!nome) erros.push("Projeto (nome) obrigatório");
     if (nome.length > 120) erros.push("Projeto acima de 120 caracteres");
     if (!status) erros.push("Status inválido (use ATIVO ou INATIVO)");
-    if (dtCad === "INVALID") erros.push("Data cadastro inválida");
 
     const bucket = enNorm ? empresasBucket.get(enNorm) : undefined;
     let emp: { id: string; nome: string; ativo: boolean } | undefined;
@@ -449,6 +449,7 @@ async function buildPreview(
     let acao: ProjetoImportAcao = "ERRO";
     let projetoId: string | null = null;
     let codigoInternoAtual: string | null = null;
+    let dataCadastroAtual: string | null = null;
     const diff: ProjetoImportFieldDiff[] = [];
 
     if (erros.length === 0 && emp && status) {
@@ -463,6 +464,7 @@ async function buildPreview(
         const existing = existingList[0];
         projetoId = existing.id;
         codigoInternoAtual = existing.codigo_interno;
+        dataCadastroAtual = existing.created_at;
         const atualStatus = existing.ativo ? "ATIVO" : "INATIVO";
         const novoStatus: "ATIVO" | "INATIVO" = wantAtivo ? "ATIVO" : "INATIVO";
 
@@ -487,7 +489,7 @@ async function buildPreview(
       nome_projeto: nome,
       descricao,
       status_normalizado: status,
-      data_cadastro: typeof dtCad === "string" ? dtCad : null,
+      data_cadastro_atual: dataCadastroAtual,
       projeto_id: projetoId,
       codigo_interno_atual: codigoInternoAtual,
       acao,
