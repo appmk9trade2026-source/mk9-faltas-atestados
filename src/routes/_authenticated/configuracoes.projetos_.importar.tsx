@@ -126,19 +126,25 @@ function ImportarProjetosPage() {
       const sheetName = wb.SheetNames.find((n) => n.toLowerCase() === "projetos") ?? wb.SheetNames[0];
       const ws = wb.Sheets[sheetName];
       const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "", raw: false });
-      const norm = raw
+      const pick = (r: Record<string, unknown>, keys: string[]): string => {
+        for (const k of keys) {
+          const val = r[k];
+          if (val != null && String(val).trim() !== "") return String(val).trim();
+        }
+        return "";
+      };
+      const norm: ProjetoImportRow[] = raw
         .map((r, i) => ({
           linha: i + 2,
-          cnpj_empresa: String(r["cnpj_empresa"] ?? r["CNPJ"] ?? r["cnpj"] ?? "").trim(),
-          codigo_projeto: String(r["codigo_projeto"] ?? r["codigo"] ?? "").trim(),
-          nome_projeto: String(r["nome_projeto"] ?? r["nome"] ?? "").trim(),
-          status: String(r["status"] ?? "").trim(),
-          descricao: String(r["descricao"] ?? "").trim() || null,
-          data_inicio: String(r["data_inicio"] ?? "").trim() || null,
-          data_fim: String(r["data_fim"] ?? "").trim() || null,
-          observacoes: String(r["observacoes"] ?? "").trim() || null,
+          nome_projeto: pick(r, ["Projeto", "projeto", "nome_projeto", "nome"]),
+          empresa_nome: pick(r, ["Empresa", "empresa", "empresa_nome", "razao_social"]),
+          codigo_projeto: pick(r, ["Código", "Codigo", "codigo", "codigo_projeto"]),
+          descricao: pick(r, ["Descrição", "Descricao", "descricao"]) || null,
+          status: pick(r, ["Status", "status"]),
+          data_cadastro: pick(r, ["Data cadastro", "data_cadastro", "Data Cadastro"]) || null,
         }))
-        .filter((r) => r.cnpj_empresa || r.codigo_projeto || r.nome_projeto || r.status);
+        .filter((r) => r.empresa_nome || r.codigo_projeto || r.nome_projeto || r.status);
+
       if (norm.length === 0) {
         toast.error("A planilha não contém linhas de dados.");
         setStep(1);
