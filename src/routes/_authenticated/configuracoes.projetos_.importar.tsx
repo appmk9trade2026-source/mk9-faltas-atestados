@@ -477,7 +477,14 @@ function ImportarProjetosPage() {
                   {preview.linhas
                     .filter((l) => !apenasNovos || l.acao === "CRIAR" || l.acao === "ERRO")
                     .map((l) => (
-                    <TableRow key={l.linha} className={l.acao === "ERRO" ? "bg-red-500/5" : ""}>
+                    <TableRow
+                      key={l.linha}
+                      className={
+                        l.acao === "ERRO" ? "bg-red-500/5"
+                        : l.acao === "DUPLICADA" ? "bg-amber-500/5"
+                        : ""
+                      }
+                    >
                       <TableCell className="text-xs text-muted-foreground">{l.linha}</TableCell>
                       <TableCell className="text-sm">{l.nome_projeto || "—"}</TableCell>
                       <TableCell className="text-sm">{l.empresa_nome ?? <span className="italic text-muted-foreground">{l.empresa_original || "não encontrada"}</span>}</TableCell>
@@ -509,17 +516,45 @@ function ImportarProjetosPage() {
                           <span className="text-destructive">
                             Linha {l.linha}: {l.erros.join("; ")}
                           </span>
+                        ) : l.acao === "DUPLICADA" ? (
+                          <span className="text-amber-700 dark:text-amber-400">
+                            Este mesmo projeto já apareceu na linha <b>{l.duplicada_de}</b> e será consolidado automaticamente.
+                          </span>
                         ) : l.acao === "CRIAR" ? (
-                          <span className="text-muted-foreground">
-                            Novo projeto — descrição “NOVO PROJETO”, status ATIVO
-                          </span>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-muted-foreground">
+                              Novo projeto — descrição “NOVO PROJETO”, status ATIVO
+                            </span>
+                            {l.linhas_repetidas.length > 0 && (
+                              <details className="text-[11px] text-muted-foreground">
+                                <summary className="cursor-pointer text-amber-700 hover:underline dark:text-amber-400">
+                                  Ver todas as linhas repetidas ({l.linhas_repetidas.length})
+                                </summary>
+                                <span className="mt-1 block break-words font-mono opacity-80">
+                                  linhas: {l.linhas_repetidas.join(", ")}
+                                </span>
+                              </details>
+                            )}
+                          </div>
                         ) : (
-                          <span className="text-muted-foreground">
-                            Projeto já cadastrado
-                            {l.codigo_interno_atual ? ` (${l.codigo_interno_atual})` : ""}
-                            {l.status_atual ? ` · ${l.status_atual}` : ""}
-                            {" — nada será alterado"}
-                          </span>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-muted-foreground">
+                              Projeto já cadastrado
+                              {l.codigo_interno_atual ? ` (${l.codigo_interno_atual})` : ""}
+                              {l.status_atual ? ` · ${l.status_atual}` : ""}
+                              {" — nada será alterado"}
+                            </span>
+                            {l.linhas_repetidas.length > 0 && (
+                              <details className="text-[11px] text-muted-foreground">
+                                <summary className="cursor-pointer text-amber-700 hover:underline dark:text-amber-400">
+                                  Ver todas as linhas repetidas ({l.linhas_repetidas.length})
+                                </summary>
+                                <span className="mt-1 block break-words font-mono opacity-80">
+                                  linhas: {l.linhas_repetidas.join(", ")}
+                                </span>
+                              </details>
+                            )}
+                          </div>
                         )}
                       </TableCell>
                     </TableRow>
