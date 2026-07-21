@@ -596,7 +596,8 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
     let rpcErrorMessage: string | null = null;
     let rpcErrorCode: string | null = null;
     let rpcErrorDetails: string | null = null;
-    let failurePhase: "rpc_call" | "rpc_validation" | "rpc_write" | "unknown" = "unknown";
+    type FailurePhase = "rpc_call" | "rpc_validation" | "rpc_write" | "unknown";
+    let failurePhase: FailurePhase = "unknown";
     const startedAt = Date.now();
 
     try {
