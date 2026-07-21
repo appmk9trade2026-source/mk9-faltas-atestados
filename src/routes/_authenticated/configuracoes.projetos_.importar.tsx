@@ -474,7 +474,16 @@ function ImportarProjetosPage() {
                       <TableCell className="text-xs text-muted-foreground">{l.linha}</TableCell>
                       <TableCell className="text-sm">{l.nome_projeto || "—"}</TableCell>
                       <TableCell className="text-sm">{l.empresa_nome ?? <span className="italic text-muted-foreground">{l.empresa_original || "não encontrada"}</span>}</TableCell>
-                      <TableCell className="font-mono text-xs">{l.codigo_normalizado || "—"}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {l.codigo_interno_atual ? (
+                          <span className="text-foreground">{l.codigo_interno_atual}</span>
+                        ) : l.acao === "CRIAR" ? (
+                          <span className="italic text-muted-foreground">Gerado automaticamente</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+
                       <TableCell className="max-w-[220px] truncate text-xs text-muted-foreground" title={l.descricao ?? ""}>{l.descricao || "—"}</TableCell>
                       <TableCell>
                         {l.status_normalizado ? (
