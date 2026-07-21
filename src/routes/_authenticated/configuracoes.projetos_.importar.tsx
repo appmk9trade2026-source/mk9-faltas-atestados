@@ -39,11 +39,13 @@ const MAX_ROWS = 2000;
 const acaoLabel: Record<ProjetoImportAcao, string> = {
   CRIAR: "Criar",
   JA_EXISTENTE: "Já existente",
+  DUPLICADA: "Repetida",
   ERRO: "Erro",
 };
 const acaoBadge: Record<ProjetoImportAcao, string> = {
   CRIAR: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
   JA_EXISTENTE: "bg-muted text-muted-foreground border-border",
+  DUPLICADA: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30",
   ERRO: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30",
 };
 
