@@ -3,7 +3,7 @@
 //
 // Regra imutável: projetos NUNCA são excluídos. Encerrar = desativar.
 // Empresa localizada apenas por CNPJ (nunca por nome, nunca por empresa_id
-// enviado pelo cliente). Chave lógica do projeto: empresa_id + codigo_projeto.
+// enviado pelo cliente). Chave lógica da importação: empresa_id + nome_projeto.
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
