@@ -616,12 +616,15 @@ const confirmInputSchema = importInputSchema.extend({
 function stripInvisible(v: string): string {
   return (v ?? "").replace(/[\u200B-\u200D\uFEFF\u00A0]/g, " ");
 }
+// Chave lógica única (paridade com src/lib/normalize-name.ts e SQL public.normalize_name):
+// remove acentos, converte hífens/travessões em espaço, colapsa espaços e usa maiúsculas.
+// Assim "AMBEV - AS ROTA PB", "AMBEV AS ROTA PB", "ambev – as rota pb" geram a MESMA chave.
+import { normalizeName as _normalizeName } from "@/lib/normalize-name";
 function normalizeEmpresaNome(v: string): string {
-  return stripInvisible(v).trim().replace(/\s+/g, " ").toLowerCase();
+  return _normalizeName(stripInvisible(v));
 }
-/** Normaliza nome do projeto para COMPARAÇÃO (case-insensitive, espaços colapsados, invisíveis removidos, acentos preservados). */
 function normalizeNomeProjeto(v: string): string {
-  return stripInvisible(v).trim().replace(/\s+/g, " ").toLowerCase();
+  return _normalizeName(stripInvisible(v));
 }
 
 async function buildPreview(
