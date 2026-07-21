@@ -593,36 +593,142 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
     };
 
     let rpcResult: AtomicResult | null = null;
-    let rpcError: string | null = null;
+    let rpcErrorMessage: string | null = null;
+    let rpcErrorCode: string | null = null;
+    let rpcErrorDetails: string | null = null;
+    let failurePhase: "rpc_call" | "rpc_validation" | "rpc_write" | "unknown" = "unknown";
+    const startedAt = Date.now();
+
     try {
       const { data: out, error } = await context.supabase.rpc(
         "import_projetos_atomic" as never,
         { _rows: rowsJson as never, _correlation_id: correlationId as never } as never,
       );
-      if (error) throw new Error(error.message);
-      rpcResult = out as unknown as AtomicResult;
+      if (error) {
+        rpcErrorMessage = error.message ?? String(error);
+        // PostgrestError expõe SQLSTATE em .code
+        rpcErrorCode = (error as { code?: string }).code ?? null;
+        rpcErrorDetails = (error as { details?: string }).details ?? null;
+      } else {
+        rpcResult = out as unknown as AtomicResult;
+      }
     } catch (err) {
-      rpcError = err instanceof Error ? err.message : String(err);
+      rpcErrorMessage = err instanceof Error ? err.message : String(err);
+      rpcErrorCode = (err as { code?: string })?.code ?? null;
+      rpcErrorDetails = (err as { details?: string })?.details ?? null;
     }
 
-    // Falha técnica: registrar auditoria FORA da transação da RPC (rollback
-    // teria descartado qualquer log interno).
-    if (rpcError || !rpcResult) {
+    // ---------------------------------------------------------------------
+    // Mapeamento de erros de concorrência para códigos seguros.
+    // Nunca expõe SQLSTATE, mensagem crua do Postgres, nome de tabela ou
+    // stack trace — apenas um code padronizado + mensagem amigável.
+    // ---------------------------------------------------------------------
+    if (rpcErrorMessage || !rpcResult) {
+      let userCode:
+        | "IMPORT_CONFLICT"
+        | "IMPORT_CONCURRENT_CHANGE"
+        | "IMPORT_TEMPORARILY_UNAVAILABLE"
+        | "IMPORT_FAILED" = "IMPORT_FAILED";
+      let userMessage =
+        "Não foi possível concluir a importação. Nenhuma alteração foi aplicada.";
+      let phase: typeof failurePhase = "rpc_call";
+
+      const rawUpper = (rpcErrorMessage ?? "").toUpperCase();
+
+      // Preserva mensagens de negócio já padronizadas pela própria RPC
+      // (PERMISSION_DENIED / INVALID_PAYLOAD / AUTH_REQUIRED / USER_INACTIVE).
+      if (/^PERMISSION_DENIED/.test(rpcErrorMessage ?? "")) {
+        await audit(context.supabase, "PROJETOS_IMPORTACAO_FALHOU", null, correlationId,
+          null, {
+            error_code: "PERMISSION_DENIED",
+            failure_phase: "rpc_validation",
+            duration_ms: Date.now() - startedAt,
+            total_rows: data.rows.length,
+            correlation_id: correlationId,
+          }, "permissão negada", null, null, false);
+        throw new Error("PERMISSION_DENIED: permissão negada para importar projetos");
+      }
+      if (/^INVALID_PAYLOAD/.test(rpcErrorMessage ?? "")) {
+        await audit(context.supabase, "PROJETOS_IMPORTACAO_FALHOU", null, correlationId,
+          null, {
+            error_code: "INVALID_PAYLOAD",
+            failure_phase: "rpc_validation",
+            duration_ms: Date.now() - startedAt,
+            total_rows: data.rows.length,
+            correlation_id: correlationId,
+          }, "payload inválido", null, null, false);
+        throw new Error("INVALID_PAYLOAD: dados inválidos para importação");
+      }
+
+      if (rpcErrorCode === "23505" || /UNIQUE|DUPLICATE/.test(rawUpper)) {
+        userCode = "IMPORT_CONFLICT";
+        userMessage =
+          "Outro usuário alterou ou importou um dos projetos durante esta operação. Nenhuma alteração foi aplicada. Valide novamente a planilha e tente de novo.";
+        phase = "rpc_write";
+      } else if (rpcErrorCode === "40001" || rpcErrorCode === "40P01") {
+        userCode = "IMPORT_CONCURRENT_CHANGE";
+        userMessage =
+          "Houve concorrência de escrita no banco. Nenhuma alteração foi aplicada. Valide novamente e tente novamente.";
+        phase = "rpc_write";
+      } else if (rpcErrorCode === "55P03") {
+        userCode = "IMPORT_TEMPORARILY_UNAVAILABLE";
+        userMessage =
+          "O sistema está momentaneamente ocupado. Nenhuma alteração foi aplicada. Aguarde alguns instantes e tente novamente.";
+        phase = "rpc_write";
+      }
+
+      // Tentativa best-effort de identificar linha/código sem vazar detalhes.
+      // Extrai codigo_protocolo do DETAIL do Postgres quando presente.
+      let conflictHint: { row_number?: number; codigo_projeto?: string; cnpj_empresa?: string } | undefined;
+      if (userCode === "IMPORT_CONFLICT" && rpcErrorDetails) {
+        const m = /\(codigo_protocolo\)=\(([^)]+)\)/i.exec(rpcErrorDetails);
+        if (m) {
+          const codigo = m[1].toUpperCase();
+          const row = data.rows.find(
+            (r) => (r.codigo_projeto ?? "").trim().toUpperCase() === codigo,
+          );
+          if (row) {
+            conflictHint = {
+              row_number: row.linha,
+              codigo_projeto: codigo,
+              cnpj_empresa: row.cnpj_empresa,
+            };
+          } else {
+            conflictHint = { codigo_projeto: codigo };
+          }
+        }
+      }
+
+      failurePhase = phase;
       await audit(
         context.supabase,
         "PROJETOS_IMPORTACAO_FALHOU",
         null,
         correlationId,
         null,
-        { erro: rpcError ?? "sem retorno da RPC", total: data.rows.length },
-        `falha técnica — rollback: ${(rpcError ?? "").slice(0, 240)}`,
+        {
+          error_code: userCode,
+          failure_phase: failurePhase,
+          duration_ms: Date.now() - startedAt,
+          total_rows: data.rows.length,
+          correlation_id: correlationId,
+          conflict_hint: conflictHint ?? null,
+        },
+        `${userCode} — importação abortada`,
         null,
         null,
         false,
       );
-      throw new Error(
-        `IMPORT_FAILED: ${(rpcError ?? "falha desconhecida").replace(/^[A-Z_]+:\s*/, "")}`,
-      );
+
+      const err = new Error(`${userCode}: ${userMessage}`) as Error & {
+        code: string;
+        correlationId: string;
+        conflictHint?: typeof conflictHint;
+      };
+      err.code = userCode;
+      err.correlationId = correlationId;
+      if (conflictHint) err.conflictHint = conflictHint;
+      throw err;
     }
 
     // Erro de validação retornado com success=false: registrar FALHOU externo.
@@ -634,14 +740,45 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
         correlationId,
         null,
         {
+          error_code: "IMPORT_VALIDATION",
+          failure_phase: "rpc_validation",
+          duration_ms: rpcResult.duration_ms,
+          total_rows: rpcResult.total,
+          correlation_id: correlationId,
           rejected: rpcResult.rejected,
-          total: rpcResult.total,
           errors: rpcResult.errors.slice(0, 50),
         },
         `bloqueada — ${rpcResult.rejected} linha(s) com erro`,
         null,
         null,
         false,
+      );
+    } else {
+      // Auditoria operacional de conclusão com métricas de performance.
+      const rps = rpcResult.duration_ms > 0
+        ? Math.round((rpcResult.total * 1000) / rpcResult.duration_ms)
+        : rpcResult.total;
+      await audit(
+        context.supabase,
+        "PROJETOS_IMPORTACAO_CONCLUIDA",
+        null,
+        correlationId,
+        null,
+        {
+          duration_ms: rpcResult.duration_ms,
+          total_rows: rpcResult.total,
+          rows_per_second: rps,
+          created: rpcResult.created,
+          updated: rpcResult.updated,
+          activated: rpcResult.activated,
+          deactivated: rpcResult.deactivated,
+          unchanged: rpcResult.unchanged,
+          correlation_id: correlationId,
+        },
+        `importação concluída — ${rpcResult.total} linha(s) em ${rpcResult.duration_ms}ms`,
+        null,
+        null,
+        true,
       );
     }
 
@@ -665,4 +802,5 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
       duration_ms: rpcResult.duration_ms,
     };
   });
+
 
