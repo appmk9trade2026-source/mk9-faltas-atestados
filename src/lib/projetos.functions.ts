@@ -510,7 +510,7 @@ export type ProjetoImportRow = {
   nome_projeto: string;
 };
 
-export type ProjetoImportAcao = "CRIAR" | "JA_EXISTENTE" | "ERRO";
+export type ProjetoImportAcao = "CRIAR" | "JA_EXISTENTE" | "DUPLICADA" | "ERRO";
 
 export type ProjetoImportPreviewRow = {
   linha: number;
@@ -528,11 +528,17 @@ export type ProjetoImportPreviewRow = {
   status_atual: "ATIVO" | "INATIVO" | null;
   acao: ProjetoImportAcao;
   erros: string[];
+  /** Se esta linha é DUPLICADA, aponta para a linha "principal" idêntica. */
+  duplicada_de: number | null;
+  /** Se esta linha é a principal (CRIAR/JA_EXISTENTE) e há repetições, lista todas as demais linhas idênticas. */
+  linhas_repetidas: number[];
 };
 
 export type ProjetoImportPreview = {
   correlation_id: string;
   total: number;
+  unicos: number;
+  repetidas: number;
   criar: number;
   ja_existente: number;
   erro: number;
@@ -556,12 +562,16 @@ const confirmInputSchema = importInputSchema.extend({
   correlation_id: z.string().uuid().optional(),
 });
 
-function normalizeEmpresaNome(v: string): string {
-  return (v ?? "").trim().toLowerCase();
+/** Remove caracteres invisíveis (BOM, zero-width, NBSP) que costumam vir do Excel. */
+function stripInvisible(v: string): string {
+  return (v ?? "").replace(/[\u200B-\u200D\uFEFF\u00A0]/g, " ");
 }
-/** Normaliza nome do projeto para COMPARAÇÃO (case-insensitive, espaços colapsados). */
+function normalizeEmpresaNome(v: string): string {
+  return stripInvisible(v).trim().replace(/\s+/g, " ").toLowerCase();
+}
+/** Normaliza nome do projeto para COMPARAÇÃO (case-insensitive, espaços colapsados, invisíveis removidos, acentos preservados). */
 function normalizeNomeProjeto(v: string): string {
-  return (v ?? "").trim().replace(/\s+/g, " ").toLowerCase();
+  return stripInvisible(v).trim().replace(/\s+/g, " ").toLowerCase();
 }
 
 async function buildPreview(
