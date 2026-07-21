@@ -18,7 +18,14 @@ import {
   Eye,
   Upload,
   Download,
+  Trash2,
+  X,
+  Loader2,
+  AlertTriangle,
+  Archive,
+  CheckCircle2,
 } from "lucide-react";
+
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/layout/app-shell";
