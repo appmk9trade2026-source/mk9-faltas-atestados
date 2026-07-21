@@ -2286,30 +2286,39 @@ export type Database = {
           ativo: boolean
           codigo_protocolo: string | null
           created_at: string
+          data_fim: string | null
+          data_inicio: string | null
           descricao: string | null
           empresa_id: string
           id: string
           nome: string
+          observacoes: string | null
           updated_at: string
         }
         Insert: {
           ativo?: boolean
           codigo_protocolo?: string | null
           created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
           descricao?: string | null
           empresa_id: string
           id?: string
           nome: string
+          observacoes?: string | null
           updated_at?: string
         }
         Update: {
           ativo?: boolean
           codigo_protocolo?: string | null
           created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
           descricao?: string | null
           empresa_id?: string
           id?: string
           nome?: string
+          observacoes?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -4167,6 +4176,10 @@ export type Database = {
         | "COLABORADOR_DESATIVADO"
         | "COLABORADOR_TRANSFERIDO"
         | "COLABORADORES_IMPORTADOS"
+        | "PROJETOS_IMPORTACAO_INICIADA"
+        | "PROJETOS_IMPORTACAO_CONCLUIDA"
+        | "PROJETOS_IMPORTACAO_FALHOU"
+        | "PROJETO_ATUALIZADO"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       changelog_tipo:
         | "NOVA_FUNCIONALIDADE"
@@ -4571,6 +4584,10 @@ export const Constants = {
         "COLABORADOR_DESATIVADO",
         "COLABORADOR_TRANSFERIDO",
         "COLABORADORES_IMPORTADOS",
+        "PROJETOS_IMPORTACAO_INICIADA",
+        "PROJETOS_IMPORTACAO_CONCLUIDA",
+        "PROJETOS_IMPORTACAO_FALHOU",
+        "PROJETO_ATUALIZADO",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       changelog_tipo: [
