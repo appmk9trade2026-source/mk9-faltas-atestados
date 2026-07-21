@@ -281,6 +281,12 @@ export type ProjetoImportRow = {
 export type ProjetoImportAcao =
   | "CRIAR" | "ATUALIZAR" | "ATIVAR" | "DESATIVAR" | "SEM_ALTERACAO" | "ERRO";
 
+export type ProjetoImportFieldDiff = {
+  campo: "nome_projeto" | "status" | "descricao" | "data_inicio" | "data_fim" | "observacoes";
+  atual: string | null;
+  novo: string | null;
+};
+
 export type ProjetoImportPreviewRow = {
   linha: number;
   cnpj_normalizado: string;
@@ -293,6 +299,8 @@ export type ProjetoImportPreviewRow = {
   projeto_id: string | null;
   acao: ProjetoImportAcao;
   erros: string[];
+  /** Diferenças por campo — presente apenas em ATUALIZAR/ATIVAR/DESATIVAR. */
+  diff: ProjetoImportFieldDiff[];
 };
 
 export type ProjetoImportPreview = {
