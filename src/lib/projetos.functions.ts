@@ -527,33 +527,67 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
       });
     });
 
-    const rowsJson = data.rows.map((r) => ({
-      row_number: r.linha,
-      empresa_nome: r.empresa_nome,
-      nome_projeto: r.nome_projeto,
-      descricao: r.descricao ?? null,
-      status: r.status,
-      data_cadastro: null,
-    }));
+    // Recomputa a prévia server-side antes de confirmar e envia à RPC APENAS
+    // as linhas classificadas como CRIAR — projetos existentes são preservados
+    // integralmente (código, data, descrição, status). Defaults automáticos:
+    // descricao='NOVO PROJETO', status='ATIVO'.
+    const previewNow = await buildPreview(context.supabase, correlationId, data.rows);
+    const rowsJson = previewNow.linhas
+      .filter((l) => l.acao === "CRIAR")
+      .map((l) => ({
+        row_number: l.linha,
+        empresa_nome: l.empresa_original,
+        nome_projeto: l.nome_projeto,
+        descricao: DESCRICAO_PADRAO_NOVO,
+        status: "ATIVO",
+        data_cadastro: null,
+      }));
 
-    type AtomicResult = {
-      success: boolean;
-      correlation_id: string;
-      total: number;
-      created: number;
-      updated: number;
-      activated: number;
-      deactivated: number;
-      unchanged: number;
-      rejected: number;
-      errors: Array<{ row_number: number; field: string; code: string; message: string }>;
-      duration_ms: number;
-    };
+    // Se todas as linhas válidas são "JÁ EXISTENTE" e não há erros, não há
+    // nada para gravar — retorna sucesso vazio sem chamar a RPC.
+    if (previewNow.erro === 0 && rowsJson.length === 0) {
+      await audit(context.supabase, "PROJETOS_IMPORTACAO_CONCLUIDA", null, correlationId,
+        null, { duration_ms: 0, total_rows: previewNow.total,
+          rows_per_second: 0, created: 0, updated: 0,
+          activated: 0, deactivated: 0,
+          unchanged: previewNow.ja_existente, correlation_id: correlationId },
+        `nenhuma criação — ${previewNow.ja_existente} projeto(s) já existente(s)`,
+        null, null, true);
+      return {
+        criadas: 0,
+        atualizadas: 0,
+        ativadas: 0,
+        desativadas: 0,
+        ignoradas: previewNow.ja_existente,
+        falhas: [],
+        success: true,
+        correlation_id: correlationId,
+        total: previewNow.total,
+        rejected: 0,
+        duration_ms: 0,
+      };
+    }
+
+    // Se há erros na prévia, aborta antes de tocar no banco.
+    if (previewNow.erro > 0) {
+      const detalhes = previewNow.linhas
+        .filter((l) => l.acao === "ERRO")
+        .slice(0, 5)
+        .map((l) => `linha ${l.linha}: ${l.erros.join("; ")}`)
+        .join(" | ");
+      await audit(context.supabase, "PROJETOS_IMPORTACAO_FALHOU", null, correlationId,
+        null, { error_code: "INVALID_PAYLOAD", failure_phase: "rpc_validation",
+          duration_ms: 0, total_rows: data.rows.length,
+          correlation_id: correlationId, rejected: previewNow.erro },
+        `bloqueada — ${previewNow.erro} linha(s) com erro`, null, null, false);
+      throw new Error(`INVALID_PAYLOAD: ${previewNow.erro} linha(s) com erro. ${detalhes}`.slice(0, 480));
+    }
 
     let rpcResult: AtomicResult | null = null;
     let rpcErrorMessage: string | null = null;
     let rpcErrorCode: string | null = null;
     let rpcErrorDetails: string | null = null;
+    let rpcErrorHint: string | null = null;
     type FailurePhase = "rpc_call" | "rpc_validation" | "rpc_write" | "unknown";
     let failurePhase: FailurePhase = "unknown";
     const startedAt = Date.now();
@@ -567,6 +601,7 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
         rpcErrorMessage = error.message ?? String(error);
         rpcErrorCode = (error as { code?: string }).code ?? null;
         rpcErrorDetails = (error as { details?: string }).details ?? null;
+        rpcErrorHint = (error as { hint?: string }).hint ?? null;
       } else {
         rpcResult = out as unknown as AtomicResult;
       }
@@ -574,6 +609,7 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
       rpcErrorMessage = err instanceof Error ? err.message : String(err);
       rpcErrorCode = (err as { code?: string })?.code ?? null;
       rpcErrorDetails = (err as { details?: string })?.details ?? null;
+      rpcErrorHint = (err as { hint?: string })?.hint ?? null;
     }
 
     if (rpcErrorMessage || !rpcResult) {
