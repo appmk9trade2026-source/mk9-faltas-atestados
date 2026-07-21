@@ -17,6 +17,7 @@ import {
   Search,
   Eye,
   Upload,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -80,7 +81,9 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { usePermissions } from "@/lib/permissions";
 import { createProjeto, updateProjeto, setProjetoAtivo } from "@/lib/projetos.functions";
+import { downloadProjetosTemplate } from "@/lib/projetos-template";
 import { friendlyRbacError } from "@/lib/rbac/errors";
 
 export const Route = createFileRoute("/_authenticated/configuracoes/projetos")({
@@ -127,7 +130,10 @@ const PAGE_SIZE = 10;
 
 function ProjetosPage() {
   const { roles } = useSession();
+  const { has } = usePermissions();
   const canManage = roles.includes("super_admin") || roles.includes("rh");
+  const canImport = has("projeto.criar") || has("projeto.editar");
+  const canDownloadTemplate = canImport || has("projeto.visualizar") || canManage;
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
@@ -269,18 +275,25 @@ function ProjetosPage() {
           Projetos vinculados a cada empresa (CNPJ). Projetos não são excluídos —
           apenas desativados quando deixam de operar.
         </p>
-        {canManage && (
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2">
+          {canDownloadTemplate && (
+            <Button variant="outline" onClick={() => downloadProjetosTemplate()}>
+              <Download className="mr-2 h-4 w-4" /> Baixar modelo
+            </Button>
+          )}
+          {canImport && (
             <Button asChild variant="outline">
               <Link to="/configuracoes/projetos/importar">
-                <Upload className="mr-2 h-4 w-4" /> Importar planilha
+                <Upload className="mr-2 h-4 w-4" /> Importar / Atualizar planilha
               </Link>
             </Button>
+          )}
+          {canManage && (
             <Button onClick={openCreate}>
               <Plus className="mr-2 h-4 w-4" /> Novo projeto
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <Card className="overflow-hidden">

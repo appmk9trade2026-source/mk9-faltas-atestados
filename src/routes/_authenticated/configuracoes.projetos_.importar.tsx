@@ -17,11 +17,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { usePermissions } from "@/lib/permissions";
 import {
   previewProjetosImport, confirmProjetosImport,
   type ProjetoImportPreview, type ProjetoImportRow, type ProjetoImportAcao,
 } from "@/lib/projetos.functions";
+import { downloadProjetosTemplate } from "@/lib/projetos-template";
 import { friendlyRbacError } from "@/lib/rbac/errors";
 
 export const Route = createFileRoute("/_authenticated/configuracoes/projetos_/importar")({
@@ -50,55 +52,8 @@ const acaoBadge: Record<ProjetoImportAcao, string> = {
   ERRO: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30",
 };
 
-function baixarModelo() {
-  const cab = ["cnpj_empresa", "codigo_projeto", "nome_projeto", "status",
-    "descricao", "data_inicio", "data_fim", "observacoes"];
-  const exemplo = ["12.345.678/0001-90", "ARMT", "Projeto Armazém", "ATIVO",
-    "Operação logística", "2026-01-01", "", ""];
-  const ws = XLSX.utils.aoa_to_sheet([cab, exemplo]);
-  ws["!cols"] = cab.map((c) => ({ wch: Math.max(16, c.length + 4) }));
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Projetos");
+const baixarModelo = downloadProjetosTemplate;
 
-  const instr = [
-    ["Importação de Projetos — CRM MK9"],
-    [],
-    ["Formatos aceitos: .xlsx e .csv (até 5 MB, máx. 2.000 linhas)."],
-    ["Somente a aba 'Projetos' é lida; as demais são ignoradas."],
-    [],
-    ["Colunas obrigatórias:"],
-    ["  • cnpj_empresa — CNPJ da empresa já cadastrada (com ou sem máscara)"],
-    ["  • codigo_projeto — 2 a 10 caracteres (A-Z, 0-9)"],
-    ["  • nome_projeto — texto até 120 caracteres"],
-    ["  • status — ATIVO ou INATIVO"],
-    [],
-    ["Colunas opcionais:"],
-    ["  • descricao — texto até 500 caracteres"],
-    ["  • data_inicio — YYYY-MM-DD (ou DD/MM/YYYY)"],
-    ["  • data_fim — YYYY-MM-DD (ou DD/MM/YYYY)"],
-    ["  • observacoes — texto livre (até 2000 caracteres)"],
-    [],
-    ["Regras de importação:"],
-    ["  • A empresa é sempre localizada pelo CNPJ (nunca por nome)."],
-    ["  • Empresas NÃO são criadas automaticamente."],
-    ["  • Se o CNPJ não existir ou estiver fora do seu escopo, a linha vira ERRO."],
-    ["  • Chave lógica do projeto: empresa + codigo_projeto (único por empresa)."],
-    ["  • Se o projeto não existir, será CRIADO."],
-    ["  • Se existir, será ATUALIZADO / ATIVADO / DESATIVADO conforme o status."],
-    [],
-    ["Projetos NÃO são excluídos por esta importação."],
-    ["Para encerrar um projeto, informe status = INATIVO."],
-    [],
-    ["Segurança:"],
-    ["  • A importação exige as permissões 'projeto.criar' e/ou 'projeto.editar'."],
-    ["  • Cada operação gera trilha de auditoria com correlation_id."],
-    ["  • Códigos de projeto com ausências registradas não são alterados."],
-  ];
-  const wsI = XLSX.utils.aoa_to_sheet(instr);
-  wsI["!cols"] = [{ wch: 100 }];
-  XLSX.utils.book_append_sheet(wb, wsI, "Instruções");
-  XLSX.writeFile(wb, "modelo_importacao_projetos.xlsx");
-}
 
 function ImportarProjetosPage() {
   const navigate = useNavigate();
@@ -120,6 +75,7 @@ function ImportarProjetosPage() {
     hint?: { row_number?: number; codigo_projeto?: string; cnpj_empresa?: string };
   } | null>(null);
   const [revalidating, setRevalidating] = useState(false);
+  const [apenasAlteracoes, setApenasAlteracoes] = useState(false);
 
   function reset() {
     setStep(1);
@@ -458,6 +414,18 @@ function ImportarProjetosPage() {
           </Card>
 
           <Card className="overflow-hidden">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b p-3">
+              <label className="flex cursor-pointer items-center gap-2 text-sm">
+                <Checkbox
+                  checked={apenasAlteracoes}
+                  onCheckedChange={(v) => setApenasAlteracoes(Boolean(v))}
+                />
+                Mostrar apenas linhas com alteração
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Exibindo {preview.linhas.filter((l) => !apenasAlteracoes || l.acao !== "SEM_ALTERACAO").length} de {preview.total} linhas
+              </p>
+            </div>
             <div className="max-h-[560px] overflow-auto">
               <Table>
                 <TableHeader className="sticky top-0 bg-muted/60 backdrop-blur">
@@ -469,11 +437,13 @@ function ImportarProjetosPage() {
                     <TableHead>Nome</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Ação</TableHead>
-                    <TableHead>Observações</TableHead>
+                    <TableHead className="min-w-[260px]">Diferenças / Observações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {preview.linhas.map((l) => (
+                  {preview.linhas
+                    .filter((l) => !apenasAlteracoes || l.acao !== "SEM_ALTERACAO")
+                    .map((l) => (
                     <TableRow key={l.linha} className={l.acao === "ERRO" ? "bg-red-500/5" : ""}>
                       <TableCell className="text-xs text-muted-foreground">{l.linha}</TableCell>
                       <TableCell className="font-mono text-xs">{l.cnpj_original || "—"}</TableCell>
@@ -488,8 +458,25 @@ function ImportarProjetosPage() {
                       <TableCell>
                         <Badge className={acaoBadge[l.acao]}>{acaoLabel[l.acao]}</Badge>
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {l.erros.length > 0 ? l.erros.join("; ") : "OK"}
+                      <TableCell className="text-xs">
+                        {l.erros.length > 0 ? (
+                          <span className="text-destructive">{l.erros.join("; ")}</span>
+                        ) : l.diff && l.diff.length > 0 ? (
+                          <ul className="space-y-0.5">
+                            {l.diff.map((d) => (
+                              <li key={d.campo} className="flex flex-wrap items-center gap-1">
+                                <span className="font-medium text-foreground">{diffLabel(d.campo)}:</span>
+                                <span className="rounded bg-muted px-1 py-0.5 font-mono text-[10px] line-through opacity-70">{fmtDiff(d.atual)}</span>
+                                <span className="opacity-60">→</span>
+                                <span className="rounded bg-emerald-500/15 px-1 py-0.5 font-mono text-[10px] text-emerald-700 dark:text-emerald-300">{fmtDiff(d.novo)}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : l.acao === "CRIAR" ? (
+                          <span className="text-muted-foreground">Novo projeto</span>
+                        ) : (
+                          <span className="text-muted-foreground">Nenhuma alteração</span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -561,4 +548,20 @@ function Metric({ label, value, tone }: { label: string; value: number; tone?: "
       <p className={`mt-1 text-2xl font-semibold ${toneCls}`}>{value}</p>
     </div>
   );
+}
+
+const DIFF_LABELS: Record<string, string> = {
+  nome_projeto: "Nome",
+  status: "Status",
+  descricao: "Descrição",
+  data_inicio: "Início",
+  data_fim: "Fim",
+  observacoes: "Observações",
+};
+function diffLabel(campo: string): string {
+  return DIFF_LABELS[campo] ?? campo;
+}
+function fmtDiff(v: string | null): string {
+  if (v == null || v === "") return "—";
+  return v.length > 40 ? v.slice(0, 40) + "…" : v;
 }
