@@ -115,6 +115,7 @@ type Projeto = {
   nome: string;
   descricao: string | null;
   codigo_protocolo: string | null;
+  codigo_interno: string | null;
   ativo: boolean;
   created_at: string;
   empresa?: { id: string; nome: string; ativo: boolean } | null;
@@ -128,19 +129,11 @@ const projetoSchema = z.object({
     .min(1, "Informe o nome do projeto.")
     .max(120, "Máximo de 120 caracteres."),
   descricao: z.string().trim().max(500, "Máximo de 500 caracteres.").optional().or(z.literal("")),
-  codigo_protocolo: z
-    .string()
-    .trim()
-    .transform((v) => v.toUpperCase())
-    .refine((v) => v === "" || /^[A-Z0-9]{2,10}$/.test(v), {
-      message: "Use 2–10 caracteres — apenas letras maiúsculas e números, sem espaços ou acentos.",
-    })
-    .optional()
-    .or(z.literal("")),
   ativo: z.boolean(),
 });
 
 type ProjetoForm = z.infer<typeof projetoSchema>;
+
 
 const PAGE_SIZE = 10;
 
