@@ -17,11 +17,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { usePermissions } from "@/lib/permissions";
 import {
   previewProjetosImport, confirmProjetosImport,
   type ProjetoImportPreview, type ProjetoImportRow, type ProjetoImportAcao,
 } from "@/lib/projetos.functions";
+import { downloadProjetosTemplate } from "@/lib/projetos-template";
 import { friendlyRbacError } from "@/lib/rbac/errors";
 
 export const Route = createFileRoute("/_authenticated/configuracoes/projetos_/importar")({
@@ -50,55 +52,8 @@ const acaoBadge: Record<ProjetoImportAcao, string> = {
   ERRO: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30",
 };
 
-function baixarModelo() {
-  const cab = ["cnpj_empresa", "codigo_projeto", "nome_projeto", "status",
-    "descricao", "data_inicio", "data_fim", "observacoes"];
-  const exemplo = ["12.345.678/0001-90", "ARMT", "Projeto Armazém", "ATIVO",
-    "Operação logística", "2026-01-01", "", ""];
-  const ws = XLSX.utils.aoa_to_sheet([cab, exemplo]);
-  ws["!cols"] = cab.map((c) => ({ wch: Math.max(16, c.length + 4) }));
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Projetos");
+const baixarModelo = downloadProjetosTemplate;
 
-  const instr = [
-    ["Importação de Projetos — CRM MK9"],
-    [],
-    ["Formatos aceitos: .xlsx e .csv (até 5 MB, máx. 2.000 linhas)."],
-    ["Somente a aba 'Projetos' é lida; as demais são ignoradas."],
-    [],
-    ["Colunas obrigatórias:"],
-    ["  • cnpj_empresa — CNPJ da empresa já cadastrada (com ou sem máscara)"],
-    ["  • codigo_projeto — 2 a 10 caracteres (A-Z, 0-9)"],
-    ["  • nome_projeto — texto até 120 caracteres"],
-    ["  • status — ATIVO ou INATIVO"],
-    [],
-    ["Colunas opcionais:"],
-    ["  • descricao — texto até 500 caracteres"],
-    ["  • data_inicio — YYYY-MM-DD (ou DD/MM/YYYY)"],
-    ["  • data_fim — YYYY-MM-DD (ou DD/MM/YYYY)"],
-    ["  • observacoes — texto livre (até 2000 caracteres)"],
-    [],
-    ["Regras de importação:"],
-    ["  • A empresa é sempre localizada pelo CNPJ (nunca por nome)."],
-    ["  • Empresas NÃO são criadas automaticamente."],
-    ["  • Se o CNPJ não existir ou estiver fora do seu escopo, a linha vira ERRO."],
-    ["  • Chave lógica do projeto: empresa + codigo_projeto (único por empresa)."],
-    ["  • Se o projeto não existir, será CRIADO."],
-    ["  • Se existir, será ATUALIZADO / ATIVADO / DESATIVADO conforme o status."],
-    [],
-    ["Projetos NÃO são excluídos por esta importação."],
-    ["Para encerrar um projeto, informe status = INATIVO."],
-    [],
-    ["Segurança:"],
-    ["  • A importação exige as permissões 'projeto.criar' e/ou 'projeto.editar'."],
-    ["  • Cada operação gera trilha de auditoria com correlation_id."],
-    ["  • Códigos de projeto com ausências registradas não são alterados."],
-  ];
-  const wsI = XLSX.utils.aoa_to_sheet(instr);
-  wsI["!cols"] = [{ wch: 100 }];
-  XLSX.utils.book_append_sheet(wb, wsI, "Instruções");
-  XLSX.writeFile(wb, "modelo_importacao_projetos.xlsx");
-}
 
 function ImportarProjetosPage() {
   const navigate = useNavigate();
