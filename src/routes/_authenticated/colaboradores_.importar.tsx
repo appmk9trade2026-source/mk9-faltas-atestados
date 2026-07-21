@@ -164,6 +164,46 @@ function ImportarPage() {
     },
   });
 
+  // Fase A — Diagnóstico global de projetos equivalentes (empresa + nome normalizado).
+  type DiagProjeto = {
+    projeto_id: string;
+    nome: string;
+    codigo_interno: string | null;
+    codigo_protocolo: string | null;
+    ativo: boolean;
+    colaboradores: number;
+    ausencias: number;
+    alertas: number;
+    protocolos: number;
+    usuarios: number;
+    created_at: string;
+    ultima_ausencia: string | null;
+  };
+  type DiagGrupo = {
+    empresa_id: string;
+    empresa_nome: string;
+    chave: string;
+    qtd: number;
+    projetos: DiagProjeto[];
+  };
+  const { data: diagnostico } = useQuery({
+    queryKey: ["projetos-duplicados-diagnostico"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("diagnose_projetos_duplicados");
+      if (error) throw error;
+      return data as { total_grupos: number; total_projetos_envolvidos: number; grupos: DiagGrupo[] };
+    },
+    enabled: canImport,
+  });
+
+  const grupoInfoByKey = useMemo(() => {
+    const m = new Map<string, DiagProjeto[]>();
+    for (const g of diagnostico?.grupos ?? []) {
+      m.set(`${g.empresa_id}::${g.chave}`, g.projetos);
+    }
+    return m;
+  }, [diagnostico]);
+
   const summary = useMemo(() => {
     const ok = rows.filter((r) => r.status === "OK").length;
     const err = rows.filter((r) => r.status === "ERRO").length;
