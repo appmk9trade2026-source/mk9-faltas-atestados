@@ -75,9 +75,13 @@ type AuditAcao =
   | "PROJETO_CODIGO_ALTERADO"
   | "PROJETO_CODIGO_ALTERACAO_NEGADA"
   | "PROJETO_ATUALIZADO"
+  | "PROJETO_EXCLUIDO"
+  | "PROJETO_ARQUIVADO_AUTOMATICO"
+  | "PROJETOS_EXCLUSAO_LOTE"
   | "PROJETOS_IMPORTACAO_INICIADA"
   | "PROJETOS_IMPORTACAO_CONCLUIDA"
   | "PROJETOS_IMPORTACAO_FALHOU";
+
 
 async function audit(
   supabase: import("@/lib/rbac/guards.server").MiddlewareContext["supabase"],
