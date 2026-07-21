@@ -672,17 +672,33 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
       }
 
       failurePhase = phase;
+      // Diagnóstico completo — nunca mascaramos message/details/hint/code
+      // vindos do Supabase. Fica no audit e no erro retornado ao cliente.
+      const diagBits = [
+        rpcErrorCode ? `code=${rpcErrorCode}` : null,
+        rpcErrorMessage ? `message=${rpcErrorMessage}` : null,
+        rpcErrorDetails ? `details=${rpcErrorDetails}` : null,
+        rpcErrorHint ? `hint=${rpcErrorHint}` : null,
+      ].filter(Boolean).join(" | ");
       await audit(context.supabase, "PROJETOS_IMPORTACAO_FALHOU", null, correlationId,
         null, { error_code: userCode, failure_phase: failurePhase,
           duration_ms: Date.now() - startedAt, total_rows: data.rows.length,
-          correlation_id: correlationId, rpc_details: rpcErrorDetails ?? null },
-        `${userCode} — importação abortada`, null, null, false);
+          correlation_id: correlationId,
+          rpc_code: rpcErrorCode, rpc_message: rpcErrorMessage,
+          rpc_details: rpcErrorDetails, rpc_hint: rpcErrorHint },
+        `${userCode} — importação abortada. ${diagBits}`.slice(0, 500), null, null, false);
 
-      const err = new Error(`${userCode}: ${userMessage}`) as Error & {
+      const fullMsg = diagBits ? `${userMessage} [${diagBits}]`.slice(0, 480) : userMessage;
+      const err = new Error(`${userCode}: ${fullMsg}`) as Error & {
         code: string; correlationId: string;
+        rpcCode?: string | null; rpcDetails?: string | null; rpcHint?: string | null; rpcMessage?: string | null;
       };
       err.code = userCode;
       err.correlationId = correlationId;
+      err.rpcCode = rpcErrorCode;
+      err.rpcDetails = rpcErrorDetails;
+      err.rpcHint = rpcErrorHint;
+      err.rpcMessage = rpcErrorMessage;
       throw err;
     }
 
