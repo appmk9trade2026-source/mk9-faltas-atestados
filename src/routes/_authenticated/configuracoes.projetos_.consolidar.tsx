@@ -192,6 +192,26 @@ function ConsolidarProjetosPage() {
     enabled: !!canManage,
   });
 
+  const { data: colisoes } = useQuery({
+    queryKey: ["projetos-colisoes-ativas"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("report_projetos_colisoes_ativas" as never);
+      if (error) throw error;
+      return data as unknown as {
+        total_grupos: number;
+        total_projetos_envolvidos: number;
+        grupos: Array<{
+          empresa_id: string;
+          empresa_nome: string | null;
+          nome_normalizado: string;
+          total: number;
+          projetos: Array<{ id: string; nome: string; codigo_interno: string | null }>;
+        }>;
+      };
+    },
+    enabled: !!canManage,
+  });
+
   const gruposDisponiveis = useMemo(() => {
     return (diagnostico?.grupos ?? []).filter((g) => g.projetos.length >= 2);
   }, [diagnostico]);
