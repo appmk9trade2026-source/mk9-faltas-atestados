@@ -89,6 +89,8 @@ import { useProjetosAtivosPorEmpresa } from "@/hooks/use-projetos";
 import { useColaboradorDuplicado } from "@/hooks/use-colaborador-duplicado";
 import { normalizeMatricula } from "@/lib/matricula";
 import { formatTelefone, onlyDigits } from "@/lib/br-format";
+import { createColaborador, updateColaborador, setColaboradorAtivo } from "@/lib/colaboradores.functions";
+import { friendlyRbacError } from "@/lib/rbac/errors";
 
 
 
