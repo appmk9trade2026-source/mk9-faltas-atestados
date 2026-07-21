@@ -405,11 +405,17 @@ export const deleteProjetosSmart = createServerFn({ method: "POST" })
 
         if (vinculos > 0) {
           if (p.ativo) {
-            const { error } = await context.supabase
+            const { data: upd, error } = await context.supabase
               .from("projetos")
               .update({ ativo: false } as never)
-              .eq("id", p.id);
+              .eq("id", p.id)
+              .select("id");
             if (error) throw mapSupabaseError(error.message);
+            if (!upd || upd.length === 0) {
+              throw new Error(
+                "PERMISSION_DENIED: sem permissão para arquivar este projeto (RLS)",
+              );
+            }
           }
           arquivados += 1;
           detalhes.push({ id: p.id, nome: p.nome, acao: "ARQUIVADO", vinculos });
@@ -426,11 +432,18 @@ export const deleteProjetosSmart = createServerFn({ method: "POST" })
             p.id,
           );
         } else {
-          const { error } = await context.supabase
+          const { data: del, error } = await context.supabase
             .from("projetos")
             .delete()
-            .eq("id", p.id);
+            .eq("id", p.id)
+            .select("id");
           if (error) throw mapSupabaseError(error.message);
+          const affected = del?.length ?? 0;
+          if (affected === 0) {
+            throw new Error(
+              "PERMISSION_DENIED: exclusão bloqueada por RLS ou registro já removido (0 linhas afetadas)",
+            );
+          }
           excluidos += 1;
           detalhes.push({ id: p.id, nome: p.nome, acao: "EXCLUIDO", vinculos: 0 });
           await audit(
