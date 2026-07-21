@@ -425,6 +425,21 @@ function ProjetosPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                {canDelete && (
+                  <TableHead className="w-[40px]">
+                    <Checkbox
+                      checked={
+                        pageAllSelected
+                          ? true
+                          : pageSomeSelected
+                            ? "indeterminate"
+                            : false
+                      }
+                      onCheckedChange={(v) => togglePageSelection(v === true)}
+                      aria-label="Selecionar todos da página"
+                    />
+                  </TableHead>
+                )}
                 <TableHead className="min-w-[180px]">
                   <button
                     onClick={() => toggleSort("nome")}
@@ -454,6 +469,7 @@ function ProjetosPage() {
                 </TableHead>
                 <TableHead className="w-[70px] text-right">Ações</TableHead>
               </TableRow>
+
             </TableHeader>
             <TableBody>
               {projetosQ.isLoading &&
