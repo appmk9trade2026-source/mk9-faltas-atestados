@@ -632,7 +632,7 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
         | "IMPORT_FAILED" = "IMPORT_FAILED";
       let userMessage =
         "Não foi possível concluir a importação. Nenhuma alteração foi aplicada.";
-      let phase: typeof failurePhase = "rpc_call";
+      let phase: FailurePhase = "rpc_call";
 
       const rawUpper = (rpcErrorMessage ?? "").toUpperCase();
 
