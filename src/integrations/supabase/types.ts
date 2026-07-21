@@ -3573,6 +3573,10 @@ export type Database = {
         Args: { _atualizar?: boolean; _rows: Json }
         Returns: Json
       }
+      import_projetos_atomic: {
+        Args: { _correlation_id: string; _rows: Json }
+        Returns: Json
+      }
       is_active_user: { Args: { _user_id: string }; Returns: boolean }
       listar_notificacoes_usuario: {
         Args: {
