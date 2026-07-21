@@ -79,6 +79,8 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { createProjeto, updateProjeto, setProjetoAtivo } from "@/lib/projetos.functions";
+import { friendlyRbacError } from "@/lib/rbac/errors";
 
 export const Route = createFileRoute("/_authenticated/configuracoes/projetos")({
   head: () => ({ meta: [{ title: "Projetos · Configurações · CRM MK9" }] }),
