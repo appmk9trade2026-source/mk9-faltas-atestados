@@ -227,6 +227,15 @@ export const updateProjeto = createServerFn({ method: "POST" })
       }
     }
 
+    // Bloqueia se, após esta edição, o projeto ficaria equivalente a outro
+    // projeto ATIVO da mesma empresa (mesmo nome_normalizado).
+    if (data.ativo) {
+      const equivalente = await findProjetoEquivalente(
+        context.supabase, data.empresa_id, data.nome.trim(), data.id,
+      );
+      if (equivalente) throw equivalenteError(equivalente);
+    }
+
     const payload = {
       empresa_id: data.empresa_id,
       nome: data.nome.trim(),
