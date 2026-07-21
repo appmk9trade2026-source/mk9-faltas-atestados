@@ -278,7 +278,7 @@ export const importColaboradoresBulk = createServerFn({ method: "POST" })
       atualizadas?: number;
       ignoradas?: number;
       erros?: number;
-      detalhes?: unknown[];
+      detalhes?: Array<Record<string, string | number | null>>;
     };
 
     await audit(context.supabase, "COLABORADORES_IMPORTADOS", null, gate.correlationId,
