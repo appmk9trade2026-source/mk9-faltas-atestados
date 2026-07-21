@@ -263,11 +263,12 @@ export const setProjetoAtivo = createServerFn({ method: "POST" })
 
 // ==================== IMPORTAÇÃO POR PLANILHA ====================
 //
-// Modelo: 5 colunas — Projeto, Empresa, Descrição, Status, Data cadastro.
+// Modelo: 4 colunas — Projeto, Empresa, Descrição, Status.
 // Chave lógica = Empresa + Projeto (nome), normalizada (trim + espaços
-// colapsados + case-insensitive). O código interno (PRJ-000001) é gerado
-// automaticamente pelo banco e nunca informado pelo usuário.
-// Nunca confiamos em empresa_id / projeto_id enviados pelo cliente.
+// colapsados + case-insensitive). Código interno (PRJ-000001) e data de
+// cadastro (created_at) são gerados automaticamente pelo banco e nunca
+// informados pelo usuário. Nunca confiamos em empresa_id / projeto_id
+// enviados pelo cliente.
 
 export type ProjetoImportRow = {
   linha: number;
@@ -275,7 +276,6 @@ export type ProjetoImportRow = {
   nome_projeto: string;
   descricao?: string | null;
   status: string;
-  data_cadastro?: string | null;
 };
 
 export type ProjetoImportAcao =
@@ -295,7 +295,8 @@ export type ProjetoImportPreviewRow = {
   nome_projeto: string;
   descricao: string | null;
   status_normalizado: "ATIVO" | "INATIVO" | null;
-  data_cadastro: string | null;
+  /** Data de cadastro atual (created_at) do projeto existente; null para novos. */
+  data_cadastro_atual: string | null;
   projeto_id: string | null;
   codigo_interno_atual: string | null;
   acao: ProjetoImportAcao;
@@ -322,7 +323,6 @@ const importRowSchema = z.object({
   nome_projeto: z.string().max(200),
   descricao: z.string().max(500).nullable().optional(),
   status: z.string().max(20),
-  data_cadastro: z.string().max(30).nullable().optional(),
 });
 
 const importInputSchema = z.object({
@@ -347,17 +347,6 @@ function normalizeStatus(v: string): "ATIVO" | "INATIVO" | null {
   if (s === "ATIVO" || s === "1" || s === "ATIVA" || s === "TRUE") return "ATIVO";
   if (s === "INATIVO" || s === "0" || s === "INATIVA" || s === "FALSE") return "INATIVO";
   return null;
-}
-/** Aceita YYYY-MM-DD ou DD/MM/YYYY (cliente já normaliza serial/Date). */
-function normalizeDate(v: string | null | undefined): string | null | "INVALID" {
-  if (v == null) return null;
-  const s = String(v).trim();
-  if (s === "") return null;
-  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
-  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
-  const br = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s);
-  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
-  return "INVALID";
 }
 
 async function buildPreview(
