@@ -997,13 +997,23 @@ function DeleteProjetosDialog({
     },
     onSuccess: (res) => {
       const parts: string[] = [];
-      if (res.excluidos > 0) parts.push(`${res.excluidos} excluído(s)`);
-      if (res.arquivados > 0) parts.push(`${res.arquivados} arquivado(s)`);
-      toast.success(parts.join(" · ") || "Operação concluída.");
+      if (res.excluidos > 0) parts.push(`${res.excluidos} excluído(s) definitivamente`);
+      if (res.arquivados > 0)
+        parts.push(`${res.arquivados} arquivado(s) por possuir vínculos`);
+      if (parts.length > 0) {
+        toast.success(parts.join(" · "));
+      } else if (res.erros.length === 0) {
+        toast.warning("Nenhum projeto foi alterado.");
+      }
       if (res.erros.length > 0) {
-        toast.error(`${res.erros.length} erro(s)`, {
-          description: res.erros.map((e) => `${e.nome}: ${e.erro}`).join("\n"),
-        });
+        toast.error(
+          `${res.erros.length} projeto(s) não foram excluídos`,
+          {
+            description: res.erros
+              .map((e) => `• ${e.nome}: ${e.erro.replace(/^[A-Z_]+:\s*/, "")}`)
+              .join("\n"),
+          },
+        );
       }
       setConfirmText("");
       setMotivo("");
