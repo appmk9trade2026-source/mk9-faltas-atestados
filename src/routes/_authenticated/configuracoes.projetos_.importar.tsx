@@ -38,28 +38,32 @@ const MAX_ROWS = 2000;
 
 const acaoLabel: Record<ProjetoImportAcao, string> = {
   CRIAR: "Criar",
-  ATUALIZAR: "Atualizar",
-  ATIVAR: "Ativar",
-  DESATIVAR: "Desativar",
-  SEM_ALTERACAO: "Sem alteração",
+  JA_EXISTENTE: "Já existente",
   ERRO: "Erro",
 };
 const acaoBadge: Record<ProjetoImportAcao, string> = {
   CRIAR: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
-  ATUALIZAR: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border-indigo-500/30",
-  ATIVAR: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
-  DESATIVAR: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30",
-  SEM_ALTERACAO: "bg-muted text-muted-foreground border-border",
+  JA_EXISTENTE: "bg-muted text-muted-foreground border-border",
   ERRO: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30",
 };
 
 const baixarModelo = downloadProjetosTemplate;
 
+type ConfirmError = {
+  code: "IMPORT_CONFLICT" | "IMPORT_CONCURRENT_CHANGE" | "IMPORT_TEMPORARILY_UNAVAILABLE" | "IMPORT_FAILED";
+  message: string;
+  correlationId?: string;
+  rpcCode?: string | null;
+  rpcMessage?: string | null;
+  rpcDetails?: string | null;
+  rpcHint?: string | null;
+  hint?: { row_number?: number; projeto?: string; empresa?: string };
+};
 
 function ImportarProjetosPage() {
   const navigate = useNavigate();
   const { has, loading: permLoading } = usePermissions();
-  const canImport = has("projeto.criar") || has("projeto.editar");
+  const canImport = has("projeto.criar");
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<WizardStep>(1);
@@ -69,14 +73,9 @@ function ImportarProjetosPage() {
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<Awaited<ReturnType<typeof confirmProjetosImport>> | null>(null);
   const [dragActive, setDragActive] = useState(false);
-  const [conflict, setConflict] = useState<{
-    code: "IMPORT_CONFLICT" | "IMPORT_CONCURRENT_CHANGE" | "IMPORT_TEMPORARILY_UNAVAILABLE" | "IMPORT_FAILED";
-    message: string;
-    correlationId?: string;
-    hint?: { row_number?: number; projeto?: string; empresa?: string };
-  } | null>(null);
+  const [conflict, setConflict] = useState<ConfirmError | null>(null);
   const [revalidating, setRevalidating] = useState(false);
-  const [apenasAlteracoes, setApenasAlteracoes] = useState(false);
+  const [apenasNovos, setApenasNovos] = useState(false);
 
   function reset() {
     setStep(1);
@@ -123,36 +122,27 @@ function ImportarProjetosPage() {
     setProgress(20);
     try {
       const buf = await f.arrayBuffer();
-      // cellDates: XLSX devolve células de data como Date real (evita drift de fuso).
-      // raw: true preserva número (serial Excel) quando não é data — parseSpreadsheetDate cobre ambos.
       const wb = XLSX.read(buf, { type: "array", cellDates: true, raw: true });
       const sheetName = wb.SheetNames.find((n) => n.toLowerCase() === "projetos") ?? wb.SheetNames[0];
       const ws = wb.Sheets[sheetName];
       const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "", raw: true });
-      const pickRaw = (r: Record<string, unknown>, keys: string[]): unknown => {
+      const pickText = (r: Record<string, unknown>, keys: string[]): string => {
         for (const k of keys) {
           const v = r[k];
-          if (v !== undefined && v !== null && !(typeof v === "string" && v.trim() === "")) return v;
+          if (v == null) continue;
+          if (typeof v === "string" && v.trim() === "") continue;
+          if (v instanceof Date) return v.toISOString();
+          return String(v).trim();
         }
         return "";
-      };
-      const pickText = (r: Record<string, unknown>, keys: string[]): string => {
-        const v = pickRaw(r, keys);
-        if (v == null) return "";
-        if (v instanceof Date) return v.toISOString();
-        return String(v).trim();
       };
       const norm: ProjetoImportRow[] = raw
         .map((r, i) => ({
           linha: i + 2,
           nome_projeto: pickText(r, ["Projeto", "projeto", "nome_projeto", "nome"]),
           empresa_nome: pickText(r, ["Empresa", "empresa", "empresa_nome", "razao_social"]),
-          descricao: pickText(r, ["Descrição", "Descricao", "descricao"]) || null,
-          status: pickText(r, ["Status", "status"]),
         }))
-        .filter((r) => r.empresa_nome || r.nome_projeto || r.status);
-
-
+        .filter((r) => r.empresa_nome || r.nome_projeto);
 
       if (norm.length === 0) {
         toast.error("A planilha não contém linhas de dados.");
@@ -185,8 +175,6 @@ function ImportarProjetosPage() {
   const confirmMut = useMutation({
     mutationFn: async () => {
       if (!preview || !file) throw new Error("Nada para confirmar.");
-      // Sempre gera novo correlation_id para cada tentativa de confirmação —
-      // uma nova confirmação após conflito NUNCA reutiliza a anterior.
       return await confirmProjetosImport({ data: {
         arquivo_nome: file.name,
         arquivo_tamanho: file.size,
@@ -201,14 +189,23 @@ function ImportarProjetosPage() {
       toast.success("Importação concluída.");
     },
     onError: (e) => {
-      const raw = (e as { message?: string; code?: string; correlationId?: string; conflictHint?: { row_number?: number; projeto?: string; empresa?: string } }) ?? {};
+      const raw = (e as {
+        message?: string; code?: string; correlationId?: string;
+        rpcCode?: string | null; rpcMessage?: string | null;
+        rpcDetails?: string | null; rpcHint?: string | null;
+        conflictHint?: { row_number?: number; projeto?: string; empresa?: string };
+      }) ?? {};
       const msg = raw.message ?? "";
       const m = /^(IMPORT_CONFLICT|IMPORT_CONCURRENT_CHANGE|IMPORT_TEMPORARILY_UNAVAILABLE|IMPORT_FAILED):\s*(.*)$/s.exec(msg);
       if (m) {
         setConflict({
-          code: m[1] as "IMPORT_CONFLICT" | "IMPORT_CONCURRENT_CHANGE" | "IMPORT_TEMPORARILY_UNAVAILABLE" | "IMPORT_FAILED",
+          code: m[1] as ConfirmError["code"],
           message: m[2],
           correlationId: raw.correlationId,
+          rpcCode: raw.rpcCode ?? null,
+          rpcMessage: raw.rpcMessage ?? null,
+          rpcDetails: raw.rpcDetails ?? null,
+          rpcHint: raw.rpcHint ?? null,
           hint: raw.conflictHint,
         });
         toast.error("Conflito na importação. Nenhuma alteração foi aplicada.");
@@ -219,7 +216,7 @@ function ImportarProjetosPage() {
     },
   });
 
-  const podeConfirmar = preview && preview.erro === 0 && (preview.criar + preview.atualizar + preview.ativar + preview.desativar) > 0;
+  const podeConfirmar = !!preview && preview.erro === 0 && preview.criar > 0;
 
   function baixarRelatorioErros() {
     if (!preview) return;
@@ -238,7 +235,6 @@ function ImportarProjetosPage() {
     const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "").slice(0, 12);
     XLSX.writeFile(wb, `erros_importacao_projetos_${stamp}.xlsx`);
   }
-
 
   const stepsMeta = useMemo(() => ([
     { n: 1, label: "Selecionar" },
@@ -261,7 +257,7 @@ function ImportarProjetosPage() {
       {!permLoading && !canImport && (
         <Alert variant="destructive">
           <AlertTitle>Sem permissão</AlertTitle>
-          <AlertDescription>Você precisa de <b>projeto.criar</b> ou <b>projeto.editar</b>.</AlertDescription>
+          <AlertDescription>Você precisa da permissão <b>projeto.criar</b> para importar projetos.</AlertDescription>
         </Alert>
       )}
 
@@ -308,7 +304,10 @@ function ImportarProjetosPage() {
             <div>
               <p className="font-medium">Arraste o arquivo aqui ou clique para selecionar</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                .xlsx ou .csv · até 5 MB · máx. 2.000 linhas · aba <b>Projetos</b>
+                .xlsx ou .csv · 2 colunas (<b>Projeto</b>, <b>Empresa</b>) · até 5 MB · máx. 2.000 linhas · aba <b>Projetos</b>
+              </p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Código, Descrição (NOVO PROJETO), Status (ATIVO) e Data de cadastro são preenchidos automaticamente pelo sistema.
               </p>
             </div>
             <input
@@ -341,7 +340,7 @@ function ImportarProjetosPage() {
             <Sparkles className="h-8 w-8 animate-pulse text-primary" />
             <p className="font-medium">Lendo e validando "{file?.name}"…</p>
             <Progress value={progress} className="w-full" />
-            <p className="text-xs text-muted-foreground">Normalizando CNPJs, localizando empresas, verificando duplicidades…</p>
+            <p className="text-xs text-muted-foreground">Localizando empresas e verificando duplicidades…</p>
           </div>
         </Card>
       )}
@@ -353,10 +352,7 @@ function ImportarProjetosPage() {
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">Total: <b className="ml-1">{preview.total}</b></Badge>
               <Badge className={acaoBadge.CRIAR}>Criar: {preview.criar}</Badge>
-              <Badge className={acaoBadge.ATUALIZAR}>Atualizar: {preview.atualizar}</Badge>
-              <Badge className={acaoBadge.ATIVAR}>Ativar: {preview.ativar}</Badge>
-              <Badge className={acaoBadge.DESATIVAR}>Desativar: {preview.desativar}</Badge>
-              <Badge className={acaoBadge.SEM_ALTERACAO}>Sem alteração: {preview.sem_alteracao}</Badge>
+              <Badge className={acaoBadge.JA_EXISTENTE}>Já existente: {preview.ja_existente}</Badge>
               <Badge className={acaoBadge.ERRO}>Erros: {preview.erro}</Badge>
               <Badge variant="outline">Empresas: {preview.empresas_envolvidas}</Badge>
               <div className="ml-auto flex gap-2">
@@ -372,7 +368,7 @@ function ImportarProjetosPage() {
                   disabled={!podeConfirmar || confirmMut.isPending || !canImport}
                   onClick={() => confirmMut.mutate()}
                 >
-                  {confirmMut.isPending ? "Confirmando…" : "Confirmar importação"}
+                  {confirmMut.isPending ? "Confirmando…" : `Confirmar criação (${preview.criar})`}
                 </Button>
               </div>
             </div>
@@ -382,6 +378,15 @@ function ImportarProjetosPage() {
                 <AlertTitle>Existem linhas com erro</AlertTitle>
                 <AlertDescription>
                   Corrija a planilha e envie novamente. A importação só é confirmada com <b>0 erros</b>.
+                </AlertDescription>
+              </Alert>
+            )}
+            {preview.erro === 0 && preview.criar === 0 && preview.ja_existente > 0 && (
+              <Alert className="mt-3">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Nada para criar</AlertTitle>
+                <AlertDescription>
+                  Todos os {preview.ja_existente} projetos da planilha já existem no sistema. Nenhuma criação será feita.
                 </AlertDescription>
               </Alert>
             )}
@@ -413,7 +418,14 @@ function ImportarProjetosPage() {
                       {conflict.hint.empresa ? <> · empresa <b>{conflict.hint.empresa}</b></> : null}
                     </p>
                   )}
-
+                  {(conflict.rpcCode || conflict.rpcMessage || conflict.rpcDetails || conflict.rpcHint) && (
+                    <div className="mt-2 rounded border border-destructive/30 bg-destructive/5 p-2 font-mono text-[10px]">
+                      {conflict.rpcCode && <div>code: {conflict.rpcCode}</div>}
+                      {conflict.rpcMessage && <div>message: {conflict.rpcMessage}</div>}
+                      {conflict.rpcDetails && <div>details: {conflict.rpcDetails}</div>}
+                      {conflict.rpcHint && <div>hint: {conflict.rpcHint}</div>}
+                    </div>
+                  )}
                   {conflict.correlationId && (
                     <p className="mt-1 text-[10px] font-mono opacity-70">correlation: {conflict.correlationId}</p>
                   )}
@@ -435,13 +447,13 @@ function ImportarProjetosPage() {
             <div className="flex flex-wrap items-center justify-between gap-3 border-b p-3">
               <label className="flex cursor-pointer items-center gap-2 text-sm">
                 <Checkbox
-                  checked={apenasAlteracoes}
-                  onCheckedChange={(v) => setApenasAlteracoes(Boolean(v))}
+                  checked={apenasNovos}
+                  onCheckedChange={(v) => setApenasNovos(Boolean(v))}
                 />
-                Mostrar apenas linhas com alteração
+                Mostrar apenas linhas a criar
               </label>
               <p className="text-xs text-muted-foreground">
-                Exibindo {preview.linhas.filter((l) => !apenasAlteracoes || l.acao !== "SEM_ALTERACAO").length} de {preview.total} linhas
+                Exibindo {preview.linhas.filter((l) => !apenasNovos || l.acao === "CRIAR" || l.acao === "ERRO").length} de {preview.total} linhas
               </p>
             </div>
             <div className="max-h-[560px] overflow-auto">
@@ -452,16 +464,14 @@ function ImportarProjetosPage() {
                     <TableHead>Projeto</TableHead>
                     <TableHead>Empresa</TableHead>
                     <TableHead>Código interno</TableHead>
-                    <TableHead className="max-w-[220px]">Descrição</TableHead>
-                    <TableHead>Status</TableHead>
                     <TableHead>Data cadastro</TableHead>
                     <TableHead>Ação</TableHead>
-                    <TableHead className="min-w-[260px]">Diferenças / Observações</TableHead>
+                    <TableHead className="min-w-[240px]">Observações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {preview.linhas
-                    .filter((l) => !apenasAlteracoes || l.acao !== "SEM_ALTERACAO")
+                    .filter((l) => !apenasNovos || l.acao === "CRIAR" || l.acao === "ERRO")
                     .map((l) => (
                     <TableRow key={l.linha} className={l.acao === "ERRO" ? "bg-red-500/5" : ""}>
                       <TableCell className="text-xs text-muted-foreground">{l.linha}</TableCell>
@@ -475,13 +485,6 @@ function ImportarProjetosPage() {
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
-                      </TableCell>
-
-                      <TableCell className="max-w-[220px] truncate text-xs text-muted-foreground" title={l.descricao ?? ""}>{l.descricao || "—"}</TableCell>
-                      <TableCell>
-                        {l.status_normalizado ? (
-                          <Badge variant="outline">{l.status_normalizado}</Badge>
-                        ) : <span className="text-xs text-muted-foreground">—</span>}
                       </TableCell>
                       <TableCell className="font-mono text-xs">
                         {l.data_cadastro_atual ? (
@@ -497,25 +500,22 @@ function ImportarProjetosPage() {
                       <TableCell>
                         <Badge className={acaoBadge[l.acao]}>{acaoLabel[l.acao]}</Badge>
                       </TableCell>
-
                       <TableCell className="text-xs">
                         {l.erros.length > 0 ? (
-                          <span className="text-destructive">{l.erros.join("; ")}</span>
-                        ) : l.diff && l.diff.length > 0 ? (
-                          <ul className="space-y-0.5">
-                            {l.diff.map((d) => (
-                              <li key={d.campo} className="flex flex-wrap items-center gap-1">
-                                <span className="font-medium text-foreground">{diffLabel(d.campo)}:</span>
-                                <span className="rounded bg-muted px-1 py-0.5 font-mono text-[10px] line-through opacity-70">{fmtDiff(d.atual)}</span>
-                                <span className="opacity-60">→</span>
-                                <span className="rounded bg-emerald-500/15 px-1 py-0.5 font-mono text-[10px] text-emerald-700 dark:text-emerald-300">{fmtDiff(d.novo)}</span>
-                              </li>
-                            ))}
-                          </ul>
+                          <span className="text-destructive">
+                            Linha {l.linha}: {l.erros.join("; ")}
+                          </span>
                         ) : l.acao === "CRIAR" ? (
-                          <span className="text-muted-foreground">Novo projeto</span>
+                          <span className="text-muted-foreground">
+                            Novo projeto — descrição “NOVO PROJETO”, status ATIVO
+                          </span>
                         ) : (
-                          <span className="text-muted-foreground">Nenhuma alteração</span>
+                          <span className="text-muted-foreground">
+                            Projeto já cadastrado
+                            {l.codigo_interno_atual ? ` (${l.codigo_interno_atual})` : ""}
+                            {l.status_atual ? ` · ${l.status_atual}` : ""}
+                            {" — nada será alterado"}
+                          </span>
                         )}
                       </TableCell>
                     </TableRow>
@@ -538,12 +538,10 @@ function ImportarProjetosPage() {
                 <p className="text-xs text-muted-foreground">Correlation: <span className="font-mono">{result.correlation_id}</span></p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <Metric label="Total" value={result.total} />
               <Metric label="Criadas" value={result.criadas} tone="blue" />
-              <Metric label="Atualizadas" value={result.atualizadas} tone="indigo" />
-              <Metric label="Ativadas" value={result.ativadas} tone="emerald" />
-              <Metric label="Desativadas" value={result.desativadas} tone="amber" />
+              <Metric label="Já existentes" value={result.ignoradas} />
               <Metric label="Falhas" value={result.falhas.length} tone={result.falhas.length ? "red" : undefined} />
             </div>
             {result.falhas.length > 0 && (
@@ -552,7 +550,7 @@ function ImportarProjetosPage() {
                 <AlertTitle>Algumas linhas não foram aplicadas</AlertTitle>
                 <AlertDescription>
                   <ul className="mt-1 list-disc pl-5 text-xs">
-                    {result.falhas.slice(0, 10).map((f) => (
+                    {result.falhas.slice(0, 10).map((f: { linha: number; erro: string }) => (
                       <li key={f.linha}>Linha {f.linha}: {f.erro}</li>
                     ))}
                   </ul>
@@ -588,20 +586,4 @@ function Metric({ label, value, tone }: { label: string; value: number; tone?: "
       <p className={`mt-1 text-2xl font-semibold ${toneCls}`}>{value}</p>
     </div>
   );
-}
-
-const DIFF_LABELS: Record<string, string> = {
-  nome_projeto: "Nome",
-  status: "Status",
-  descricao: "Descrição",
-  data_inicio: "Início",
-  data_fim: "Fim",
-  observacoes: "Observações",
-};
-function diffLabel(campo: string): string {
-  return DIFF_LABELS[campo] ?? campo;
-}
-function fmtDiff(v: string | null): string {
-  if (v == null || v === "") return "—";
-  return v.length > 40 ? v.slice(0, 40) + "…" : v;
 }
