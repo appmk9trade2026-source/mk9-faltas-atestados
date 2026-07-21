@@ -150,6 +150,7 @@ function ProjetosPage() {
   const canManage = roles.includes("super_admin") || roles.includes("rh");
   const canImport = canManage || has("projeto.criar") || has("projeto.editar");
   const canDownloadTemplate = canImport || has("projeto.visualizar");
+  const canDelete = roles.includes("super_admin") || has("projeto.excluir");
 
   const queryClient = useQueryClient();
 
@@ -164,6 +165,10 @@ function ProjetosPage() {
   const [editing, setEditing] = useState<Projeto | null>(null);
   const [viewing, setViewing] = useState<Projeto | null>(null);
   const [confirmToggle, setConfirmToggle] = useState<Projeto | null>(null);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
 
   const empresasQ = useQuery({
     queryKey: ["empresas", "todas"],
