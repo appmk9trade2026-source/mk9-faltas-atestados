@@ -113,6 +113,13 @@ function ImportarProjetosPage() {
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<Awaited<ReturnType<typeof confirmProjetosImport>> | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [conflict, setConflict] = useState<{
+    code: "IMPORT_CONFLICT" | "IMPORT_CONCURRENT_CHANGE" | "IMPORT_TEMPORARILY_UNAVAILABLE" | "IMPORT_FAILED";
+    message: string;
+    correlationId?: string;
+    hint?: { row_number?: number; codigo_projeto?: string; cnpj_empresa?: string };
+  } | null>(null);
+  const [revalidating, setRevalidating] = useState(false);
 
   function reset() {
     setStep(1);
@@ -121,7 +128,28 @@ function ImportarProjetosPage() {
     setPreview(null);
     setResult(null);
     setProgress(0);
+    setConflict(null);
     if (fileRef.current) fileRef.current.value = "";
+  }
+
+  async function revalidateFromParsed() {
+    if (!file || parsedRows.length === 0) return;
+    setRevalidating(true);
+    try {
+      const prev = await previewProjetosImport({ data: {
+        arquivo_nome: file.name,
+        arquivo_tamanho: file.size,
+        rows: parsedRows,
+      } });
+      setPreview(prev);
+      setConflict(null);
+      toast.success("Prévia recalculada com base no estado atual.");
+    } catch (err) {
+      const f2 = friendlyRbacError(err);
+      toast.error(f2.title, { description: f2.description });
+    } finally {
+      setRevalidating(false);
+    }
   }
 
   async function processFile(f: File) {
@@ -186,19 +214,35 @@ function ImportarProjetosPage() {
   const confirmMut = useMutation({
     mutationFn: async () => {
       if (!preview || !file) throw new Error("Nada para confirmar.");
+      // Sempre gera novo correlation_id para cada tentativa de confirmação —
+      // uma nova confirmação após conflito NUNCA reutiliza a anterior.
       return await confirmProjetosImport({ data: {
         arquivo_nome: file.name,
         arquivo_tamanho: file.size,
         rows: parsedRows,
-        correlation_id: preview.correlation_id,
+        correlation_id: crypto.randomUUID(),
       } });
     },
     onSuccess: (r) => {
       setResult(r);
       setStep(4);
+      setConflict(null);
       toast.success("Importação concluída.");
     },
     onError: (e) => {
+      const raw = (e as { message?: string; code?: string; correlationId?: string; conflictHint?: { row_number?: number; codigo_projeto?: string; cnpj_empresa?: string } }) ?? {};
+      const msg = raw.message ?? "";
+      const m = /^(IMPORT_CONFLICT|IMPORT_CONCURRENT_CHANGE|IMPORT_TEMPORARILY_UNAVAILABLE|IMPORT_FAILED):\s*(.*)$/s.exec(msg);
+      if (m) {
+        setConflict({
+          code: m[1] as "IMPORT_CONFLICT" | "IMPORT_CONCURRENT_CHANGE" | "IMPORT_TEMPORARILY_UNAVAILABLE" | "IMPORT_FAILED",
+          message: m[2],
+          correlationId: raw.correlationId,
+          hint: raw.conflictHint,
+        });
+        toast.error("Conflito na importação. Nenhuma alteração foi aplicada.");
+        return;
+      }
       const f = friendlyRbacError(e);
       toast.error(f.title, { description: f.description });
     },
@@ -365,6 +409,49 @@ function ImportarProjetosPage() {
                 <AlertTitle>Existem linhas com erro</AlertTitle>
                 <AlertDescription>
                   Corrija a planilha e envie novamente. A importação só é confirmada com <b>0 erros</b>.
+                </AlertDescription>
+              </Alert>
+            )}
+            {preview.total >= 1000 && (
+              <Alert className="mt-3">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Volume elevado</AlertTitle>
+                <AlertDescription>
+                  Este arquivo possui um volume elevado e pode levar alguns instantes para ser processado. Não feche esta página.
+                </AlertDescription>
+              </Alert>
+            )}
+            {conflict && (
+              <Alert variant="destructive" className="mt-3">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>
+                  {conflict.code === "IMPORT_CONFLICT" && "Conflito detectado"}
+                  {conflict.code === "IMPORT_CONCURRENT_CHANGE" && "Concorrência detectada"}
+                  {conflict.code === "IMPORT_TEMPORARILY_UNAVAILABLE" && "Sistema momentaneamente ocupado"}
+                  {conflict.code === "IMPORT_FAILED" && "Falha na importação"}
+                </AlertTitle>
+                <AlertDescription>
+                  <p>{conflict.message}</p>
+                  {conflict.hint && (conflict.hint.row_number || conflict.hint.codigo_projeto) && (
+                    <p className="mt-2 text-xs">
+                      Referência:
+                      {conflict.hint.row_number ? <> linha <b>{conflict.hint.row_number}</b></> : null}
+                      {conflict.hint.codigo_projeto ? <> · código <b>{conflict.hint.codigo_projeto}</b></> : null}
+                      {conflict.hint.cnpj_empresa ? <> · CNPJ <b>{conflict.hint.cnpj_empresa}</b></> : null}
+                    </p>
+                  )}
+                  {conflict.correlationId && (
+                    <p className="mt-1 text-[10px] font-mono opacity-70">correlation: {conflict.correlationId}</p>
+                  )}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button size="sm" onClick={revalidateFromParsed} disabled={revalidating}>
+                      <RotateCcw className="mr-2 h-4 w-4" />
+                      {revalidating ? "Recalculando…" : "Validar novamente"}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setConflict(null)}>
+                      Voltar para revisão
+                    </Button>
+                  </div>
                 </AlertDescription>
               </Alert>
             )}
