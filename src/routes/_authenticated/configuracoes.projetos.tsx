@@ -670,8 +670,11 @@ function ProjetosPage() {
           <dl className="grid grid-cols-3 gap-2 text-sm">
             <dt className="text-muted-foreground">Empresa</dt>
             <dd className="col-span-2">{viewing?.empresa?.nome ?? "—"}</dd>
-            <dt className="text-muted-foreground">Código</dt>
-            <dd className="col-span-2 font-mono">{viewing?.codigo_protocolo ?? "—"}</dd>
+            <dt className="text-muted-foreground">Cód. interno</dt>
+            <dd className="col-span-2 font-mono">{viewing?.codigo_interno ?? "—"}</dd>
+            <dt className="text-muted-foreground">Prefixo protocolo</dt>
+            <dd className="col-span-2 font-mono tracking-wider">{viewing?.codigo_protocolo ?? "—"}</dd>
+
             <dt className="text-muted-foreground">Status</dt>
             <dd className="col-span-2">{viewing?.ativo ? "Ativo" : "Inativo"}</dd>
             <dt className="text-muted-foreground">Cadastro</dt>
