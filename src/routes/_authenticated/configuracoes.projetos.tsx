@@ -587,7 +587,19 @@ function ProjetosPage() {
                             </DropdownMenuItem>
                           </>
                         )}
+                        {canDelete && (
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedIds(new Set([row.id]));
+                              setDeleteOpen(true);
+                            }}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
+
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
