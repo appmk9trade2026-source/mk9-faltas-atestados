@@ -263,11 +263,12 @@ export const setProjetoAtivo = createServerFn({ method: "POST" })
 
 // ==================== IMPORTAÇÃO POR PLANILHA ====================
 //
-// Modelo: 5 colunas — Projeto, Empresa, Descrição, Status, Data cadastro.
+// Modelo: 4 colunas — Projeto, Empresa, Descrição, Status.
 // Chave lógica = Empresa + Projeto (nome), normalizada (trim + espaços
-// colapsados + case-insensitive). O código interno (PRJ-000001) é gerado
-// automaticamente pelo banco e nunca informado pelo usuário.
-// Nunca confiamos em empresa_id / projeto_id enviados pelo cliente.
+// colapsados + case-insensitive). Código interno (PRJ-000001) e data de
+// cadastro (created_at) são gerados automaticamente pelo banco e nunca
+// informados pelo usuário. Nunca confiamos em empresa_id / projeto_id
+// enviados pelo cliente.
 
 export type ProjetoImportRow = {
   linha: number;
@@ -275,7 +276,6 @@ export type ProjetoImportRow = {
   nome_projeto: string;
   descricao?: string | null;
   status: string;
-  data_cadastro?: string | null;
 };
 
 export type ProjetoImportAcao =
@@ -295,7 +295,8 @@ export type ProjetoImportPreviewRow = {
   nome_projeto: string;
   descricao: string | null;
   status_normalizado: "ATIVO" | "INATIVO" | null;
-  data_cadastro: string | null;
+  /** Data de cadastro atual (created_at) do projeto existente; null para novos. */
+  data_cadastro_atual: string | null;
   projeto_id: string | null;
   codigo_interno_atual: string | null;
   acao: ProjetoImportAcao;
@@ -322,7 +323,6 @@ const importRowSchema = z.object({
   nome_projeto: z.string().max(200),
   descricao: z.string().max(500).nullable().optional(),
   status: z.string().max(20),
-  data_cadastro: z.string().max(30).nullable().optional(),
 });
 
 const importInputSchema = z.object({
@@ -348,17 +348,6 @@ function normalizeStatus(v: string): "ATIVO" | "INATIVO" | null {
   if (s === "INATIVO" || s === "0" || s === "INATIVA" || s === "FALSE") return "INATIVO";
   return null;
 }
-/** Aceita YYYY-MM-DD ou DD/MM/YYYY (cliente já normaliza serial/Date). */
-function normalizeDate(v: string | null | undefined): string | null | "INVALID" {
-  if (v == null) return null;
-  const s = String(v).trim();
-  if (s === "") return null;
-  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
-  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
-  const br = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s);
-  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
-  return "INVALID";
-}
 
 async function buildPreview(
   supabase: import("@/lib/rbac/guards.server").MiddlewareContext["supabase"],
@@ -383,17 +372,18 @@ async function buildPreview(
   }
   type ExistingProjeto = {
     id: string; ativo: boolean; nome: string; descricao: string | null;
-    codigo_interno: string | null;
+    codigo_interno: string | null; created_at: string | null;
   };
   const projetoKey = new Map<string, ExistingProjeto[]>();
   if (empresaIds.size > 0) {
     const { data: projs } = await supabase
       .from("projetos")
-      .select("id, empresa_id, nome, ativo, descricao, codigo_interno")
+      .select("id, empresa_id, nome, ativo, descricao, codigo_interno, created_at")
       .in("empresa_id", [...empresaIds]);
     for (const p of (projs ?? []) as Array<{
       id: string; empresa_id: string; nome: string;
-      ativo: boolean; descricao: string | null; codigo_interno: string | null;
+      ativo: boolean; descricao: string | null;
+      codigo_interno: string | null; created_at: string | null;
     }>) {
       const nomeNorm = normalizeNomeProjeto(p.nome);
       const k = `${p.empresa_id}::${nomeNorm}`;
@@ -401,6 +391,7 @@ async function buildPreview(
       arr.push({
         id: p.id, ativo: p.ativo, nome: p.nome,
         descricao: p.descricao, codigo_interno: p.codigo_interno,
+        created_at: p.created_at,
       });
       projetoKey.set(k, arr);
     }
@@ -430,14 +421,12 @@ async function buildPreview(
     const nomeNorm = normalizeNomeProjeto(nome);
     const descricao = nullIfBlank(r.descricao);
     const status = normalizeStatus(r.status);
-    const dtCad = normalizeDate(r.data_cadastro ?? null);
     const erros: string[] = [];
 
     if (!enNorm) erros.push("Empresa obrigatória");
     if (!nome) erros.push("Projeto (nome) obrigatório");
     if (nome.length > 120) erros.push("Projeto acima de 120 caracteres");
     if (!status) erros.push("Status inválido (use ATIVO ou INATIVO)");
-    if (dtCad === "INVALID") erros.push("Data cadastro inválida");
 
     const bucket = enNorm ? empresasBucket.get(enNorm) : undefined;
     let emp: { id: string; nome: string; ativo: boolean } | undefined;
@@ -460,6 +449,7 @@ async function buildPreview(
     let acao: ProjetoImportAcao = "ERRO";
     let projetoId: string | null = null;
     let codigoInternoAtual: string | null = null;
+    let dataCadastroAtual: string | null = null;
     const diff: ProjetoImportFieldDiff[] = [];
 
     if (erros.length === 0 && emp && status) {
@@ -474,6 +464,7 @@ async function buildPreview(
         const existing = existingList[0];
         projetoId = existing.id;
         codigoInternoAtual = existing.codigo_interno;
+        dataCadastroAtual = existing.created_at;
         const atualStatus = existing.ativo ? "ATIVO" : "INATIVO";
         const novoStatus: "ATIVO" | "INATIVO" = wantAtivo ? "ATIVO" : "INATIVO";
 
@@ -498,7 +489,7 @@ async function buildPreview(
       nome_projeto: nome,
       descricao,
       status_normalizado: status,
-      data_cadastro: typeof dtCad === "string" ? dtCad : null,
+      data_cadastro_atual: dataCadastroAtual,
       projeto_id: projetoId,
       codigo_interno_atual: codigoInternoAtual,
       acao,
@@ -572,7 +563,7 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
       nome_projeto: r.nome_projeto,
       descricao: r.descricao ?? null,
       status: r.status,
-      data_cadastro: r.data_cadastro ?? null,
+      data_cadastro: null,
     }));
 
     type AtomicResult = {

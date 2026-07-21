@@ -24,7 +24,7 @@ import {
   type ProjetoImportPreview, type ProjetoImportRow, type ProjetoImportAcao,
 } from "@/lib/projetos.functions";
 import { downloadProjetosTemplate } from "@/lib/projetos-template";
-import { parseSpreadsheetDate } from "@/lib/spreadsheet-date";
+
 import { friendlyRbacError } from "@/lib/rbac/errors";
 
 export const Route = createFileRoute("/_authenticated/configuracoes/projetos_/importar")({
@@ -142,14 +142,6 @@ function ImportarProjetosPage() {
         if (v instanceof Date) return v.toISOString();
         return String(v).trim();
       };
-      const pickDate = (r: Record<string, unknown>, keys: string[]): string | null => {
-        const v = pickRaw(r, keys);
-        if (v === "" || v === null || v === undefined) return null;
-        const parsed = parseSpreadsheetDate(v);
-        if (parsed === null) return null;
-        if (parsed === "INVALID") return "INVALID"; // sinaliza para o backend rejeitar
-        return parsed;
-      };
       const norm: ProjetoImportRow[] = raw
         .map((r, i) => ({
           linha: i + 2,
@@ -157,9 +149,9 @@ function ImportarProjetosPage() {
           empresa_nome: pickText(r, ["Empresa", "empresa", "empresa_nome", "razao_social"]),
           descricao: pickText(r, ["Descrição", "Descricao", "descricao"]) || null,
           status: pickText(r, ["Status", "status"]),
-          data_cadastro: pickDate(r, ["Data cadastro", "data_cadastro", "Data Cadastro"]),
         }))
         .filter((r) => r.empresa_nome || r.nome_projeto || r.status);
+
 
 
       if (norm.length === 0) {
@@ -491,7 +483,17 @@ function ImportarProjetosPage() {
                           <Badge variant="outline">{l.status_normalizado}</Badge>
                         ) : <span className="text-xs text-muted-foreground">—</span>}
                       </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">{l.data_cadastro || "—"}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {l.data_cadastro_atual ? (
+                          <span className="text-foreground">
+                            {new Date(l.data_cadastro_atual).toLocaleDateString("pt-BR")}
+                          </span>
+                        ) : l.acao === "CRIAR" ? (
+                          <span className="italic text-muted-foreground">Será definida automaticamente</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Badge className={acaoBadge[l.acao]}>{acaoLabel[l.acao]}</Badge>
                       </TableCell>

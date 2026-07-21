@@ -1,7 +1,7 @@
 // Modelo XLSX para importação de Projetos — CRM MK9.
-// 5 colunas exatas: Projeto, Empresa, Descrição, Status, Data cadastro.
-// Código NÃO é informado pelo usuário — é gerado automaticamente pelo sistema
-// no formato PRJ-000001, único e imutável.
+// 4 colunas exatas: Projeto, Empresa, Descrição, Status.
+// Código interno (PRJ-000001) e Data de cadastro são gerados
+// automaticamente pelo backend e NUNCA informados pelo usuário.
 
 import * as XLSX from "xlsx";
 
@@ -10,12 +10,11 @@ const COLUNAS = [
   "Empresa",
   "Descrição",
   "Status",
-  "Data cadastro",
 ] as const;
 
 const EXEMPLOS: string[][] = [
-  ["Novo Projeto", "Empresa Exemplo LTDA", "Projeto novo — exemplo de criação", "ATIVO", "2026-01-01"],
-  ["Projeto Armazém Atualizado", "Empresa Exemplo LTDA", "Encerramento operacional", "INATIVO", "2025-03-01"],
+  ["Novo Projeto", "Empresa Exemplo LTDA", "Projeto novo — exemplo de criação", "ATIVO"],
+  ["Projeto Armazém Atualizado", "Empresa Exemplo LTDA", "Encerramento operacional", "INATIVO"],
 ];
 
 const INSTRUCOES: string[][] = [
@@ -25,22 +24,23 @@ const INSTRUCOES: string[][] = [
   ["Somente a aba 'Projetos' é lida; as demais são ignoradas."],
   [],
   ["Colunas (nesta ordem exata):"],
-  ["  1. Projeto        — nome do projeto (até 120 caracteres)"],
-  ["  2. Empresa        — razão social exata da empresa já cadastrada"],
-  ["  3. Descrição      — texto até 500 caracteres (opcional)"],
-  ["  4. Status         — ATIVO ou INATIVO"],
-  ["  5. Data cadastro  — DD/MM/AAAA ou AAAA-MM-DD (usada apenas na criação)"],
+  ["  1. Projeto     — nome do projeto (até 120 caracteres)"],
+  ["  2. Empresa     — razão social exata da empresa já cadastrada"],
+  ["  3. Descrição   — texto até 500 caracteres (opcional)"],
+  ["  4. Status      — ATIVO ou INATIVO"],
   [],
-  ["O código interno do projeto (PRJ-000001, PRJ-000002, …) é gerado"],
-  ["automaticamente pelo sistema. Não informe o código na planilha."],
+  ["Campos gerados automaticamente pelo sistema (NÃO informe na planilha):"],
+  ["  • Código interno  — formato PRJ-000001, único e imutável"],
+  ["  • Data de cadastro — atribuída no momento da criação"],
   [],
   ["COMO O SISTEMA IDENTIFICA UM PROJETO:"],
   ["  Chave lógica = Empresa + Projeto (nome), comparados sem diferenciar"],
   ["  maiúsculas/minúsculas e ignorando espaços extras."],
   [],
-  ["  • Empresa + Projeto ainda NÃO existe   → cria e gera novo código."],
-  ["  • Empresa + Projeto JÁ existe          → atualiza Descrição, Status"],
-  ["                                          e Data cadastro; preserva o código."],
+  ["  • Empresa + Projeto ainda NÃO existe   → cria projeto, gera código"],
+  ["                                          e data de cadastro."],
+  ["  • Empresa + Projeto JÁ existe          → atualiza Descrição e Status;"],
+  ["                                          preserva código e data de cadastro."],
   ["  • Mesma Empresa + Projeto repetida     → linha marcada como duplicada."],
   ["  • Empresa não cadastrada               → linha marcada como erro."],
   [],
@@ -53,7 +53,7 @@ const INSTRUCOES: string[][] = [
   ["       ERRO            — quando a linha viola alguma regra"],
   [],
   ["Empresas NÃO são criadas automaticamente. Projetos NÃO são excluídos."],
-  ["Códigos internos NUNCA são alterados nem reutilizados."],
+  ["Códigos internos e datas de cadastro NUNCA são alterados nem reutilizados."],
   [],
   ["Segurança e auditoria:"],
   ["  • A confirmação é atômica: se qualquer linha falhar, nenhuma é aplicada."],
