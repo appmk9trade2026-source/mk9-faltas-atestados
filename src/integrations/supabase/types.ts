@@ -3524,6 +3524,10 @@ export type Database = {
           total_exec_time_ms: number
         }[]
       }
+      gen_projeto_codigo_protocolo: {
+        Args: { _empresa_id: string; _exclude_id?: string; _nome: string }
+        Returns: string
+      }
       gerar_alertas_do_sistema: { Args: never; Returns: Json }
       gerar_campanha_revisao: {
         Args: { _dias_prazo?: number }
@@ -3934,6 +3938,7 @@ export type Database = {
         }[]
       }
       simular_regras_escalonamento: { Args: { p_evento: Json }; Returns: Json }
+      unaccent: { Args: { "": string }; Returns: string }
       unaccent_if_available: { Args: { p: string }; Returns: string }
       user_has_projeto: {
         Args: { _projeto_id: string; _user_id: string }
