@@ -24,6 +24,7 @@ import {
   type ProjetoImportPreview, type ProjetoImportRow, type ProjetoImportAcao,
 } from "@/lib/projetos.functions";
 import { downloadProjetosTemplate } from "@/lib/projetos-template";
+import { parseSpreadsheetDate } from "@/lib/spreadsheet-date";
 import { friendlyRbacError } from "@/lib/rbac/errors";
 
 export const Route = createFileRoute("/_authenticated/configuracoes/projetos_/importar")({
