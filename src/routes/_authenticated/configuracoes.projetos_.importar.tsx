@@ -128,7 +128,28 @@ function ImportarProjetosPage() {
     setPreview(null);
     setResult(null);
     setProgress(0);
+    setConflict(null);
     if (fileRef.current) fileRef.current.value = "";
+  }
+
+  async function revalidateFromParsed() {
+    if (!file || parsedRows.length === 0) return;
+    setRevalidating(true);
+    try {
+      const prev = await previewProjetosImport({ data: {
+        arquivo_nome: file.name,
+        arquivo_tamanho: file.size,
+        rows: parsedRows,
+      } });
+      setPreview(prev);
+      setConflict(null);
+      toast.success("Prévia recalculada com base no estado atual.");
+    } catch (err) {
+      const f2 = friendlyRbacError(err);
+      toast.error(f2.title, { description: f2.description });
+    } finally {
+      setRevalidating(false);
+    }
   }
 
   async function processFile(f: File) {
