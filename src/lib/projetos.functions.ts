@@ -658,7 +658,8 @@ async function buildPreview(
     const { data: projs, error: projsErr } = await supabase
       .from("projetos")
       .select("id, empresa_id, nome, ativo, descricao, codigo_interno, created_at")
-      .in("empresa_id", [...empresaIds]);
+      .in("empresa_id", [...empresaIds])
+      .eq("ativo", true);
     if (projsErr) throw mapSupabaseError(projsErr.message);
     for (const p of (projs ?? []) as Array<{
       id: string; empresa_id: string; nome: string;
