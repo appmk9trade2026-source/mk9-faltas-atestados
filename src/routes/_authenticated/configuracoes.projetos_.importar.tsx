@@ -549,3 +549,19 @@ function Metric({ label, value, tone }: { label: string; value: number; tone?: "
     </div>
   );
 }
+
+const DIFF_LABELS: Record<string, string> = {
+  nome_projeto: "Nome",
+  status: "Status",
+  descricao: "Descrição",
+  data_inicio: "Início",
+  data_fim: "Fim",
+  observacoes: "Observações",
+};
+function diffLabel(campo: string): string {
+  return DIFF_LABELS[campo] ?? campo;
+}
+function fmtDiff(v: string | null): string {
+  if (v == null || v === "") return "—";
+  return v.length > 40 ? v.slice(0, 40) + "…" : v;
+}
