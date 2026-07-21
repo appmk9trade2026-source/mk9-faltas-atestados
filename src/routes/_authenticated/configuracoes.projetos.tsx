@@ -181,7 +181,7 @@ function ProjetosPage() {
       const { data, error } = await supabase
         .from("projetos")
         .select(
-          "id, empresa_id, nome, descricao, codigo_protocolo, ativo, created_at, empresa:empresas(id, nome, ativo)",
+          "id, empresa_id, nome, descricao, codigo_protocolo, codigo_interno, ativo, created_at, empresa:empresas(id, nome, ativo)",
         );
       if (error) throw error;
       return (data ?? []) as Projeto[];
