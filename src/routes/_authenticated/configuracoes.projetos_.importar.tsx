@@ -353,8 +353,10 @@ function ImportarProjetosPage() {
           <Card className="p-4">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">Total: <b className="ml-1">{preview.total}</b></Badge>
-              <Badge className={acaoBadge.CRIAR}>Criar: {preview.criar}</Badge>
-              <Badge className={acaoBadge.JA_EXISTENTE}>Já existente: {preview.ja_existente}</Badge>
+              <Badge variant="outline">Únicos: <b className="ml-1">{preview.unicos}</b></Badge>
+              <Badge className={acaoBadge.DUPLICADA}>Repetidas: {preview.repetidas}</Badge>
+              <Badge className={acaoBadge.CRIAR}>A criar: {preview.criar}</Badge>
+              <Badge className={acaoBadge.JA_EXISTENTE}>Já existentes: {preview.ja_existente}</Badge>
               <Badge className={acaoBadge.ERRO}>Erros: {preview.erro}</Badge>
               <Badge variant="outline">Empresas: {preview.empresas_envolvidas}</Badge>
               <div className="ml-auto flex gap-2">
