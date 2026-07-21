@@ -269,12 +269,9 @@ function ImportarPage() {
           supervisor_telefone: r.supervisor_telefone,
           supervisor_email: r.supervisor_email,
         }));
-        const { data, error } = await supabase.rpc("import_colaboradores_bulk", {
-          _rows: slice,
-          _atualizar: atualizar,
+        const r = await importColaboradoresBulk({
+          data: { rows: slice, atualizar },
         });
-        if (error) throw error;
-        const r = data as { inseridas: number; atualizadas: number; ignoradas: number; erros: number; detalhes: unknown[] };
         inseridas += r.inseridas ?? 0;
         atualizadas += r.atualizadas ?? 0;
         ignoradas += r.ignoradas ?? 0;
