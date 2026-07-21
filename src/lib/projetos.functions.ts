@@ -510,7 +510,7 @@ export type ProjetoImportRow = {
   nome_projeto: string;
 };
 
-export type ProjetoImportAcao = "CRIAR" | "JA_EXISTENTE" | "ERRO";
+export type ProjetoImportAcao = "CRIAR" | "JA_EXISTENTE" | "DUPLICADA" | "ERRO";
 
 export type ProjetoImportPreviewRow = {
   linha: number;
@@ -528,11 +528,17 @@ export type ProjetoImportPreviewRow = {
   status_atual: "ATIVO" | "INATIVO" | null;
   acao: ProjetoImportAcao;
   erros: string[];
+  /** Se esta linha é DUPLICADA, aponta para a linha "principal" idêntica. */
+  duplicada_de: number | null;
+  /** Se esta linha é a principal (CRIAR/JA_EXISTENTE) e há repetições, lista todas as demais linhas idênticas. */
+  linhas_repetidas: number[];
 };
 
 export type ProjetoImportPreview = {
   correlation_id: string;
   total: number;
+  unicos: number;
+  repetidas: number;
   criar: number;
   ja_existente: number;
   erro: number;
@@ -556,12 +562,16 @@ const confirmInputSchema = importInputSchema.extend({
   correlation_id: z.string().uuid().optional(),
 });
 
-function normalizeEmpresaNome(v: string): string {
-  return (v ?? "").trim().toLowerCase();
+/** Remove caracteres invisíveis (BOM, zero-width, NBSP) que costumam vir do Excel. */
+function stripInvisible(v: string): string {
+  return (v ?? "").replace(/[\u200B-\u200D\uFEFF\u00A0]/g, " ");
 }
-/** Normaliza nome do projeto para COMPARAÇÃO (case-insensitive, espaços colapsados). */
+function normalizeEmpresaNome(v: string): string {
+  return stripInvisible(v).trim().replace(/\s+/g, " ").toLowerCase();
+}
+/** Normaliza nome do projeto para COMPARAÇÃO (case-insensitive, espaços colapsados, invisíveis removidos, acentos preservados). */
 function normalizeNomeProjeto(v: string): string {
-  return (v ?? "").trim().replace(/\s+/g, " ").toLowerCase();
+  return stripInvisible(v).trim().replace(/\s+/g, " ").toLowerCase();
 }
 
 async function buildPreview(
@@ -628,7 +638,7 @@ async function buildPreview(
 
   const linhas: ProjetoImportPreviewRow[] = rows.map((r) => {
     const enNorm = normalizeEmpresaNome(r.empresa_nome);
-    const nome = (r.nome_projeto ?? "").trim().replace(/\s+/g, " ");
+    const nome = stripInvisible(r.nome_projeto ?? "").trim().replace(/\s+/g, " ");
     const nomeNorm = normalizeNomeProjeto(nome);
     const erros: string[] = [];
 
@@ -649,9 +659,22 @@ async function buildPreview(
       }
     }
 
+    // Detecta se esta linha é uma repetição EXATA (mesma empresa + mesmo
+    // nome normalizado) de outra linha do MESMO arquivo. Não é mais erro:
+    // apenas a primeira ocorrência será considerada; as demais viram
+    // DUPLICADA (informativas, consolidadas automaticamente).
+    let duplicadaDe: number | null = null;
+    let linhasRepetidas: number[] = [];
     if (enNorm && nomeNorm) {
       const dup = arquivoKeyCount.get(`${enNorm}::${nomeNorm}`) ?? [];
-      if (dup.length > 1) erros.push(`Linha duplicada no arquivo (linhas: ${dup.join(", ")})`);
+      if (dup.length > 1) {
+        const primeira = dup[0];
+        if (r.linha === primeira) {
+          linhasRepetidas = dup.slice(1);
+        } else {
+          duplicadaDe = primeira;
+        }
+      }
     }
 
     let acao: ProjetoImportAcao = "ERRO";
@@ -664,18 +687,26 @@ async function buildPreview(
     if (erros.length === 0 && emp) {
       const key = `${emp.id}::${nomeNorm}`;
       const existingList = projetoKey.get(key) ?? [];
-      if (existingList.length === 0) {
-        acao = "CRIAR";
-      } else if (existingList.length > 1) {
+      if (existingList.length > 1) {
         erros.push("Ambiguidade no banco — múltiplos projetos com este nome nesta empresa");
       } else {
-        const existing = existingList[0];
-        projetoId = existing.id;
-        codigoInternoAtual = existing.codigo_interno;
-        dataCadastroAtual = existing.created_at;
-        descricaoAtual = existing.descricao;
-        statusAtual = existing.ativo ? "ATIVO" : "INATIVO";
-        acao = "JA_EXISTENTE";
+        if (existingList.length === 1) {
+          const existing = existingList[0];
+          projetoId = existing.id;
+          codigoInternoAtual = existing.codigo_interno;
+          dataCadastroAtual = existing.created_at;
+          descricaoAtual = existing.descricao;
+          statusAtual = existing.ativo ? "ATIVO" : "INATIVO";
+        }
+        if (duplicadaDe !== null) {
+          // Linha repetida no arquivo (não é a primeira ocorrência) —
+          // consolidada automaticamente, sem bloquear a importação.
+          acao = "DUPLICADA";
+        } else if (existingList.length === 1) {
+          acao = "JA_EXISTENTE";
+        } else {
+          acao = "CRIAR";
+        }
       }
     }
 
@@ -692,16 +723,24 @@ async function buildPreview(
       status_atual: statusAtual,
       acao,
       erros,
+      duplicada_de: duplicadaDe,
+      linhas_repetidas: linhasRepetidas,
     };
   });
 
   const contar = (a: ProjetoImportAcao) => linhas.filter((l) => l.acao === a).length;
+  const criar = contar("CRIAR");
+  const jaExistente = contar("JA_EXISTENTE");
+  const repetidas = contar("DUPLICADA");
+  const erro = contar("ERRO");
   return {
     correlation_id: correlationId,
     total: linhas.length,
-    criar: contar("CRIAR"),
-    ja_existente: contar("JA_EXISTENTE"),
-    erro: contar("ERRO"),
+    unicos: criar + jaExistente,
+    repetidas,
+    criar,
+    ja_existente: jaExistente,
+    erro,
     empresas_envolvidas: new Set(linhas.map((l) => l.empresa_id).filter(Boolean)).size,
     linhas,
   };

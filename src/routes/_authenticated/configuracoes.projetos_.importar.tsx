@@ -39,11 +39,13 @@ const MAX_ROWS = 2000;
 const acaoLabel: Record<ProjetoImportAcao, string> = {
   CRIAR: "Criar",
   JA_EXISTENTE: "Já existente",
+  DUPLICADA: "Repetida",
   ERRO: "Erro",
 };
 const acaoBadge: Record<ProjetoImportAcao, string> = {
   CRIAR: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
   JA_EXISTENTE: "bg-muted text-muted-foreground border-border",
+  DUPLICADA: "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30",
   ERRO: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30",
 };
 
@@ -351,8 +353,10 @@ function ImportarProjetosPage() {
           <Card className="p-4">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline">Total: <b className="ml-1">{preview.total}</b></Badge>
-              <Badge className={acaoBadge.CRIAR}>Criar: {preview.criar}</Badge>
-              <Badge className={acaoBadge.JA_EXISTENTE}>Já existente: {preview.ja_existente}</Badge>
+              <Badge variant="outline">Únicos: <b className="ml-1">{preview.unicos}</b></Badge>
+              <Badge className={acaoBadge.DUPLICADA}>Repetidas: {preview.repetidas}</Badge>
+              <Badge className={acaoBadge.CRIAR}>A criar: {preview.criar}</Badge>
+              <Badge className={acaoBadge.JA_EXISTENTE}>Já existentes: {preview.ja_existente}</Badge>
               <Badge className={acaoBadge.ERRO}>Erros: {preview.erro}</Badge>
               <Badge variant="outline">Empresas: {preview.empresas_envolvidas}</Badge>
               <div className="ml-auto flex gap-2">
@@ -473,7 +477,14 @@ function ImportarProjetosPage() {
                   {preview.linhas
                     .filter((l) => !apenasNovos || l.acao === "CRIAR" || l.acao === "ERRO")
                     .map((l) => (
-                    <TableRow key={l.linha} className={l.acao === "ERRO" ? "bg-red-500/5" : ""}>
+                    <TableRow
+                      key={l.linha}
+                      className={
+                        l.acao === "ERRO" ? "bg-red-500/5"
+                        : l.acao === "DUPLICADA" ? "bg-amber-500/5"
+                        : ""
+                      }
+                    >
                       <TableCell className="text-xs text-muted-foreground">{l.linha}</TableCell>
                       <TableCell className="text-sm">{l.nome_projeto || "—"}</TableCell>
                       <TableCell className="text-sm">{l.empresa_nome ?? <span className="italic text-muted-foreground">{l.empresa_original || "não encontrada"}</span>}</TableCell>
@@ -505,17 +516,45 @@ function ImportarProjetosPage() {
                           <span className="text-destructive">
                             Linha {l.linha}: {l.erros.join("; ")}
                           </span>
+                        ) : l.acao === "DUPLICADA" ? (
+                          <span className="text-amber-700 dark:text-amber-400">
+                            Este mesmo projeto já apareceu na linha <b>{l.duplicada_de}</b> e será consolidado automaticamente.
+                          </span>
                         ) : l.acao === "CRIAR" ? (
-                          <span className="text-muted-foreground">
-                            Novo projeto — descrição “NOVO PROJETO”, status ATIVO
-                          </span>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-muted-foreground">
+                              Novo projeto — descrição “NOVO PROJETO”, status ATIVO
+                            </span>
+                            {l.linhas_repetidas.length > 0 && (
+                              <details className="text-[11px] text-muted-foreground">
+                                <summary className="cursor-pointer text-amber-700 hover:underline dark:text-amber-400">
+                                  Ver todas as linhas repetidas ({l.linhas_repetidas.length})
+                                </summary>
+                                <span className="mt-1 block break-words font-mono opacity-80">
+                                  linhas: {l.linhas_repetidas.join(", ")}
+                                </span>
+                              </details>
+                            )}
+                          </div>
                         ) : (
-                          <span className="text-muted-foreground">
-                            Projeto já cadastrado
-                            {l.codigo_interno_atual ? ` (${l.codigo_interno_atual})` : ""}
-                            {l.status_atual ? ` · ${l.status_atual}` : ""}
-                            {" — nada será alterado"}
-                          </span>
+                          <div className="flex flex-col gap-1">
+                            <span className="text-muted-foreground">
+                              Projeto já cadastrado
+                              {l.codigo_interno_atual ? ` (${l.codigo_interno_atual})` : ""}
+                              {l.status_atual ? ` · ${l.status_atual}` : ""}
+                              {" — nada será alterado"}
+                            </span>
+                            {l.linhas_repetidas.length > 0 && (
+                              <details className="text-[11px] text-muted-foreground">
+                                <summary className="cursor-pointer text-amber-700 hover:underline dark:text-amber-400">
+                                  Ver todas as linhas repetidas ({l.linhas_repetidas.length})
+                                </summary>
+                                <span className="mt-1 block break-words font-mono opacity-80">
+                                  linhas: {l.linhas_repetidas.join(", ")}
+                                </span>
+                              </details>
+                            )}
+                          </div>
                         )}
                       </TableCell>
                     </TableRow>
