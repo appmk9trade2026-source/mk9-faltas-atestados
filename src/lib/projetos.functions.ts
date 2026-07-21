@@ -263,29 +263,30 @@ export const setProjetoAtivo = createServerFn({ method: "POST" })
 
 // ==================== IMPORTAÇÃO POR PLANILHA ====================
 //
-// Modelo: 4 colunas — Projeto, Empresa, Descrição, Status.
+// Modelo simplificado: 2 colunas — Projeto, Empresa.
 // Chave lógica = Empresa + Projeto (nome), normalizada (trim + espaços
-// colapsados + case-insensitive). Código interno (PRJ-000001) e data de
-// cadastro (created_at) são gerados automaticamente pelo banco e nunca
-// informados pelo usuário. Nunca confiamos em empresa_id / projeto_id
-// enviados pelo cliente.
+// colapsados + case-insensitive).
+//
+// Para novos projetos, o sistema atribui automaticamente:
+//   • codigo_interno   → PRJ-000001 (sequence/trigger no banco)
+//   • descricao        → "NOVO PROJETO"
+//   • ativo            → true (Status = ATIVO)
+//   • created_at       → now()
+//   • updated_at       → now()
+//
+// Projetos já existentes NÃO são duplicados nem alterados — apenas
+// classificados como "Já existente". Empresas nunca são criadas.
+// Nunca confiamos em empresa_id / projeto_id enviados pelo cliente.
+
+const DESCRICAO_PADRAO_NOVO = "NOVO PROJETO";
 
 export type ProjetoImportRow = {
   linha: number;
   empresa_nome: string;
   nome_projeto: string;
-  descricao?: string | null;
-  status: string;
 };
 
-export type ProjetoImportAcao =
-  | "CRIAR" | "ATUALIZAR" | "ATIVAR" | "DESATIVAR" | "SEM_ALTERACAO" | "ERRO";
-
-export type ProjetoImportFieldDiff = {
-  campo: "status" | "descricao";
-  atual: string | null;
-  novo: string | null;
-};
+export type ProjetoImportAcao = "CRIAR" | "JA_EXISTENTE" | "ERRO";
 
 export type ProjetoImportPreviewRow = {
   linha: number;
@@ -293,25 +294,23 @@ export type ProjetoImportPreviewRow = {
   empresa_nome: string | null;
   empresa_id: string | null;
   nome_projeto: string;
-  descricao: string | null;
-  status_normalizado: "ATIVO" | "INATIVO" | null;
   /** Data de cadastro atual (created_at) do projeto existente; null para novos. */
   data_cadastro_atual: string | null;
   projeto_id: string | null;
   codigo_interno_atual: string | null;
+  /** Descrição atual do projeto existente; null para novos. */
+  descricao_atual: string | null;
+  /** Status atual do projeto existente; null para novos. */
+  status_atual: "ATIVO" | "INATIVO" | null;
   acao: ProjetoImportAcao;
   erros: string[];
-  diff: ProjetoImportFieldDiff[];
 };
 
 export type ProjetoImportPreview = {
   correlation_id: string;
   total: number;
   criar: number;
-  atualizar: number;
-  ativar: number;
-  desativar: number;
-  sem_alteracao: number;
+  ja_existente: number;
   erro: number;
   empresas_envolvidas: number;
   linhas: ProjetoImportPreviewRow[];
@@ -321,8 +320,6 @@ const importRowSchema = z.object({
   linha: z.number().int().min(1),
   empresa_nome: z.string().max(200),
   nome_projeto: z.string().max(200),
-  descricao: z.string().max(500).nullable().optional(),
-  status: z.string().max(20),
 });
 
 const importInputSchema = z.object({
@@ -342,12 +339,6 @@ function normalizeEmpresaNome(v: string): string {
 function normalizeNomeProjeto(v: string): string {
   return (v ?? "").trim().replace(/\s+/g, " ").toLowerCase();
 }
-function normalizeStatus(v: string): "ATIVO" | "INATIVO" | null {
-  const s = (v ?? "").trim().toUpperCase();
-  if (s === "ATIVO" || s === "1" || s === "ATIVA" || s === "TRUE") return "ATIVO";
-  if (s === "INATIVO" || s === "0" || s === "INATIVA" || s === "FALSE") return "INATIVO";
-  return null;
-}
 
 async function buildPreview(
   supabase: import("@/lib/rbac/guards.server").MiddlewareContext["supabase"],
@@ -355,7 +346,8 @@ async function buildPreview(
   rows: z.infer<typeof importRowSchema>[],
 ): Promise<ProjetoImportPreview> {
   const empresasBucket = new Map<string, Array<{ id: string; nome: string; ativo: boolean }>>();
-  const { data: emps } = await supabase.from("empresas").select("id, nome, ativo");
+  const { data: emps, error: empsErr } = await supabase.from("empresas").select("id, nome, ativo");
+  if (empsErr) throw mapSupabaseError(empsErr.message);
   for (const e of (emps ?? []) as Array<{ id: string; nome: string; ativo: boolean }>) {
     const key = normalizeEmpresaNome(e.nome);
     if (!key) continue;
@@ -376,10 +368,11 @@ async function buildPreview(
   };
   const projetoKey = new Map<string, ExistingProjeto[]>();
   if (empresaIds.size > 0) {
-    const { data: projs } = await supabase
+    const { data: projs, error: projsErr } = await supabase
       .from("projetos")
       .select("id, empresa_id, nome, ativo, descricao, codigo_interno, created_at")
       .in("empresa_id", [...empresaIds]);
+    if (projsErr) throw mapSupabaseError(projsErr.message);
     for (const p of (projs ?? []) as Array<{
       id: string; empresa_id: string; nome: string;
       ativo: boolean; descricao: string | null;
@@ -409,24 +402,15 @@ async function buildPreview(
     }
   }
 
-  const nullIfBlank = (v: string | null | undefined): string | null => {
-    if (v == null) return null;
-    const s = String(v).trim();
-    return s === "" ? null : s;
-  };
-
   const linhas: ProjetoImportPreviewRow[] = rows.map((r) => {
     const enNorm = normalizeEmpresaNome(r.empresa_nome);
     const nome = (r.nome_projeto ?? "").trim().replace(/\s+/g, " ");
     const nomeNorm = normalizeNomeProjeto(nome);
-    const descricao = nullIfBlank(r.descricao);
-    const status = normalizeStatus(r.status);
     const erros: string[] = [];
 
     if (!enNorm) erros.push("Empresa obrigatória");
     if (!nome) erros.push("Projeto (nome) obrigatório");
     if (nome.length > 120) erros.push("Projeto acima de 120 caracteres");
-    if (!status) erros.push("Status inválido (use ATIVO ou INATIVO)");
 
     const bucket = enNorm ? empresasBucket.get(enNorm) : undefined;
     let emp: { id: string; nome: string; ativo: boolean } | undefined;
@@ -450,12 +434,12 @@ async function buildPreview(
     let projetoId: string | null = null;
     let codigoInternoAtual: string | null = null;
     let dataCadastroAtual: string | null = null;
-    const diff: ProjetoImportFieldDiff[] = [];
+    let descricaoAtual: string | null = null;
+    let statusAtual: "ATIVO" | "INATIVO" | null = null;
 
-    if (erros.length === 0 && emp && status) {
+    if (erros.length === 0 && emp) {
       const key = `${emp.id}::${nomeNorm}`;
       const existingList = projetoKey.get(key) ?? [];
-      const wantAtivo = status === "ATIVO";
       if (existingList.length === 0) {
         acao = "CRIAR";
       } else if (existingList.length > 1) {
@@ -465,19 +449,9 @@ async function buildPreview(
         projetoId = existing.id;
         codigoInternoAtual = existing.codigo_interno;
         dataCadastroAtual = existing.created_at;
-        const atualStatus = existing.ativo ? "ATIVO" : "INATIVO";
-        const novoStatus: "ATIVO" | "INATIVO" = wantAtivo ? "ATIVO" : "INATIVO";
-
-        if (atualStatus !== novoStatus)
-          diff.push({ campo: "status", atual: atualStatus, novo: novoStatus });
-        if ((existing.descricao ?? null) !== descricao)
-          diff.push({ campo: "descricao", atual: existing.descricao, novo: descricao });
-
-        const statusMudou = atualStatus !== novoStatus;
-        const outrosMudaram = diff.some((d) => d.campo !== "status");
-        if (!statusMudou && !outrosMudaram) acao = "SEM_ALTERACAO";
-        else if (statusMudou && !outrosMudaram) acao = wantAtivo ? "ATIVAR" : "DESATIVAR";
-        else acao = "ATUALIZAR";
+        descricaoAtual = existing.descricao;
+        statusAtual = existing.ativo ? "ATIVO" : "INATIVO";
+        acao = "JA_EXISTENTE";
       }
     }
 
@@ -487,14 +461,13 @@ async function buildPreview(
       empresa_nome: emp?.nome ?? null,
       empresa_id: emp?.id ?? null,
       nome_projeto: nome,
-      descricao,
-      status_normalizado: status,
       data_cadastro_atual: dataCadastroAtual,
       projeto_id: projetoId,
       codigo_interno_atual: codigoInternoAtual,
+      descricao_atual: descricaoAtual,
+      status_atual: statusAtual,
       acao,
       erros,
-      diff,
     };
   });
 
@@ -503,10 +476,7 @@ async function buildPreview(
     correlation_id: correlationId,
     total: linhas.length,
     criar: contar("CRIAR"),
-    atualizar: contar("ATUALIZAR"),
-    ativar: contar("ATIVAR"),
-    desativar: contar("DESATIVAR"),
-    sem_alteracao: contar("SEM_ALTERACAO"),
+    ja_existente: contar("JA_EXISTENTE"),
     erro: contar("ERRO"),
     empresas_envolvidas: new Set(linhas.map((l) => l.empresa_id).filter(Boolean)).size,
     linhas,
