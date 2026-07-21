@@ -438,11 +438,12 @@ function ImportarProjetosPage() {
                 <TableHeader className="sticky top-0 bg-muted/60 backdrop-blur">
                   <TableRow>
                     <TableHead className="w-14">#</TableHead>
-                    <TableHead>CNPJ</TableHead>
+                    <TableHead>Projeto</TableHead>
                     <TableHead>Empresa</TableHead>
                     <TableHead>Código</TableHead>
-                    <TableHead>Nome</TableHead>
+                    <TableHead className="max-w-[220px]">Descrição</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Data cadastro</TableHead>
                     <TableHead>Ação</TableHead>
                     <TableHead className="min-w-[260px]">Diferenças / Observações</TableHead>
                   </TableRow>
@@ -453,18 +454,20 @@ function ImportarProjetosPage() {
                     .map((l) => (
                     <TableRow key={l.linha} className={l.acao === "ERRO" ? "bg-red-500/5" : ""}>
                       <TableCell className="text-xs text-muted-foreground">{l.linha}</TableCell>
-                      <TableCell className="font-mono text-xs">{l.cnpj_original || "—"}</TableCell>
-                      <TableCell className="text-sm">{l.empresa_nome ?? <span className="italic text-muted-foreground">não encontrada</span>}</TableCell>
-                      <TableCell className="font-mono text-xs">{l.codigo_normalizado || "—"}</TableCell>
                       <TableCell className="text-sm">{l.nome_projeto || "—"}</TableCell>
+                      <TableCell className="text-sm">{l.empresa_nome ?? <span className="italic text-muted-foreground">{l.empresa_original || "não encontrada"}</span>}</TableCell>
+                      <TableCell className="font-mono text-xs">{l.codigo_normalizado || "—"}</TableCell>
+                      <TableCell className="max-w-[220px] truncate text-xs text-muted-foreground" title={l.descricao ?? ""}>{l.descricao || "—"}</TableCell>
                       <TableCell>
                         {l.status_normalizado ? (
                           <Badge variant="outline">{l.status_normalizado}</Badge>
                         ) : <span className="text-xs text-muted-foreground">—</span>}
                       </TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">{l.data_cadastro || "—"}</TableCell>
                       <TableCell>
                         <Badge className={acaoBadge[l.acao]}>{acaoLabel[l.acao]}</Badge>
                       </TableCell>
+
                       <TableCell className="text-xs">
                         {l.erros.length > 0 ? (
                           <span className="text-destructive">{l.erros.join("; ")}</span>
