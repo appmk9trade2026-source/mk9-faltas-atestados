@@ -563,7 +563,7 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
       nome_projeto: r.nome_projeto,
       descricao: r.descricao ?? null,
       status: r.status,
-      data_cadastro: r.data_cadastro ?? null,
+      data_cadastro: null,
     }));
 
     type AtomicResult = {
