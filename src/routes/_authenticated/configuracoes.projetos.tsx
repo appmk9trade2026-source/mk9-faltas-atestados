@@ -532,16 +532,24 @@ function ProjetosPage() {
                     )}
                   </TableCell>
                   <TableCell>
+                    {row.codigo_interno ? (
+                      <span className="font-mono text-xs text-muted-foreground">
+                        {row.codigo_interno}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     {row.codigo_protocolo ? (
                       <span className="inline-flex items-center rounded-md border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 font-mono text-xs font-semibold tracking-wider text-blue-700 dark:text-blue-300">
                         {row.codigo_protocolo}
                       </span>
                     ) : (
-                      <span className="text-xs italic text-amber-600 dark:text-amber-400">
-                        não configurado
-                      </span>
+                      <span className="text-xs text-muted-foreground">—</span>
                     )}
                   </TableCell>
+
                   <TableCell className="hidden md:table-cell text-muted-foreground max-w-[260px] truncate">
                     {row.descricao ?? <span className="italic">—</span>}
                   </TableCell>
