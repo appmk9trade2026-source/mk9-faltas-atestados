@@ -781,9 +781,9 @@ function ProjetoDialog({
       empresa_id: editing?.empresa_id ?? "",
       nome: editing?.nome ?? "",
       descricao: editing?.descricao ?? "",
-      codigo_protocolo: editing?.codigo_protocolo ?? "",
       ativo: editing?.ativo ?? true,
     },
+
   });
 
   // Ao editar, se a empresa vinculada estiver inativa, ainda deve aparecer no select.
