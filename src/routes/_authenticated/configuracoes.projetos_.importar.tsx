@@ -75,6 +75,7 @@ function ImportarProjetosPage() {
     hint?: { row_number?: number; codigo_projeto?: string; cnpj_empresa?: string };
   } | null>(null);
   const [revalidating, setRevalidating] = useState(false);
+  const [apenasAlteracoes, setApenasAlteracoes] = useState(false);
 
   function reset() {
     setStep(1);
