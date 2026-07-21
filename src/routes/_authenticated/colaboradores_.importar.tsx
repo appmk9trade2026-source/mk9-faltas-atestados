@@ -670,18 +670,68 @@ function ImportarPage() {
         </div>
       </Card>
 
+      {rows.length > 0 && diagnostico && diagnostico.total_grupos > 0 && (
+        <Card className="border-sky-400/40 bg-sky-500/5 p-5">
+          <h3 className="flex items-center gap-2 text-base font-semibold">
+            <FileSpreadsheet className="h-4 w-4 text-sky-500" />
+            Diagnóstico de projetos equivalentes no sistema
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Foram encontrados <b>{diagnostico.total_grupos}</b> grupo(s) de projetos
+            com o mesmo nome normalizado dentro da mesma empresa
+            (<b>{diagnostico.total_projetos_envolvidos}</b> cadastros no total).
+            A importação abaixo continua funcionando — você escolhe o projeto correto por grupo.
+            A consolidação definitiva será feita em uma etapa administrativa dedicada.
+          </p>
+          <details className="mt-3 text-sm">
+            <summary className="cursor-pointer text-xs font-medium text-sky-700 dark:text-sky-300">
+              Ver detalhes dos grupos
+            </summary>
+            <div className="mt-2 space-y-2">
+              {diagnostico.grupos.map((g) => (
+                <div key={`${g.empresa_id}::${g.chave}`} className="rounded border bg-background/60 p-2">
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <Badge variant="outline">{g.empresa_nome}</Badge>
+                    <span className="font-mono text-muted-foreground">chave:</span>
+                    <code className="rounded bg-muted px-1.5 py-0.5">{g.chave}</code>
+                    <Badge variant="secondary">{g.qtd} cadastros</Badge>
+                  </div>
+                  <ul className="mt-2 space-y-1 text-xs">
+                    {g.projetos.map((p) => (
+                      <li key={p.projeto_id} className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium">{p.nome}</span>
+                        <span className="font-mono text-muted-foreground">{p.codigo_interno}</span>
+                        {p.codigo_protocolo && (
+                          <Badge variant="outline" className="text-[10px]">{p.codigo_protocolo}</Badge>
+                        )}
+                        <Badge className={p.ativo ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" : "bg-muted"}>
+                          {p.ativo ? "Ativo" : "Inativo"}
+                        </Badge>
+                        <span className="text-muted-foreground">
+                          {p.colaboradores} colab · {p.ausencias} aus · {p.protocolos} prot
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </details>
+        </Card>
+      )}
+
       {rows.length > 0 && gruposResolucao.length > 0 && (
         <Card className="border-amber-400/40 bg-amber-500/5 p-5">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <h3 className="flex items-center gap-2 text-base font-semibold">
                 <Wand2 className="h-4 w-4 text-amber-500" />
-                Resolver projetos
+                Resolver projetos ({gruposResolucao.length} grupo{gruposResolucao.length > 1 ? "s" : ""})
               </h3>
               <p className="text-sm text-muted-foreground">
-                Alguns projetos informados não puderam ser localizados automaticamente.
-                O sistema <b>não escolhe projetos semelhantes por conta própria</b>.
-                Selecione o projeto correto — a escolha será aplicada a todas as linhas equivalentes.
+                A escolha é aplicada automaticamente a todas as linhas equivalentes e o
+                <code className="mx-1 rounded bg-muted px-1">projeto_id</code> selecionado é usado na importação
+                — o servidor <b>não faz nova busca por nome</b>.
               </p>
             </div>
             <Button variant="outline" size="sm" onClick={revalidar}>
@@ -691,8 +741,11 @@ function ImportarPage() {
 
           <div className="space-y-3">
             {gruposResolucao.map((g) => {
-              const opts = (projetos.filter((p) => p.empresa_id === g.empresa_id && p.ativo));
+              const opts = projetos.filter((p) => p.empresa_id === g.empresa_id && p.ativo);
               const semelhantes = g.sugestoes;
+              // Se for ambíguo, temos metadados ricos via diagnóstico.
+              const equivalentes = grupoInfoByKey.get(g.key) ?? [];
+              const isAmbiguo = g.motivo === "PROJETO_AMBIGUO";
               return (
                 <div key={g.key} className="rounded-lg border bg-background p-3 sm:p-4">
                   <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -706,47 +759,99 @@ function ImportarPage() {
                       {g.motivo === "PROJETO_INATIVO" && "Inativo"}
                     </Badge>
                     <Badge variant="secondary">{g.linhas.length} linha{g.linhas.length > 1 ? "s" : ""}</Badge>
+                    {resolucoes[g.key] && (
+                      <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
+                        <CheckCircle2 className="mr-1 h-3 w-3" /> Resolvido
+                      </Badge>
+                    )}
                   </div>
 
-                  {semelhantes.length > 0 && (
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      Projetos semelhantes na empresa <b>{g.empresa_nome}</b>:{" "}
-                      {semelhantes.slice(0, 6).map((s) => s.nome).join(", ")}
-                      {semelhantes.length > 6 ? "…" : ""}
-                    </p>
+                  {isAmbiguo && equivalentes.length > 0 ? (
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      {equivalentes.map((p) => {
+                        const selected = resolucoes[g.key] === p.projeto_id;
+                        return (
+                          <button
+                            key={p.projeto_id}
+                            type="button"
+                            onClick={() => setResolucao(g.key, p.projeto_id)}
+                            className={`flex flex-col gap-1 rounded-lg border p-3 text-left text-sm transition ${
+                              selected
+                                ? "border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/40"
+                                : "hover:border-primary/40 hover:bg-muted/40"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold">{p.nome}</span>
+                              {selected && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                              <span className="font-mono">{p.codigo_interno}</span>
+                              {p.codigo_protocolo && (
+                                <Badge variant="outline" className="text-[10px]">{p.codigo_protocolo}</Badge>
+                              )}
+                              <Badge className={p.ativo ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" : "bg-muted"}>
+                                {p.ativo ? "Ativo" : "Inativo"}
+                              </Badge>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {p.colaboradores} colaborador(es) · {p.ausencias} ausência(s) · {p.protocolos} protocolo(s)
+                            </div>
+                            <div className="text-[11px] text-muted-foreground">
+                              Cadastrado em {new Date(p.created_at).toLocaleDateString("pt-BR")}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <>
+                      {semelhantes.length > 0 && (
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Projetos semelhantes na empresa <b>{g.empresa_nome}</b>:{" "}
+                          {semelhantes.slice(0, 6).map((s) => s.nome).join(", ")}
+                          {semelhantes.length > 6 ? "…" : ""}
+                        </p>
+                      )}
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                        <Label className="text-xs text-muted-foreground sm:w-40">
+                          Selecionar projeto correto:
+                        </Label>
+                        <Select
+                          value={resolucoes[g.key] ?? ""}
+                          onValueChange={(v) => setResolucao(g.key, v)}
+                        >
+                          <SelectTrigger className="w-full sm:max-w-md">
+                            <SelectValue placeholder="Escolha um projeto desta empresa…" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {opts.length === 0 && (
+                              <div className="px-3 py-2 text-xs text-muted-foreground">
+                                Nenhum projeto ativo nesta empresa.
+                              </div>
+                            )}
+                            {opts.map((p) => (
+                              <SelectItem key={p.id} value={p.id}>
+                                {p.nome}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
                   )}
 
-                  <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-                    <Label className="text-xs text-muted-foreground sm:w-40">
-                      Selecionar projeto correto:
-                    </Label>
-                    <Select
-                      value={resolucoes[g.key] ?? ""}
-                      onValueChange={(v) => setResolucao(g.key, v)}
-                    >
-                      <SelectTrigger className="w-full sm:max-w-md">
-                        <SelectValue placeholder="Escolha um projeto desta empresa…" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {opts.length === 0 && (
-                          <div className="px-3 py-2 text-xs text-muted-foreground">
-                            Nenhum projeto ativo nesta empresa.
-                          </div>
-                        )}
-                        {opts.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {p.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    Aplica-se às linhas: {g.linhas.slice(0, 12).join(", ")}
+                    {g.linhas.length > 12 ? ` … (+${g.linhas.length - 12})` : ""}
+                  </p>
                 </div>
               );
             })}
           </div>
         </Card>
       )}
+
 
       {rows.length > 0 && (
         <>
