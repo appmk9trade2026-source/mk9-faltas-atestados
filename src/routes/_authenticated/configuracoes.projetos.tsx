@@ -130,10 +130,11 @@ const PAGE_SIZE = 10;
 
 function ProjetosPage() {
   const { roles } = useSession();
-  const { has } = usePermissions();
+  const { has, loading: permsLoading } = usePermissions();
   const canManage = roles.includes("super_admin") || roles.includes("rh");
-  const canImport = has("projeto.criar") || has("projeto.editar");
-  const canDownloadTemplate = canImport || has("projeto.visualizar") || canManage;
+  const canImport = canManage || has("projeto.criar") || has("projeto.editar");
+  const canDownloadTemplate = canImport || has("projeto.visualizar");
+
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
