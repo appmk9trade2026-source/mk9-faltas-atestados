@@ -41,6 +41,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { normalizeMatricula } from "@/lib/matricula";
+import { normalizeName } from "@/lib/normalize-name";
 import { importColaboradoresBulk } from "@/lib/colaboradores.functions";
 import { friendlyRbacError } from "@/lib/rbac/errors";
 
