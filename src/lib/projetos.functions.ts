@@ -527,6 +527,20 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
       });
     });
 
+    type AtomicResult = {
+      success: boolean;
+      correlation_id: string;
+      total: number;
+      created: number;
+      updated: number;
+      activated: number;
+      deactivated: number;
+      unchanged: number;
+      rejected: number;
+      errors: Array<{ row_number: number; field: string; code: string; message: string }>;
+      duration_ms: number;
+    };
+
     // Recomputa a prévia server-side antes de confirmar e envia à RPC APENAS
     // as linhas classificadas como CRIAR — projetos existentes são preservados
     // integralmente (código, data, descrição, status). Defaults automáticos:
