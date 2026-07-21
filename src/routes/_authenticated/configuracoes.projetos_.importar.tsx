@@ -214,19 +214,35 @@ function ImportarProjetosPage() {
   const confirmMut = useMutation({
     mutationFn: async () => {
       if (!preview || !file) throw new Error("Nada para confirmar.");
+      // Sempre gera novo correlation_id para cada tentativa de confirmação —
+      // uma nova confirmação após conflito NUNCA reutiliza a anterior.
       return await confirmProjetosImport({ data: {
         arquivo_nome: file.name,
         arquivo_tamanho: file.size,
         rows: parsedRows,
-        correlation_id: preview.correlation_id,
+        correlation_id: crypto.randomUUID(),
       } });
     },
     onSuccess: (r) => {
       setResult(r);
       setStep(4);
+      setConflict(null);
       toast.success("Importação concluída.");
     },
     onError: (e) => {
+      const raw = (e as { message?: string; code?: string; correlationId?: string; conflictHint?: { row_number?: number; codigo_projeto?: string; cnpj_empresa?: string } }) ?? {};
+      const msg = raw.message ?? "";
+      const m = /^(IMPORT_CONFLICT|IMPORT_CONCURRENT_CHANGE|IMPORT_TEMPORARILY_UNAVAILABLE|IMPORT_FAILED):\s*(.*)$/s.exec(msg);
+      if (m) {
+        setConflict({
+          code: m[1] as "IMPORT_CONFLICT" | "IMPORT_CONCURRENT_CHANGE" | "IMPORT_TEMPORARILY_UNAVAILABLE" | "IMPORT_FAILED",
+          message: m[2],
+          correlationId: raw.correlationId,
+          hint: raw.conflictHint,
+        });
+        toast.error("Conflito na importação. Nenhuma alteração foi aplicada.");
+        return;
+      }
       const f = friendlyRbacError(e);
       toast.error(f.title, { description: f.description });
     },
