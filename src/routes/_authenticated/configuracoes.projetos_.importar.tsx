@@ -236,7 +236,7 @@ function ImportarProjetosPage() {
       .map((l) => ({
         linha: l.linha,
         empresa: l.empresa_original,
-        codigo: l.codigo_normalizado,
+        projeto: l.nome_projeto,
         problema: l.erros.join("; "),
       }));
 
@@ -246,6 +246,7 @@ function ImportarProjetosPage() {
     const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "").slice(0, 12);
     XLSX.writeFile(wb, `erros_importacao_projetos_${stamp}.xlsx`);
   }
+
 
   const stepsMeta = useMemo(() => ([
     { n: 1, label: "Selecionar" },
