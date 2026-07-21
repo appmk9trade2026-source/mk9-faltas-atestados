@@ -73,7 +73,7 @@ function ImportarProjetosPage() {
     code: "IMPORT_CONFLICT" | "IMPORT_CONCURRENT_CHANGE" | "IMPORT_TEMPORARILY_UNAVAILABLE" | "IMPORT_FAILED";
     message: string;
     correlationId?: string;
-    hint?: { row_number?: number; codigo_projeto?: string; cnpj_empresa?: string };
+    hint?: { row_number?: number; projeto?: string; empresa?: string };
   } | null>(null);
   const [revalidating, setRevalidating] = useState(false);
   const [apenasAlteracoes, setApenasAlteracoes] = useState(false);
@@ -155,12 +155,12 @@ function ImportarProjetosPage() {
           linha: i + 2,
           nome_projeto: pickText(r, ["Projeto", "projeto", "nome_projeto", "nome"]),
           empresa_nome: pickText(r, ["Empresa", "empresa", "empresa_nome", "razao_social"]),
-          codigo_projeto: pickText(r, ["Código", "Codigo", "codigo", "codigo_projeto"]),
           descricao: pickText(r, ["Descrição", "Descricao", "descricao"]) || null,
           status: pickText(r, ["Status", "status"]),
           data_cadastro: pickDate(r, ["Data cadastro", "data_cadastro", "Data Cadastro"]),
         }))
-        .filter((r) => r.empresa_nome || r.codigo_projeto || r.nome_projeto || r.status);
+        .filter((r) => r.empresa_nome || r.nome_projeto || r.status);
+
 
       if (norm.length === 0) {
         toast.error("A planilha não contém linhas de dados.");
@@ -209,7 +209,7 @@ function ImportarProjetosPage() {
       toast.success("Importação concluída.");
     },
     onError: (e) => {
-      const raw = (e as { message?: string; code?: string; correlationId?: string; conflictHint?: { row_number?: number; codigo_projeto?: string; cnpj_empresa?: string } }) ?? {};
+      const raw = (e as { message?: string; code?: string; correlationId?: string; conflictHint?: { row_number?: number; projeto?: string; empresa?: string } }) ?? {};
       const msg = raw.message ?? "";
       const m = /^(IMPORT_CONFLICT|IMPORT_CONCURRENT_CHANGE|IMPORT_TEMPORARILY_UNAVAILABLE|IMPORT_FAILED):\s*(.*)$/s.exec(msg);
       if (m) {
@@ -413,14 +413,15 @@ function ImportarProjetosPage() {
                 </AlertTitle>
                 <AlertDescription>
                   <p>{conflict.message}</p>
-                  {conflict.hint && (conflict.hint.row_number || conflict.hint.codigo_projeto) && (
+                  {conflict.hint && (conflict.hint.row_number || conflict.hint.projeto) && (
                     <p className="mt-2 text-xs">
                       Referência:
                       {conflict.hint.row_number ? <> linha <b>{conflict.hint.row_number}</b></> : null}
-                      {conflict.hint.codigo_projeto ? <> · código <b>{conflict.hint.codigo_projeto}</b></> : null}
-                      {conflict.hint.cnpj_empresa ? <> · CNPJ <b>{conflict.hint.cnpj_empresa}</b></> : null}
+                      {conflict.hint.projeto ? <> · projeto <b>{conflict.hint.projeto}</b></> : null}
+                      {conflict.hint.empresa ? <> · empresa <b>{conflict.hint.empresa}</b></> : null}
                     </p>
                   )}
+
                   {conflict.correlationId && (
                     <p className="mt-1 text-[10px] font-mono opacity-70">correlation: {conflict.correlationId}</p>
                   )}
@@ -458,7 +459,7 @@ function ImportarProjetosPage() {
                     <TableHead className="w-14">#</TableHead>
                     <TableHead>Projeto</TableHead>
                     <TableHead>Empresa</TableHead>
-                    <TableHead>Código</TableHead>
+                    <TableHead>Código interno</TableHead>
                     <TableHead className="max-w-[220px]">Descrição</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Data cadastro</TableHead>
