@@ -459,7 +459,9 @@ function ProjetosPage() {
                     Empresa <ArrowUpDown className="h-3.5 w-3.5" />
                   </button>
                 </TableHead>
-                <TableHead>Código</TableHead>
+                <TableHead title="Código interno gerado automaticamente pelo sistema">Cód. interno</TableHead>
+                <TableHead title="Prefixo curto usado nos protocolos dos lançamentos">Prefixo</TableHead>
+
                 <TableHead className="hidden md:table-cell">Descrição</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="hidden sm:table-cell">
