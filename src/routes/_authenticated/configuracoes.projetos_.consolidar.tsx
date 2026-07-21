@@ -38,7 +38,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 
 export const Route = createFileRoute(
-  "/_authenticated/configuracoes/projetos/consolidar",
+  "/_authenticated/configuracoes/projetos_/consolidar",
 )({
   head: () => ({
     meta: [{ title: "Consolidar projetos · Configurações · CRM MK9" }],

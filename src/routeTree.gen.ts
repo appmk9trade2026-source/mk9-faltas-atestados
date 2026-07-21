@@ -50,6 +50,7 @@ import { Route as ApiPublicHooksProcessWhatsappOutboxRouteImport } from './route
 import { Route as ApiPublicHooksEvolutionWhatsappWebhookRouteImport } from './routes/api/public/hooks/evolution-whatsapp-webhook'
 import { Route as AuthenticatedUsuariosIdPermissoesRouteImport } from './routes/_authenticated/usuarios.$id.permissoes'
 import { Route as AuthenticatedConfiguracoesProjetosImportarRouteImport } from './routes/_authenticated/configuracoes.projetos_.importar'
+import { Route as AuthenticatedConfiguracoesProjetosConsolidarRouteImport } from './routes/_authenticated/configuracoes.projetos_.consolidar'
 import { Route as AuthenticatedComunicacoesWhatsappTestesRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.testes'
 import { Route as AuthenticatedComunicacoesWhatsappOutboxRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.outbox'
 import { Route as AuthenticatedComunicacoesWhatsappHealthRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.health'
@@ -285,6 +286,12 @@ const AuthenticatedConfiguracoesProjetosImportarRoute =
     path: '/projetos/importar',
     getParentRoute: () => AuthenticatedConfiguracoesRoute,
   } as any)
+const AuthenticatedConfiguracoesProjetosConsolidarRoute =
+  AuthenticatedConfiguracoesProjetosConsolidarRouteImport.update({
+    id: '/projetos_/consolidar',
+    path: '/projetos/consolidar',
+    getParentRoute: () => AuthenticatedConfiguracoesRoute,
+  } as any)
 const AuthenticatedComunicacoesWhatsappTestesRoute =
   AuthenticatedComunicacoesWhatsappTestesRouteImport.update({
     id: '/testes',
@@ -364,6 +371,7 @@ export interface FileRoutesByFullPath {
   '/comunicacoes/whatsapp/health': typeof AuthenticatedComunicacoesWhatsappHealthRoute
   '/comunicacoes/whatsapp/outbox': typeof AuthenticatedComunicacoesWhatsappOutboxRoute
   '/comunicacoes/whatsapp/testes': typeof AuthenticatedComunicacoesWhatsappTestesRoute
+  '/configuracoes/projetos/consolidar': typeof AuthenticatedConfiguracoesProjetosConsolidarRoute
   '/configuracoes/projetos/importar': typeof AuthenticatedConfiguracoesProjetosImportarRoute
   '/usuarios/$id/permissoes': typeof AuthenticatedUsuariosIdPermissoesRoute
   '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
@@ -410,6 +418,7 @@ export interface FileRoutesByTo {
   '/comunicacoes/whatsapp/health': typeof AuthenticatedComunicacoesWhatsappHealthRoute
   '/comunicacoes/whatsapp/outbox': typeof AuthenticatedComunicacoesWhatsappOutboxRoute
   '/comunicacoes/whatsapp/testes': typeof AuthenticatedComunicacoesWhatsappTestesRoute
+  '/configuracoes/projetos/consolidar': typeof AuthenticatedConfiguracoesProjetosConsolidarRoute
   '/configuracoes/projetos/importar': typeof AuthenticatedConfiguracoesProjetosImportarRoute
   '/usuarios/$id/permissoes': typeof AuthenticatedUsuariosIdPermissoesRoute
   '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
@@ -460,6 +469,7 @@ export interface FileRoutesById {
   '/_authenticated/comunicacoes/whatsapp/health': typeof AuthenticatedComunicacoesWhatsappHealthRoute
   '/_authenticated/comunicacoes/whatsapp/outbox': typeof AuthenticatedComunicacoesWhatsappOutboxRoute
   '/_authenticated/comunicacoes/whatsapp/testes': typeof AuthenticatedComunicacoesWhatsappTestesRoute
+  '/_authenticated/configuracoes/projetos_/consolidar': typeof AuthenticatedConfiguracoesProjetosConsolidarRoute
   '/_authenticated/configuracoes/projetos_/importar': typeof AuthenticatedConfiguracoesProjetosImportarRoute
   '/_authenticated/usuarios/$id/permissoes': typeof AuthenticatedUsuariosIdPermissoesRoute
   '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
@@ -510,6 +520,7 @@ export interface FileRouteTypes {
     | '/comunicacoes/whatsapp/health'
     | '/comunicacoes/whatsapp/outbox'
     | '/comunicacoes/whatsapp/testes'
+    | '/configuracoes/projetos/consolidar'
     | '/configuracoes/projetos/importar'
     | '/usuarios/$id/permissoes'
     | '/api/public/hooks/evolution-whatsapp-webhook'
@@ -556,6 +567,7 @@ export interface FileRouteTypes {
     | '/comunicacoes/whatsapp/health'
     | '/comunicacoes/whatsapp/outbox'
     | '/comunicacoes/whatsapp/testes'
+    | '/configuracoes/projetos/consolidar'
     | '/configuracoes/projetos/importar'
     | '/usuarios/$id/permissoes'
     | '/api/public/hooks/evolution-whatsapp-webhook'
@@ -605,6 +617,7 @@ export interface FileRouteTypes {
     | '/_authenticated/comunicacoes/whatsapp/health'
     | '/_authenticated/comunicacoes/whatsapp/outbox'
     | '/_authenticated/comunicacoes/whatsapp/testes'
+    | '/_authenticated/configuracoes/projetos_/consolidar'
     | '/_authenticated/configuracoes/projetos_/importar'
     | '/_authenticated/usuarios/$id/permissoes'
     | '/api/public/hooks/evolution-whatsapp-webhook'
@@ -909,6 +922,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConfiguracoesProjetosImportarRouteImport
       parentRoute: typeof AuthenticatedConfiguracoesRoute
     }
+    '/_authenticated/configuracoes/projetos_/consolidar': {
+      id: '/_authenticated/configuracoes/projetos_/consolidar'
+      path: '/projetos/consolidar'
+      fullPath: '/configuracoes/projetos/consolidar'
+      preLoaderRoute: typeof AuthenticatedConfiguracoesProjetosConsolidarRouteImport
+      parentRoute: typeof AuthenticatedConfiguracoesRoute
+    }
     '/_authenticated/comunicacoes/whatsapp/testes': {
       id: '/_authenticated/comunicacoes/whatsapp/testes'
       path: '/testes'
@@ -1009,6 +1029,7 @@ interface AuthenticatedConfiguracoesRouteChildren {
   AuthenticatedConfiguracoesPreferenciasRoute: typeof AuthenticatedConfiguracoesPreferenciasRoute
   AuthenticatedConfiguracoesProjetosRoute: typeof AuthenticatedConfiguracoesProjetosRoute
   AuthenticatedConfiguracoesTiposAusenciaRoute: typeof AuthenticatedConfiguracoesTiposAusenciaRoute
+  AuthenticatedConfiguracoesProjetosConsolidarRoute: typeof AuthenticatedConfiguracoesProjetosConsolidarRoute
   AuthenticatedConfiguracoesProjetosImportarRoute: typeof AuthenticatedConfiguracoesProjetosImportarRoute
 }
 
@@ -1022,6 +1043,8 @@ const AuthenticatedConfiguracoesRouteChildren: AuthenticatedConfiguracoesRouteCh
       AuthenticatedConfiguracoesProjetosRoute,
     AuthenticatedConfiguracoesTiposAusenciaRoute:
       AuthenticatedConfiguracoesTiposAusenciaRoute,
+    AuthenticatedConfiguracoesProjetosConsolidarRoute:
+      AuthenticatedConfiguracoesProjetosConsolidarRoute,
     AuthenticatedConfiguracoesProjetosImportarRoute:
       AuthenticatedConfiguracoesProjetosImportarRoute,
   }
