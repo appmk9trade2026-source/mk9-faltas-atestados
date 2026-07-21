@@ -224,20 +224,30 @@ function ProjetosPage() {
 
   const upsertMut = useMutation({
     mutationFn: async (values: ProjetoForm & { id?: string }) => {
-      const codigo = (values.codigo_protocolo ?? "").trim().toUpperCase();
-      const payload = {
+      const basePayload = {
         empresa_id: values.empresa_id,
         nome: values.nome.trim(),
         descricao: values.descricao?.trim() ? values.descricao.trim() : null,
-        codigo_protocolo: codigo,
         ativo: values.ativo,
       };
       if (values.id) {
-        await updateProjeto({ data: { id: values.id, ...payload } });
+        // Ao editar, preservamos o prefixo atual (gerado pelo sistema). Ele
+        // nunca é alterado por este formulário — permissão específica pode
+        // ser adicionada no futuro.
+        await updateProjeto({
+          data: {
+            id: values.id,
+            ...basePayload,
+            codigo_protocolo: editing?.codigo_protocolo ?? "",
+          },
+        });
       } else {
-        await createProjeto({ data: payload });
+        // Ao criar, o backend gera codigo_interno (PRJ-000001) e codigo_protocolo
+        // (prefixo curto) automaticamente via trigger.
+        await createProjeto({ data: { ...basePayload, codigo_protocolo: "" } });
       }
     },
+
     onSuccess: (_d, vars) => {
       toast.success(vars.id ? "Projeto atualizado." : "Projeto cadastrado.");
       queryClient.invalidateQueries({ queryKey: ["projetos"] });
