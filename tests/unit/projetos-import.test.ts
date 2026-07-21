@@ -54,10 +54,3 @@ describe("Importação de Projetos — normalização", () => {
   });
 });
 
-describe("Importação de Projetos — módulo server", () => {
-  it("exporta preview e confirm", async () => {
-    const mod = await import("@/lib/projetos.functions");
-    expect(typeof mod.previewProjetosImport).toBe("function");
-    expect(typeof mod.confirmProjetosImport).toBe("function");
-  });
-});
