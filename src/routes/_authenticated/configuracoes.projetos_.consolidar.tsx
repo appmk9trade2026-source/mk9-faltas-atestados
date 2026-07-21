@@ -219,7 +219,7 @@ function ConsolidarProjetosPage() {
       const { data, error } = await supabase.rpc("consolidar_projetos", {
         p_principal_id: principalId,
         p_duplicado_id: duplicadoId,
-        p_motivo: motivo?.trim() || null,
+        p_motivo: motivo?.trim() || undefined,
       });
       if (error) throw error;
       return data as unknown as ExecResult;
