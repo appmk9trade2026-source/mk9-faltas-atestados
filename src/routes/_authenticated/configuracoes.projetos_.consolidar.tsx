@@ -192,6 +192,26 @@ function ConsolidarProjetosPage() {
     enabled: !!canManage,
   });
 
+  const { data: colisoes } = useQuery({
+    queryKey: ["projetos-colisoes-ativas"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("report_projetos_colisoes_ativas" as never);
+      if (error) throw error;
+      return data as unknown as {
+        total_grupos: number;
+        total_projetos_envolvidos: number;
+        grupos: Array<{
+          empresa_id: string;
+          empresa_nome: string | null;
+          nome_normalizado: string;
+          total: number;
+          projetos: Array<{ id: string; nome: string; codigo_interno: string | null }>;
+        }>;
+      };
+    },
+    enabled: !!canManage,
+  });
+
   const gruposDisponiveis = useMemo(() => {
     return (diagnostico?.grupos ?? []).filter((g) => g.projetos.length >= 2);
   }, [diagnostico]);
@@ -279,6 +299,42 @@ function ConsolidarProjetosPage() {
           </Link>
         </Button>
       </div>
+
+      {/* Relatório de colisões ativas — bloqueia aplicação de UNIQUE definitivo */}
+      {colisoes && colisoes.total_grupos > 0 && (
+        <Card className="mb-4 border-amber-500/40 bg-amber-500/5 p-4">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300">!</span>
+            <h2 className="text-sm font-semibold">
+              Colisões ativas remanescentes ({colisoes.total_grupos} {colisoes.total_grupos === 1 ? "grupo" : "grupos"} · {colisoes.total_projetos_envolvidos} projetos)
+            </h2>
+          </div>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Enquanto houver grupos ativos com o mesmo nome normalizado na mesma empresa, o
+            bloqueio único definitivo (UNIQUE parcial) não pode ser aplicado. Consolide os
+            grupos abaixo para liberar a proteção final.
+          </p>
+          <div className="max-h-56 space-y-1 overflow-auto rounded border bg-background/50 p-2 text-xs">
+            {colisoes.grupos.map((g) => (
+              <div key={`${g.empresa_id}::${g.nome_normalizado}`} className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="font-medium">{g.empresa_nome ?? "—"}</span>
+                <span className="text-muted-foreground">·</span>
+                <span className="font-mono">{g.nome_normalizado}</span>
+                <span className="text-muted-foreground">→</span>
+                <span>
+                  {g.projetos.map((p) => `${p.codigo_interno ?? "—"} "${p.nome}"`).join(" | ")}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+      {colisoes && colisoes.total_grupos === 0 && (
+        <Card className="mb-4 border-emerald-500/40 bg-emerald-500/5 p-3 text-xs text-emerald-900 dark:text-emerald-200">
+          Nenhuma colisão ativa restante. O ambiente está pronto para receber o bloqueio
+          único definitivo (a ser aplicado em migração futura).
+        </Card>
+      )}
 
       {/* Passo 1 — grupo */}
       <Card className="mb-4 p-4">

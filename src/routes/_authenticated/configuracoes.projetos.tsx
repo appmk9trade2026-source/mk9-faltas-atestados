@@ -780,6 +780,53 @@ function ProjetosPage() {
   );
 }
 
+function EquivalenteCheck({
+  empresaId,
+  nome,
+  excludeId,
+}: {
+  empresaId: string;
+  nome: string;
+  excludeId: string | null;
+}) {
+  const nomeTrim = (nome ?? "").trim();
+  const enabled = !!empresaId && nomeTrim.length >= 2;
+  const { data } = useQuery({
+    enabled,
+    queryKey: ["projeto-equivalente", empresaId, nomeTrim, excludeId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("check_projeto_equivalente" as never, {
+        _empresa_id: empresaId,
+        _nome: nomeTrim,
+        _exclude_id: excludeId,
+      } as never);
+      if (error) return null;
+      const rows = (data ?? []) as Array<{ id: string; nome: string; codigo_interno: string | null }>;
+      return rows[0] ?? null;
+    },
+  });
+  if (!data) return null;
+  return (
+    <div className="rounded-md border border-amber-500/50 bg-amber-500/10 p-3 text-xs">
+      <div className="flex items-start gap-2">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+        <div className="space-y-1">
+          <p className="font-medium text-amber-900 dark:text-amber-200">
+            Já existe um projeto ativo equivalente nesta empresa
+          </p>
+          <p className="text-amber-900/80 dark:text-amber-200/80">
+            <span className="font-mono">{data.codigo_interno ?? "—"}</span> — {data.nome}
+          </p>
+          <p className="text-amber-900/70 dark:text-amber-200/70">
+            O cadastro será bloqueado. Use ou consolide o projeto existente.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 function ProjetoDialog({
   open,
   onOpenChange,
@@ -881,6 +928,12 @@ function ProjetoDialog({
                     <FormMessage />
                   </FormItem>
                 )}
+              />
+
+              <EquivalenteCheck
+                empresaId={form.watch("empresa_id")}
+                nome={form.watch("nome")}
+                excludeId={editing?.id ?? null}
               />
 
               {editing ? (

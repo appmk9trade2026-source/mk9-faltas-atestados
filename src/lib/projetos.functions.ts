@@ -112,6 +112,30 @@ async function audit(
   } catch { /* best-effort */ }
 }
 
+// Checa se já existe projeto ATIVO equivalente (mesma empresa + nome_normalizado).
+async function findProjetoEquivalente(
+  supabase: import("@/lib/rbac/guards.server").MiddlewareContext["supabase"],
+  empresaId: string,
+  nome: string,
+  excludeId: string | null,
+): Promise<{ id: string; nome: string; codigo_interno: string | null; codigo_protocolo: string | null } | null> {
+  const { data, error } = await supabase.rpc("check_projeto_equivalente" as never, {
+    _empresa_id: empresaId as never,
+    _nome: nome as never,
+    _exclude_id: (excludeId ?? null) as never,
+  } as never);
+  if (error) return null;
+  const rows = (data ?? []) as Array<{ id: string; nome: string; codigo_interno: string | null; codigo_protocolo: string | null }>;
+  return rows[0] ?? null;
+}
+
+function equivalenteError(existing: { nome: string; codigo_interno: string | null }): Error {
+  const cod = existing.codigo_interno ? ` (${existing.codigo_interno})` : "";
+  return new Error(
+    `PROJETO_EQUIVALENTE: já existe um projeto ativo equivalente nesta empresa — "${existing.nome}"${cod}. Consolide os duplicados antes de criar um novo.`,
+  );
+}
+
 // ==================== CREATE ====================
 export const createProjeto = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -125,10 +149,14 @@ export const createProjeto = createServerFn({ method: "POST" })
       empresaId: data.empresa_id,
       route: "/configuracoes/projetos",
     });
+    const nomeTrim = data.nome.trim();
+    const equivalente = await findProjetoEquivalente(context.supabase, data.empresa_id, nomeTrim, null);
+    if (equivalente) throw equivalenteError(equivalente);
+
     const codigo = (data.codigo_protocolo ?? "").trim().toUpperCase();
     const payload = {
       empresa_id: data.empresa_id,
-      nome: data.nome.trim(),
+      nome: nomeTrim,
       descricao: data.descricao?.trim() ? data.descricao.trim() : null,
       codigo_protocolo: codigo ? codigo : null,
       ativo: data.ativo,
@@ -197,6 +225,15 @@ export const updateProjeto = createServerFn({ method: "POST" })
           current.empresa_id as string, data.id, false);
         throw new Error("CONFLICT: código de protocolo não pode ser alterado — projeto já possui ausências registradas");
       }
+    }
+
+    // Bloqueia se, após esta edição, o projeto ficaria equivalente a outro
+    // projeto ATIVO da mesma empresa (mesmo nome_normalizado).
+    if (data.ativo) {
+      const equivalente = await findProjetoEquivalente(
+        context.supabase, data.empresa_id, data.nome.trim(), data.id,
+      );
+      if (equivalente) throw equivalenteError(equivalente);
     }
 
     const payload = {
