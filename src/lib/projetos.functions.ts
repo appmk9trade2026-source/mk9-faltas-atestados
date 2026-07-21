@@ -263,43 +263,42 @@ export const setProjetoAtivo = createServerFn({ method: "POST" })
 
 // ==================== IMPORTAÇÃO POR PLANILHA ====================
 //
-// Preview e Confirm compartilham a mesma pipeline de validação. Nunca
-// confiamos no que o front decidiu — validamos tudo do zero no backend.
+// Modelo: 6 colunas — Projeto, Empresa, Código, Descrição, Status,
+// Data cadastro. Empresa é localizada por nome (case-insensitive, trim).
+// Nunca confiamos em empresa_id / projeto_id enviados pelo cliente.
 
 export type ProjetoImportRow = {
   linha: number;
-  cnpj_empresa: string;
+  empresa_nome: string;
   codigo_projeto: string;
   nome_projeto: string;
-  status: string;
   descricao?: string | null;
-  data_inicio?: string | null;
-  data_fim?: string | null;
-  observacoes?: string | null;
+  status: string;
+  data_cadastro?: string | null;
 };
 
 export type ProjetoImportAcao =
   | "CRIAR" | "ATUALIZAR" | "ATIVAR" | "DESATIVAR" | "SEM_ALTERACAO" | "ERRO";
 
 export type ProjetoImportFieldDiff = {
-  campo: "nome_projeto" | "status" | "descricao" | "data_inicio" | "data_fim" | "observacoes";
+  campo: "nome_projeto" | "status" | "descricao";
   atual: string | null;
   novo: string | null;
 };
 
 export type ProjetoImportPreviewRow = {
   linha: number;
-  cnpj_normalizado: string;
-  cnpj_original: string;
+  empresa_original: string;
+  empresa_nome: string | null;
+  empresa_id: string | null;
   codigo_normalizado: string;
   nome_projeto: string;
+  descricao: string | null;
   status_normalizado: "ATIVO" | "INATIVO" | null;
-  empresa_id: string | null;
-  empresa_nome: string | null;
+  data_cadastro: string | null;
   projeto_id: string | null;
   acao: ProjetoImportAcao;
   erros: string[];
-  /** Diferenças por campo — presente apenas em ATUALIZAR/ATIVAR/DESATIVAR. */
   diff: ProjetoImportFieldDiff[];
 };
 
@@ -318,14 +317,12 @@ export type ProjetoImportPreview = {
 
 const importRowSchema = z.object({
   linha: z.number().int().min(1),
-  cnpj_empresa: z.string().max(30),
+  empresa_nome: z.string().max(200),
   codigo_projeto: z.string().max(30),
   nome_projeto: z.string().max(200),
-  status: z.string().max(20),
   descricao: z.string().max(500).nullable().optional(),
-  data_inicio: z.string().max(30).nullable().optional(),
-  data_fim: z.string().max(30).nullable().optional(),
-  observacoes: z.string().max(2000).nullable().optional(),
+  status: z.string().max(20),
+  data_cadastro: z.string().max(30).nullable().optional(),
 });
 
 const importInputSchema = z.object({
@@ -338,8 +335,8 @@ const confirmInputSchema = importInputSchema.extend({
   correlation_id: z.string().uuid().optional(),
 });
 
-function normalizeCnpj(v: string): string {
-  return (v ?? "").replace(/\D+/g, "");
+function normalizeEmpresaNome(v: string): string {
+  return (v ?? "").trim().toLowerCase();
 }
 function normalizeCodigoProjeto(v: string): string {
   return (v ?? "").trim().toUpperCase();
@@ -360,87 +357,58 @@ function normalizeDate(v: string | null | undefined): string | null | "INVALID" 
   if (br) return `${br[3]}-${br[2]}-${br[1]}`;
   return "INVALID";
 }
-function validCnpj(cnpj: string): boolean {
-  if (cnpj.length !== 14) return false;
-  if (/^(\d)\1+$/.test(cnpj)) return false;
-  const calc = (base: string, pesos: number[]) => {
-    const sum = base.split("").reduce((a, d, i) => a + Number(d) * pesos[i], 0);
-    const r = sum % 11;
-    return r < 2 ? 0 : 11 - r;
-  };
-  const p1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-  const p2 = [6, ...p1];
-  const d1 = calc(cnpj.slice(0, 12), p1);
-  const d2 = calc(cnpj.slice(0, 12) + String(d1), p2);
-  return d1 === Number(cnpj[12]) && d2 === Number(cnpj[13]);
-}
 
 async function buildPreview(
   supabase: import("@/lib/rbac/guards.server").MiddlewareContext["supabase"],
   correlationId: string,
   rows: z.infer<typeof importRowSchema>[],
 ): Promise<ProjetoImportPreview> {
-  // Prepara os CNPJs distintos → localiza as empresas em UMA consulta (RLS scoped).
-  const cnpjsRaw = new Set<string>();
-  for (const r of rows) cnpjsRaw.add(normalizeCnpj(r.cnpj_empresa));
-  const cnpjs = [...cnpjsRaw].filter((c) => c.length === 14);
-
-  const empresasMap = new Map<string, { id: string; nome: string; ativo: boolean }>();
-  if (cnpjs.length > 0) {
-    // Comparação com CNPJ normalizado (regex) em Postgres.
-    const { data: emps } = await supabase
-      .from("empresas")
-      .select("id, nome, cnpj, ativo");
-    for (const e of (emps ?? []) as Array<{ id: string; nome: string; cnpj: string | null; ativo: boolean }>) {
-      const cn = normalizeCnpj(e.cnpj ?? "");
-      if (cn.length === 14) empresasMap.set(cn, { id: e.id, nome: e.nome, ativo: e.ativo });
-    }
+  // Localiza empresas por nome normalizado (case-insensitive). Detecta ambiguidade.
+  const empresasBucket = new Map<string, Array<{ id: string; nome: string; ativo: boolean }>>();
+  const { data: emps } = await supabase.from("empresas").select("id, nome, ativo");
+  for (const e of (emps ?? []) as Array<{ id: string; nome: string; ativo: boolean }>) {
+    const key = normalizeEmpresaNome(e.nome);
+    if (!key) continue;
+    const arr = empresasBucket.get(key) ?? [];
+    arr.push({ id: e.id, nome: e.nome, ativo: e.ativo });
+    empresasBucket.set(key, arr);
   }
 
-  // Localiza projetos existentes por empresa+codigo em UMA consulta.
+  // Projetos existentes por empresa+codigo
   const empresaIds = new Set<string>();
-  for (const c of cnpjs) {
-    const emp = empresasMap.get(c);
-    if (emp) empresaIds.add(emp.id);
+  for (const r of rows) {
+    const key = normalizeEmpresaNome(r.empresa_nome);
+    const bucket = empresasBucket.get(key);
+    if (bucket && bucket.length === 1) empresaIds.add(bucket[0].id);
   }
   type ExistingProjeto = {
-    id: string;
-    ativo: boolean;
-    nome: string;
-    descricao: string | null;
-    data_inicio: string | null;
-    data_fim: string | null;
-    observacoes: string | null;
+    id: string; ativo: boolean; nome: string; descricao: string | null;
   };
   const projetoKey = new Map<string, ExistingProjeto>();
   if (empresaIds.size > 0) {
     const { data: projs } = await supabase
       .from("projetos")
-      .select("id, empresa_id, codigo_protocolo, nome, ativo, descricao, data_inicio, data_fim, observacoes")
+      .select("id, empresa_id, codigo_protocolo, nome, ativo, descricao")
       .in("empresa_id", [...empresaIds]);
     for (const p of (projs ?? []) as Array<{
       id: string; empresa_id: string; codigo_protocolo: string | null;
-      nome: string; ativo: boolean;
-      descricao: string | null; data_inicio: string | null;
-      data_fim: string | null; observacoes: string | null;
+      nome: string; ativo: boolean; descricao: string | null;
     }>) {
       if (p.codigo_protocolo) {
         projetoKey.set(`${p.empresa_id}::${p.codigo_protocolo.toUpperCase()}`, {
-          id: p.id, ativo: p.ativo, nome: p.nome,
-          descricao: p.descricao, data_inicio: p.data_inicio,
-          data_fim: p.data_fim, observacoes: p.observacoes,
+          id: p.id, ativo: p.ativo, nome: p.nome, descricao: p.descricao,
         });
       }
     }
   }
 
-  // Detecta duplicidade dentro do próprio arquivo (empresa+codigo).
+  // Duplicidade dentro do próprio arquivo (empresa_norm + codigo)
   const arquivoKeyCount = new Map<string, number[]>();
   for (const r of rows) {
-    const cn = normalizeCnpj(r.cnpj_empresa);
+    const en = normalizeEmpresaNome(r.empresa_nome);
     const cod = normalizeCodigoProjeto(r.codigo_projeto);
-    if (cn && cod) {
-      const k = `${cn}::${cod}`;
+    if (en && cod) {
+      const k = `${en}::${cod}`;
       const arr = arquivoKeyCount.get(k) ?? [];
       arr.push(r.linha);
       arquivoKeyCount.set(k, arr);
@@ -454,45 +422,39 @@ async function buildPreview(
   };
 
   const linhas: ProjetoImportPreviewRow[] = rows.map((r) => {
-    const cnNorm = normalizeCnpj(r.cnpj_empresa);
+    const enNorm = normalizeEmpresaNome(r.empresa_nome);
     const codNorm = normalizeCodigoProjeto(r.codigo_projeto);
     const nome = (r.nome_projeto ?? "").trim();
-    const status = normalizeStatus(r.status);
-    const dtIni = normalizeDate(r.data_inicio ?? null);
-    const dtFim = normalizeDate(r.data_fim ?? null);
     const descricao = nullIfBlank(r.descricao);
-    const observacoes = nullIfBlank(r.observacoes);
+    const status = normalizeStatus(r.status);
+    const dtCad = normalizeDate(r.data_cadastro ?? null);
     const erros: string[] = [];
 
-    if (!cnNorm) erros.push("CNPJ obrigatório");
-    else if (cnNorm.length !== 14) erros.push("CNPJ deve ter 14 dígitos");
-    else if (!validCnpj(cnNorm)) erros.push("CNPJ inválido");
-
-    if (!codNorm) erros.push("codigo_projeto obrigatório");
+    if (!enNorm) erros.push("Empresa obrigatória");
+    if (!codNorm) erros.push("Código obrigatório");
     else if (!/^[A-Z0-9]{2,10}$/.test(codNorm))
-      erros.push("codigo_projeto deve conter 2-10 caracteres A-Z/0-9");
+      erros.push("Código deve conter 2-10 caracteres A-Z/0-9");
+    if (!nome) erros.push("Projeto (nome) obrigatório");
+    if (nome.length > 120) erros.push("Projeto acima de 120 caracteres");
+    if (!status) erros.push("Status inválido (use ATIVO ou INATIVO)");
+    if (dtCad === "INVALID") erros.push("Data cadastro inválida (use DD/MM/YYYY ou YYYY-MM-DD)");
 
-    if (!nome) erros.push("nome_projeto obrigatório");
-    if (nome.length > 120) erros.push("nome_projeto acima de 120 caracteres");
-
-    if (!status) erros.push("status inválido (use ATIVO ou INATIVO)");
-
-    if (dtIni === "INVALID") erros.push("data_inicio inválida (use YYYY-MM-DD)");
-    if (dtFim === "INVALID") erros.push("data_fim inválida (use YYYY-MM-DD)");
-    if (dtIni && dtFim && dtIni !== "INVALID" && dtFim !== "INVALID" && (dtFim as string) < (dtIni as string))
-      erros.push("data_fim anterior a data_inicio");
-
-    const emp = cnNorm && cnNorm.length === 14 ? empresasMap.get(cnNorm) : undefined;
-    if (!emp && cnNorm.length === 14 && validCnpj(cnNorm))
-      erros.push("empresa não encontrada ou fora do seu escopo");
-    else if (emp && !emp.ativo) erros.push("empresa está inativa");
-
-    // Duplicidade no próprio arquivo
-    if (cnNorm && codNorm) {
-      const dup = arquivoKeyCount.get(`${cnNorm}::${codNorm}`) ?? [];
-      if (dup.length > 1) {
-        erros.push(`linha duplicada no arquivo (linhas: ${dup.join(", ")})`);
+    const bucket = enNorm ? empresasBucket.get(enNorm) : undefined;
+    let emp: { id: string; nome: string; ativo: boolean } | undefined;
+    if (enNorm) {
+      if (!bucket || bucket.length === 0) {
+        erros.push("Empresa não encontrada ou fora do seu escopo");
+      } else if (bucket.length > 1) {
+        erros.push(`Empresa ambígua — ${bucket.length} cadastros com este nome`);
+      } else {
+        emp = bucket[0];
+        if (!emp.ativo) erros.push("Empresa está inativa");
       }
+    }
+
+    if (enNorm && codNorm) {
+      const dup = arquivoKeyCount.get(`${enNorm}::${codNorm}`) ?? [];
+      if (dup.length > 1) erros.push(`Linha duplicada no arquivo (linhas: ${dup.join(", ")})`);
     }
 
     let acao: ProjetoImportAcao = "ERRO";
@@ -507,9 +469,6 @@ async function buildPreview(
       if (!existing) {
         acao = "CRIAR";
       } else {
-        // Comparação campo a campo — datas são strings YYYY-MM-DD no banco
-        const novoDtIni = typeof dtIni === "string" ? dtIni : null;
-        const novoDtFim = typeof dtFim === "string" ? dtFim : null;
         const atualStatus = existing.ativo ? "ATIVO" : "INATIVO";
         const novoStatus: "ATIVO" | "INATIVO" = wantAtivo ? "ATIVO" : "INATIVO";
 
@@ -519,12 +478,6 @@ async function buildPreview(
           diff.push({ campo: "status", atual: atualStatus, novo: novoStatus });
         if ((existing.descricao ?? null) !== descricao)
           diff.push({ campo: "descricao", atual: existing.descricao, novo: descricao });
-        if ((existing.data_inicio ?? null) !== novoDtIni)
-          diff.push({ campo: "data_inicio", atual: existing.data_inicio, novo: novoDtIni });
-        if ((existing.data_fim ?? null) !== novoDtFim)
-          diff.push({ campo: "data_fim", atual: existing.data_fim, novo: novoDtFim });
-        if ((existing.observacoes ?? null) !== observacoes)
-          diff.push({ campo: "observacoes", atual: existing.observacoes, novo: observacoes });
 
         const statusMudou = atualStatus !== novoStatus;
         const outrosMudaram = diff.some((d) => d.campo !== "status");
@@ -536,13 +489,14 @@ async function buildPreview(
 
     return {
       linha: r.linha,
-      cnpj_normalizado: cnNorm,
-      cnpj_original: r.cnpj_empresa,
+      empresa_original: r.empresa_nome,
+      empresa_nome: emp?.nome ?? null,
+      empresa_id: emp?.id ?? null,
       codigo_normalizado: codNorm,
       nome_projeto: nome,
+      descricao,
       status_normalizado: status,
-      empresa_id: emp?.id ?? null,
-      empresa_nome: emp?.nome ?? null,
+      data_cadastro: typeof dtCad === "string" ? dtCad : null,
       projeto_id: projetoId,
       acao,
       erros,
@@ -571,13 +525,11 @@ export const previewProjetosImport = createServerFn({ method: "POST" })
     try { return importInputSchema.parse(data); } catch (e) { throw invalidPayload(e); }
   })
   .handler(async ({ data, context }) => {
-    // Preview exige pelo menos permissão de leitura+algo de escrita.
     await requirePermission({
       ctx: context,
       permission: PERMISSION_MAP.viewReport,
       route: "/configuracoes/projetos/importar",
     }).catch(async () => {
-      // fallback: precisa poder criar OU editar projeto
       await requirePermission({
         ctx: context,
         permission: PERMISSION_MAP.createProject,
@@ -588,12 +540,7 @@ export const previewProjetosImport = createServerFn({ method: "POST" })
     return buildPreview(context.supabase, correlationId, data.rows);
   });
 
-/**
- * Confirmação atômica: delega toda a escrita para a RPC transacional
- * `import_projetos_atomic`. Se qualquer erro ocorrer no banco, a transação
- * inteira é revertida (tudo-ou-nada). Falhas técnicas são registradas fora
- * da transação para não serem apagadas pelo rollback.
- */
+/** Confirmação atômica via RPC transacional import_projetos_atomic. */
 export const confirmProjetosImport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => {
@@ -602,8 +549,6 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const correlationId = data.correlation_id ?? crypto.randomUUID();
 
-    // Gate mínimo: usuário precisa poder criar OU editar projeto para chegar
-    // aqui. A RPC re-avalia o gate real (criar vs. editar) com base no plano.
     await requirePermission({
       ctx: context,
       permission: PERMISSION_MAP.createProject,
@@ -618,17 +563,14 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
       });
     });
 
-    // Payload da RPC — nunca envia empresa_id (a RPC localiza por CNPJ).
     const rowsJson = data.rows.map((r) => ({
       row_number: r.linha,
-      cnpj_empresa: r.cnpj_empresa,
+      empresa_nome: r.empresa_nome,
       codigo_projeto: r.codigo_projeto,
       nome_projeto: r.nome_projeto,
-      status: r.status,
       descricao: r.descricao ?? null,
-      data_inicio: r.data_inicio ?? null,
-      data_fim: r.data_fim ?? null,
-      observacoes: r.observacoes ?? null,
+      status: r.status,
+      data_cadastro: r.data_cadastro ?? null,
     }));
 
     type AtomicResult = {
@@ -660,7 +602,6 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
       );
       if (error) {
         rpcErrorMessage = error.message ?? String(error);
-        // PostgrestError expõe SQLSTATE em .code
         rpcErrorCode = (error as { code?: string }).code ?? null;
         rpcErrorDetails = (error as { details?: string }).details ?? null;
       } else {
@@ -672,11 +613,6 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
       rpcErrorDetails = (err as { details?: string })?.details ?? null;
     }
 
-    // ---------------------------------------------------------------------
-    // Mapeamento de erros de concorrência para códigos seguros.
-    // Nunca expõe SQLSTATE, mensagem crua do Postgres, nome de tabela ou
-    // stack trace — apenas um code padronizado + mensagem amigável.
-    // ---------------------------------------------------------------------
     if (rpcErrorMessage || !rpcResult) {
       let userCode:
         | "IMPORT_CONFLICT"
@@ -686,31 +622,22 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
       let userMessage =
         "Não foi possível concluir a importação. Nenhuma alteração foi aplicada.";
       let phase: FailurePhase = "rpc_call";
-
       const rawUpper = (rpcErrorMessage ?? "").toUpperCase();
 
-      // Preserva mensagens de negócio já padronizadas pela própria RPC
-      // (PERMISSION_DENIED / INVALID_PAYLOAD / AUTH_REQUIRED / USER_INACTIVE).
       if (/^PERMISSION_DENIED/.test(rpcErrorMessage ?? "")) {
         await audit(context.supabase, "PROJETOS_IMPORTACAO_FALHOU", null, correlationId,
-          null, {
-            error_code: "PERMISSION_DENIED",
-            failure_phase: "rpc_validation",
-            duration_ms: Date.now() - startedAt,
-            total_rows: data.rows.length,
-            correlation_id: correlationId,
-          }, "permissão negada", null, null, false);
+          null, { error_code: "PERMISSION_DENIED", failure_phase: "rpc_validation",
+            duration_ms: Date.now() - startedAt, total_rows: data.rows.length,
+            correlation_id: correlationId },
+          "permissão negada", null, null, false);
         throw new Error("PERMISSION_DENIED: permissão negada para importar projetos");
       }
       if (/^INVALID_PAYLOAD/.test(rpcErrorMessage ?? "")) {
         await audit(context.supabase, "PROJETOS_IMPORTACAO_FALHOU", null, correlationId,
-          null, {
-            error_code: "INVALID_PAYLOAD",
-            failure_phase: "rpc_validation",
-            duration_ms: Date.now() - startedAt,
-            total_rows: data.rows.length,
-            correlation_id: correlationId,
-          }, "payload inválido", null, null, false);
+          null, { error_code: "INVALID_PAYLOAD", failure_phase: "rpc_validation",
+            duration_ms: Date.now() - startedAt, total_rows: data.rows.length,
+            correlation_id: correlationId },
+          "payload inválido", null, null, false);
         throw new Error("INVALID_PAYLOAD: dados inválidos para importação");
       }
 
@@ -731,9 +658,7 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
         phase = "rpc_write";
       }
 
-      // Tentativa best-effort de identificar linha/código sem vazar detalhes.
-      // Extrai codigo_protocolo do DETAIL do Postgres quando presente.
-      let conflictHint: { row_number?: number; codigo_projeto?: string; cnpj_empresa?: string } | undefined;
+      let conflictHint: { row_number?: number; codigo_projeto?: string; empresa_nome?: string } | undefined;
       if (userCode === "IMPORT_CONFLICT" && rpcErrorDetails) {
         const m = /\(codigo_protocolo\)=\(([^)]+)\)/i.exec(rpcErrorDetails);
         if (m) {
@@ -741,43 +666,21 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
           const row = data.rows.find(
             (r) => (r.codigo_projeto ?? "").trim().toUpperCase() === codigo,
           );
-          if (row) {
-            conflictHint = {
-              row_number: row.linha,
-              codigo_projeto: codigo,
-              cnpj_empresa: row.cnpj_empresa,
-            };
-          } else {
-            conflictHint = { codigo_projeto: codigo };
-          }
+          conflictHint = row
+            ? { row_number: row.linha, codigo_projeto: codigo, empresa_nome: row.empresa_nome }
+            : { codigo_projeto: codigo };
         }
       }
 
       failurePhase = phase;
-      await audit(
-        context.supabase,
-        "PROJETOS_IMPORTACAO_FALHOU",
-        null,
-        correlationId,
-        null,
-        {
-          error_code: userCode,
-          failure_phase: failurePhase,
-          duration_ms: Date.now() - startedAt,
-          total_rows: data.rows.length,
-          correlation_id: correlationId,
-          conflict_hint: conflictHint ?? null,
-        },
-        `${userCode} — importação abortada`,
-        null,
-        null,
-        false,
-      );
+      await audit(context.supabase, "PROJETOS_IMPORTACAO_FALHOU", null, correlationId,
+        null, { error_code: userCode, failure_phase: failurePhase,
+          duration_ms: Date.now() - startedAt, total_rows: data.rows.length,
+          correlation_id: correlationId, conflict_hint: conflictHint ?? null },
+        `${userCode} — importação abortada`, null, null, false);
 
       const err = new Error(`${userCode}: ${userMessage}`) as Error & {
-        code: string;
-        correlationId: string;
-        conflictHint?: typeof conflictHint;
+        code: string; correlationId: string; conflictHint?: typeof conflictHint;
       };
       err.code = userCode;
       err.correlationId = correlationId;
@@ -785,60 +688,27 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
       throw err;
     }
 
-    // Erro de validação retornado com success=false: registrar FALHOU externo.
     if (!rpcResult.success) {
-      await audit(
-        context.supabase,
-        "PROJETOS_IMPORTACAO_FALHOU",
-        null,
-        correlationId,
-        null,
-        {
-          error_code: "IMPORT_VALIDATION",
-          failure_phase: "rpc_validation",
-          duration_ms: rpcResult.duration_ms,
-          total_rows: rpcResult.total,
-          correlation_id: correlationId,
-          rejected: rpcResult.rejected,
-          errors: rpcResult.errors.slice(0, 50),
-        },
-        `bloqueada — ${rpcResult.rejected} linha(s) com erro`,
-        null,
-        null,
-        false,
-      );
+      await audit(context.supabase, "PROJETOS_IMPORTACAO_FALHOU", null, correlationId,
+        null, { error_code: "IMPORT_VALIDATION", failure_phase: "rpc_validation",
+          duration_ms: rpcResult.duration_ms, total_rows: rpcResult.total,
+          correlation_id: correlationId, rejected: rpcResult.rejected,
+          errors: rpcResult.errors.slice(0, 50) },
+        `bloqueada — ${rpcResult.rejected} linha(s) com erro`, null, null, false);
     } else {
-      // Auditoria operacional de conclusão com métricas de performance.
       const rps = rpcResult.duration_ms > 0
         ? Math.round((rpcResult.total * 1000) / rpcResult.duration_ms)
         : rpcResult.total;
-      await audit(
-        context.supabase,
-        "PROJETOS_IMPORTACAO_CONCLUIDA",
-        null,
-        correlationId,
-        null,
-        {
-          duration_ms: rpcResult.duration_ms,
-          total_rows: rpcResult.total,
-          rows_per_second: rps,
-          created: rpcResult.created,
-          updated: rpcResult.updated,
-          activated: rpcResult.activated,
-          deactivated: rpcResult.deactivated,
-          unchanged: rpcResult.unchanged,
-          correlation_id: correlationId,
-        },
+      await audit(context.supabase, "PROJETOS_IMPORTACAO_CONCLUIDA", null, correlationId,
+        null, { duration_ms: rpcResult.duration_ms, total_rows: rpcResult.total,
+          rows_per_second: rps, created: rpcResult.created, updated: rpcResult.updated,
+          activated: rpcResult.activated, deactivated: rpcResult.deactivated,
+          unchanged: rpcResult.unchanged, correlation_id: correlationId },
         `importação concluída — ${rpcResult.total} linha(s) em ${rpcResult.duration_ms}ms`,
-        null,
-        null,
-        true,
-      );
+        null, null, true);
     }
 
-    // Retorno mantém compatibilidade com o wizard existente + expõe novos campos.
     return {
-      // legado
       criadas: rpcResult.created,
       atualizadas: rpcResult.updated,
       ativadas: rpcResult.activated,
@@ -848,7 +718,6 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
         linha: e.row_number,
         erro: `${e.field}: ${e.message}`,
       })),
-      // novos
       success: rpcResult.success,
       correlation_id: rpcResult.correlation_id,
       total: rpcResult.total,
@@ -856,5 +725,6 @@ export const confirmProjetosImport = createServerFn({ method: "POST" })
       duration_ms: rpcResult.duration_ms,
     };
   });
+
 
 

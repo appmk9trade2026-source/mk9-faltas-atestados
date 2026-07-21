@@ -126,19 +126,25 @@ function ImportarProjetosPage() {
       const sheetName = wb.SheetNames.find((n) => n.toLowerCase() === "projetos") ?? wb.SheetNames[0];
       const ws = wb.Sheets[sheetName];
       const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "", raw: false });
-      const norm = raw
+      const pick = (r: Record<string, unknown>, keys: string[]): string => {
+        for (const k of keys) {
+          const val = r[k];
+          if (val != null && String(val).trim() !== "") return String(val).trim();
+        }
+        return "";
+      };
+      const norm: ProjetoImportRow[] = raw
         .map((r, i) => ({
           linha: i + 2,
-          cnpj_empresa: String(r["cnpj_empresa"] ?? r["CNPJ"] ?? r["cnpj"] ?? "").trim(),
-          codigo_projeto: String(r["codigo_projeto"] ?? r["codigo"] ?? "").trim(),
-          nome_projeto: String(r["nome_projeto"] ?? r["nome"] ?? "").trim(),
-          status: String(r["status"] ?? "").trim(),
-          descricao: String(r["descricao"] ?? "").trim() || null,
-          data_inicio: String(r["data_inicio"] ?? "").trim() || null,
-          data_fim: String(r["data_fim"] ?? "").trim() || null,
-          observacoes: String(r["observacoes"] ?? "").trim() || null,
+          nome_projeto: pick(r, ["Projeto", "projeto", "nome_projeto", "nome"]),
+          empresa_nome: pick(r, ["Empresa", "empresa", "empresa_nome", "razao_social"]),
+          codigo_projeto: pick(r, ["Código", "Codigo", "codigo", "codigo_projeto"]),
+          descricao: pick(r, ["Descrição", "Descricao", "descricao"]) || null,
+          status: pick(r, ["Status", "status"]),
+          data_cadastro: pick(r, ["Data cadastro", "data_cadastro", "Data Cadastro"]) || null,
         }))
-        .filter((r) => r.cnpj_empresa || r.codigo_projeto || r.nome_projeto || r.status);
+        .filter((r) => r.empresa_nome || r.codigo_projeto || r.nome_projeto || r.status);
+
       if (norm.length === 0) {
         toast.error("A planilha não contém linhas de dados.");
         setStep(1);
@@ -212,10 +218,11 @@ function ImportarProjetosPage() {
       .filter((l) => l.erros.length > 0)
       .map((l) => ({
         linha: l.linha,
-        cnpj: l.cnpj_original,
+        empresa: l.empresa_original,
         codigo: l.codigo_normalizado,
         problema: l.erros.join("; "),
       }));
+
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Erros");
@@ -431,11 +438,12 @@ function ImportarProjetosPage() {
                 <TableHeader className="sticky top-0 bg-muted/60 backdrop-blur">
                   <TableRow>
                     <TableHead className="w-14">#</TableHead>
-                    <TableHead>CNPJ</TableHead>
+                    <TableHead>Projeto</TableHead>
                     <TableHead>Empresa</TableHead>
                     <TableHead>Código</TableHead>
-                    <TableHead>Nome</TableHead>
+                    <TableHead className="max-w-[220px]">Descrição</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Data cadastro</TableHead>
                     <TableHead>Ação</TableHead>
                     <TableHead className="min-w-[260px]">Diferenças / Observações</TableHead>
                   </TableRow>
@@ -446,18 +454,20 @@ function ImportarProjetosPage() {
                     .map((l) => (
                     <TableRow key={l.linha} className={l.acao === "ERRO" ? "bg-red-500/5" : ""}>
                       <TableCell className="text-xs text-muted-foreground">{l.linha}</TableCell>
-                      <TableCell className="font-mono text-xs">{l.cnpj_original || "—"}</TableCell>
-                      <TableCell className="text-sm">{l.empresa_nome ?? <span className="italic text-muted-foreground">não encontrada</span>}</TableCell>
-                      <TableCell className="font-mono text-xs">{l.codigo_normalizado || "—"}</TableCell>
                       <TableCell className="text-sm">{l.nome_projeto || "—"}</TableCell>
+                      <TableCell className="text-sm">{l.empresa_nome ?? <span className="italic text-muted-foreground">{l.empresa_original || "não encontrada"}</span>}</TableCell>
+                      <TableCell className="font-mono text-xs">{l.codigo_normalizado || "—"}</TableCell>
+                      <TableCell className="max-w-[220px] truncate text-xs text-muted-foreground" title={l.descricao ?? ""}>{l.descricao || "—"}</TableCell>
                       <TableCell>
                         {l.status_normalizado ? (
                           <Badge variant="outline">{l.status_normalizado}</Badge>
                         ) : <span className="text-xs text-muted-foreground">—</span>}
                       </TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">{l.data_cadastro || "—"}</TableCell>
                       <TableCell>
                         <Badge className={acaoBadge[l.acao]}>{acaoLabel[l.acao]}</Badge>
                       </TableCell>
+
                       <TableCell className="text-xs">
                         {l.erros.length > 0 ? (
                           <span className="text-destructive">{l.erros.join("; ")}</span>
