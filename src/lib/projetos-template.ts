@@ -1,20 +1,21 @@
 // Modelo XLSX para importação de Projetos — CRM MK9.
-// 6 colunas exatas: Projeto, Empresa, Código, Descrição, Status, Data cadastro.
+// 5 colunas exatas: Projeto, Empresa, Descrição, Status, Data cadastro.
+// Código NÃO é informado pelo usuário — é gerado automaticamente pelo sistema
+// no formato PRJ-000001, único e imutável.
 
 import * as XLSX from "xlsx";
 
 const COLUNAS = [
   "Projeto",
   "Empresa",
-  "Código",
   "Descrição",
   "Status",
   "Data cadastro",
 ] as const;
 
 const EXEMPLOS: string[][] = [
-  ["Novo Projeto", "Empresa Exemplo LTDA", "NOVO01", "Projeto novo — exemplo de criação", "ATIVO", "2026-01-01"],
-  ["Projeto Armazém Atualizado", "Empresa Exemplo LTDA", "ARMT", "Encerramento operacional", "INATIVO", "2025-03-01"],
+  ["Novo Projeto", "Empresa Exemplo LTDA", "Projeto novo — exemplo de criação", "ATIVO", "2026-01-01"],
+  ["Projeto Armazém Atualizado", "Empresa Exemplo LTDA", "Encerramento operacional", "INATIVO", "2025-03-01"],
 ];
 
 const INSTRUCOES: string[][] = [
@@ -26,35 +27,33 @@ const INSTRUCOES: string[][] = [
   ["Colunas (nesta ordem exata):"],
   ["  1. Projeto        — nome do projeto (até 120 caracteres)"],
   ["  2. Empresa        — razão social exata da empresa já cadastrada"],
-  ["  3. Código         — 2 a 10 caracteres A-Z/0-9 (sem espaços ou acentos)"],
-  ["  4. Descrição      — texto até 500 caracteres (opcional)"],
-  ["  5. Status         — ATIVO ou INATIVO"],
-  ["  6. Data cadastro  — DD/MM/YYYY ou YYYY-MM-DD"],
+  ["  3. Descrição      — texto até 500 caracteres (opcional)"],
+  ["  4. Status         — ATIVO ou INATIVO"],
+  ["  5. Data cadastro  — DD/MM/AAAA ou AAAA-MM-DD (usada apenas na criação)"],
   [],
-  ["COMO CRIAR UM PROJETO NOVO:"],
-  ["  1. Informe o nome de uma Empresa já cadastrada (comparação sem diferenciar maiúsculas)."],
-  ["  2. Informe um Código que ainda NÃO exista para essa empresa."],
-  ["  3. Preencha Projeto e Status."],
-  ["  4. Data cadastro é usada como data de criação; se vazia, será a data atual."],
-  ["  5. Ação calculada: CRIAR (exige permissão projeto.criar)."],
+  ["O código interno do projeto (PRJ-000001, PRJ-000002, …) é gerado"],
+  ["automaticamente pelo sistema. Não informe o código na planilha."],
   [],
-  ["COMO ATUALIZAR UM PROJETO EXISTENTE:"],
-  ["  1. Informe a MESMA Empresa e o MESMO Código do projeto atual."],
-  ["  2. Altere apenas: Projeto (nome), Descrição, Status."],
-  ["  3. Data cadastro é ignorada em projetos existentes."],
-  ["  4. Ação calculada:"],
-  ["       ATUALIZAR       — quando nome ou descrição muda"],
+  ["COMO O SISTEMA IDENTIFICA UM PROJETO:"],
+  ["  Chave lógica = Empresa + Projeto (nome), comparados sem diferenciar"],
+  ["  maiúsculas/minúsculas e ignorando espaços extras."],
+  [],
+  ["  • Empresa + Projeto ainda NÃO existe   → cria e gera novo código."],
+  ["  • Empresa + Projeto JÁ existe          → atualiza Descrição, Status"],
+  ["                                          e Data cadastro; preserva o código."],
+  ["  • Mesma Empresa + Projeto repetida     → linha marcada como duplicada."],
+  ["  • Empresa não cadastrada               → linha marcada como erro."],
+  [],
+  ["Ações possíveis no preview:"],
+  ["       CRIAR           — exige permissão projeto.criar"],
+  ["       ATUALIZAR       — quando descrição muda"],
   ["       ATIVAR          — quando status muda de INATIVO para ATIVO"],
   ["       DESATIVAR       — quando status muda de ATIVO para INATIVO"],
-  ["       SEM ALTERAÇÃO   — quando todos os valores forem iguais aos atuais"],
-  ["  5. Exige permissão projeto.editar."],
+  ["       SEM ALTERAÇÃO   — quando todos os valores são iguais aos atuais"],
+  ["       ERRO            — quando a linha viola alguma regra"],
   [],
-  ["Empresa e Código NUNCA são alterados por esta importação — servem"],
-  ["apenas para localizar o projeto existente."],
-  [],
-  ["Projetos NÃO são excluídos por esta importação."],
-  ["Empresas NÃO são criadas automaticamente. Se a empresa não existir,"],
-  ["estiver inativa ou for ambígua (nome repetido), a linha vira ERRO."],
+  ["Empresas NÃO são criadas automaticamente. Projetos NÃO são excluídos."],
+  ["Códigos internos NUNCA são alterados nem reutilizados."],
   [],
   ["Segurança e auditoria:"],
   ["  • A confirmação é atômica: se qualquer linha falhar, nenhuma é aplicada."],
