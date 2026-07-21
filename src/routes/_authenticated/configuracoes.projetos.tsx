@@ -357,6 +357,15 @@ function ProjetosPage() {
                 </Button>
               )}
               {canManage && (
+                <Button asChild variant="outline">
+                  <Link to="/configuracoes/projetos/consolidar">
+                    <Archive className="mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Consolidar duplicados</span>
+                    <span className="sm:hidden">Consolidar</span>
+                  </Link>
+                </Button>
+              )}
+              {canManage && (
                 <Button onClick={openCreate}>
                   <Plus className="mr-2 h-4 w-4" /> Novo projeto
                 </Button>
