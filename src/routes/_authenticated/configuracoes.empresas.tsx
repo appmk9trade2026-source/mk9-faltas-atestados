@@ -158,14 +158,9 @@ function EmpresasPage() {
         ativo: values.ativo,
       };
       if (values.id) {
-        const { error } = await supabase
-          .from("empresas")
-          .update(payload)
-          .eq("id", values.id);
-        if (error) throw error;
+        await updateEmpresa({ data: { id: values.id, ...payload } });
       } else {
-        const { error } = await supabase.from("empresas").insert(payload);
-        if (error) throw error;
+        await createEmpresa({ data: payload });
       }
     },
     onSuccess: (_d, vars) => {
@@ -175,22 +170,14 @@ function EmpresasPage() {
       setEditing(null);
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (/duplicate|unique/i.test(msg)) {
-        toast.error("Já existe uma empresa com este nome.");
-      } else {
-        toast.error("Não foi possível salvar a empresa.", { description: msg });
-      }
+      const f = friendlyRbacError(err);
+      toast.error(f.title, { description: f.description });
     },
   });
 
   const toggleMut = useMutation({
     mutationFn: async (row: Empresa) => {
-      const { error } = await supabase
-        .from("empresas")
-        .update({ ativo: !row.ativo })
-        .eq("id", row.id);
-      if (error) throw error;
+      await setEmpresaAtiva({ data: { id: row.id, ativo: !row.ativo } });
       return !row.ativo;
     },
     onSuccess: (novoAtivo) => {
@@ -198,8 +185,8 @@ function EmpresasPage() {
       queryClient.invalidateQueries({ queryKey: ["empresas"] });
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : String(err);
-      toast.error("Não foi possível alterar o status.", { description: msg });
+      const f = friendlyRbacError(err);
+      toast.error(f.title, { description: f.description });
     },
   });
 
