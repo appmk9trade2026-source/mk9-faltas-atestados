@@ -341,12 +341,20 @@ function normalizeEmpresaNome(v: string): string {
 function normalizeCodigoProjeto(v: string): string {
   return (v ?? "").trim().toUpperCase();
 }
+/** Normaliza nome do projeto para COMPARAÇÃO (case-insensitive, espaços colapsados). */
+function normalizeNomeProjeto(v: string): string {
+  return (v ?? "").trim().replace(/\s+/g, " ").toLowerCase();
+}
 function normalizeStatus(v: string): "ATIVO" | "INATIVO" | null {
   const s = (v ?? "").trim().toUpperCase();
   if (s === "ATIVO" || s === "1" || s === "ATIVA" || s === "TRUE") return "ATIVO";
   if (s === "INATIVO" || s === "0" || s === "INATIVA" || s === "FALSE") return "INATIVO";
   return null;
 }
+/**
+ * O cliente já normaliza a data via parseSpreadsheetDate (serial Excel, Date,
+ * DD/MM/YYYY, YYYY-MM-DD, ISO). Aqui aceitamos YYYY-MM-DD ou DD/MM/YYYY.
+ */
 function normalizeDate(v: string | null | undefined): string | null | "INVALID" {
   if (v == null) return null;
   const s = String(v).trim();
