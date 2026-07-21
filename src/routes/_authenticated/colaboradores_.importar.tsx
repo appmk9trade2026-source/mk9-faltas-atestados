@@ -41,6 +41,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { normalizeMatricula } from "@/lib/matricula";
+import { normalizeName } from "@/lib/normalize-name";
 import { importColaboradoresBulk } from "@/lib/colaboradores.functions";
 import { friendlyRbacError } from "@/lib/rbac/errors";
 
@@ -101,14 +102,17 @@ type ParsedRow = {
   erros: { code: ErrorCode; msg: string }[];
   /** Sugestões de projeto quando o nome não bateu exatamente. */
   sugestoes_projeto?: { id: string; nome: string }[];
+  /** Nome cadastrado do projeto encontrado (para exibição quando difere do informado). */
+  projeto_localizado_nome?: string | null;
+  /** true quando o vínculo foi resolvido por normalização (hífen, acento, espaços). */
+  projeto_por_normalizacao?: boolean;
 };
 
 const digitsOnly = (v: string) => v.replace(/\D+/g, "");
 const isValidEmail = (e: string) => !e || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 const norm = (v: unknown) => String(v ?? "").trim();
-/** Normalização para chave lógica: upper + colapso de espaços (preserva acentos). */
-const nameKey = (v: string) =>
-  v.trim().replace(/\s+/g, " ").toUpperCase();
+/** Chave lógica de comparação (upper + sem acentos + hífens→espaço + colapso). */
+const nameKey = (v: string) => normalizeName(v);
 
 type Empresa = { id: string; nome: string; ativo: boolean };
 type Projeto = { id: string; nome: string; empresa_id: string; ativo: boolean };
@@ -296,6 +300,8 @@ function ImportarPage() {
         let empresa_id: string | null = null;
         let projeto_id: string | null = null;
         let sugestoes_projeto: { id: string; nome: string }[] | undefined;
+        let projeto_localizado_nome: string | null = null;
+        let projeto_por_normalizacao = false;
 
         // Campos base
         if (!matricula) erros.push({ code: "MATRICULA_OBRIGATORIA", msg: "Matrícula obrigatória." });
@@ -339,6 +345,8 @@ function ImportarPage() {
             const p = projetos.find((x) => x.id === chosen);
             if (p && p.empresa_id === empresa_id && p.ativo) {
               projeto_id = p.id;
+              projeto_localizado_nome = p.nome;
+              if (nameKey(p.nome) !== nameKey(projeto)) projeto_por_normalizacao = true;
             }
           }
 
@@ -349,15 +357,20 @@ function ImportarPage() {
                 erros.push({ code: "PROJETO_INATIVO", msg: `Projeto "${projeto}" está inativo.` });
               } else {
                 projeto_id = matches[0].id;
+                projeto_localizado_nome = matches[0].nome;
+                if (matches[0].nome.trim() !== projeto.trim()) projeto_por_normalizacao = true;
               }
             } else if (matches.length > 1) {
+              // Ambiguidade real (dois cadastros com a mesma chave normalizada).
               erros.push({
                 code: "PROJETO_AMBIGUO",
-                msg: `Existem vários projetos chamados "${projeto}" na empresa "${empresa}".`,
+                msg:
+                  `Projeto ambíguo: existem ${matches.length} cadastros equivalentes na empresa "${empresa}" ` +
+                  `(${matches.map((p) => `"${p.nome}"`).join(", ")}). Selecione o correto.`,
               });
               sugestoes_projeto = matches.map((p) => ({ id: p.id, nome: p.nome }));
             } else {
-              // Não achou por nome exato. Testar em outras empresas para dar mensagem específica.
+              // Não achou por nome normalizado. Testar em outras empresas para dar mensagem específica.
               const outros = projetoByKeyGlobal.get(projKey) ?? [];
               if (outros.length > 0) {
                 const donos = Array.from(new Set(outros.map((p) => {
@@ -371,13 +384,17 @@ function ImportarPage() {
               } else {
                 erros.push({
                   code: "PROJETO_NAO_ENCONTRADO",
-                  msg: `Projeto "${projeto}" não encontrado na empresa "${empresa}".`,
+                  msg:
+                    `Projeto "${projeto}" não foi encontrado na empresa "${empresa}", ` +
+                    `mesmo após normalização de espaços, acentos e hífens.`,
                 });
               }
-              // Sugestões: projetos da MESMA empresa cujo nome contenha o termo
+              // Sugestões: projetos da MESMA empresa (sem correspondência automática).
               const disponiveis = (projetosByEmpresa.get(empresa_id) ?? []).filter((p) => p.ativo);
-              const termo = projKey;
-              const semelhantes = disponiveis.filter((p) => nameKey(p.nome).includes(termo));
+              const semelhantes = disponiveis.filter((p) => {
+                const k = nameKey(p.nome);
+                return k.includes(projKey) || projKey.includes(k);
+              });
               sugestoes_projeto = (semelhantes.length ? semelhantes : disponiveis)
                 .slice(0, 20)
                 .map((p) => ({ id: p.id, nome: p.nome }));
@@ -415,6 +432,8 @@ function ImportarPage() {
           status,
           erros,
           sugestoes_projeto,
+          projeto_localizado_nome,
+          projeto_por_normalizacao,
         } as ParsedRow;
       })
       .filter((r): r is ParsedRow => r !== null);
@@ -731,7 +750,19 @@ function ImportarPage() {
                     <TableRow key={r.linha}>
                       <TableCell className="text-xs text-muted-foreground">{r.linha}</TableCell>
                       <TableCell className="text-sm">{r.empresa || "—"}</TableCell>
-                      <TableCell className="text-sm">{r.projeto || "—"}</TableCell>
+                      <TableCell className="text-sm">
+                        <div className="flex flex-col gap-0.5">
+                          <span>{r.projeto || "—"}</span>
+                          {r.projeto_por_normalizacao && r.projeto_localizado_nome && (
+                            <span
+                              className="text-[11px] text-emerald-600 dark:text-emerald-400"
+                              title="Localizado após normalizar espaços, acentos e hífens."
+                            >
+                              ↳ Localizado: {r.projeto_localizado_nome}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-sm font-mono">{r.matricula || "—"}</TableCell>
                       <TableCell className="text-sm">{r.nome_completo || "—"}</TableCell>
                       <TableCell>

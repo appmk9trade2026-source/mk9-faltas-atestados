@@ -3711,6 +3711,7 @@ export type Database = {
         }[]
       }
       normalize_matricula: { Args: { _v: string }; Returns: string }
+      normalize_name: { Args: { _value: string }; Returns: string }
       notificacoes_motor_healthcheck: { Args: never; Returns: Json }
       oa_dashboard: { Args: { _periodo_id?: string }; Returns: Json }
       oa_incidente_transicionar: {
