@@ -345,6 +345,8 @@ function ImportarPage() {
             const p = projetos.find((x) => x.id === chosen);
             if (p && p.empresa_id === empresa_id && p.ativo) {
               projeto_id = p.id;
+              projeto_localizado_nome = p.nome;
+              if (nameKey(p.nome) !== nameKey(projeto)) projeto_por_normalizacao = true;
             }
           }
 
@@ -355,15 +357,20 @@ function ImportarPage() {
                 erros.push({ code: "PROJETO_INATIVO", msg: `Projeto "${projeto}" está inativo.` });
               } else {
                 projeto_id = matches[0].id;
+                projeto_localizado_nome = matches[0].nome;
+                if (matches[0].nome.trim() !== projeto.trim()) projeto_por_normalizacao = true;
               }
             } else if (matches.length > 1) {
+              // Ambiguidade real (dois cadastros com a mesma chave normalizada).
               erros.push({
                 code: "PROJETO_AMBIGUO",
-                msg: `Existem vários projetos chamados "${projeto}" na empresa "${empresa}".`,
+                msg:
+                  `Projeto ambíguo: existem ${matches.length} cadastros equivalentes na empresa "${empresa}" ` +
+                  `(${matches.map((p) => `"${p.nome}"`).join(", ")}). Selecione o correto.`,
               });
               sugestoes_projeto = matches.map((p) => ({ id: p.id, nome: p.nome }));
             } else {
-              // Não achou por nome exato. Testar em outras empresas para dar mensagem específica.
+              // Não achou por nome normalizado. Testar em outras empresas para dar mensagem específica.
               const outros = projetoByKeyGlobal.get(projKey) ?? [];
               if (outros.length > 0) {
                 const donos = Array.from(new Set(outros.map((p) => {
@@ -377,13 +384,17 @@ function ImportarPage() {
               } else {
                 erros.push({
                   code: "PROJETO_NAO_ENCONTRADO",
-                  msg: `Projeto "${projeto}" não encontrado na empresa "${empresa}".`,
+                  msg:
+                    `Projeto "${projeto}" não foi encontrado na empresa "${empresa}", ` +
+                    `mesmo após normalização de espaços, acentos e hífens.`,
                 });
               }
-              // Sugestões: projetos da MESMA empresa cujo nome contenha o termo
+              // Sugestões: projetos da MESMA empresa (sem correspondência automática).
               const disponiveis = (projetosByEmpresa.get(empresa_id) ?? []).filter((p) => p.ativo);
-              const termo = projKey;
-              const semelhantes = disponiveis.filter((p) => nameKey(p.nome).includes(termo));
+              const semelhantes = disponiveis.filter((p) => {
+                const k = nameKey(p.nome);
+                return k.includes(projKey) || projKey.includes(k);
+              });
               sugestoes_projeto = (semelhantes.length ? semelhantes : disponiveis)
                 .slice(0, 20)
                 .map((p) => ({ id: p.id, nome: p.nome }));
