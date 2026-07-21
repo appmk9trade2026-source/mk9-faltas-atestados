@@ -240,6 +240,8 @@ const importRowSchema = z.object({
   nome_completo: z.string().trim().min(1),
   empresa: z.string().trim().min(1),
   projeto: z.string().trim().min(1),
+  empresa_id: z.string().uuid().nullable().optional(),
+  projeto_id: z.string().uuid().nullable().optional(),
   telefone: z.string().trim().nullable().optional(),
   whatsapp: z.string().trim().nullable().optional(),
   email: z.string().trim().nullable().optional(),

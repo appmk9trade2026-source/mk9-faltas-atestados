@@ -9,7 +9,9 @@ import {
   Download,
   FileSpreadsheet,
   History,
+  RefreshCw,
   Upload,
+  Wand2,
   XCircle,
 } from "lucide-react";
 
@@ -21,6 +23,13 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -53,7 +62,27 @@ const COLUNAS = [
   "Email Supervisor",
 ] as const;
 
+type ErrorCode =
+  | "OK"
+  | "EMPRESA_OBRIGATORIA"
+  | "EMPRESA_NAO_ENCONTRADA"
+  | "EMPRESA_AMBIGUA"
+  | "EMPRESA_INATIVA"
+  | "PROJETO_OBRIGATORIO"
+  | "PROJETO_NAO_ENCONTRADO"
+  | "PROJETO_AMBIGUO"
+  | "PROJETO_INATIVO"
+  | "PROJETO_OUTRA_EMPRESA"
+  | "MATRICULA_OBRIGATORIA"
+  | "MATRICULA_DUPLICADA_ARQUIVO"
+  | "NOME_OBRIGATORIO"
+  | "EMAIL_INVALIDO"
+  | "SUPERVISOR_EMAIL_INVALIDO"
+  | "TELEFONE_INVALIDO"
+  | "WHATSAPP_INVALIDO";
+
 type RowStatus = "OK" | "ERRO" | "DUPLICADA";
+
 type ParsedRow = {
   linha: number;
   matricula: string;
@@ -66,13 +95,23 @@ type ParsedRow = {
   supervisor_nome: string;
   supervisor_telefone: string;
   supervisor_email: string;
+  empresa_id: string | null;
+  projeto_id: string | null;
   status: RowStatus;
-  mensagem: string;
+  erros: { code: ErrorCode; msg: string }[];
+  /** Sugestões de projeto quando o nome não bateu exatamente. */
+  sugestoes_projeto?: { id: string; nome: string }[];
 };
 
 const digitsOnly = (v: string) => v.replace(/\D+/g, "");
 const isValidEmail = (e: string) => !e || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 const norm = (v: unknown) => String(v ?? "").trim();
+/** Normalização para chave lógica: upper + colapso de espaços (preserva acentos). */
+const nameKey = (v: string) =>
+  v.trim().replace(/\s+/g, " ").toUpperCase();
+
+type Empresa = { id: string; nome: string; ativo: boolean };
+type Projeto = { id: string; nome: string; empresa_id: string; ativo: boolean };
 
 function ImportarPage() {
   const navigate = useNavigate();
@@ -85,6 +124,8 @@ function ImportarPage() {
   const [rows, setRows] = useState<ParsedRow[]>([]);
   const [atualizar, setAtualizar] = useState(false);
   const [progress, setProgress] = useState(0);
+  /** Escolhas de resolução: chave = `empresa_id::PROJETO_NORMALIZADO` → projeto_id */
+  const [resolucoes, setResolucoes] = useState<Record<string, string>>({});
   const [resultado, setResultado] = useState<{
     total: number;
     importadas: number;
@@ -94,7 +135,7 @@ function ImportarPage() {
     ms: number;
   } | null>(null);
 
-  const { data: empresas = [] } = useQuery({
+  const { data: empresas = [] } = useQuery<Empresa[]>({
     queryKey: ["empresas-all"],
     queryFn: async () => {
       const { data, error } = await supabase.from("empresas").select("id,nome,ativo");
@@ -102,7 +143,7 @@ function ImportarPage() {
       return data ?? [];
     },
   });
-  const { data: projetos = [] } = useQuery({
+  const { data: projetos = [] } = useQuery<Projeto[]>({
     queryKey: ["projetos-all"],
     queryFn: async () => {
       const { data, error } = await supabase.from("projetos").select("id,nome,empresa_id,ativo");
@@ -126,6 +167,46 @@ function ImportarPage() {
     return { total: rows.length, ok, err, dup };
   }, [rows]);
 
+  // Rows que precisam de resolução manual de projeto (por grupo empresa+nome informado)
+  const gruposResolucao = useMemo(() => {
+    const alvos = new Set<ErrorCode>([
+      "PROJETO_NAO_ENCONTRADO",
+      "PROJETO_AMBIGUO",
+      "PROJETO_OUTRA_EMPRESA",
+      "PROJETO_INATIVO",
+    ]);
+    const groups = new Map<string, {
+      key: string;
+      empresa_id: string;
+      empresa_nome: string;
+      projeto_input: string;
+      motivo: ErrorCode;
+      linhas: number[];
+      sugestoes: { id: string; nome: string }[];
+    }>();
+    for (const r of rows) {
+      if (!r.empresa_id) continue;
+      const err = r.erros.find((e) => alvos.has(e.code));
+      if (!err) continue;
+      const key = `${r.empresa_id}::${nameKey(r.projeto)}`;
+      const g = groups.get(key);
+      if (g) {
+        g.linhas.push(r.linha);
+      } else {
+        groups.set(key, {
+          key,
+          empresa_id: r.empresa_id,
+          empresa_nome: r.empresa,
+          projeto_input: r.projeto,
+          motivo: err.code,
+          linhas: [r.linha],
+          sugestoes: r.sugestoes_projeto ?? [],
+        });
+      }
+    }
+    return Array.from(groups.values());
+  }, [rows]);
+
   function baixarModelo() {
     const ws = XLSX.utils.aoa_to_sheet([COLUNAS as unknown as string[]]);
     ws["!cols"] = COLUNAS.map(() => ({ wch: 24 }));
@@ -142,6 +223,7 @@ function ImportarPage() {
       return;
     }
     setResultado(null);
+    setResolucoes({});
     setFileName(f.name);
     setFileSize(f.size);
     try {
@@ -152,7 +234,7 @@ function ImportarPage() {
         defval: "",
         raw: false,
       });
-      const parsed = validar(raw);
+      const parsed = validar(raw, {});
       setRows(parsed);
       toast.success(`Planilha carregada: ${parsed.length} linha(s).`);
     } catch (err) {
@@ -161,13 +243,31 @@ function ImportarPage() {
     }
   }
 
-  function validar(raw: Record<string, unknown>[]): ParsedRow[] {
-    const empresaByName = new Map(
-      empresas.map((e) => [e.nome.toLowerCase(), e]),
-    );
-    const projetoByEmpNome = new Map(
-      projetos.map((p) => [`${p.empresa_id}::${p.nome.toLowerCase()}`, p]),
-    );
+  function validar(
+    raw: Record<string, unknown>[],
+    resolvedMap: Record<string, string>,
+  ): ParsedRow[] {
+    // Índices normalizados (upper + colapso de espaços)
+    const empresaByKey = new Map<string, Empresa[]>();
+    for (const e of empresas) {
+      const k = nameKey(e.nome);
+      const arr = empresaByKey.get(k) ?? [];
+      arr.push(e);
+      empresaByKey.set(k, arr);
+    }
+    const projetoByEmpKey = new Map<string, Projeto[]>();
+    const projetoByKeyGlobal = new Map<string, Projeto[]>();
+    const projetosByEmpresa = new Map<string, Projeto[]>();
+    for (const p of projetos) {
+      const k = nameKey(p.nome);
+      const empKey = `${p.empresa_id}::${k}`;
+      const a1 = projetoByEmpKey.get(empKey) ?? [];
+      a1.push(p); projetoByEmpKey.set(empKey, a1);
+      const a2 = projetoByKeyGlobal.get(k) ?? [];
+      a2.push(p); projetoByKeyGlobal.set(k, a2);
+      const a3 = projetosByEmpresa.get(p.empresa_id) ?? [];
+      a3.push(p); projetosByEmpresa.set(p.empresa_id, a3);
+    }
     const matriculasBanco = new Set(
       existentes.map((c) => `${c.empresa_id}::${c.matricula}`),
     );
@@ -192,39 +292,111 @@ function ImportarPage() {
         );
         if (vazia) return null;
 
-        let status: RowStatus = "OK";
-        const msgs: string[] = [];
+        const erros: { code: ErrorCode; msg: string }[] = [];
+        let empresa_id: string | null = null;
+        let projeto_id: string | null = null;
+        let sugestoes_projeto: { id: string; nome: string }[] | undefined;
 
-        if (!matricula) msgs.push("Matrícula obrigatória");
-        if (!nome_completo) msgs.push("Nome obrigatório");
-        if (!empresa) msgs.push("Empresa obrigatória");
-        if (!projeto) msgs.push("Projeto obrigatório");
-        if (email && !isValidEmail(email)) msgs.push("E-mail inválido");
-        if (supervisor_email && !isValidEmail(supervisor_email)) msgs.push("E-mail do supervisor inválido");
-        if (telefone && (telefone.length < 10 || telefone.length > 13)) msgs.push("Telefone inválido");
-        if (whatsapp && (whatsapp.length < 10 || whatsapp.length > 13)) msgs.push("WhatsApp inválido");
+        // Campos base
+        if (!matricula) erros.push({ code: "MATRICULA_OBRIGATORIA", msg: "Matrícula obrigatória." });
+        if (!nome_completo) erros.push({ code: "NOME_OBRIGATORIO", msg: "Nome obrigatório." });
+        if (email && !isValidEmail(email))
+          erros.push({ code: "EMAIL_INVALIDO", msg: `E-mail inválido ("${email}").` });
+        if (supervisor_email && !isValidEmail(supervisor_email))
+          erros.push({ code: "SUPERVISOR_EMAIL_INVALIDO", msg: `E-mail do supervisor inválido ("${supervisor_email}").` });
+        if (telefone && (telefone.length < 10 || telefone.length > 13))
+          erros.push({ code: "TELEFONE_INVALIDO", msg: "Telefone inválido (10 a 13 dígitos)." });
+        if (whatsapp && (whatsapp.length < 10 || whatsapp.length > 13))
+          erros.push({ code: "WHATSAPP_INVALIDO", msg: "WhatsApp inválido (10 a 13 dígitos)." });
 
-        const emp = empresa ? empresaByName.get(empresa.toLowerCase()) : undefined;
-        if (empresa && !emp) msgs.push("Empresa inexistente");
-        else if (emp && !emp.ativo) msgs.push("Empresa inativa");
-
-        let proj: { id: string; ativo: boolean; empresa_id: string } | undefined;
-        if (emp && projeto) {
-          proj = projetoByEmpNome.get(`${emp.id}::${projeto.toLowerCase()}`);
-          if (!proj) msgs.push("Projeto não pertence à empresa (ou inexistente)");
-          else if (!proj.ativo) msgs.push("Projeto inativo");
-        }
-
-        if (emp && matricula) {
-          const key = `${emp.id}::${matricula}`;
-          if (matriculasArquivo.has(key)) msgs.push("Matrícula duplicada no arquivo");
-          matriculasArquivo.add(key);
-          if (matriculasBanco.has(key)) {
-            status = "DUPLICADA";
+        // Empresa
+        if (!empresa) {
+          erros.push({ code: "EMPRESA_OBRIGATORIA", msg: "Empresa obrigatória." });
+        } else {
+          const matches = empresaByKey.get(nameKey(empresa)) ?? [];
+          if (matches.length === 0) {
+            erros.push({ code: "EMPRESA_NAO_ENCONTRADA", msg: `Empresa "${empresa}" não encontrada.` });
+          } else if (matches.length > 1) {
+            erros.push({ code: "EMPRESA_AMBIGUA", msg: `Existem várias empresas cadastradas como "${empresa}".` });
+          } else if (!matches[0].ativo) {
+            empresa_id = matches[0].id;
+            erros.push({ code: "EMPRESA_INATIVA", msg: `Empresa "${empresa}" está inativa.` });
+          } else {
+            empresa_id = matches[0].id;
           }
         }
 
-        if (msgs.length > 0) status = "ERRO";
+        // Projeto — busca SEMPRE por empresa_id + nome normalizado.
+        if (!projeto) {
+          erros.push({ code: "PROJETO_OBRIGATORIO", msg: "Projeto obrigatório." });
+        } else if (empresa_id) {
+          const projKey = nameKey(projeto);
+          const empKey = `${empresa_id}::${projKey}`;
+
+          // 1) Escolha prévia do usuário (etapa Resolver projetos)
+          const chosen = resolvedMap[empKey];
+          if (chosen) {
+            const p = projetos.find((x) => x.id === chosen);
+            if (p && p.empresa_id === empresa_id && p.ativo) {
+              projeto_id = p.id;
+            }
+          }
+
+          if (!projeto_id) {
+            const matches = projetoByEmpKey.get(empKey) ?? [];
+            if (matches.length === 1) {
+              if (!matches[0].ativo) {
+                erros.push({ code: "PROJETO_INATIVO", msg: `Projeto "${projeto}" está inativo.` });
+              } else {
+                projeto_id = matches[0].id;
+              }
+            } else if (matches.length > 1) {
+              erros.push({
+                code: "PROJETO_AMBIGUO",
+                msg: `Existem vários projetos chamados "${projeto}" na empresa "${empresa}".`,
+              });
+              sugestoes_projeto = matches.map((p) => ({ id: p.id, nome: p.nome }));
+            } else {
+              // Não achou por nome exato. Testar em outras empresas para dar mensagem específica.
+              const outros = projetoByKeyGlobal.get(projKey) ?? [];
+              if (outros.length > 0) {
+                const donos = Array.from(new Set(outros.map((p) => {
+                  const e = empresas.find((e) => e.id === p.empresa_id);
+                  return e?.nome ?? "outra empresa";
+                }))).join(", ");
+                erros.push({
+                  code: "PROJETO_OUTRA_EMPRESA",
+                  msg: `O projeto "${projeto}" existe, mas pertence à empresa ${donos}.`,
+                });
+              } else {
+                erros.push({
+                  code: "PROJETO_NAO_ENCONTRADO",
+                  msg: `Projeto "${projeto}" não encontrado na empresa "${empresa}".`,
+                });
+              }
+              // Sugestões: projetos da MESMA empresa cujo nome contenha o termo
+              const disponiveis = (projetosByEmpresa.get(empresa_id) ?? []).filter((p) => p.ativo);
+              const termo = projKey;
+              const semelhantes = disponiveis.filter((p) => nameKey(p.nome).includes(termo));
+              sugestoes_projeto = (semelhantes.length ? semelhantes : disponiveis)
+                .slice(0, 20)
+                .map((p) => ({ id: p.id, nome: p.nome }));
+            }
+          }
+        }
+
+        // Duplicidade de matrícula no arquivo / banco
+        let status: RowStatus = "OK";
+        if (empresa_id && matricula) {
+          const key = `${empresa_id}::${matricula}`;
+          if (matriculasArquivo.has(key))
+            erros.push({ code: "MATRICULA_DUPLICADA_ARQUIVO", msg: "Matrícula duplicada no arquivo." });
+          matriculasArquivo.add(key);
+          if (matriculasBanco.has(key)) status = "DUPLICADA";
+        }
+
+        if (erros.length > 0) status = "ERRO";
+        else if (status !== "DUPLICADA") status = "OK";
 
         return {
           linha,
@@ -238,11 +410,33 @@ function ImportarPage() {
           supervisor_nome,
           supervisor_telefone,
           supervisor_email,
+          empresa_id,
+          projeto_id,
           status,
-          mensagem: msgs.length ? msgs.join("; ") : status === "DUPLICADA" ? "Já existe (atualizar ou ignorar)" : "OK",
+          erros,
+          sugestoes_projeto,
         } as ParsedRow;
       })
       .filter((r): r is ParsedRow => r !== null);
+  }
+
+  function revalidar() {
+    if (!fileName) return;
+    // Reaproveitar linhas parseadas: reconstruir raw a partir de rows atuais
+    const raw = rows.map((r) => ({
+      "Matrícula": r.matricula,
+      "Nome Completo": r.nome_completo,
+      "Projeto": r.projeto,
+      "Empresa": r.empresa,
+      "Telefone do Colaborador": r.telefone,
+      "WhatsApp": r.whatsapp,
+      "Email": r.email,
+      "Supervisor(a)": r.supervisor_nome,
+      "Telefone do Supervisor": r.supervisor_telefone,
+      "Email Supervisor": r.supervisor_email,
+    }));
+    setRows(validar(raw, resolucoes));
+    toast.success("Linhas revalidadas com as resoluções aplicadas.");
   }
 
   const importar = useMutation({
@@ -262,6 +456,8 @@ function ImportarPage() {
           nome_completo: r.nome_completo,
           empresa: r.empresa,
           projeto: r.projeto,
+          empresa_id: r.empresa_id, // ← IDs pré-resolvidos
+          projeto_id: r.projeto_id, // ←
           telefone: r.telefone,
           whatsapp: r.whatsapp,
           email: r.email,
@@ -286,7 +482,7 @@ function ImportarPage() {
 
       const detalhesInvalidos = rows
         .filter((r) => r.status === "ERRO")
-        .map((r) => ({ linha: r.linha, erro: r.mensagem }));
+        .map((r) => ({ linha: r.linha, erro: r.erros.map((e) => e.msg).join(" · ") }));
 
       const { data: userData } = await supabase.auth.getUser();
       await supabase.from("importacoes").insert({
@@ -330,7 +526,12 @@ function ImportarPage() {
     setFileSize(0);
     setProgress(0);
     setResultado(null);
+    setResolucoes({});
     if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function setResolucao(key: string, projetoId: string) {
+    setResolucoes((prev) => ({ ...prev, [key]: projetoId }));
   }
 
   return (
@@ -392,6 +593,84 @@ function ImportarPage() {
           )}
         </div>
       </Card>
+
+      {rows.length > 0 && gruposResolucao.length > 0 && (
+        <Card className="border-amber-400/40 bg-amber-500/5 p-5">
+          <div className="mb-3 flex items-start justify-between gap-3">
+            <div>
+              <h3 className="flex items-center gap-2 text-base font-semibold">
+                <Wand2 className="h-4 w-4 text-amber-500" />
+                Resolver projetos
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Alguns projetos informados não puderam ser localizados automaticamente.
+                O sistema <b>não escolhe projetos semelhantes por conta própria</b>.
+                Selecione o projeto correto — a escolha será aplicada a todas as linhas equivalentes.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={revalidar}>
+              <RefreshCw className="mr-2 h-4 w-4" /> Validar novamente
+            </Button>
+          </div>
+
+          <div className="space-y-3">
+            {gruposResolucao.map((g) => {
+              const opts = (projetos.filter((p) => p.empresa_id === g.empresa_id && p.ativo));
+              const semelhantes = g.sugestoes;
+              return (
+                <div key={g.key} className="rounded-lg border bg-background p-3 sm:p-4">
+                  <div className="flex flex-wrap items-center gap-2 text-sm">
+                    <Badge variant="outline">{g.empresa_nome}</Badge>
+                    <span className="font-mono text-xs text-muted-foreground">→</span>
+                    <span className="font-medium">{g.projeto_input || "(vazio)"}</span>
+                    <Badge className="bg-red-500/15 text-red-600 dark:text-red-400">
+                      {g.motivo === "PROJETO_NAO_ENCONTRADO" && "Não encontrado"}
+                      {g.motivo === "PROJETO_AMBIGUO" && "Ambíguo"}
+                      {g.motivo === "PROJETO_OUTRA_EMPRESA" && "Existe em outra empresa"}
+                      {g.motivo === "PROJETO_INATIVO" && "Inativo"}
+                    </Badge>
+                    <Badge variant="secondary">{g.linhas.length} linha{g.linhas.length > 1 ? "s" : ""}</Badge>
+                  </div>
+
+                  {semelhantes.length > 0 && (
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Projetos semelhantes na empresa <b>{g.empresa_nome}</b>:{" "}
+                      {semelhantes.slice(0, 6).map((s) => s.nome).join(", ")}
+                      {semelhantes.length > 6 ? "…" : ""}
+                    </p>
+                  )}
+
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <Label className="text-xs text-muted-foreground sm:w-40">
+                      Selecionar projeto correto:
+                    </Label>
+                    <Select
+                      value={resolucoes[g.key] ?? ""}
+                      onValueChange={(v) => setResolucao(g.key, v)}
+                    >
+                      <SelectTrigger className="w-full sm:max-w-md">
+                        <SelectValue placeholder="Escolha um projeto desta empresa…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {opts.length === 0 && (
+                          <div className="px-3 py-2 text-xs text-muted-foreground">
+                            Nenhum projeto ativo nesta empresa.
+                          </div>
+                        )}
+                        {opts.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       {rows.length > 0 && (
         <>
@@ -470,7 +749,25 @@ function ImportarPage() {
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{r.mensagem}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {r.status === "ERRO" ? (
+                          <div className="flex flex-wrap gap-1">
+                            {r.erros.map((e, i) => (
+                              <Badge
+                                key={`${r.linha}-${i}`}
+                                variant="outline"
+                                className="border-red-400/40 bg-red-500/5 text-red-600 dark:text-red-400"
+                              >
+                                {e.msg}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : r.status === "DUPLICADA" ? (
+                          "Já existe (atualizar ou ignorar)"
+                        ) : (
+                          "OK"
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
