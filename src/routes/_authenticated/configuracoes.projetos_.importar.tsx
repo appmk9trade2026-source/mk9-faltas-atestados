@@ -414,6 +414,18 @@ function ImportarProjetosPage() {
           </Card>
 
           <Card className="overflow-hidden">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b p-3">
+              <label className="flex cursor-pointer items-center gap-2 text-sm">
+                <Checkbox
+                  checked={apenasAlteracoes}
+                  onCheckedChange={(v) => setApenasAlteracoes(Boolean(v))}
+                />
+                Mostrar apenas linhas com alteração
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Exibindo {preview.linhas.filter((l) => !apenasAlteracoes || l.acao !== "SEM_ALTERACAO").length} de {preview.total} linhas
+              </p>
+            </div>
             <div className="max-h-[560px] overflow-auto">
               <Table>
                 <TableHeader className="sticky top-0 bg-muted/60 backdrop-blur">
@@ -425,11 +437,13 @@ function ImportarProjetosPage() {
                     <TableHead>Nome</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Ação</TableHead>
-                    <TableHead>Observações</TableHead>
+                    <TableHead className="min-w-[260px]">Diferenças / Observações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {preview.linhas.map((l) => (
+                  {preview.linhas
+                    .filter((l) => !apenasAlteracoes || l.acao !== "SEM_ALTERACAO")
+                    .map((l) => (
                     <TableRow key={l.linha} className={l.acao === "ERRO" ? "bg-red-500/5" : ""}>
                       <TableCell className="text-xs text-muted-foreground">{l.linha}</TableCell>
                       <TableCell className="font-mono text-xs">{l.cnpj_original || "—"}</TableCell>
@@ -444,8 +458,25 @@ function ImportarProjetosPage() {
                       <TableCell>
                         <Badge className={acaoBadge[l.acao]}>{acaoLabel[l.acao]}</Badge>
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {l.erros.length > 0 ? l.erros.join("; ") : "OK"}
+                      <TableCell className="text-xs">
+                        {l.erros.length > 0 ? (
+                          <span className="text-destructive">{l.erros.join("; ")}</span>
+                        ) : l.diff && l.diff.length > 0 ? (
+                          <ul className="space-y-0.5">
+                            {l.diff.map((d) => (
+                              <li key={d.campo} className="flex flex-wrap items-center gap-1">
+                                <span className="font-medium text-foreground">{diffLabel(d.campo)}:</span>
+                                <span className="rounded bg-muted px-1 py-0.5 font-mono text-[10px] line-through opacity-70">{fmtDiff(d.atual)}</span>
+                                <span className="opacity-60">→</span>
+                                <span className="rounded bg-emerald-500/15 px-1 py-0.5 font-mono text-[10px] text-emerald-700 dark:text-emerald-300">{fmtDiff(d.novo)}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : l.acao === "CRIAR" ? (
+                          <span className="text-muted-foreground">Novo projeto</span>
+                        ) : (
+                          <span className="text-muted-foreground">Nenhuma alteração</span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
