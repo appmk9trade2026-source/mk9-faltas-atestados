@@ -79,6 +79,8 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { createProjeto, updateProjeto, setProjetoAtivo } from "@/lib/projetos.functions";
+import { friendlyRbacError } from "@/lib/rbac/errors";
 
 export const Route = createFileRoute("/_authenticated/configuracoes/projetos")({
   head: () => ({ meta: [{ title: "Projetos · Configurações · CRM MK9" }] }),
@@ -205,15 +207,13 @@ function ProjetosPage() {
         empresa_id: values.empresa_id,
         nome: values.nome.trim(),
         descricao: values.descricao?.trim() ? values.descricao.trim() : null,
-        codigo_protocolo: codigo ? codigo : null,
+        codigo_protocolo: codigo,
         ativo: values.ativo,
       };
       if (values.id) {
-        const { error } = await supabase.from("projetos").update(payload).eq("id", values.id);
-        if (error) throw error;
+        await updateProjeto({ data: { id: values.id, ...payload } });
       } else {
-        const { error } = await supabase.from("projetos").insert(payload);
-        if (error) throw error;
+        await createProjeto({ data: payload });
       }
     },
     onSuccess: (_d, vars) => {
@@ -223,28 +223,14 @@ function ProjetosPage() {
       setEditing(null);
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (/projetos_codigo_protocolo_uidx/i.test(msg)) {
-        toast.error("Este código de protocolo já está em uso por outro projeto.");
-      } else if (/projetos_codigo_protocolo_formato_chk/i.test(msg)) {
-        toast.error("Código de protocolo inválido — use 2 a 10 caracteres (A–Z, 0–9).");
-      } else if (/projetos_empresa_nome_uidx|duplicate|unique/i.test(msg)) {
-        toast.error("Já existe um projeto com este nome nesta empresa.");
-      } else if (/empresa está inativa|empresa inativa/i.test(msg)) {
-        toast.error("A empresa selecionada está inativa. Ative-a antes de manter o projeto ativo.");
-      } else {
-        toast.error("Não foi possível salvar o projeto.", { description: msg });
-      }
+      const f = friendlyRbacError(err);
+      toast.error(f.title, { description: f.description });
     },
   });
 
   const toggleMut = useMutation({
     mutationFn: async (row: Projeto) => {
-      const { error } = await supabase
-        .from("projetos")
-        .update({ ativo: !row.ativo })
-        .eq("id", row.id);
-      if (error) throw error;
+      await setProjetoAtivo({ data: { id: row.id, ativo: !row.ativo } });
       return !row.ativo;
     },
     onSuccess: (novoAtivo) => {
@@ -253,12 +239,8 @@ function ProjetosPage() {
       setConfirmToggle(null);
     },
     onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : String(err);
-      if (/empresa está inativa|empresa inativa/i.test(msg)) {
-        toast.error("Não é possível ativar: a empresa deste projeto está inativa.");
-      } else {
-        toast.error("Não foi possível alterar o status.", { description: msg });
-      }
+      const f = friendlyRbacError(err);
+      toast.error(f.title, { description: f.description });
       setConfirmToggle(null);
     },
   });

@@ -4151,6 +4151,22 @@ export type Database = {
         | "ESCOPO_PROJETO_NEGADO"
         | "ESCOPO_COLABORADOR_NEGADO"
         | "MUTACAO_BLOQUEADA"
+        | "EMPRESA_CRIADA"
+        | "EMPRESA_EDITADA"
+        | "EMPRESA_ATIVADA"
+        | "EMPRESA_DESATIVADA"
+        | "PROJETO_CRIADO"
+        | "PROJETO_EDITADO"
+        | "PROJETO_ATIVADO"
+        | "PROJETO_DESATIVADO"
+        | "PROJETO_CODIGO_ALTERADO"
+        | "PROJETO_CODIGO_ALTERACAO_NEGADA"
+        | "COLABORADOR_CRIADO"
+        | "COLABORADOR_EDITADO"
+        | "COLABORADOR_ATIVADO"
+        | "COLABORADOR_DESATIVADO"
+        | "COLABORADOR_TRANSFERIDO"
+        | "COLABORADORES_IMPORTADOS"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       changelog_tipo:
         | "NOVA_FUNCIONALIDADE"
@@ -4539,6 +4555,22 @@ export const Constants = {
         "ESCOPO_PROJETO_NEGADO",
         "ESCOPO_COLABORADOR_NEGADO",
         "MUTACAO_BLOQUEADA",
+        "EMPRESA_CRIADA",
+        "EMPRESA_EDITADA",
+        "EMPRESA_ATIVADA",
+        "EMPRESA_DESATIVADA",
+        "PROJETO_CRIADO",
+        "PROJETO_EDITADO",
+        "PROJETO_ATIVADO",
+        "PROJETO_DESATIVADO",
+        "PROJETO_CODIGO_ALTERADO",
+        "PROJETO_CODIGO_ALTERACAO_NEGADA",
+        "COLABORADOR_CRIADO",
+        "COLABORADOR_EDITADO",
+        "COLABORADOR_ATIVADO",
+        "COLABORADOR_DESATIVADO",
+        "COLABORADOR_TRANSFERIDO",
+        "COLABORADORES_IMPORTADOS",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       changelog_tipo: [
