@@ -3524,6 +3524,7 @@ export type Database = {
           total_exec_time_ms: number
         }[]
       }
+      diagnose_projetos_duplicados: { Args: never; Returns: Json }
       gen_projeto_codigo_protocolo: {
         Args: { _empresa_id: string; _exclude_id?: string; _nome: string }
         Returns: string
