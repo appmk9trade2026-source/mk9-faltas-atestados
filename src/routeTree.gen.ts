@@ -49,6 +49,7 @@ import { Route as AuthenticatedComunicacoesWhatsappIndexRouteImport } from './ro
 import { Route as ApiPublicHooksProcessWhatsappOutboxRouteImport } from './routes/api/public/hooks/process-whatsapp-outbox'
 import { Route as ApiPublicHooksEvolutionWhatsappWebhookRouteImport } from './routes/api/public/hooks/evolution-whatsapp-webhook'
 import { Route as AuthenticatedUsuariosIdPermissoesRouteImport } from './routes/_authenticated/usuarios.$id.permissoes'
+import { Route as AuthenticatedConfiguracoesProjetosImportarRouteImport } from './routes/_authenticated/configuracoes.projetos_.importar'
 import { Route as AuthenticatedComunicacoesWhatsappTestesRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.testes'
 import { Route as AuthenticatedComunicacoesWhatsappOutboxRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.outbox'
 import { Route as AuthenticatedComunicacoesWhatsappHealthRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.health'
@@ -278,6 +279,12 @@ const AuthenticatedUsuariosIdPermissoesRoute =
     path: '/$id/permissoes',
     getParentRoute: () => AuthenticatedUsuariosRoute,
   } as any)
+const AuthenticatedConfiguracoesProjetosImportarRoute =
+  AuthenticatedConfiguracoesProjetosImportarRouteImport.update({
+    id: '/projetos_/importar',
+    path: '/projetos/importar',
+    getParentRoute: () => AuthenticatedConfiguracoesRoute,
+  } as any)
 const AuthenticatedComunicacoesWhatsappTestesRoute =
   AuthenticatedComunicacoesWhatsappTestesRouteImport.update({
     id: '/testes',
@@ -357,6 +364,7 @@ export interface FileRoutesByFullPath {
   '/comunicacoes/whatsapp/health': typeof AuthenticatedComunicacoesWhatsappHealthRoute
   '/comunicacoes/whatsapp/outbox': typeof AuthenticatedComunicacoesWhatsappOutboxRoute
   '/comunicacoes/whatsapp/testes': typeof AuthenticatedComunicacoesWhatsappTestesRoute
+  '/configuracoes/projetos/importar': typeof AuthenticatedConfiguracoesProjetosImportarRoute
   '/usuarios/$id/permissoes': typeof AuthenticatedUsuariosIdPermissoesRoute
   '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   '/api/public/hooks/process-whatsapp-outbox': typeof ApiPublicHooksProcessWhatsappOutboxRoute
@@ -402,6 +410,7 @@ export interface FileRoutesByTo {
   '/comunicacoes/whatsapp/health': typeof AuthenticatedComunicacoesWhatsappHealthRoute
   '/comunicacoes/whatsapp/outbox': typeof AuthenticatedComunicacoesWhatsappOutboxRoute
   '/comunicacoes/whatsapp/testes': typeof AuthenticatedComunicacoesWhatsappTestesRoute
+  '/configuracoes/projetos/importar': typeof AuthenticatedConfiguracoesProjetosImportarRoute
   '/usuarios/$id/permissoes': typeof AuthenticatedUsuariosIdPermissoesRoute
   '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   '/api/public/hooks/process-whatsapp-outbox': typeof ApiPublicHooksProcessWhatsappOutboxRoute
@@ -451,6 +460,7 @@ export interface FileRoutesById {
   '/_authenticated/comunicacoes/whatsapp/health': typeof AuthenticatedComunicacoesWhatsappHealthRoute
   '/_authenticated/comunicacoes/whatsapp/outbox': typeof AuthenticatedComunicacoesWhatsappOutboxRoute
   '/_authenticated/comunicacoes/whatsapp/testes': typeof AuthenticatedComunicacoesWhatsappTestesRoute
+  '/_authenticated/configuracoes/projetos_/importar': typeof AuthenticatedConfiguracoesProjetosImportarRoute
   '/_authenticated/usuarios/$id/permissoes': typeof AuthenticatedUsuariosIdPermissoesRoute
   '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   '/api/public/hooks/process-whatsapp-outbox': typeof ApiPublicHooksProcessWhatsappOutboxRoute
@@ -500,6 +510,7 @@ export interface FileRouteTypes {
     | '/comunicacoes/whatsapp/health'
     | '/comunicacoes/whatsapp/outbox'
     | '/comunicacoes/whatsapp/testes'
+    | '/configuracoes/projetos/importar'
     | '/usuarios/$id/permissoes'
     | '/api/public/hooks/evolution-whatsapp-webhook'
     | '/api/public/hooks/process-whatsapp-outbox'
@@ -545,6 +556,7 @@ export interface FileRouteTypes {
     | '/comunicacoes/whatsapp/health'
     | '/comunicacoes/whatsapp/outbox'
     | '/comunicacoes/whatsapp/testes'
+    | '/configuracoes/projetos/importar'
     | '/usuarios/$id/permissoes'
     | '/api/public/hooks/evolution-whatsapp-webhook'
     | '/api/public/hooks/process-whatsapp-outbox'
@@ -593,6 +605,7 @@ export interface FileRouteTypes {
     | '/_authenticated/comunicacoes/whatsapp/health'
     | '/_authenticated/comunicacoes/whatsapp/outbox'
     | '/_authenticated/comunicacoes/whatsapp/testes'
+    | '/_authenticated/configuracoes/projetos_/importar'
     | '/_authenticated/usuarios/$id/permissoes'
     | '/api/public/hooks/evolution-whatsapp-webhook'
     | '/api/public/hooks/process-whatsapp-outbox'
@@ -889,6 +902,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUsuariosIdPermissoesRouteImport
       parentRoute: typeof AuthenticatedUsuariosRoute
     }
+    '/_authenticated/configuracoes/projetos_/importar': {
+      id: '/_authenticated/configuracoes/projetos_/importar'
+      path: '/projetos/importar'
+      fullPath: '/configuracoes/projetos/importar'
+      preLoaderRoute: typeof AuthenticatedConfiguracoesProjetosImportarRouteImport
+      parentRoute: typeof AuthenticatedConfiguracoesRoute
+    }
     '/_authenticated/comunicacoes/whatsapp/testes': {
       id: '/_authenticated/comunicacoes/whatsapp/testes'
       path: '/testes'
@@ -989,6 +1009,7 @@ interface AuthenticatedConfiguracoesRouteChildren {
   AuthenticatedConfiguracoesPreferenciasRoute: typeof AuthenticatedConfiguracoesPreferenciasRoute
   AuthenticatedConfiguracoesProjetosRoute: typeof AuthenticatedConfiguracoesProjetosRoute
   AuthenticatedConfiguracoesTiposAusenciaRoute: typeof AuthenticatedConfiguracoesTiposAusenciaRoute
+  AuthenticatedConfiguracoesProjetosImportarRoute: typeof AuthenticatedConfiguracoesProjetosImportarRoute
 }
 
 const AuthenticatedConfiguracoesRouteChildren: AuthenticatedConfiguracoesRouteChildren =
@@ -1001,6 +1022,8 @@ const AuthenticatedConfiguracoesRouteChildren: AuthenticatedConfiguracoesRouteCh
       AuthenticatedConfiguracoesProjetosRoute,
     AuthenticatedConfiguracoesTiposAusenciaRoute:
       AuthenticatedConfiguracoesTiposAusenciaRoute,
+    AuthenticatedConfiguracoesProjetosImportarRoute:
+      AuthenticatedConfiguracoesProjetosImportarRoute,
   }
 
 const AuthenticatedConfiguracoesRouteWithChildren =

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -16,6 +16,7 @@ import {
   PowerOff,
   Search,
   Eye,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -269,9 +270,16 @@ function ProjetosPage() {
           apenas desativados quando deixam de operar.
         </p>
         {canManage && (
-          <Button onClick={openCreate} className="sm:w-auto">
-            <Plus className="mr-2 h-4 w-4" /> Novo projeto
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline">
+              <Link to="/configuracoes/projetos/importar">
+                <Upload className="mr-2 h-4 w-4" /> Importar planilha
+              </Link>
+            </Button>
+            <Button onClick={openCreate}>
+              <Plus className="mr-2 h-4 w-4" /> Novo projeto
+            </Button>
+          </div>
         )}
       </div>
 
