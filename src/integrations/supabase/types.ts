@@ -3467,6 +3467,14 @@ export type Database = {
       bi_healthcheck: { Args: never; Returns: Json }
       bi_recorrencia_consultar: { Args: { p_filtros?: Json }; Returns: Json }
       bootstrap_first_super_admin: { Args: never; Returns: string }
+      consolidar_projetos: {
+        Args: {
+          p_duplicado_id: string
+          p_motivo?: string
+          p_principal_id: string
+        }
+        Returns: Json
+      }
       contagem_alertas_menu: { Args: never; Returns: Json }
       contar_notificacoes_nao_lidas: { Args: never; Returns: number }
       count_active_super_admins: { Args: never; Returns: number }
@@ -3747,6 +3755,10 @@ export type Database = {
           p_tipo: Database["public"]["Enums"]["notif_tipo"]
           p_usuario_id: string
         }
+        Returns: Json
+      }
+      preview_consolidar_projetos: {
+        Args: { p_duplicado_id: string; p_principal_id: string }
         Returns: Json
       }
       processar_escalonamentos_pendentes: { Args: never; Returns: Json }
