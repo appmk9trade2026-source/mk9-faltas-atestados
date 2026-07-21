@@ -24,6 +24,7 @@ import {
   type ProjetoImportPreview, type ProjetoImportRow, type ProjetoImportAcao,
 } from "@/lib/projetos.functions";
 import { downloadProjetosTemplate } from "@/lib/projetos-template";
+import { parseSpreadsheetDate } from "@/lib/spreadsheet-date";
 import { friendlyRbacError } from "@/lib/rbac/errors";
 
 export const Route = createFileRoute("/_authenticated/configuracoes/projetos_/importar")({
@@ -122,26 +123,42 @@ function ImportarProjetosPage() {
     setProgress(20);
     try {
       const buf = await f.arrayBuffer();
-      const wb = XLSX.read(buf, { type: "array" });
+      // cellDates: XLSX devolve células de data como Date real (evita drift de fuso).
+      // raw: true preserva número (serial Excel) quando não é data — parseSpreadsheetDate cobre ambos.
+      const wb = XLSX.read(buf, { type: "array", cellDates: true, raw: true });
       const sheetName = wb.SheetNames.find((n) => n.toLowerCase() === "projetos") ?? wb.SheetNames[0];
       const ws = wb.Sheets[sheetName];
-      const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "", raw: false });
-      const pick = (r: Record<string, unknown>, keys: string[]): string => {
+      const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "", raw: true });
+      const pickRaw = (r: Record<string, unknown>, keys: string[]): unknown => {
         for (const k of keys) {
-          const val = r[k];
-          if (val != null && String(val).trim() !== "") return String(val).trim();
+          const v = r[k];
+          if (v !== undefined && v !== null && !(typeof v === "string" && v.trim() === "")) return v;
         }
         return "";
+      };
+      const pickText = (r: Record<string, unknown>, keys: string[]): string => {
+        const v = pickRaw(r, keys);
+        if (v == null) return "";
+        if (v instanceof Date) return v.toISOString();
+        return String(v).trim();
+      };
+      const pickDate = (r: Record<string, unknown>, keys: string[]): string | null => {
+        const v = pickRaw(r, keys);
+        if (v === "" || v === null || v === undefined) return null;
+        const parsed = parseSpreadsheetDate(v);
+        if (parsed === null) return null;
+        if (parsed === "INVALID") return "INVALID"; // sinaliza para o backend rejeitar
+        return parsed;
       };
       const norm: ProjetoImportRow[] = raw
         .map((r, i) => ({
           linha: i + 2,
-          nome_projeto: pick(r, ["Projeto", "projeto", "nome_projeto", "nome"]),
-          empresa_nome: pick(r, ["Empresa", "empresa", "empresa_nome", "razao_social"]),
-          codigo_projeto: pick(r, ["Código", "Codigo", "codigo", "codigo_projeto"]),
-          descricao: pick(r, ["Descrição", "Descricao", "descricao"]) || null,
-          status: pick(r, ["Status", "status"]),
-          data_cadastro: pick(r, ["Data cadastro", "data_cadastro", "Data Cadastro"]) || null,
+          nome_projeto: pickText(r, ["Projeto", "projeto", "nome_projeto", "nome"]),
+          empresa_nome: pickText(r, ["Empresa", "empresa", "empresa_nome", "razao_social"]),
+          codigo_projeto: pickText(r, ["Código", "Codigo", "codigo", "codigo_projeto"]),
+          descricao: pickText(r, ["Descrição", "Descricao", "descricao"]) || null,
+          status: pickText(r, ["Status", "status"]),
+          data_cadastro: pickDate(r, ["Data cadastro", "data_cadastro", "Data Cadastro"]),
         }))
         .filter((r) => r.empresa_nome || r.codigo_projeto || r.nome_projeto || r.status);
 

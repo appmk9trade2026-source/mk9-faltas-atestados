@@ -2284,6 +2284,7 @@ export type Database = {
       projetos: {
         Row: {
           ativo: boolean
+          codigo_projeto: string | null
           codigo_protocolo: string | null
           created_at: string
           data_fim: string | null
@@ -2297,6 +2298,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          codigo_projeto?: string | null
           codigo_protocolo?: string | null
           created_at?: string
           data_fim?: string | null
@@ -2310,6 +2312,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          codigo_projeto?: string | null
           codigo_protocolo?: string | null
           created_at?: string
           data_fim?: string | null

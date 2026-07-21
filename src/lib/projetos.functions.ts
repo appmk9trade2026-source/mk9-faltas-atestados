@@ -341,12 +341,20 @@ function normalizeEmpresaNome(v: string): string {
 function normalizeCodigoProjeto(v: string): string {
   return (v ?? "").trim().toUpperCase();
 }
+/** Normaliza nome do projeto para COMPARAÇÃO (case-insensitive, espaços colapsados). */
+function normalizeNomeProjeto(v: string): string {
+  return (v ?? "").trim().replace(/\s+/g, " ").toLowerCase();
+}
 function normalizeStatus(v: string): "ATIVO" | "INATIVO" | null {
   const s = (v ?? "").trim().toUpperCase();
   if (s === "ATIVO" || s === "1" || s === "ATIVA" || s === "TRUE") return "ATIVO";
   if (s === "INATIVO" || s === "0" || s === "INATIVA" || s === "FALSE") return "INATIVO";
   return null;
 }
+/**
+ * O cliente já normaliza a data via parseSpreadsheetDate (serial Excel, Date,
+ * DD/MM/YYYY, YYYY-MM-DD, ISO). Aqui aceitamos YYYY-MM-DD ou DD/MM/YYYY.
+ */
 function normalizeDate(v: string | null | undefined): string | null | "INVALID" {
   if (v == null) return null;
   const s = String(v).trim();
@@ -374,7 +382,8 @@ async function buildPreview(
     empresasBucket.set(key, arr);
   }
 
-  // Projetos existentes por empresa+codigo
+  // Projetos existentes por empresa+nome+codigo (nova chave lógica).
+  // Mesma Empresa + mesmo Código pode aparecer em vários Projetos distintos.
   const empresaIds = new Set<string>();
   for (const r of rows) {
     const key = normalizeEmpresaNome(r.empresa_nome);
@@ -384,31 +393,36 @@ async function buildPreview(
   type ExistingProjeto = {
     id: string; ativo: boolean; nome: string; descricao: string | null;
   };
-  const projetoKey = new Map<string, ExistingProjeto>();
+  // key = empresa_id::nome_norm::codigo_norm; valor = lista (para detectar ambiguidade no banco)
+  const projetoKey = new Map<string, ExistingProjeto[]>();
   if (empresaIds.size > 0) {
     const { data: projs } = await supabase
       .from("projetos")
-      .select("id, empresa_id, codigo_protocolo, nome, ativo, descricao")
+      .select("id, empresa_id, codigo_projeto, codigo_protocolo, nome, ativo, descricao")
       .in("empresa_id", [...empresaIds]);
     for (const p of (projs ?? []) as Array<{
-      id: string; empresa_id: string; codigo_protocolo: string | null;
+      id: string; empresa_id: string;
+      codigo_projeto: string | null; codigo_protocolo: string | null;
       nome: string; ativo: boolean; descricao: string | null;
     }>) {
-      if (p.codigo_protocolo) {
-        projetoKey.set(`${p.empresa_id}::${p.codigo_protocolo.toUpperCase()}`, {
-          id: p.id, ativo: p.ativo, nome: p.nome, descricao: p.descricao,
-        });
-      }
+      const codigoEfetivo = (p.codigo_projeto ?? p.codigo_protocolo ?? "").toUpperCase().trim();
+      if (!codigoEfetivo) continue;
+      const nomeNorm = normalizeNomeProjeto(p.nome);
+      const k = `${p.empresa_id}::${nomeNorm}::${codigoEfetivo}`;
+      const arr = projetoKey.get(k) ?? [];
+      arr.push({ id: p.id, ativo: p.ativo, nome: p.nome, descricao: p.descricao });
+      projetoKey.set(k, arr);
     }
   }
 
-  // Duplicidade dentro do próprio arquivo (empresa_norm + codigo)
+  // Duplicidade dentro do arquivo: mesma Empresa + mesmo Nome + mesmo Código
   const arquivoKeyCount = new Map<string, number[]>();
   for (const r of rows) {
     const en = normalizeEmpresaNome(r.empresa_nome);
+    const nn = normalizeNomeProjeto(r.nome_projeto);
     const cod = normalizeCodigoProjeto(r.codigo_projeto);
-    if (en && cod) {
-      const k = `${en}::${cod}`;
+    if (en && nn && cod) {
+      const k = `${en}::${nn}::${cod}`;
       const arr = arquivoKeyCount.get(k) ?? [];
       arr.push(r.linha);
       arquivoKeyCount.set(k, arr);
@@ -424,7 +438,8 @@ async function buildPreview(
   const linhas: ProjetoImportPreviewRow[] = rows.map((r) => {
     const enNorm = normalizeEmpresaNome(r.empresa_nome);
     const codNorm = normalizeCodigoProjeto(r.codigo_projeto);
-    const nome = (r.nome_projeto ?? "").trim();
+    const nome = (r.nome_projeto ?? "").trim().replace(/\s+/g, " ");
+    const nomeNorm = normalizeNomeProjeto(nome);
     const descricao = nullIfBlank(r.descricao);
     const status = normalizeStatus(r.status);
     const dtCad = normalizeDate(r.data_cadastro ?? null);
@@ -437,7 +452,7 @@ async function buildPreview(
     if (!nome) erros.push("Projeto (nome) obrigatório");
     if (nome.length > 120) erros.push("Projeto acima de 120 caracteres");
     if (!status) erros.push("Status inválido (use ATIVO ou INATIVO)");
-    if (dtCad === "INVALID") erros.push("Data cadastro inválida (use DD/MM/YYYY ou YYYY-MM-DD)");
+    if (dtCad === "INVALID") erros.push("Data cadastro inválida");
 
     const bucket = enNorm ? empresasBucket.get(enNorm) : undefined;
     let emp: { id: string; nome: string; ativo: boolean } | undefined;
@@ -452,8 +467,8 @@ async function buildPreview(
       }
     }
 
-    if (enNorm && codNorm) {
-      const dup = arquivoKeyCount.get(`${enNorm}::${codNorm}`) ?? [];
+    if (enNorm && nomeNorm && codNorm) {
+      const dup = arquivoKeyCount.get(`${enNorm}::${nomeNorm}::${codNorm}`) ?? [];
       if (dup.length > 1) erros.push(`Linha duplicada no arquivo (linhas: ${dup.join(", ")})`);
     }
 
@@ -462,18 +477,19 @@ async function buildPreview(
     const diff: ProjetoImportFieldDiff[] = [];
 
     if (erros.length === 0 && emp && status) {
-      const key = `${emp.id}::${codNorm}`;
-      const existing = projetoKey.get(key);
-      projetoId = existing?.id ?? null;
+      const key = `${emp.id}::${nomeNorm}::${codNorm}`;
+      const existingList = projetoKey.get(key) ?? [];
       const wantAtivo = status === "ATIVO";
-      if (!existing) {
+      if (existingList.length === 0) {
         acao = "CRIAR";
+      } else if (existingList.length > 1) {
+        erros.push("Ambiguidade no banco — múltiplos projetos com este nome e código nesta empresa");
       } else {
+        const existing = existingList[0];
+        projetoId = existing.id;
         const atualStatus = existing.ativo ? "ATIVO" : "INATIVO";
         const novoStatus: "ATIVO" | "INATIVO" = wantAtivo ? "ATIVO" : "INATIVO";
 
-        if (existing.nome !== nome)
-          diff.push({ campo: "nome_projeto", atual: existing.nome, novo: nome });
         if (atualStatus !== novoStatus)
           diff.push({ campo: "status", atual: atualStatus, novo: novoStatus });
         if ((existing.descricao ?? null) !== descricao)
