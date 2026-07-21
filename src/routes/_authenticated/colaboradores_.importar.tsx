@@ -318,8 +318,8 @@ function ImportarPage() {
       setProgress(100);
     },
     onError: (e: unknown) => {
-      const msg = e instanceof Error ? e.message : "Falha na importação.";
-      toast.error(msg);
+      const f = friendlyRbacError(e);
+      toast.error(f.title, { description: f.description });
       setProgress(0);
     },
   });
