@@ -483,7 +483,17 @@ function ImportarProjetosPage() {
                           <Badge variant="outline">{l.status_normalizado}</Badge>
                         ) : <span className="text-xs text-muted-foreground">—</span>}
                       </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">{l.data_cadastro || "—"}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {l.data_cadastro_atual ? (
+                          <span className="text-foreground">
+                            {new Date(l.data_cadastro_atual).toLocaleDateString("pt-BR")}
+                          </span>
+                        ) : l.acao === "CRIAR" ? (
+                          <span className="italic text-muted-foreground">Será definida automaticamente</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Badge className={acaoBadge[l.acao]}>{acaoLabel[l.acao]}</Badge>
                       </TableCell>
