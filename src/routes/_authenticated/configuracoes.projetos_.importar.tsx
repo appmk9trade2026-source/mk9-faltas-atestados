@@ -412,6 +412,49 @@ function ImportarProjetosPage() {
                 </AlertDescription>
               </Alert>
             )}
+            {preview.total >= 1000 && (
+              <Alert className="mt-3">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Volume elevado</AlertTitle>
+                <AlertDescription>
+                  Este arquivo possui um volume elevado e pode levar alguns instantes para ser processado. Não feche esta página.
+                </AlertDescription>
+              </Alert>
+            )}
+            {conflict && (
+              <Alert variant="destructive" className="mt-3">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>
+                  {conflict.code === "IMPORT_CONFLICT" && "Conflito detectado"}
+                  {conflict.code === "IMPORT_CONCURRENT_CHANGE" && "Concorrência detectada"}
+                  {conflict.code === "IMPORT_TEMPORARILY_UNAVAILABLE" && "Sistema momentaneamente ocupado"}
+                  {conflict.code === "IMPORT_FAILED" && "Falha na importação"}
+                </AlertTitle>
+                <AlertDescription>
+                  <p>{conflict.message}</p>
+                  {conflict.hint && (conflict.hint.row_number || conflict.hint.codigo_projeto) && (
+                    <p className="mt-2 text-xs">
+                      Referência:
+                      {conflict.hint.row_number ? <> linha <b>{conflict.hint.row_number}</b></> : null}
+                      {conflict.hint.codigo_projeto ? <> · código <b>{conflict.hint.codigo_projeto}</b></> : null}
+                      {conflict.hint.cnpj_empresa ? <> · CNPJ <b>{conflict.hint.cnpj_empresa}</b></> : null}
+                    </p>
+                  )}
+                  {conflict.correlationId && (
+                    <p className="mt-1 text-[10px] font-mono opacity-70">correlation: {conflict.correlationId}</p>
+                  )}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button size="sm" onClick={revalidateFromParsed} disabled={revalidating}>
+                      <RotateCcw className="mr-2 h-4 w-4" />
+                      {revalidating ? "Recalculando…" : "Validar novamente"}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setConflict(null)}>
+                      Voltar para revisão
+                    </Button>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
           </Card>
 
           <Card className="overflow-hidden">
