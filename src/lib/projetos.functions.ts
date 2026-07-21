@@ -75,9 +75,13 @@ type AuditAcao =
   | "PROJETO_CODIGO_ALTERADO"
   | "PROJETO_CODIGO_ALTERACAO_NEGADA"
   | "PROJETO_ATUALIZADO"
+  | "PROJETO_EXCLUIDO"
+  | "PROJETO_ARQUIVADO_AUTOMATICO"
+  | "PROJETOS_EXCLUSAO_LOTE"
   | "PROJETOS_IMPORTACAO_INICIADA"
   | "PROJETOS_IMPORTACAO_CONCLUIDA"
   | "PROJETOS_IMPORTACAO_FALHOU";
+
 
 async function audit(
   supabase: import("@/lib/rbac/guards.server").MiddlewareContext["supabase"],
@@ -260,6 +264,226 @@ export const setProjetoAtivo = createServerFn({ method: "POST" })
       current.empresa_id as string, data.id);
     return { ok: true, correlation_id: gate.correlationId };
   });
+
+// ==================== VÍNCULOS (contadores) ====================
+export type ProjetoVinculos = {
+  id: string;
+  nome: string;
+  empresa_nome: string | null;
+  colaboradores: number;
+  ausencias: number;
+  atestados: number;
+  protocolos: number;
+  total: number;
+  pode_excluir: boolean;
+};
+
+export const getProjetosVinculos = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => {
+    try { return z.object({ ids: z.array(uuid).min(1).max(500) }).parse(data); }
+    catch (e) { throw invalidPayload(e); }
+  })
+  .handler(async ({ data, context }) => {
+    const ids = data.ids;
+    const { data: projetos, error } = await context.supabase
+      .from("projetos")
+      .select("id, nome, empresa:empresas(nome)")
+      .in("id", ids);
+    if (error) throw mapSupabaseError(error.message);
+
+    const results: ProjetoVinculos[] = [];
+    for (const p of (projetos ?? []) as Array<{
+      id: string;
+      nome: string;
+      empresa: { nome: string } | null;
+    }>) {
+      const [colabQ, ausQ, atestQ, protoQ] = await Promise.all([
+        context.supabase
+          .from("colaboradores")
+          .select("id", { count: "exact", head: true })
+          .eq("projeto_id", p.id),
+        context.supabase
+          .from("ausencias")
+          .select("id", { count: "exact", head: true })
+          .eq("projeto_id", p.id),
+        context.supabase
+          .from("ausencias")
+          .select("id", { count: "exact", head: true })
+          .eq("projeto_id", p.id)
+          .not("arquivo_url", "is", null),
+        context.supabase
+          .from("ausencias")
+          .select("id", { count: "exact", head: true })
+          .eq("projeto_id", p.id)
+          .not("protocolo", "is", null),
+      ]);
+      const colaboradores = colabQ.count ?? 0;
+      const ausencias = ausQ.count ?? 0;
+      const atestados = atestQ.count ?? 0;
+      const protocolos = protoQ.count ?? 0;
+      const total = colaboradores + ausencias;
+      results.push({
+        id: p.id,
+        nome: p.nome,
+        empresa_nome: p.empresa?.nome ?? null,
+        colaboradores,
+        ausencias,
+        atestados,
+        protocolos,
+        total,
+        pode_excluir: total === 0,
+      });
+    }
+    return { projetos: results };
+  });
+
+// ==================== EXCLUSÃO INTELIGENTE ====================
+// - Sem vínculos → DELETE físico + auditoria PROJETO_EXCLUIDO
+// - Com vínculos → UPDATE ativo=false + auditoria PROJETO_ARQUIVADO_AUTOMATICO
+// Requer permissão `projeto.excluir` para cada empresa envolvida.
+export const deleteProjetosSmart = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => {
+    try {
+      return z.object({
+        ids: z.array(uuid).min(1).max(500),
+        confirm: z.literal("EXCLUIR"),
+        motivo: z.string().trim().max(500).optional(),
+      }).parse(data);
+    } catch (e) { throw invalidPayload(e); }
+  })
+  .handler(async ({ data, context }) => {
+    const { data: projetos, error: loadErr } = await context.supabase
+      .from("projetos")
+      .select("id, empresa_id, nome, ativo, descricao, codigo_protocolo")
+      .in("id", data.ids);
+    if (loadErr) throw mapSupabaseError(loadErr.message);
+    if (!projetos || projetos.length === 0) {
+      throw new Error("RESOURCE_NOT_FOUND: nenhum projeto localizado");
+    }
+
+    // Gate de permissão por empresa (uma vez por empresa distinta).
+    const empresasSet = new Set<string>();
+    for (const p of projetos) empresasSet.add(p.empresa_id as string);
+    const correlationId = crypto.randomUUID();
+    for (const empresaId of empresasSet) {
+      await requirePermission({
+        ctx: context,
+        permission: PERMISSION_MAP.deleteProject,
+        empresaId,
+        route: "/configuracoes/projetos",
+        correlationId,
+      });
+    }
+
+    let excluidos = 0;
+    let arquivados = 0;
+    const erros: Array<{ id: string; nome: string; erro: string }> = [];
+    const detalhes: Array<{
+      id: string; nome: string; acao: "EXCLUIDO" | "ARQUIVADO"; vinculos: number;
+    }> = [];
+
+    for (const p of projetos as Array<{
+      id: string; empresa_id: string; nome: string; ativo: boolean;
+      descricao: string | null; codigo_protocolo: string | null;
+    }>) {
+      try {
+        const [colabQ, ausQ] = await Promise.all([
+          context.supabase
+            .from("colaboradores")
+            .select("id", { count: "exact", head: true })
+            .eq("projeto_id", p.id),
+          context.supabase
+            .from("ausencias")
+            .select("id", { count: "exact", head: true })
+            .eq("projeto_id", p.id),
+        ]);
+        const nColab = colabQ.count ?? 0;
+        const nAus = ausQ.count ?? 0;
+        const vinculos = nColab + nAus;
+
+        if (vinculos > 0) {
+          if (p.ativo) {
+            const { error } = await context.supabase
+              .from("projetos")
+              .update({ ativo: false } as never)
+              .eq("id", p.id);
+            if (error) throw mapSupabaseError(error.message);
+          }
+          arquivados += 1;
+          detalhes.push({ id: p.id, nome: p.nome, acao: "ARQUIVADO", vinculos });
+          await audit(
+            context.supabase,
+            "PROJETO_ARQUIVADO_AUTOMATICO",
+            p.id,
+            correlationId,
+            { ativo: p.ativo },
+            { ativo: false, colaboradores: nColab, ausencias: nAus },
+            `arquivado: possui ${nColab} colaborador(es) e ${nAus} ausência(s)` +
+              (data.motivo ? ` — motivo: ${data.motivo}` : ""),
+            p.empresa_id,
+            p.id,
+          );
+        } else {
+          const { error } = await context.supabase
+            .from("projetos")
+            .delete()
+            .eq("id", p.id);
+          if (error) throw mapSupabaseError(error.message);
+          excluidos += 1;
+          detalhes.push({ id: p.id, nome: p.nome, acao: "EXCLUIDO", vinculos: 0 });
+          await audit(
+            context.supabase,
+            "PROJETO_EXCLUIDO",
+            p.id,
+            correlationId,
+            {
+              nome: p.nome,
+              ativo: p.ativo,
+              descricao: p.descricao,
+              codigo_protocolo: p.codigo_protocolo,
+            },
+            null,
+            `excluído fisicamente (sem vínculos)` +
+              (data.motivo ? ` — motivo: ${data.motivo}` : ""),
+            p.empresa_id,
+            p.id,
+          );
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        erros.push({ id: p.id, nome: p.nome, erro: msg });
+      }
+    }
+
+    // Auditoria consolidada de lote (quando houver >1 projeto na operação).
+    if (projetos.length > 1) {
+      await audit(
+        context.supabase,
+        "PROJETOS_EXCLUSAO_LOTE",
+        null,
+        correlationId,
+        { ids: data.ids },
+        { excluidos, arquivados, erros: erros.length, detalhes },
+        `lote: ${excluidos} excluído(s), ${arquivados} arquivado(s), ${erros.length} erro(s)` +
+          (data.motivo ? ` — motivo: ${data.motivo}` : ""),
+        null,
+        null,
+      );
+    }
+
+    return {
+      correlation_id: correlationId,
+      total: projetos.length,
+      excluidos,
+      arquivados,
+      erros,
+      detalhes,
+    };
+  });
+
+
 
 // ==================== IMPORTAÇÃO POR PLANILHA ====================
 //

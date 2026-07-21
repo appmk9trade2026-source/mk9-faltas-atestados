@@ -18,7 +18,14 @@ import {
   Eye,
   Upload,
   Download,
+  Trash2,
+  X,
+  Loader2,
+  AlertTriangle,
+  Archive,
+  CheckCircle2,
 } from "lucide-react";
+
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/layout/app-shell";
@@ -82,9 +89,18 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { usePermissions } from "@/lib/permissions";
-import { createProjeto, updateProjeto, setProjetoAtivo } from "@/lib/projetos.functions";
+import {
+  createProjeto,
+  updateProjeto,
+  setProjetoAtivo,
+  getProjetosVinculos,
+  deleteProjetosSmart,
+  type ProjetoVinculos,
+} from "@/lib/projetos.functions";
 import { downloadProjetosTemplate } from "@/lib/projetos-template";
 import { friendlyRbacError } from "@/lib/rbac/errors";
+import { Checkbox } from "@/components/ui/checkbox";
+
 
 export const Route = createFileRoute("/_authenticated/configuracoes/projetos")({
   head: () => ({ meta: [{ title: "Projetos · Configurações · CRM MK9" }] }),
@@ -134,6 +150,7 @@ function ProjetosPage() {
   const canManage = roles.includes("super_admin") || roles.includes("rh");
   const canImport = canManage || has("projeto.criar") || has("projeto.editar");
   const canDownloadTemplate = canImport || has("projeto.visualizar");
+  const canDelete = roles.includes("super_admin") || has("projeto.excluir");
 
   const queryClient = useQueryClient();
 
@@ -148,6 +165,10 @@ function ProjetosPage() {
   const [editing, setEditing] = useState<Projeto | null>(null);
   const [viewing, setViewing] = useState<Projeto | null>(null);
   const [confirmToggle, setConfirmToggle] = useState<Projeto | null>(null);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
 
   const empresasQ = useQuery({
     queryKey: ["empresas", "todas"],
@@ -269,7 +290,38 @@ function ProjetosPage() {
     }
   }
 
+  const selectedCount = selectedIds.size;
+  const pageAllSelected =
+    pageRows.length > 0 && pageRows.every((r) => selectedIds.has(r.id));
+  const pageSomeSelected = pageRows.some((r) => selectedIds.has(r.id));
+
+  function togglePageSelection(checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      for (const r of pageRows) {
+        if (checked) next.add(r.id);
+        else next.delete(r.id);
+      }
+      return next;
+    });
+  }
+  function toggleRowSelection(id: string, checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+  function selectAllFiltered() {
+    setSelectedIds(new Set(filtered.map((r) => r.id)));
+  }
+  function clearSelection() {
+    setSelectedIds(new Set());
+  }
+
   return (
+
     <AppShell title="Projetos" breadcrumb={["Configurações", "Projetos"]}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
@@ -373,6 +425,21 @@ function ProjetosPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                {canDelete && (
+                  <TableHead className="w-[40px]">
+                    <Checkbox
+                      checked={
+                        pageAllSelected
+                          ? true
+                          : pageSomeSelected
+                            ? "indeterminate"
+                            : false
+                      }
+                      onCheckedChange={(v) => togglePageSelection(v === true)}
+                      aria-label="Selecionar todos da página"
+                    />
+                  </TableHead>
+                )}
                 <TableHead className="min-w-[180px]">
                   <button
                     onClick={() => toggleSort("nome")}
@@ -402,12 +469,13 @@ function ProjetosPage() {
                 </TableHead>
                 <TableHead className="w-[70px] text-right">Ações</TableHead>
               </TableRow>
+
             </TableHeader>
             <TableBody>
               {projetosQ.isLoading &&
                 Array.from({ length: 3 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell colSpan={7}>
+                    <TableCell colSpan={canDelete ? 8 : 7}>
                       <Skeleton className="h-6 w-full" />
                     </TableCell>
                   </TableRow>
@@ -415,7 +483,7 @@ function ProjetosPage() {
 
               {projetosQ.isError && (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-10 text-center text-sm text-destructive">
+                  <TableCell colSpan={canDelete ? 8 : 7} className="py-10 text-center text-sm text-destructive">
                     Erro ao carregar projetos: {(projetosQ.error as Error)?.message}
                   </TableCell>
                 </TableRow>
@@ -423,7 +491,7 @@ function ProjetosPage() {
 
               {!projetosQ.isLoading && !projetosQ.isError && pageRows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-14">
+                  <TableCell colSpan={canDelete ? 8 : 7} className="py-14">
                     <div className="flex flex-col items-center gap-2 text-center">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
                         <FolderKanban className="h-5 w-5 text-muted-foreground" />
@@ -438,8 +506,18 @@ function ProjetosPage() {
               )}
 
               {pageRows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow key={row.id} data-state={selectedIds.has(row.id) ? "selected" : undefined}>
+                  {canDelete && (
+                    <TableCell className="w-[40px]">
+                      <Checkbox
+                        checked={selectedIds.has(row.id)}
+                        onCheckedChange={(v) => toggleRowSelection(row.id, v === true)}
+                        aria-label={`Selecionar ${row.nome}`}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell className="font-medium">{row.nome}</TableCell>
+
                   <TableCell className="text-muted-foreground">
                     {row.empresa?.nome ?? "—"}
                     {row.empresa && !row.empresa.ativo && (
@@ -509,7 +587,19 @@ function ProjetosPage() {
                             </DropdownMenuItem>
                           </>
                         )}
+                        {canDelete && (
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedIds(new Set([row.id]));
+                              setDeleteOpen(true);
+                            }}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
+
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
@@ -610,7 +700,58 @@ function ProjetosPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {canDelete && (
+        <DeleteProjetosDialog
+          open={deleteOpen}
+          onOpenChange={(o) => {
+            setDeleteOpen(o);
+          }}
+          ids={Array.from(selectedIds)}
+          onDone={() => {
+            setDeleteOpen(false);
+            clearSelection();
+            queryClient.invalidateQueries({ queryKey: ["projetos"] });
+          }}
+        />
+      )}
+
+      {canDelete && selectedCount > 0 && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
+          <div className="pointer-events-auto flex w-full max-w-3xl items-center gap-3 rounded-lg border bg-card/95 p-3 shadow-lg backdrop-blur">
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              <span className="font-medium">
+                {selectedCount} {selectedCount === 1 ? "projeto selecionado" : "projetos selecionados"}
+              </span>
+              {selectedCount < filtered.length && (
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0 text-xs"
+                  onClick={selectAllFiltered}
+                >
+                  Selecionar todos os {filtered.length} filtrados
+                </Button>
+              )}
+            </div>
+            <div className="ml-auto flex gap-2">
+              <Button variant="outline" size="sm" onClick={clearSelection}>
+                <X className="mr-1 h-4 w-4" /> Limpar
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 className="mr-1 h-4 w-4" /> Excluir selecionados
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
+
   );
 }
 
@@ -796,3 +937,221 @@ function ProjetoDialog({
     </Dialog>
   );
 }
+
+function DeleteProjetosDialog({
+  open,
+  onOpenChange,
+  ids,
+  onDone,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  ids: string[];
+  onDone: () => void;
+}) {
+  const [confirmText, setConfirmText] = useState("");
+  const [motivo, setMotivo] = useState("");
+
+  const vinculosQ = useQuery({
+    queryKey: ["projetos", "vinculos", ids.sort().join(",")],
+    queryFn: async () => {
+      if (ids.length === 0) return { projetos: [] as ProjetoVinculos[] };
+      return await getProjetosVinculos({ data: { ids } });
+    },
+    enabled: open && ids.length > 0,
+  });
+
+  const projetos = vinculosQ.data?.projetos ?? [];
+  const paraExcluir = projetos.filter((p) => p.pode_excluir);
+  const paraArquivar = projetos.filter((p) => !p.pode_excluir);
+
+  const deleteMut = useMutation({
+    mutationFn: async () => {
+      return await deleteProjetosSmart({
+        data: {
+          ids,
+          confirm: "EXCLUIR",
+          motivo: motivo.trim() || undefined,
+        },
+      });
+    },
+    onSuccess: (res) => {
+      const parts: string[] = [];
+      if (res.excluidos > 0) parts.push(`${res.excluidos} excluído(s)`);
+      if (res.arquivados > 0) parts.push(`${res.arquivados} arquivado(s)`);
+      toast.success(parts.join(" · ") || "Operação concluída.");
+      if (res.erros.length > 0) {
+        toast.error(`${res.erros.length} erro(s)`, {
+          description: res.erros.map((e) => `${e.nome}: ${e.erro}`).join("\n"),
+        });
+      }
+      setConfirmText("");
+      setMotivo("");
+      onDone();
+    },
+    onError: (err: unknown) => {
+      const f = friendlyRbacError(err);
+      toast.error(f.title, { description: f.description });
+    },
+  });
+
+  const canConfirm = confirmText.trim().toUpperCase() === "EXCLUIR" && projetos.length > 0;
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) {
+          setConfirmText("");
+          setMotivo("");
+        }
+        onOpenChange(o);
+      }}
+    >
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-destructive" />
+            Excluir {ids.length === 1 ? "projeto" : `${ids.length} projetos`}
+          </DialogTitle>
+          <DialogDescription>
+            Projetos sem vínculos serão <strong>excluídos definitivamente</strong>.
+            Projetos com colaboradores ou ausências serão <strong>arquivados</strong>{" "}
+            (desativados) para preservar o histórico.
+          </DialogDescription>
+        </DialogHeader>
+
+        {vinculosQ.isLoading && (
+          <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verificando vínculos...
+          </div>
+        )}
+
+        {vinculosQ.isError && (
+          <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+            Erro ao carregar vínculos: {(vinculosQ.error as Error)?.message}
+          </div>
+        )}
+
+        {!vinculosQ.isLoading && !vinculosQ.isError && projetos.length > 0 && (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
+                <div className="flex items-center gap-2 font-medium text-destructive">
+                  <Trash2 className="h-4 w-4" /> Exclusão física
+                </div>
+                <p className="mt-1 text-2xl font-bold text-destructive">
+                  {paraExcluir.length}
+                </p>
+                <p className="text-xs text-muted-foreground">sem vínculos</p>
+              </div>
+              <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
+                <div className="flex items-center gap-2 font-medium text-amber-700 dark:text-amber-400">
+                  <Archive className="h-4 w-4" /> Arquivamento
+                </div>
+                <p className="mt-1 text-2xl font-bold text-amber-700 dark:text-amber-400">
+                  {paraArquivar.length}
+                </p>
+                <p className="text-xs text-muted-foreground">com vínculos</p>
+              </div>
+            </div>
+
+            <div className="max-h-56 overflow-y-auto rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Projeto</TableHead>
+                    <TableHead>Empresa</TableHead>
+                    <TableHead className="text-right">Colab.</TableHead>
+                    <TableHead className="text-right">Ausências</TableHead>
+                    <TableHead>Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {projetos.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-medium">{p.nome}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {p.empresa_nome ?? "—"}
+                      </TableCell>
+                      <TableCell className="text-right">{p.colaboradores}</TableCell>
+                      <TableCell className="text-right">{p.ausencias}</TableCell>
+                      <TableCell>
+                        {p.pode_excluir ? (
+                          <Badge
+                            variant="outline"
+                            className="border-destructive/40 text-destructive"
+                          >
+                            Excluir
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="border-amber-500/40 text-amber-700 dark:text-amber-400"
+                          >
+                            Arquivar
+                          </Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">
+                Motivo (opcional, registrado na auditoria)
+              </label>
+              <Input
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                placeholder="Ex.: encerramento de contrato, projeto duplicado..."
+                maxLength={500}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium">
+                Digite <span className="font-mono font-bold text-destructive">EXCLUIR</span>{" "}
+                para confirmar
+              </label>
+              <Input
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="EXCLUIR"
+                autoComplete="off"
+              />
+            </div>
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={deleteMut.isPending}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="destructive"
+            disabled={!canConfirm || deleteMut.isPending}
+            onClick={() => deleteMut.mutate()}
+          >
+            {deleteMut.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processando...
+              </>
+            ) : (
+              <>
+                <Trash2 className="mr-2 h-4 w-4" /> Confirmar
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+

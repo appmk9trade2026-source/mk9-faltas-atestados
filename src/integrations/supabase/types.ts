@@ -4190,6 +4190,9 @@ export type Database = {
         | "PROJETOS_IMPORTACAO_CONCLUIDA"
         | "PROJETOS_IMPORTACAO_FALHOU"
         | "PROJETO_ATUALIZADO"
+        | "PROJETO_EXCLUIDO"
+        | "PROJETO_ARQUIVADO_AUTOMATICO"
+        | "PROJETOS_EXCLUSAO_LOTE"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       changelog_tipo:
         | "NOVA_FUNCIONALIDADE"
@@ -4598,6 +4601,9 @@ export const Constants = {
         "PROJETOS_IMPORTACAO_CONCLUIDA",
         "PROJETOS_IMPORTACAO_FALHOU",
         "PROJETO_ATUALIZADO",
+        "PROJETO_EXCLUIDO",
+        "PROJETO_ARQUIVADO_AUTOMATICO",
+        "PROJETOS_EXCLUSAO_LOTE",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       changelog_tipo: [
