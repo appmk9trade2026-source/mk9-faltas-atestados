@@ -300,6 +300,8 @@ function ImportarPage() {
         let empresa_id: string | null = null;
         let projeto_id: string | null = null;
         let sugestoes_projeto: { id: string; nome: string }[] | undefined;
+        let projeto_localizado_nome: string | null = null;
+        let projeto_por_normalizacao = false;
 
         // Campos base
         if (!matricula) erros.push({ code: "MATRICULA_OBRIGATORIA", msg: "Matrícula obrigatória." });
