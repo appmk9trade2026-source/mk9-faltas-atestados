@@ -89,9 +89,18 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { usePermissions } from "@/lib/permissions";
-import { createProjeto, updateProjeto, setProjetoAtivo } from "@/lib/projetos.functions";
+import {
+  createProjeto,
+  updateProjeto,
+  setProjetoAtivo,
+  getProjetosVinculos,
+  deleteProjetosSmart,
+  type ProjetoVinculos,
+} from "@/lib/projetos.functions";
 import { downloadProjetosTemplate } from "@/lib/projetos-template";
 import { friendlyRbacError } from "@/lib/rbac/errors";
+import { Checkbox } from "@/components/ui/checkbox";
+
 
 export const Route = createFileRoute("/_authenticated/configuracoes/projetos")({
   head: () => ({ meta: [{ title: "Projetos · Configurações · CRM MK9" }] }),
