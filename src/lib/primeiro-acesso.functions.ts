@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getHeaders } from "@tanstack/react-start/server";
 import { z } from "zod";
+
 
 /**
  * Server function pública para o fluxo "Primeiro acesso" / "Esqueci a senha".
