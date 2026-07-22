@@ -218,7 +218,7 @@ export const createUsuario = createServerFn({ method: "POST" })
             await audit(context.supabase, "ENVIO_COMUNICACAO", userId,
               `WhatsApp de boas-vindas enfileirado (outbox ${res.outbox_id})`,
               null,
-              { canal: "whatsapp", template: "USUARIO_CRIADO_V1", outbox_id: res.outbox_id, possui_senha_temporaria: !!data.senha_temporaria });
+              { canal: "whatsapp", template: "USUARIO_CRIADO_V1", outbox_id: res.outbox_id, possui_senha_temporaria: true });
           } else {
             await audit(context.supabase, "ENVIO_COMUNICACAO", userId,
               `WhatsApp de boas-vindas não enfileirado: ${res.motivo}`,
