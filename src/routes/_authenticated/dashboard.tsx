@@ -37,6 +37,8 @@ import {
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchCategorias, CATEGORIA_CORES, type Categoria } from "@/lib/categorias";
+import { useSessionScope } from "@/hooks/use-session-scope";
+import { SupervisorEmptyState } from "@/components/supervisor-empty-state";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard · CRM MK9" }] }),
@@ -119,6 +121,7 @@ function delta(curr: number, prev: number): { pct: number; up: boolean } {
 // ---------- Page
 function DashboardPage() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const scope = useSessionScope();
   const [filters, setFilters] = useState<Filters>(() => {
     const r = presetRange("30d");
     return { preset: "30d", inicio: r.i, fim: r.f };
@@ -128,7 +131,8 @@ function DashboardPage() {
 
   // Lookups for filter dropdowns
   const { data: empresas = [] } = useQuery({
-    queryKey: ["dash-empresas"],
+    queryKey: ["dash-empresas", ...scope.keyParts],
+    enabled: scope.ready,
     queryFn: async () => {
       const { data } = await supabase.from("empresas").select("id,nome").eq("ativo", true).order("nome");
       return data ?? [];
@@ -136,7 +140,8 @@ function DashboardPage() {
     staleTime: 5 * 60_000,
   });
   const { data: projetos = [] } = useQuery({
-    queryKey: ["dash-projetos", filters.empresa_id],
+    queryKey: ["dash-projetos", ...scope.keyParts, filters.empresa_id],
+    enabled: scope.ready,
     queryFn: async () => {
       let q = supabase.from("projetos").select("id,nome,empresa_id").eq("ativo", true).order("nome");
       if (filters.empresa_id) q = q.eq("empresa_id", filters.empresa_id);
@@ -147,14 +152,16 @@ function DashboardPage() {
   });
 
   const { data: categorias = [] } = useQuery<Categoria[]>({
-    queryKey: ["dash-categorias"],
+    queryKey: ["dash-categorias", ...scope.keyParts],
+    enabled: scope.ready,
     queryFn: fetchCategorias,
     staleTime: 10 * 60_000,
   });
 
   // Main query — single RPC, auto refresh 60s
   const query = useQuery({
-    queryKey: ["dashboard-metrics", filters],
+    queryKey: ["dashboard-metrics", ...scope.keyParts, filters],
+    enabled: scope.ready,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("dashboard_metrics", {
         _inicio: filters.inicio,
