@@ -70,7 +70,7 @@ type Vinculo = {
 };
 
 function TiposAusenciaPage() {
-  const { roles } = useSession();
+  const { roles, loading: sessionLoading } = useSession();
   const isAdmin = roles.includes("super_admin");
   const podeVer = isAdmin || roles.includes("rh") || roles.includes("compliance");
   const qc = useQueryClient();
