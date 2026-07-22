@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Eye, EyeOff, Loader2, ShieldCheck, Mail, Lock, KeyRound, UserPlus } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { solicitarPrimeiroAcesso } from "@/lib/primeiro-acesso.functions";
+import { solicitarRecuperacaoSenha } from "@/lib/recuperacao-senha.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
