@@ -1230,4 +1230,76 @@ function WhatsappStatusCell({
   );
 }
 
+function WhatsappDetalhesDialog({
+  alvo,
+  onClose,
+  onReprocessar,
+  reprocessando,
+}: {
+  alvo: { usuario: UsuarioRow; status: BoasVindasStatus | null } | null;
+  onClose: () => void;
+  onReprocessar: () => void;
+  reprocessando: boolean;
+}) {
+  const open = !!alvo;
+  const s = alvo?.status ?? null;
+  const derived = s?.status_derivado ?? "NAO_ENVIADO";
+  const meta = WA_STATUS_META[derived] ?? { label: derived, cls: "text-muted-foreground" };
+
+  const rows: Array<[string, React.ReactNode]> = s
+    ? [
+        ["Status", <Badge key="s" variant="outline" className={`text-[10px] ${meta.cls}`}>{meta.label}</Badge>],
+        ["Status interno", <code key="si" className="text-[11px]">{s.status ?? "—"}</code>],
+        ["Telefone", s.telefone_mascarado ?? "—"],
+        ["Template", s.template_codigo ?? "—"],
+        ["Tentativas", `${s.tentativas} / ${s.max_tentativas}`],
+        ["Próxima tentativa", s.proxima_tentativa_em ? fmtDate(s.proxima_tentativa_em) : "—"],
+        ["Enviado em", s.enviado_em ? fmtDate(s.enviado_em) : "—"],
+        ["Criado em", s.created_at ? fmtDate(s.created_at) : "—"],
+        ["ID do provedor", <code key="pm" className="text-[11px] break-all">{s.provider_message_id ?? "—"}</code>],
+        ["Código do erro", <code key="ec" className="text-[11px]">{s.ultimo_erro_codigo ?? "—"}</code>],
+        ["Erro (resumo)", <span key="er" className="text-[11px] break-words">{s.ultimo_erro ?? "—"}</span>],
+        ["Outbox ID", <code key="oid" className="text-[11px] break-all">{s.outbox_id ?? "—"}</code>],
+      ]
+    : [];
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Envio do convite por WhatsApp</DialogTitle>
+          <DialogDescription>
+            {alvo?.usuario.nome} · {alvo?.usuario.email}
+          </DialogDescription>
+        </DialogHeader>
+        {s ? (
+          <div className="grid grid-cols-[140px_1fr] gap-x-3 gap-y-2 text-sm">
+            {rows.map(([k, v]) => (
+              <>
+                <div key={`k-${k}`} className="text-muted-foreground">{k}</div>
+                <div key={`v-${k}`} className="min-w-0">{v}</div>
+              </>
+            ))}
+          </div>
+        ) : (
+          <div className="text-sm text-muted-foreground py-4">
+            Nenhum envio foi registrado para este usuário ainda.
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Fechar</Button>
+          <Button
+            onClick={onReprocessar}
+            disabled={reprocessando || !alvo?.usuario.telefone_whatsapp || !alvo?.usuario.ativo}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            {reprocessando ? "Enviando..." : "Tentar novamente"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
 
