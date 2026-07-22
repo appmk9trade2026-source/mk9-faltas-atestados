@@ -1,6 +1,7 @@
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { LogOut } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Loader2, LogOut } from "lucide-react";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -14,10 +15,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useSession, type AppRole } from "@/hooks/use-session";
-import { supabase } from "@/integrations/supabase/client";
+import { performSignOut } from "@/lib/auth-signout";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { CommandPaletteProvider } from "@/components/command-palette/command-palette";
 import { CommandPaletteButton } from "@/components/command-palette/search-button";
@@ -45,11 +56,22 @@ function initials(name: string) {
 export function AppShell({ title, breadcrumb, children }: { title: string; breadcrumb?: string[]; children: ReactNode }) {
   const { profile, roles, primaryRole } = useSession();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   async function handleLogout() {
-    await supabase.auth.signOut();
-    toast.success("Sessão encerrada.");
-    navigate({ to: "/auth", replace: true });
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await performSignOut(queryClient);
+      toast.success("Logout realizado com sucesso.");
+      setConfirmOpen(false);
+      navigate({ to: "/auth", replace: true });
+    } catch {
+      toast.error("Não foi possível encerrar a sessão. Tente novamente.");
+      setSigningOut(false);
+    }
   }
 
   const nome = profile?.nome ?? "Usuário";

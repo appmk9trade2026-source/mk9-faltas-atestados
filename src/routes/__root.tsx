@@ -130,13 +130,29 @@ function RootComponent() {
   const router = useRouter();
 
   useEffect(() => {
+    let isFirst = true;
     const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "INITIAL_SESSION") {
+        isFirst = false;
+        return;
+      }
       if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+        if (event === "SIGNED_OUT") {
+          import("@/lib/auth-signout").then(({ consumeManualSignOut }) => {
+            if (!consumeManualSignOut() && !isFirst) {
+              import("sonner").then(({ toast }) =>
+                toast.error("Sua sessão expirou. Faça login novamente."),
+              );
+            }
+          });
+          queryClient.clear();
+        }
         router.invalidate();
+        isFirst = false;
       }
     });
     return () => data.subscription.unsubscribe();
-  }, [router]);
+  }, [router, queryClient]);
 
   return (
     <QueryClientProvider client={queryClient}>
