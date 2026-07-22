@@ -1004,6 +1004,7 @@ function ColaboradorDialog({
         ? formatTelefone(editing.supervisor_telefone)
         : "",
       supervisor_email: editing?.supervisor_email ?? "",
+      supervisor_usuario_id: editing?.supervisor_usuario_id ?? "",
       ativo: editing?.ativo ?? true,
     },
   });
