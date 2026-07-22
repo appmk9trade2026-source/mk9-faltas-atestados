@@ -125,14 +125,28 @@ function TstDestinatariosPage() {
 
   const confirmar = useMutation({
     mutationFn: async (id: string) => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData?.user) throw new Error("Sessão expirada. Faça login novamente.");
       const { error } = await supabase.rpc(
         "wa_tst_confirmar" as never,
         { p_id: id, p_ip: null } as never,
       );
-      if (error) throw error;
+      if (error) {
+        console.error("[wa_tst_confirmar] falhou", {
+          rpc: "wa_tst_confirmar",
+          destinatario_id: id,
+          usuario_id: userData.user.id,
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+        });
+        const codeSuffix = error.code ? ` (${error.code})` : "";
+        throw new Error(`${error.message || "Falha ao confirmar"}${codeSuffix}`);
+      }
     },
     onSuccess: () => {
-      toast.success("Número confirmado. Notificações passam a ser enviadas para essa empresa.");
+      toast.success("Telefone do TST confirmado com sucesso.");
       qc.invalidateQueries({ queryKey: ["wa-tst-destinatarios"] });
       qc.invalidateQueries({ queryKey: ["wa-tst-monitor"] });
     },
