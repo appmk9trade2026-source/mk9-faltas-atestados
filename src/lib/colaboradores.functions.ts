@@ -26,6 +26,7 @@ const baseSchema = z.object({
   supervisor_nome: z.string().trim().max(150).nullable().optional(),
   supervisor_telefone: z.string().trim().max(20).nullable().optional(),
   supervisor_email: z.string().trim().max(150).nullable().optional(),
+  supervisor_usuario_id: uuid.nullable().optional(),
   ativo: z.boolean(),
 });
 
