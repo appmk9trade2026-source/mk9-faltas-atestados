@@ -1,97 +1,82 @@
+# Módulo Inteligência de Absenteísmo — Entrega fatiada
 
-## Diagnóstico
+Vou entregar por etapas, cada uma testável e reversível. Esta primeira entrega cobre **Etapa 1 + fundação de navegação**. As etapas 2 a 9 virão nas próximas rodadas, cada uma validada por você antes da próxima.
 
-O envio nunca acontece porque **o worker nunca é acionado**. Toda a pipeline já está pronta e correta:
+## Regras invariantes (valem para todas as etapas)
 
-- ✅ Ao clicar "Reenviar", `reenviarBoasVindasWhatsapp` chama `materializar_whatsapp_usuario_boas_vindas`, que normaliza o telefone (SQL `normalizar_telefone_whatsapp` — valida E.164 e transforma `61983111405` em `+5561983111405`), calcula hash, escolhe template `USUARIO_CRIADO_V1`, gera `idempotency_key = usuario:<id>:boas_vindas:v1` e insere na `whatsapp_outbox` com `status=PENDENTE`.
-- ✅ Existe rota `POST /api/public/hooks/process-whatsapp-outbox` com autenticação por `WHATSAPP_WORKER_SECRET`, reserva de lote, retry/backoff exponencial (30s→1h, max 5 tentativas), classificação temporária/definitiva, chamada à Evolution API e registro em `whatsapp_worker_execucoes`.
-- ✅ `whatsapp_provider_config` está `enabled=true, modo=PRODUCAO`, com `EVOLUTION_BASE_URL/API_KEY/INSTANCE_NAME` presentes.
-- ❌ **Nenhum `cron.schedule` aponta para essa rota** — `whatsapp_worker_execucoes` tem 0 linhas históricas. Registro do usuário está preso em `PENDENTE` desde 16:04 sem qualquer tentativa.
-- ⚠️ Toast atual diz "enfileirado" (correto), mas o badge mostra "Pendente" em amber sem timestamp de última tentativa nem ação de reprocessar, e não há visão administrativa da falha.
+- **Nunca** alterar RLS, RBAC ou matriz de permissões existentes.
+- Todas as novas RPCs em `SECURITY INVOKER` — os rankings herdam automaticamente o escopo do Supervisor (`supervisor_usuario_id = auth.uid()`), RH/Compliance/Super Admin/Visualizador seguem regras atuais.
+- CID nunca aparece para papéis não autorizados (respeitando policy atual de `ausencias`).
+- Nada de indicador punitivo: sempre taxa/média proporcional, nunca só absoluto.
+- Zero regressão: não altero tabelas ou funções existentes; apenas adiciono.
 
-## Escopo da correção
+## Entrega 1 (esta rodada) — Fundação + Etapa 1
 
-### 1. Disparar o worker (correção do bug real)
+### Backend
 
-Migração criando dois `cron.schedule` com `net.http_post` para o endpoint público, usando `apikey` da anon key (padrão documentado):
+Nova tabela `public.absenteismo_config` (singleton, Super Admin edita):
+- pesos por tipo base: `peso_falta`, `peso_atestado`, `peso_declaracao`, `peso_acidente_trabalho`, `peso_acidente_trajeto`, `peso_suspensao`, `peso_outros`
+- `peso_dia_perdido` (multiplicado por dias)
+- `peso_reincidencia` (bônus quando 3+ ocorrências em 30d)
+- `janela_dias` (padrão 90)
+- limiares: `limiar_atencao`, `limiar_alta`, `limiar_critica`
+- audit trigger + `updated_at`
+- RLS: SELECT para authenticated, UPDATE só Super Admin
+- Seed inicial com os padrões abaixo
 
-- `whatsapp_outbox_worker_tick` — a cada 1 minuto, dispara o worker (envia `x-worker-secret` também para satisfazer a verificação da rota).
-- `whatsapp_outbox_worker_recover` — a cada 5 minutos, redundância para recuperar itens presos.
-
-Como `WHATSAPP_WORKER_SECRET` já existe, o header vai como literal na chamada (padrão `net.http_post`; o segredo já está no ambiente do worker, não é criado novo). Se o secret precisar ser lido a partir do banco, uso `current_setting` ou embuto o valor via `secrets--fetch_secrets` → `set_secret` numa `pg_settings` per-database (evito isso; prefiro passar direto no header do net.http_post).
-
-### 2. Timeout operacional + estados adicionais
-
-Sem alterar o enum `whatsapp_status` (que já tem `PENDENTE, PROCESSANDO, ENVIADO, FALHOU_TEMPORARIO, FALHOU_DEFINITIVO, CANCELADO`), derivo estados de apresentação no servidor:
-
-- `NAO_ENVIADO` — sem registro na outbox.
-- `PENDENTE` — na fila, < 5 min desde `created_at`.
-- `ATRASADO` — `PENDENTE` há > 5 min (sinaliza worker não rodou).
-- `PROCESSANDO`, `FALHOU_TEMPORARIO`, `FALHOU_DEFINITIVO`, `ENVIADO`, `CANCELADO` — vindos do enum.
-- `NUMERO_INVALIDO` — quando `materializar_whatsapp_usuario_boas_vindas` retorna `motivo_invalido` (já emitido pela SQL, hoje só surge como erro genérico no toast). Passa a bloquear a criação da outbox e retorna código estruturado.
-
-Não altero a lógica do worker; apenas leituras/derivações.
-
-### 3. `listarStatusBoasVindas` — mais campos
-
-Passa a expor: `tentativas`, `max_tentativas`, `proxima_tentativa_em`, `created_at`, `enviado_em`, `provider_message_id`, `ultimo_erro_codigo`, `ultimo_erro_resumido`, e um `status_derivado` calculado no servidor incluindo `ATRASADO`.
-
-### 4. Server function nova: `reprocessarConviteWhatsapp`
-
-- Restrita a Super Admin.
-- Se a última outbox está em `FALHOU_DEFINITIVO/CANCELADO`: gera nova versão (bump `v1→v2` no `idempotency_key`) via `materializar_whatsapp_usuario_boas_vindas`, preservando linhas antigas para histórico.
-- Se está em `PENDENTE/ATRASADO`: apenas reseta `proxima_tentativa_em=now(), locked_at=null` (não zera tentativas), disparando o worker imediatamente na próxima tick.
-- Nunca sobrescreve linhas antigas nem apaga eventos.
-- Registra em `audit_logs` com ação `WHATSAPP_CONVITE_REPROCESSADO`.
-
-### 5. UI — `WhatsappStatusCell` e diálogo de detalhes
-
-- Badge por estado real (cores distintas para `ATRASADO`, `FALHOU_TEMPORARIO`, `FALHOU_DEFINITIVO`, `NUMERO_INVALIDO`).
-- Timestamp da última transição (`enviado_em ?? proxima_tentativa_em ?? created_at`).
-- Botão "Ver detalhes" (Super Admin) abre `Dialog` com: status interno, tentativas/max, próxima tentativa, provider_message_id, código+mensagem sanitizada do último erro, telefone mascarado, template, criado em.
-- Botão "Tentar novamente" (Super Admin) chama `reprocessarConviteWhatsapp`.
-- Toasts:
-  - Sucesso do enqueue → "Convite enfileirado para envio." (troca do texto atual).
-  - Reprocessar sucesso → "Reprocessamento solicitado."
-  - `NUMERO_INVALIDO` → "Telefone inválido para WhatsApp. Corrija o cadastro antes de reenviar."
-
-### 6. Verificação pós-migração
-
-- Confirmar `SELECT * FROM whatsapp_worker_execucoes ORDER BY inicio DESC LIMIT 5` mostra execuções após ~1 min.
-- Confirmar linha `61983111405` transiciona `PENDENTE → PROCESSANDO → ENVIADO` com `provider_message_id` preenchido.
-- Se Evolution retornar erro, ver `ultimo_erro_resumido` no diálogo administrativo.
-
-## Fora de escopo
-
-- Não altero RLS, RBAC, enum `whatsapp_status`, template `USUARIO_CRIADO_V1`, lógica interna do worker, normalização SQL, criptografia de telefone.
-- Não crio novo secret; reuso `WHATSAPP_WORKER_SECRET` já existente.
-- Não gravo senha temporária em log nem no payload (o template já usa `{{bloco_senha}}` só quando explicitamente passado pela materialização, e o fluxo de reenvio não repassa senha).
-- Webhook de entrega/leitura (LIDA/ENTREGUE) fica como está — o backend já suporta, mas a implementação de webhook do provedor é uma etapa separada.
-
-## Detalhes técnicos
-
-**Arquivos editados**
-
-- `supabase/migrations/<novo>.sql` — agenda dois `cron.schedule` chamando `net.http_post` com headers `apikey: <anon>` e `x-worker-secret: <valor>`; adiciona ação `WHATSAPP_CONVITE_REPROCESSADO` ao enum `audit_action`.
-- `src/lib/usuarios.functions.ts` — enriquece `listarStatusBoasVindas` (colunas extras + `status_derivado`); trata `motivo_invalido` do `materializar_...` em `reenviarBoasVindasWhatsapp` retornando `NUMERO_INVALIDO`; nova server function `reprocessarConviteWhatsapp`.
-- `src/routes/_authenticated/usuarios.tsx` — atualiza `WhatsappStatusCell` (badge por estado real + timestamp), adiciona botão "Ver detalhes" + `Dialog` administrativo, ação "Tentar novamente", ajusta toasts.
-
-**Fluxo de estados**
-
-```text
-                ┌────────────────────────────────┐
-click Reenviar  │ NUMERO_INVALIDO (erro imediato)│
-     │          └────────────────────────────────┘
-     ▼
-[insert outbox] ──► PENDENTE ──►(cron 1min tick)──► PROCESSANDO ──► ENVIADO
-                       │                                │
-                       │(>5min sem tick)                ├──► FALHOU_TEMPORARIO ──(backoff)──► PROCESSANDO
-                       ▼                                │
-                    ATRASADO (UI-derived)               └──► FALHOU_DEFINITIVO (max_tentativas ou erro 4xx)
+Padrões iniciais sugeridos (editáveis pela UI depois):
+```
+falta=3, atestado=1, declaracao=1, suspensao=4,
+acidente_trabalho=6, acidente_trajeto=4, outros=1,
+peso_dia_perdido=0.5, peso_reincidencia=3, janela=90d
+limiares: <5 Baixa, 5–10 Atenção, 11–20 Alta, >20 Crítica
 ```
 
-**Idempotência preservada**
+Nova RPC `public.calcular_score_colaborador(_colaborador_id uuid, _janela_dias int default null)`:
+- `SECURITY INVOKER` — só retorna se o caller enxerga o colaborador via RLS
+- lê config, agrega ausências na janela, devolve `{ score numeric, nivel text, breakdown jsonb, ultima_ocorrencia timestamptz }`
 
-- Reenvio comum: `usuario:<id>:boas_vindas:v1` (renomeia a linha antiga com sufixo `:reenviada:<ts>` — já implementado).
-- Reprocessar após `FALHOU_DEFINITIVO`: nova versão `:v2`, `:v3`, ... para preservar histórico e permitir novo insert.
-- Reprocessar `PENDENTE/ATRASADO`: só reseta `proxima_tentativa_em`/`locked_at`, sem novo insert (evita duplicação em clique duplo).
+Nova RPC `public.calcular_score_colaboradores_lote(_empresa_id uuid?, _projeto_id uuid?)`:
+- devolve `SETOF` com score de cada colaborador visível ao caller (batch para o ranking futuro)
+
+### Frontend
+
+Nova entrada de menu **"Inteligência"** com sub-rotas (só as duas primeiras já ativas nesta rodada; demais renderizam placeholder até implementarem):
+
+```
+/inteligencia                → redireciona para /inteligencia/colaboradores
+/inteligencia/configuracao   → UI de pesos/limiares (Super Admin)
+/inteligencia/colaboradores  → placeholder (Etapa 2)
+/inteligencia/supervisores   → placeholder (Etapa 3)
+/inteligencia/executivo      → placeholder (Etapa 4)
+/inteligencia/alertas        → placeholder (Etapa 5)
+```
+
+- Sidebar: novo item com ícone `Brain` / `Activity`, visível para roles que já veem BI/Dashboard (Super Admin, RH, Compliance, Supervisor). Sub-item "Configuração" só para Super Admin.
+- Tela **Configuração**: form com sliders/inputs para cada peso, janela, e 3 limiares; preview do card de níveis (Baixa/Atenção/Alta/Crítica) com cores oficiais 🟢🟡🟠🔴.
+- Badge/utilitário reutilizável `<CriticidadeBadge nivel="..." />` para as próximas etapas.
+
+### Testes
+
+- RPC de score retorna zero quando não há ausências.
+- Supervisor sem colaborador → RPC lote devolve vazio.
+- Alteração de peso na config muda o score no próximo cálculo.
+
+## Etapas seguintes (rodadas futuras, uma por vez)
+
+- **Etapa 2** — Ranking de Colaboradores com filtros/ordenação + badge de criticidade.
+- **Etapa 3** — Ranking de Supervisores com métricas proporcionais e SLA.
+- **Etapa 4** — Dashboard Executivo com widgets Top 10 e evolução 12 meses.
+- **Etapa 5** — Alertas inteligentes com limiares parametrizáveis.
+- **Etapa 6** — Aba Análise no perfil do colaborador.
+- **Etapa 7** — Inteligência executiva (Top Empresas/Projetos/CID/crescimento).
+- **Etapas 8+9** — Auditoria final de RLS por rota + otimização (materialized view só se medir gargalo real).
+
+## O que NÃO vou fazer
+
+- Não crio ranking punitivo nem exposição de dados que fujam da RLS.
+- Não toco em `ausencias`, `colaboradores`, `user_roles`, ou qualquer policy existente.
+- Não crio materialized view agora — só se a Etapa 4 mostrar necessidade real.
+- Não exponho CID em rankings; se aparecer, filtro pela mesma regra da tela atual.
+
+Confirma que posso executar **Entrega 1** exatamente assim?

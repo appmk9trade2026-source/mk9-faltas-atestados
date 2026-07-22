@@ -25,6 +25,7 @@ import { Route as AuthenticatedOperacaoAssistidaRouteImport } from './routes/_au
 import { Route as AuthenticatedObservabilidadeRouteImport } from './routes/_authenticated/observabilidade'
 import { Route as AuthenticatedNovaAusenciaRouteImport } from './routes/_authenticated/nova-ausencia'
 import { Route as AuthenticatedNotificacoesRouteImport } from './routes/_authenticated/notificacoes'
+import { Route as AuthenticatedInteligenciaRouteImport } from './routes/_authenticated/inteligencia'
 import { Route as AuthenticatedHomologacaoRouteImport } from './routes/_authenticated/homologacao'
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
 import { Route as AuthenticatedDocumentacaoRouteImport } from './routes/_authenticated/documentacao'
@@ -40,6 +41,7 @@ import { Route as AuthenticatedAssistenteRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
 import { Route as AuthenticatedAcessosRouteImport } from './routes/_authenticated/acessos'
 import { Route as AuthenticatedComunicacoesIndexRouteImport } from './routes/_authenticated/comunicacoes.index'
+import { Route as AuthenticatedInteligenciaConfiguracaoRouteImport } from './routes/_authenticated/inteligencia.configuracao'
 import { Route as AuthenticatedConfiguracoesTiposAusenciaRouteImport } from './routes/_authenticated/configuracoes.tipos-ausencia'
 import { Route as AuthenticatedConfiguracoesProjetosRouteImport } from './routes/_authenticated/configuracoes.projetos'
 import { Route as AuthenticatedConfiguracoesPreferenciasRouteImport } from './routes/_authenticated/configuracoes.preferencias'
@@ -145,6 +147,12 @@ const AuthenticatedNotificacoesRoute =
     path: '/notificacoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedInteligenciaRoute =
+  AuthenticatedInteligenciaRouteImport.update({
+    id: '/inteligencia',
+    path: '/inteligencia',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedHomologacaoRoute =
   AuthenticatedHomologacaoRouteImport.update({
     id: '/homologacao',
@@ -226,6 +234,12 @@ const AuthenticatedComunicacoesIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedComunicacoesRoute,
+  } as any)
+const AuthenticatedInteligenciaConfiguracaoRoute =
+  AuthenticatedInteligenciaConfiguracaoRouteImport.update({
+    id: '/configuracao',
+    path: '/configuracao',
+    getParentRoute: () => AuthenticatedInteligenciaRoute,
   } as any)
 const AuthenticatedConfiguracoesTiposAusenciaRoute =
   AuthenticatedConfiguracoesTiposAusenciaRouteImport.update({
@@ -372,6 +386,7 @@ export interface FileRoutesByFullPath {
   '/documentacao': typeof AuthenticatedDocumentacaoRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/homologacao': typeof AuthenticatedHomologacaoRoute
+  '/inteligencia': typeof AuthenticatedInteligenciaRouteWithChildren
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/nova-ausencia': typeof AuthenticatedNovaAusenciaRoute
   '/observabilidade': typeof AuthenticatedObservabilidadeRoute
@@ -392,6 +407,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes/preferencias': typeof AuthenticatedConfiguracoesPreferenciasRoute
   '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
+  '/inteligencia/configuracao': typeof AuthenticatedInteligenciaConfiguracaoRoute
   '/comunicacoes/': typeof AuthenticatedComunicacoesIndexRoute
   '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
   '/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
@@ -424,6 +440,7 @@ export interface FileRoutesByTo {
   '/documentacao': typeof AuthenticatedDocumentacaoRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/homologacao': typeof AuthenticatedHomologacaoRoute
+  '/inteligencia': typeof AuthenticatedInteligenciaRouteWithChildren
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/nova-ausencia': typeof AuthenticatedNovaAusenciaRoute
   '/observabilidade': typeof AuthenticatedObservabilidadeRoute
@@ -443,6 +460,7 @@ export interface FileRoutesByTo {
   '/configuracoes/preferencias': typeof AuthenticatedConfiguracoesPreferenciasRoute
   '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
+  '/inteligencia/configuracao': typeof AuthenticatedInteligenciaConfiguracaoRoute
   '/comunicacoes': typeof AuthenticatedComunicacoesIndexRoute
   '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
   '/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
@@ -478,6 +496,7 @@ export interface FileRoutesById {
   '/_authenticated/documentacao': typeof AuthenticatedDocumentacaoRoute
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
   '/_authenticated/homologacao': typeof AuthenticatedHomologacaoRoute
+  '/_authenticated/inteligencia': typeof AuthenticatedInteligenciaRouteWithChildren
   '/_authenticated/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/_authenticated/nova-ausencia': typeof AuthenticatedNovaAusenciaRoute
   '/_authenticated/observabilidade': typeof AuthenticatedObservabilidadeRoute
@@ -498,6 +517,7 @@ export interface FileRoutesById {
   '/_authenticated/configuracoes/preferencias': typeof AuthenticatedConfiguracoesPreferenciasRoute
   '/_authenticated/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/_authenticated/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
+  '/_authenticated/inteligencia/configuracao': typeof AuthenticatedInteligenciaConfiguracaoRoute
   '/_authenticated/comunicacoes/': typeof AuthenticatedComunicacoesIndexRoute
   '/_authenticated/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
   '/_authenticated/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
@@ -533,6 +553,7 @@ export interface FileRouteTypes {
     | '/documentacao'
     | '/historico'
     | '/homologacao'
+    | '/inteligencia'
     | '/notificacoes'
     | '/nova-ausencia'
     | '/observabilidade'
@@ -553,6 +574,7 @@ export interface FileRouteTypes {
     | '/configuracoes/preferencias'
     | '/configuracoes/projetos'
     | '/configuracoes/tipos-ausencia'
+    | '/inteligencia/configuracao'
     | '/comunicacoes/'
     | '/comunicacoes/whatsapp/configuracao'
     | '/comunicacoes/whatsapp/dead-letter'
@@ -585,6 +607,7 @@ export interface FileRouteTypes {
     | '/documentacao'
     | '/historico'
     | '/homologacao'
+    | '/inteligencia'
     | '/notificacoes'
     | '/nova-ausencia'
     | '/observabilidade'
@@ -604,6 +627,7 @@ export interface FileRouteTypes {
     | '/configuracoes/preferencias'
     | '/configuracoes/projetos'
     | '/configuracoes/tipos-ausencia'
+    | '/inteligencia/configuracao'
     | '/comunicacoes'
     | '/comunicacoes/whatsapp/configuracao'
     | '/comunicacoes/whatsapp/dead-letter'
@@ -638,6 +662,7 @@ export interface FileRouteTypes {
     | '/_authenticated/documentacao'
     | '/_authenticated/historico'
     | '/_authenticated/homologacao'
+    | '/_authenticated/inteligencia'
     | '/_authenticated/notificacoes'
     | '/_authenticated/nova-ausencia'
     | '/_authenticated/observabilidade'
@@ -658,6 +683,7 @@ export interface FileRouteTypes {
     | '/_authenticated/configuracoes/preferencias'
     | '/_authenticated/configuracoes/projetos'
     | '/_authenticated/configuracoes/tipos-ausencia'
+    | '/_authenticated/inteligencia/configuracao'
     | '/_authenticated/comunicacoes/'
     | '/_authenticated/comunicacoes/whatsapp/configuracao'
     | '/_authenticated/comunicacoes/whatsapp/dead-letter'
@@ -797,6 +823,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNotificacoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/inteligencia': {
+      id: '/_authenticated/inteligencia'
+      path: '/inteligencia'
+      fullPath: '/inteligencia'
+      preLoaderRoute: typeof AuthenticatedInteligenciaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/homologacao': {
       id: '/_authenticated/homologacao'
       path: '/homologacao'
@@ -901,6 +934,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/comunicacoes/'
       preLoaderRoute: typeof AuthenticatedComunicacoesIndexRouteImport
       parentRoute: typeof AuthenticatedComunicacoesRoute
+    }
+    '/_authenticated/inteligencia/configuracao': {
+      id: '/_authenticated/inteligencia/configuracao'
+      path: '/configuracao'
+      fullPath: '/inteligencia/configuracao'
+      preLoaderRoute: typeof AuthenticatedInteligenciaConfiguracaoRouteImport
+      parentRoute: typeof AuthenticatedInteligenciaRoute
     }
     '/_authenticated/configuracoes/tipos-ausencia': {
       id: '/_authenticated/configuracoes/tipos-ausencia'
@@ -1135,6 +1175,21 @@ const AuthenticatedConfiguracoesRouteWithChildren =
     AuthenticatedConfiguracoesRouteChildren,
   )
 
+interface AuthenticatedInteligenciaRouteChildren {
+  AuthenticatedInteligenciaConfiguracaoRoute: typeof AuthenticatedInteligenciaConfiguracaoRoute
+}
+
+const AuthenticatedInteligenciaRouteChildren: AuthenticatedInteligenciaRouteChildren =
+  {
+    AuthenticatedInteligenciaConfiguracaoRoute:
+      AuthenticatedInteligenciaConfiguracaoRoute,
+  }
+
+const AuthenticatedInteligenciaRouteWithChildren =
+  AuthenticatedInteligenciaRoute._addFileChildren(
+    AuthenticatedInteligenciaRouteChildren,
+  )
+
 interface AuthenticatedUsuariosRouteChildren {
   AuthenticatedUsuariosIdPermissoesRoute: typeof AuthenticatedUsuariosIdPermissoesRoute
 }
@@ -1164,6 +1219,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDocumentacaoRoute: typeof AuthenticatedDocumentacaoRoute
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
   AuthenticatedHomologacaoRoute: typeof AuthenticatedHomologacaoRoute
+  AuthenticatedInteligenciaRoute: typeof AuthenticatedInteligenciaRouteWithChildren
   AuthenticatedNotificacoesRoute: typeof AuthenticatedNotificacoesRoute
   AuthenticatedNovaAusenciaRoute: typeof AuthenticatedNovaAusenciaRoute
   AuthenticatedObservabilidadeRoute: typeof AuthenticatedObservabilidadeRoute
@@ -1195,6 +1251,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDocumentacaoRoute: AuthenticatedDocumentacaoRoute,
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
   AuthenticatedHomologacaoRoute: AuthenticatedHomologacaoRoute,
+  AuthenticatedInteligenciaRoute: AuthenticatedInteligenciaRouteWithChildren,
   AuthenticatedNotificacoesRoute: AuthenticatedNotificacoesRoute,
   AuthenticatedNovaAusenciaRoute: AuthenticatedNovaAusenciaRoute,
   AuthenticatedObservabilidadeRoute: AuthenticatedObservabilidadeRoute,
@@ -1240,13 +1297,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

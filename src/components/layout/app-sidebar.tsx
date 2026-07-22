@@ -82,6 +82,8 @@ const items: Item[] = [
   { title: "Permissões", url: "/administracao/permissoes", icon: ShieldCheck, roles: ["super_admin"] },
   { title: "BI Executivo", url: "/bi-executivo", icon: Sparkles, roles: ["super_admin", "compliance", "rh"] },
   { title: "Observabilidade", url: "/observabilidade", icon: Gauge, roles: ["super_admin", "compliance"] },
+  { title: "Inteligência", url: "/inteligencia", icon: Sparkles, roles: ["super_admin", "compliance", "rh", "supervisor"] },
+  { title: "Config. Inteligência", url: "/inteligencia/configuracao", icon: Settings, roles: ["super_admin"] },
 ];
 
 const itemByUrl = new Map(items.map((i) => [i.url, i]));
@@ -103,7 +105,7 @@ const SECTIONS: Section[] = [
   {
     id: "analises",
     label: "Análises",
-    urls: ["/relatorios", "/bi-executivo", "/auditoria"],
+    urls: ["/relatorios", "/bi-executivo", "/inteligencia", "/inteligencia/configuracao", "/auditoria"],
   },
   {
     id: "administracao",
