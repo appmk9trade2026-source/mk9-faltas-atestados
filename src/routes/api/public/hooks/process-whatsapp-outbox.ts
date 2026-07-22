@@ -1,6 +1,6 @@
 // ============================================================================
 // FASE 3 · Worker WhatsApp — endpoint público (chamado por pg_cron)
-// Autenticação: header `apikey` deve conter SUPABASE_PUBLISHABLE_KEY.
+// Autenticação: header `x-worker-secret` (ou Bearer) deve conter WHATSAPP_WORKER_SECRET.
 // Segredos: EVOLUTION_BASE_URL, EVOLUTION_API_KEY, EVOLUTION_INSTANCE_NAME,
 // EVOLUTION_ENABLED (opcional, default "true").
 // ============================================================================
@@ -267,18 +267,28 @@ async function handleRun(): Promise<Response> {
   });
 }
 
-function verifyApiKey(request: Request): boolean {
-  const expected = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+function timingSafeEqualStr(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+function verifyWorkerSecret(request: Request): boolean {
+  const expected = process.env.WHATSAPP_WORKER_SECRET;
   if (!expected) return false;
-  const got = request.headers.get("apikey") ?? request.headers.get("x-api-key");
-  return !!got && got === expected;
+  const got =
+    request.headers.get("x-worker-secret") ??
+    request.headers.get("x-cron-secret") ??
+    (request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? null);
+  return !!got && timingSafeEqualStr(got, expected);
 }
 
 export const Route = createFileRoute("/api/public/hooks/process-whatsapp-outbox")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        if (!verifyApiKey(request)) return jsonResponse({ ok: false, error: "unauthorized" }, 401);
+        if (!verifyWorkerSecret(request)) return jsonResponse({ ok: false, error: "unauthorized" }, 401);
         try {
           return await handleRun();
         } catch (err: any) {
@@ -286,8 +296,8 @@ export const Route = createFileRoute("/api/public/hooks/process-whatsapp-outbox"
         }
       },
       GET: async ({ request }) => {
-        // Permite health-check autenticado (mesmo apikey do cron).
-        if (!verifyApiKey(request)) return jsonResponse({ ok: false, error: "unauthorized" }, 401);
+        // Health-check autenticado com o mesmo segredo dedicado do worker.
+        if (!verifyWorkerSecret(request)) return jsonResponse({ ok: false, error: "unauthorized" }, 401);
         return jsonResponse({ ok: true, worker: WORKER_NAME });
       },
     },
