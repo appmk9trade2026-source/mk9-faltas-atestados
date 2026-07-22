@@ -1357,6 +1357,58 @@ function ColaboradorDialog({
                 </h3>
                 <FormField
                   control={form.control}
+                  name="supervisor_usuario_id"
+                  render={({ field }) => {
+                    const opts = supervisoresQ.data ?? [];
+                    const disabled = !projetoIdWatch || supervisoresQ.isLoading;
+                    return (
+                      <FormItem>
+                        <FormLabel>Supervisor responsável</FormLabel>
+                        <Select
+                          value={field.value || "none"}
+                          onValueChange={(v) => field.onChange(v === "none" ? "" : v)}
+                          disabled={disabled}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue
+                                placeholder={
+                                  !projetoIdWatch
+                                    ? "Selecione um projeto primeiro"
+                                    : supervisoresQ.isLoading
+                                      ? "Carregando..."
+                                      : opts.length === 0
+                                        ? "Nenhum supervisor vinculado a este projeto"
+                                        : "Selecione o supervisor"
+                                }
+                              />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">
+                              Sem supervisor responsável
+                            </SelectItem>
+                            {opts.map((s) => (
+                              <SelectItem key={s.id} value={s.id}>
+                                {s.nome}{" "}
+                                <span className="text-xs text-muted-foreground">
+                                  ({s.email})
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Define quais colaboradores este supervisor enxerga na listagem. Somente
+                          usuários com papel Supervisor ativo e vinculados ao projeto aparecem aqui.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
+                <FormField
+                  control={form.control}
                   name="supervisor_nome"
                   render={({ field }) => (
                     <FormItem>
