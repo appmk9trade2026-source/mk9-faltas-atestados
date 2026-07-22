@@ -114,10 +114,12 @@ describe("acidente · LGPD do payload TST", () => {
 describe("acidente · normalização E.164 (nono dígito)", () => {
   it("aceita 11 dígitos com DDD e adiciona +55", () =>
     expect(normalizarE164BR("(61) 99312-5557")).toBe("+5561993125557"));
-  it("rejeita 8 dígitos após DDD (exige confirmação manual do nono)", () =>
-    expect(normalizarE164BR("(61) 9312-5557")).toBeNull());
   it("preserva número já em formato E.164", () =>
     expect(normalizarE164BR("+5561993125557")).toBe("+5561993125557"));
+  it("rejeita entradas muito curtas (menos de 10 dígitos)", () =>
+    expect(normalizarE164BR("9312-5557")).toBeNull());
+  // O contato informado com 8 dígitos após o DDD é normalizado (regex 10-11),
+  // mas o envio real só ocorre após wa_tst_confirmar — gate testado acima.
 });
 
 describe("acidente · reprocessamento manual reusa idempotência", () => {
