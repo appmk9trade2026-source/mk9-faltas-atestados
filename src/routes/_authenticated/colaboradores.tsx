@@ -332,6 +332,10 @@ function ColaboradoresPage() {
         supervisor_email: values.supervisor_email?.trim()
           ? values.supervisor_email.trim().toLowerCase()
           : null,
+        supervisor_usuario_id:
+          values.supervisor_usuario_id && values.supervisor_usuario_id !== ""
+            ? values.supervisor_usuario_id
+            : null,
         ativo: values.ativo,
       };
       if (values.id) {
