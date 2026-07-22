@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
   History as HistoryIcon,
+  Info,
   KeyRound,
   LogOut,
   MailPlus,
@@ -18,6 +19,7 @@ import {
   Plus,
   Power,
   PowerOff,
+  RefreshCw,
   Search,
   Send,
   Trash2,
@@ -104,6 +106,7 @@ import {
   reenviarConviteUsuario,
   encerrarSessoesUsuario,
   reenviarBoasVindasWhatsapp,
+  reprocessarConviteWhatsapp,
   listarStatusBoasVindas,
   type BoasVindasStatus,
 } from "@/lib/usuarios.functions";
