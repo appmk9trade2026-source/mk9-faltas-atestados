@@ -13,6 +13,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthNovaSenhaRouteImport } from './routes/auth.nova-senha'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
 import { Route as AuthenticatedSaudeRouteImport } from './routes/_authenticated/saude'
 import { Route as AuthenticatedRoadmapRouteImport } from './routes/_authenticated/roadmap'
@@ -79,6 +80,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthNovaSenhaRoute = AuthNovaSenhaRouteImport.update({
+  id: '/nova-senha',
+  path: '/nova-senha',
+  getParentRoute: () => AuthRoute,
 } as any)
 const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
   id: '/usuarios',
@@ -350,7 +356,7 @@ const AuthenticatedComunicacoesWhatsappConfiguracaoRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/acessos': typeof AuthenticatedAcessosRoute
   '/alertas': typeof AuthenticatedAlertasRoute
@@ -377,6 +383,7 @@ export interface FileRoutesByFullPath {
   '/roadmap': typeof AuthenticatedRoadmapRoute
   '/saude': typeof AuthenticatedSaudeRoute
   '/usuarios': typeof AuthenticatedUsuariosRouteWithChildren
+  '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/colaboradores/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/colaboradores/importar': typeof AuthenticatedColaboradoresImportarRoute
@@ -402,7 +409,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/acessos': typeof AuthenticatedAcessosRoute
   '/alertas': typeof AuthenticatedAlertasRoute
@@ -428,6 +435,7 @@ export interface FileRoutesByTo {
   '/roadmap': typeof AuthenticatedRoadmapRoute
   '/saude': typeof AuthenticatedSaudeRoute
   '/usuarios': typeof AuthenticatedUsuariosRouteWithChildren
+  '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/colaboradores/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/colaboradores/importar': typeof AuthenticatedColaboradoresImportarRoute
@@ -454,7 +462,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/acessos': typeof AuthenticatedAcessosRoute
   '/_authenticated/alertas': typeof AuthenticatedAlertasRoute
@@ -481,6 +489,7 @@ export interface FileRoutesById {
   '/_authenticated/roadmap': typeof AuthenticatedRoadmapRoute
   '/_authenticated/saude': typeof AuthenticatedSaudeRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRouteWithChildren
+  '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/_authenticated/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/_authenticated/colaboradores_/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/_authenticated/colaboradores_/importar': typeof AuthenticatedColaboradoresImportarRoute
@@ -535,6 +544,7 @@ export interface FileRouteTypes {
     | '/roadmap'
     | '/saude'
     | '/usuarios'
+    | '/auth/nova-senha'
     | '/administracao/permissoes'
     | '/colaboradores/importacoes'
     | '/colaboradores/importar'
@@ -586,6 +596,7 @@ export interface FileRouteTypes {
     | '/roadmap'
     | '/saude'
     | '/usuarios'
+    | '/auth/nova-senha'
     | '/administracao/permissoes'
     | '/colaboradores/importacoes'
     | '/colaboradores/importar'
@@ -638,6 +649,7 @@ export interface FileRouteTypes {
     | '/_authenticated/roadmap'
     | '/_authenticated/saude'
     | '/_authenticated/usuarios'
+    | '/auth/nova-senha'
     | '/_authenticated/administracao/permissoes'
     | '/_authenticated/colaboradores_/importacoes'
     | '/_authenticated/colaboradores_/importar'
@@ -665,7 +677,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPublicHooksEvolutionWhatsappWebhookRoute: typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   ApiPublicHooksProcessWhatsappOutboxRoute: typeof ApiPublicHooksProcessWhatsappOutboxRoute
@@ -700,6 +712,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/auth/nova-senha': {
+      id: '/auth/nova-senha'
+      path: '/nova-senha'
+      fullPath: '/auth/nova-senha'
+      preLoaderRoute: typeof AuthNovaSenhaRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/_authenticated/usuarios': {
       id: '/_authenticated/usuarios'
@@ -1198,10 +1217,20 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AuthRouteChildren {
+  AuthNovaSenhaRoute: typeof AuthNovaSenhaRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthNovaSenhaRoute: AuthNovaSenhaRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   ApiPublicHooksEvolutionWhatsappWebhookRoute:
     ApiPublicHooksEvolutionWhatsappWebhookRoute,
