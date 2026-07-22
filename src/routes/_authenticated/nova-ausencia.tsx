@@ -1275,6 +1275,84 @@ function NovaAusenciaPage() {
                       />
                     </div>
 
+                    {tipoSelecionado?.codigo === "ACIDENTE_TRABALHO" && (
+                      <div className="mt-4 rounded-lg border border-red-300/60 bg-red-50/60 p-4 dark:bg-red-950/30">
+                        <div className="mb-3 flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-semibold text-white">
+                            <AlertTriangle className="h-3.5 w-3.5" /> Acidente de Trabalho
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            O Técnico de Segurança será notificado após o lançamento.
+                          </span>
+                        </div>
+                        <div className="grid gap-3 md:grid-cols-3">
+                          <div>
+                            <label className="text-xs font-medium">Data do acidente <span className="text-red-500">*</span></label>
+                            <Input type="date" value={acidenteData} onChange={(e) => setAcidenteData(e.target.value)} />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium">Hora <span className="text-red-500">*</span></label>
+                            <Input type="time" value={acidenteHora} onChange={(e) => setAcidenteHora(e.target.value)} />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium">Local <span className="text-red-500">*</span></label>
+                            <Input maxLength={200} placeholder="Ex: Depósito - Setor B" value={acidenteLocal} onChange={(e) => setAcidenteLocal(e.target.value)} />
+                          </div>
+                        </div>
+                        <div className="mt-3">
+                          <label className="text-xs font-medium">Descrição do ocorrido <span className="text-red-500">*</span></label>
+                          <Textarea rows={3} maxLength={2000} placeholder="Descreva o que aconteceu, como e onde." value={acidenteDescricao} onChange={(e) => setAcidenteDescricao(e.target.value)} />
+                        </div>
+                        <div className="mt-3 grid gap-3 md:grid-cols-3">
+                          <div>
+                            <label className="text-xs font-medium">Houve atendimento médico?</label>
+                            <RadioGroup
+                              value={acidenteAtendMedico === null ? "" : acidenteAtendMedico ? "sim" : "nao"}
+                              onValueChange={(v) => setAcidenteAtendMedico(v === "sim" ? true : v === "nao" ? false : null)}
+                              className="flex gap-3 pt-1"
+                            >
+                              <label className="flex cursor-pointer items-center gap-1.5 text-sm"><RadioGroupItem value="sim" /> Sim</label>
+                              <label className="flex cursor-pointer items-center gap-1.5 text-sm"><RadioGroupItem value="nao" /> Não</label>
+                            </RadioGroup>
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium">Houve afastamento?</label>
+                            <RadioGroup
+                              value={acidenteAfastamento === null ? "" : acidenteAfastamento ? "sim" : "nao"}
+                              onValueChange={(v) => setAcidenteAfastamento(v === "sim" ? true : v === "nao" ? false : null)}
+                              className="flex gap-3 pt-1"
+                            >
+                              <label className="flex cursor-pointer items-center gap-1.5 text-sm"><RadioGroupItem value="sim" /> Sim</label>
+                              <label className="flex cursor-pointer items-center gap-1.5 text-sm"><RadioGroupItem value="nao" /> Não</label>
+                            </RadioGroup>
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium">Dias iniciais de afastamento</label>
+                            <Input type="number" min={0} max={3650} value={acidenteDiasAfast} onChange={(e) => setAcidenteDiasAfast(e.target.value)} disabled={acidenteAfastamento !== true} />
+                          </div>
+                        </div>
+                        <div className="mt-3 grid gap-3 md:grid-cols-2">
+                          <div>
+                            <label className="text-xs font-medium">CAT emitida?</label>
+                            <RadioGroup
+                              value={acidenteCatEmitida === null ? "" : acidenteCatEmitida ? "sim" : "nao"}
+                              onValueChange={(v) => setAcidenteCatEmitida(v === "sim" ? true : v === "nao" ? false : null)}
+                              className="flex gap-3 pt-1"
+                            >
+                              <label className="flex cursor-pointer items-center gap-1.5 text-sm"><RadioGroupItem value="sim" /> Sim</label>
+                              <label className="flex cursor-pointer items-center gap-1.5 text-sm"><RadioGroupItem value="nao" /> Não</label>
+                            </RadioGroup>
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium">Observações</label>
+                            <Textarea rows={2} maxLength={2000} value={acidenteObs} onChange={(e) => setAcidenteObs(e.target.value)} />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+
+
                     <div className="mt-4">
                       <FormField
                         control={form.control}
