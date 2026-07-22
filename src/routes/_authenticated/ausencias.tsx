@@ -361,6 +361,15 @@ function AusenciasPage() {
         )}
       </div>
 
+      {scope.isSupervisorOnly &&
+        !ausenciasQ.isLoading &&
+        (ausenciasQ.data?.length ?? 0) === 0 && (
+          <SupervisorEmptyState
+            title="Você ainda não possui ausências para acompanhar"
+            description="Nenhum colaborador está vinculado ao seu usuário. Solicite ao RH ou Super Admin a atribuição administrativa para começar a lançar ausências."
+          />
+        )}
+
       <Card className="overflow-hidden">
         <div className="flex flex-col gap-3 border-b p-4">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
