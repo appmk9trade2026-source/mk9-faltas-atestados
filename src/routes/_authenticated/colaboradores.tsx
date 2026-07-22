@@ -250,7 +250,8 @@ function ColaboradoresPage() {
   });
 
   const colabQ = useQuery({
-    queryKey: ["colaboradores"],
+    queryKey: ["colaboradores", userId, roles.join(",")],
+    enabled: !!userId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("colaboradores")
