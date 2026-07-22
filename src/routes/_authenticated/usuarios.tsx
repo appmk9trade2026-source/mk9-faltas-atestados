@@ -510,6 +510,14 @@ function UsuariosPage() {
                             >
                               <KeyRound className="mr-2 h-4 w-4" /> Enviar reset de senha
                             </DropdownMenuItem>
+                            {isSuperAdmin && (
+                              <DropdownMenuItem
+                                onClick={() => setSenhaTempAlvo(u)}
+                                disabled={u.id === user?.id}
+                              >
+                                <KeyRound className="mr-2 h-4 w-4" /> Definir nova senha temporária
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
                               onClick={() => reenviarMut.mutate(u.id)}
                               disabled={!u.email || !u.ativo}
