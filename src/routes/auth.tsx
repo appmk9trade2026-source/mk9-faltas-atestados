@@ -53,10 +53,22 @@ function AuthPage() {
   const [firstAccessOpen, setFirstAccessOpen] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard", replace: true });
-    });
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) return;
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("primeiro_acesso_pendente")
+        .eq("id", data.session.user.id)
+        .maybeSingle();
+      if (prof?.primeiro_acesso_pendente) {
+        navigate({ to: "/auth/nova-senha", replace: true });
+      } else {
+        navigate({ to: "/dashboard", replace: true });
+      }
+    })();
   }, [navigate]);
+
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
