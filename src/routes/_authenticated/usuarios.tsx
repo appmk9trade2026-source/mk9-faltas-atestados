@@ -1085,7 +1085,58 @@ function EditDialog({
               emptyLabel="Selecione empresas para liberar projetos."
             />
 
+            {canManageSecurity && (
+              <>
+                <Separator />
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Segurança e acesso</h4>
+                  <div className="rounded-md border p-3 space-y-3 text-sm">
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                      <div>
+                        <div className="text-muted-foreground">Status</div>
+                        <div className="font-medium">
+                          {usuario.ativo ? (
+                            <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30">Ativo</Badge>
+                          ) : (
+                            <Badge variant="outline">Desativado</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Último acesso</div>
+                        <div className="font-medium">{fmtDate(usuario.last_sign_in_at)}</div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Senha temporária padrão: <code className="font-mono">12345678</code>. Ao redefinir,
+                      todas as sessões ativas são encerradas e o usuário deve escolher uma nova senha no próximo login.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onRedefinirSenhaPadrao?.()}
+                        disabled={!usuario.ativo}
+                      >
+                        <RefreshCw className="mr-2 h-4 w-4" /> Redefinir para 12345678
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onEncerrarSessoes?.()}
+                      >
+                        <LogOut className="mr-2 h-4 w-4" /> Encerrar sessões
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
             <DialogFooter>
+
               <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
               <Button type="submit" disabled={submitting}>{submitting ? "Salvando..." : "Salvar alterações"}</Button>
             </DialogFooter>
