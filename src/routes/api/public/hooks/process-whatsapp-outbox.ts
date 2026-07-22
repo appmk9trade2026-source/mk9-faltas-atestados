@@ -1,6 +1,6 @@
 // ============================================================================
 // FASE 3 · Worker WhatsApp — endpoint público (chamado por pg_cron)
-// Autenticação: header `apikey` deve conter SUPABASE_PUBLISHABLE_KEY.
+// Autenticação: header `x-worker-secret` (ou Bearer) deve conter WHATSAPP_WORKER_SECRET.
 // Segredos: EVOLUTION_BASE_URL, EVOLUTION_API_KEY, EVOLUTION_INSTANCE_NAME,
 // EVOLUTION_ENABLED (opcional, default "true").
 // ============================================================================
