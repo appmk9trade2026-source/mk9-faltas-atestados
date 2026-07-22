@@ -2271,6 +2271,42 @@ export type Database = {
         }
         Relationships: []
       }
+      primeiro_acesso_logs: {
+        Row: {
+          codigo_erro: string | null
+          created_at: string
+          email_masked: string
+          id: string
+          ip: string | null
+          mensagem_erro: string | null
+          request_id: string | null
+          resultado: string
+          user_agent: string | null
+        }
+        Insert: {
+          codigo_erro?: string | null
+          created_at?: string
+          email_masked: string
+          id?: string
+          ip?: string | null
+          mensagem_erro?: string | null
+          request_id?: string | null
+          resultado: string
+          user_agent?: string | null
+        }
+        Update: {
+          codigo_erro?: string | null
+          created_at?: string
+          email_masked?: string
+          id?: string
+          ip?: string | null
+          mensagem_erro?: string | null
+          request_id?: string | null
+          resultado?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           ativo: boolean
