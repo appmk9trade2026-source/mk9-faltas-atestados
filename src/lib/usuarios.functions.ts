@@ -113,17 +113,15 @@ export const createUsuario = createServerFn({ method: "POST" })
       }
     }
 
+    // Regra do CRM MK9: todo novo usuário nasce com a senha temporária padrão
+    // "12345678" e com primeiro_acesso_pendente = true. O admin não escolhe a
+    // senha inicial e nenhum convite por e-mail é enviado.
+    const SENHA_PADRAO = "12345678";
     let userId: string;
-    if (data.enviar_convite && !data.senha_temporaria) {
-      const inv = await supabaseAdmin.auth.admin.inviteUserByEmail(data.email, {
-        data: { nome: data.nome },
-      });
-      if (inv.error || !inv.data.user) throw new Error(inv.error?.message ?? "Falha ao convidar usuário.");
-      userId = inv.data.user.id;
-    } else {
+    {
       const cr = await supabaseAdmin.auth.admin.createUser({
         email: data.email,
-        password: data.senha_temporaria ?? undefined,
+        password: SENHA_PADRAO,
         email_confirm: true,
         user_metadata: { nome: data.nome },
       });
@@ -154,10 +152,10 @@ export const createUsuario = createServerFn({ method: "POST" })
         cargo: data.cargo || null,
         avatar_url: data.avatar_url || null,
         ativo: data.ativo,
-        // Marca troca obrigatória no primeiro acesso quando o admin definiu
-        // uma senha temporária (fluxo sem envio de e-mail).
-        primeiro_acesso_pendente: !!data.senha_temporaria,
+        // Força troca obrigatória no primeiro login — senha padrão do CRM.
+        primeiro_acesso_pendente: true,
       };
+
       const up = await supabaseAdmin.from("profiles").upsert(profilePayload, { onConflict: "id" });
       if (up.error) throw new Error(up.error.message);
 
