@@ -25,7 +25,10 @@ import { z } from "zod";
 const schema = z.object({
   email: z.string().trim().toLowerCase().email().max(255),
   redirect_to: z.string().url().max(500),
+  client_request_id: z.string().trim().max(64).optional().nullable(),
+  user_agent: z.string().trim().max(500).optional().nullable(),
 });
+
 
 function maskEmail(email: string): string {
   const at = email.indexOf("@");
