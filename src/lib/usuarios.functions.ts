@@ -154,9 +154,13 @@ export const createUsuario = createServerFn({ method: "POST" })
         cargo: data.cargo || null,
         avatar_url: data.avatar_url || null,
         ativo: data.ativo,
+        // Marca troca obrigatória no primeiro acesso quando o admin definiu
+        // uma senha temporária (fluxo sem envio de e-mail).
+        primeiro_acesso_pendente: !!data.senha_temporaria,
       };
       const up = await supabaseAdmin.from("profiles").upsert(profilePayload, { onConflict: "id" });
       if (up.error) throw new Error(up.error.message);
+
 
       if (data.roles.length) {
         const rows = data.roles.map((role) => ({ user_id: userId, role: role as AppRole }));
