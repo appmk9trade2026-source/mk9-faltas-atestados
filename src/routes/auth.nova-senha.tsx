@@ -128,11 +128,20 @@ function NovaSenhaPage() {
     setSaving(true);
     try {
       const res = await concluirFn({ data: { nova_senha: novaSenha } });
+      // Atualiza a sessão para propagar o novo estado (primeiro_acesso_pendente=false)
+      // aos consumidores do contexto de autenticação antes de sair da tela.
+      try {
+        await supabase.auth.refreshSession();
+      } catch {
+        // ignore: gate no _authenticated fará re-check via DB
+      }
       if (res?.ja_concluido) {
         toast.info("Seu primeiro acesso já havia sido concluído.");
       } else {
         toast.success("Senha definida! Bem-vindo(a) ao CRM MK9.");
       }
+      // Libera o bloqueio de "Voltar" antes de navegar para o Dashboard.
+      setAutorizado(false);
       navigate({ to: "/dashboard", replace: true });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Não foi possível concluir. Tente novamente.";
