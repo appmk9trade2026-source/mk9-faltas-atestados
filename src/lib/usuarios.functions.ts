@@ -565,7 +565,70 @@ export const definirSenhaTemporariaUsuario = createServerFn({ method: "POST" })
     return { ok: true, primeiro_acesso_pendente: true };
   });
 
-// ---------------- DEPENDÊNCIAS / EXCLUSÃO SEGURA ----------------
+// ---------------- REDEFINIR PARA SENHA PADRÃO DO CRM (12345678) ----------------
+// Atalho para Super Admin: repõe a senha do usuário para a senha temporária
+// padrão "12345678", força primeiro_acesso_pendente = true e encerra sessões.
+export const redefinirSenhaPadraoUsuario = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({
+      id: z.string().uuid(),
+      motivo: z.string().trim().max(500).optional().nullable(),
+    }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await gateUsuario(context, PERMISSION_MAP.updateUser, "/usuarios#senha-padrao");
+    await requireSuperAdmin(context);
+    if (data.id === context.userId) {
+      throw new Error("Você não pode redefinir a própria senha por este fluxo.");
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const prof = await supabaseAdmin
+      .from("profiles")
+      .select("id, email, ativo")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!prof.data) throw new Error("Usuário não encontrado.");
+    if (prof.data.ativo === false) throw new Error("Usuário está desativado — reative antes de redefinir a senha.");
+
+    const upd = await supabaseAdmin.auth.admin.updateUserById(data.id, { password: "12345678" });
+    if (upd.error) throw new Error(upd.error.message);
+
+    const now = new Date().toISOString();
+    const p = await supabaseAdmin
+      .from("profiles")
+      .update({ primeiro_acesso_pendente: true, senha_temporaria_redefinida_em: now })
+      .eq("id", data.id);
+    if (p.error) throw new Error(p.error.message);
+
+    try {
+      const adminAny = supabaseAdmin.auth.admin as unknown as {
+        signOut: (uid: string, scope?: "global" | "local" | "others") => Promise<{ error: unknown }>;
+      };
+      await adminAny.signOut(data.id, "global").catch(() => {});
+    } catch { /* noop */ }
+    await supabaseAdmin
+      .from("user_sessions")
+      .update({
+        status: "ENCERRADA" as never,
+        encerrada_em: now,
+        motivo_encerramento: "senha_padrao_redefinida",
+      })
+      .eq("user_id", data.id)
+      .eq("status", "ATIVA" as never);
+
+    await audit(
+      context.supabase,
+      "SENHA_TEMPORARIA_REDEFINIDA",
+      data.id,
+      data.motivo?.trim() ? `Motivo: ${data.motivo.trim()}` : "Senha redefinida para a padrão do CRM (12345678)",
+      null,
+      { email_alvo: prof.data.email, padrao: true, primeiro_acesso_pendente: true, sessoes_encerradas: true },
+    );
+
+    return { ok: true, senha: "12345678" };
+  });
+
 export type DependenciasUsuario = {
   ausencias_registradas: number;
   comunicacoes: number;
