@@ -415,6 +415,9 @@ function ColaboradoresPage() {
 
   return (
     <AppShell title="Colaboradores" breadcrumb={["Operação", "Colaboradores"]}>
+      <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+        Os colaboradores são exibidos conforme os vínculos de supervisão cadastrados.
+      </div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           Pessoas vinculadas às empresas e projetos operacionais. Colaboradores não
