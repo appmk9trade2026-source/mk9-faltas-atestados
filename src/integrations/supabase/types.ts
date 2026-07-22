@@ -2317,6 +2317,7 @@ export type Database = {
           id: string
           nome: string
           primeiro_acesso_pendente: boolean
+          senha_temporaria_redefinida_em: string | null
           telefone_whatsapp: string | null
           updated_at: string
         }
@@ -2329,6 +2330,7 @@ export type Database = {
           id: string
           nome: string
           primeiro_acesso_pendente?: boolean
+          senha_temporaria_redefinida_em?: string | null
           telefone_whatsapp?: string | null
           updated_at?: string
         }
@@ -2341,6 +2343,7 @@ export type Database = {
           id?: string
           nome?: string
           primeiro_acesso_pendente?: boolean
+          senha_temporaria_redefinida_em?: string | null
           telefone_whatsapp?: string | null
           updated_at?: string
         }
@@ -3710,6 +3713,10 @@ export type Database = {
         Returns: Json
       }
       contagem_alertas_menu: { Args: never; Returns: Json }
+      contar_dependencias_usuario: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       contar_notificacoes_nao_lidas: { Args: never; Returns: number }
       count_active_super_admins: { Args: never; Returns: number }
       criar_notificacao: {
@@ -4491,6 +4498,10 @@ export type Database = {
         | "PROJETOS_EXCLUSAO_LOTE"
         | "TST_CONFIRMADO"
         | "PRIMEIRO_ACESSO_CONCLUIDO"
+        | "SENHA_TEMPORARIA_REDEFINIDA"
+        | "USUARIO_EXCLUIDO"
+        | "USUARIO_EXCLUSAO_BLOQUEADA"
+        | "USUARIO_EXCLUSAO_TENTATIVA"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       changelog_tipo:
         | "NOVA_FUNCIONALIDADE"
@@ -4904,6 +4915,10 @@ export const Constants = {
         "PROJETOS_EXCLUSAO_LOTE",
         "TST_CONFIRMADO",
         "PRIMEIRO_ACESSO_CONCLUIDO",
+        "SENHA_TEMPORARIA_REDEFINIDA",
+        "USUARIO_EXCLUIDO",
+        "USUARIO_EXCLUSAO_BLOQUEADA",
+        "USUARIO_EXCLUSAO_TENTATIVA",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       changelog_tipo: [

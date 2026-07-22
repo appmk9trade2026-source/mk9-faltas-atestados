@@ -20,6 +20,7 @@ import {
   PowerOff,
   Search,
   Send,
+  Trash2,
   UserCog,
 } from "lucide-react";
 
@@ -106,6 +107,8 @@ import {
   listarStatusBoasVindas,
   type BoasVindasStatus,
 } from "@/lib/usuarios.functions";
+import { SenhaTemporariaDialog } from "@/components/usuarios/senha-temporaria-dialog";
+import { ExcluirUsuarioDialog } from "@/components/usuarios/excluir-usuario-dialog";
 
 
 export const Route = createFileRoute("/_authenticated/usuarios")({
@@ -274,6 +277,9 @@ function UsuariosPage() {
 
   const [confirmDeactivate, setConfirmDeactivate] = useState<UsuarioRow | null>(null);
   const [confirmEncerrarSessoes, setConfirmEncerrarSessoes] = useState<UsuarioRow | null>(null);
+  const [senhaTempAlvo, setSenhaTempAlvo] = useState<UsuarioRow | null>(null);
+  const [excluirAlvo, setExcluirAlvo] = useState<UsuarioRow | null>(null);
+  const isSuperAdmin = roles.includes("super_admin");
 
   const canResendWhatsapp = roles.includes("super_admin");
   const canSeeWhatsapp = roles.includes("super_admin") || roles.includes("rh") || roles.includes("compliance");
@@ -504,6 +510,14 @@ function UsuariosPage() {
                             >
                               <KeyRound className="mr-2 h-4 w-4" /> Enviar reset de senha
                             </DropdownMenuItem>
+                            {isSuperAdmin && (
+                              <DropdownMenuItem
+                                onClick={() => setSenhaTempAlvo(u)}
+                                disabled={u.id === user?.id}
+                              >
+                                <KeyRound className="mr-2 h-4 w-4" /> Definir nova senha temporária
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
                               onClick={() => reenviarMut.mutate(u.id)}
                               disabled={!u.email || !u.ativo}
@@ -543,6 +557,18 @@ function UsuariosPage() {
                                 <Power className="mr-2 h-4 w-4" /> Ativar
                               </DropdownMenuItem>
                             )}
+                          </>
+                        )}
+                        {isSuperAdmin && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              disabled={u.id === user?.id}
+                              onClick={() => setExcluirAlvo(u)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" /> Excluir definitivamente
+                            </DropdownMenuItem>
                           </>
                         )}
                       </DropdownMenuContent>
@@ -659,6 +685,26 @@ function UsuariosPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <SenhaTemporariaDialog
+        alvo={senhaTempAlvo ? { id: senhaTempAlvo.id, nome: senhaTempAlvo.nome, email: senhaTempAlvo.email } : null}
+        onClose={() => setSenhaTempAlvo(null)}
+      />
+      <ExcluirUsuarioDialog
+        alvo={
+          excluirAlvo
+            ? {
+                id: excluirAlvo.id,
+                nome: excluirAlvo.nome,
+                email: excluirAlvo.email,
+                roles: excluirAlvo.roles,
+                empresa_nomes: excluirAlvo.empresa_nomes,
+                projeto_nomes: excluirAlvo.projeto_nomes,
+              }
+            : null
+        }
+        onClose={() => setExcluirAlvo(null)}
+      />
     </AppShell>
   );
 }
