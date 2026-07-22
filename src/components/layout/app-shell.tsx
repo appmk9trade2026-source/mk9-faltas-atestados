@@ -78,6 +78,25 @@ export function AppShell({ title, breadcrumb, children }: { title: string; bread
   const email = profile?.email ?? "";
   const displayBreadcrumb = breadcrumb ?? [title];
 
+  const [sendingReset, setSendingReset] = useState(false);
+  async function handleChangePassword() {
+    if (!email || sendingReset) return;
+    setSendingReset(true);
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Enviamos um link para redefinir sua senha no seu e-mail.");
+    } catch {
+      toast.error("Não foi possível enviar o e-mail de redefinição.");
+    } finally {
+      setSendingReset(false);
+    }
+  }
+
+
   return (
     <SidebarProvider>
       <CommandPaletteProvider>
