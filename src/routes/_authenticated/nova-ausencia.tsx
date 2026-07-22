@@ -355,7 +355,7 @@ function NovaAusenciaPage() {
       const { data, error } = await supabase
         .from("ausencias")
         .select(
-          "id, empresa_id, projeto_id, colaborador_id, tipo, tipo_detalhe, dias_label, motivo, data_inicio, data_fim, dias, localidade, cid, loja_codigo_nome, acidente_trabalho_trajeto, status, possui_anexo, arquivo_url, arquivo_nome, arquivo_mime, arquivo_tamanho",
+          "id, empresa_id, projeto_id, colaborador_id, tipo, tipo_detalhe, dias_label, motivo, data_inicio, data_fim, dias, localidade, cid, loja_codigo_nome, acidente_trabalho_trajeto, status, possui_anexo, arquivo_url, arquivo_nome, arquivo_mime, arquivo_tamanho, acidente_data, acidente_hora, acidente_local, acidente_descricao, acidente_atendimento_medico, acidente_houve_afastamento, acidente_dias_afastamento_inicial, acidente_cat_emitida, acidente_observacoes",
         )
         .eq("id", editId!)
         .maybeSingle();
