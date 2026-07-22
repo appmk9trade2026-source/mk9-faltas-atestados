@@ -107,6 +107,8 @@ import {
   listarStatusBoasVindas,
   type BoasVindasStatus,
 } from "@/lib/usuarios.functions";
+import { SenhaTemporariaDialog } from "@/components/usuarios/senha-temporaria-dialog";
+import { ExcluirUsuarioDialog } from "@/components/usuarios/excluir-usuario-dialog";
 
 
 export const Route = createFileRoute("/_authenticated/usuarios")({
