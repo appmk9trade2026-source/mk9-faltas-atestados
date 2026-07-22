@@ -202,7 +202,8 @@ function waLink(numero: string | null | undefined): string | null {
 }
 
 function ColaboradoresPage() {
-  const { roles, userId } = useSession();
+  const { roles, user } = useSession();
+  const userId = user?.id ?? null;
   const canManage = roles.includes("super_admin") || roles.includes("rh");
   const isSupervisorOnly =
     roles.includes("supervisor") &&
