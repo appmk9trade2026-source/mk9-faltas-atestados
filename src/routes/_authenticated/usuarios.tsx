@@ -354,8 +354,15 @@ function UsuariosPage() {
   });
   const redefinirSenhaPadraoMut = useMutation({
     mutationFn: async (v: { id: string }) => redefinirSenhaPadraoFn({ data: { id: v.id, motivo: null } }),
-    onSuccess: () => {
-      toast.success('Senha redefinida para "12345678". O usuário precisará trocá-la no próximo login.');
+    onSuccess: (r: { whatsapp_outbox_id?: string | null; whatsapp_motivo?: string | null }) => {
+      if (r?.whatsapp_outbox_id) {
+        toast.success("Senha temporária redefinida e mensagem de boas-vindas enfileirada.");
+      } else if (r?.whatsapp_motivo === "SEM_TELEFONE") {
+        toast.success("Senha temporária redefinida. Usuário sem WhatsApp — nenhuma mensagem foi enfileirada.");
+      } else {
+        toast.success("Senha temporária redefinida. Falha ao enfileirar WhatsApp — reenvie manualmente.");
+      }
+      qc.invalidateQueries({ queryKey: ["usuarios-whatsapp-status"] });
       invalidate();
     },
     onError: (e: Error) => toast.error(e.message),
