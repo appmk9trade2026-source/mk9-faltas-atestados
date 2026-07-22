@@ -114,12 +114,16 @@ type Colaborador = {
   supervisor_nome: string | null;
   supervisor_telefone: string | null;
   supervisor_email: string | null;
+  supervisor_usuario_id: string | null;
   ativo: boolean;
   created_at: string;
   updated_at: string;
   empresa?: { id: string; nome: string; ativo: boolean } | null;
   projeto?: { id: string; nome: string; ativo: boolean } | null;
+  supervisor_usuario?: { id: string; nome: string; email: string } | null;
 };
+
+type SupervisorOption = { id: string; nome: string; email: string };
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
