@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, LogOut } from "lucide-react";
+import { KeyRound, Loader2, LogOut, UserCircle } from "lucide-react";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -78,6 +78,25 @@ export function AppShell({ title, breadcrumb, children }: { title: string; bread
   const email = profile?.email ?? "";
   const displayBreadcrumb = breadcrumb ?? [title];
 
+  const [sendingReset, setSendingReset] = useState(false);
+  async function handleChangePassword() {
+    if (!email || sendingReset) return;
+    setSendingReset(true);
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Enviamos um link para redefinir sua senha no seu e-mail.");
+    } catch {
+      toast.error("Não foi possível enviar o e-mail de redefinição.");
+    } finally {
+      setSendingReset(false);
+    }
+  }
+
+
   return (
     <SidebarProvider>
       <CommandPaletteProvider>
@@ -126,6 +145,26 @@ export function AppShell({ title, breadcrumb, children }: { title: string; bread
                     ))}
                   </div>
                 </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={() => navigate({ to: "/perfil" })}
+                >
+                  <UserCircle className="mr-2 h-4 w-4" /> Meu Perfil
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={sendingReset || !email}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    void handleChangePassword();
+                  }}
+                >
+                  {sendingReset ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <KeyRound className="mr-2 h-4 w-4" />
+                  )}
+                  Alterar Senha
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onSelect={(e) => {
