@@ -562,7 +562,7 @@ function UsuariosPage() {
                                   onClick={() => setSenhaPadraoAlvo(u)}
                                   disabled={u.id === user?.id || !u.ativo}
                                 >
-                                  <RefreshCw className="mr-2 h-4 w-4" /> Redefinir senha temporária (12345678)
+                                  <RefreshCw className="mr-2 h-4 w-4" /> Redefinir senha temporária e reenviar WhatsApp
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => setSenhaTempAlvo(u)}
