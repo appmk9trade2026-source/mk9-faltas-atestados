@@ -224,10 +224,9 @@ function InteligenciaPage() {
   const setSearch = React.useCallback(
     (patch: Partial<z.infer<typeof searchSchema>>) => {
       navigate({
-        search: (prev) => ({
+        search: (prev: z.infer<typeof searchSchema>) => ({
           ...prev,
           ...patch,
-          // qualquer alteração de filtro reseta paginação
           page: "page" in patch ? (patch.page as number) : 0,
         }),
         replace: true,
