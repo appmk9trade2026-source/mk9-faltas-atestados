@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { requirePermission } from "@/lib/rbac/guards.server";
 import { PERMISSION_MAP } from "@/lib/permissions-map";
+import { getAppPublicUrl } from "@/lib/app-url";
 import type { PermissionCode } from "@/lib/permissions";
 
 type AppRole = "super_admin" | "rh" | "supervisor" | "compliance" | "operacao" | "visualizador";
