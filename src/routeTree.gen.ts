@@ -41,6 +41,7 @@ import { Route as AuthenticatedAssistenteRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
 import { Route as AuthenticatedAcessosRouteImport } from './routes/_authenticated/acessos'
 import { Route as AuthenticatedComunicacoesIndexRouteImport } from './routes/_authenticated/comunicacoes.index'
+import { Route as AuthenticatedInteligenciaConfiguracaoRouteImport } from './routes/_authenticated/inteligencia.configuracao'
 import { Route as AuthenticatedConfiguracoesTiposAusenciaRouteImport } from './routes/_authenticated/configuracoes.tipos-ausencia'
 import { Route as AuthenticatedConfiguracoesProjetosRouteImport } from './routes/_authenticated/configuracoes.projetos'
 import { Route as AuthenticatedConfiguracoesPreferenciasRouteImport } from './routes/_authenticated/configuracoes.preferencias'
@@ -234,6 +235,12 @@ const AuthenticatedComunicacoesIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedComunicacoesRoute,
   } as any)
+const AuthenticatedInteligenciaConfiguracaoRoute =
+  AuthenticatedInteligenciaConfiguracaoRouteImport.update({
+    id: '/configuracao',
+    path: '/configuracao',
+    getParentRoute: () => AuthenticatedInteligenciaRoute,
+  } as any)
 const AuthenticatedConfiguracoesTiposAusenciaRoute =
   AuthenticatedConfiguracoesTiposAusenciaRouteImport.update({
     id: '/tipos-ausencia',
@@ -379,7 +386,7 @@ export interface FileRoutesByFullPath {
   '/documentacao': typeof AuthenticatedDocumentacaoRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/homologacao': typeof AuthenticatedHomologacaoRoute
-  '/inteligencia': typeof AuthenticatedInteligenciaRoute
+  '/inteligencia': typeof AuthenticatedInteligenciaRouteWithChildren
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/nova-ausencia': typeof AuthenticatedNovaAusenciaRoute
   '/observabilidade': typeof AuthenticatedObservabilidadeRoute
@@ -400,6 +407,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes/preferencias': typeof AuthenticatedConfiguracoesPreferenciasRoute
   '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
+  '/inteligencia/configuracao': typeof AuthenticatedInteligenciaConfiguracaoRoute
   '/comunicacoes/': typeof AuthenticatedComunicacoesIndexRoute
   '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
   '/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
@@ -432,7 +440,7 @@ export interface FileRoutesByTo {
   '/documentacao': typeof AuthenticatedDocumentacaoRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/homologacao': typeof AuthenticatedHomologacaoRoute
-  '/inteligencia': typeof AuthenticatedInteligenciaRoute
+  '/inteligencia': typeof AuthenticatedInteligenciaRouteWithChildren
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/nova-ausencia': typeof AuthenticatedNovaAusenciaRoute
   '/observabilidade': typeof AuthenticatedObservabilidadeRoute
@@ -452,6 +460,7 @@ export interface FileRoutesByTo {
   '/configuracoes/preferencias': typeof AuthenticatedConfiguracoesPreferenciasRoute
   '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
+  '/inteligencia/configuracao': typeof AuthenticatedInteligenciaConfiguracaoRoute
   '/comunicacoes': typeof AuthenticatedComunicacoesIndexRoute
   '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
   '/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
@@ -487,7 +496,7 @@ export interface FileRoutesById {
   '/_authenticated/documentacao': typeof AuthenticatedDocumentacaoRoute
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
   '/_authenticated/homologacao': typeof AuthenticatedHomologacaoRoute
-  '/_authenticated/inteligencia': typeof AuthenticatedInteligenciaRoute
+  '/_authenticated/inteligencia': typeof AuthenticatedInteligenciaRouteWithChildren
   '/_authenticated/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/_authenticated/nova-ausencia': typeof AuthenticatedNovaAusenciaRoute
   '/_authenticated/observabilidade': typeof AuthenticatedObservabilidadeRoute
@@ -508,6 +517,7 @@ export interface FileRoutesById {
   '/_authenticated/configuracoes/preferencias': typeof AuthenticatedConfiguracoesPreferenciasRoute
   '/_authenticated/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/_authenticated/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
+  '/_authenticated/inteligencia/configuracao': typeof AuthenticatedInteligenciaConfiguracaoRoute
   '/_authenticated/comunicacoes/': typeof AuthenticatedComunicacoesIndexRoute
   '/_authenticated/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
   '/_authenticated/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
@@ -564,6 +574,7 @@ export interface FileRouteTypes {
     | '/configuracoes/preferencias'
     | '/configuracoes/projetos'
     | '/configuracoes/tipos-ausencia'
+    | '/inteligencia/configuracao'
     | '/comunicacoes/'
     | '/comunicacoes/whatsapp/configuracao'
     | '/comunicacoes/whatsapp/dead-letter'
@@ -616,6 +627,7 @@ export interface FileRouteTypes {
     | '/configuracoes/preferencias'
     | '/configuracoes/projetos'
     | '/configuracoes/tipos-ausencia'
+    | '/inteligencia/configuracao'
     | '/comunicacoes'
     | '/comunicacoes/whatsapp/configuracao'
     | '/comunicacoes/whatsapp/dead-letter'
@@ -671,6 +683,7 @@ export interface FileRouteTypes {
     | '/_authenticated/configuracoes/preferencias'
     | '/_authenticated/configuracoes/projetos'
     | '/_authenticated/configuracoes/tipos-ausencia'
+    | '/_authenticated/inteligencia/configuracao'
     | '/_authenticated/comunicacoes/'
     | '/_authenticated/comunicacoes/whatsapp/configuracao'
     | '/_authenticated/comunicacoes/whatsapp/dead-letter'
@@ -922,6 +935,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedComunicacoesIndexRouteImport
       parentRoute: typeof AuthenticatedComunicacoesRoute
     }
+    '/_authenticated/inteligencia/configuracao': {
+      id: '/_authenticated/inteligencia/configuracao'
+      path: '/configuracao'
+      fullPath: '/inteligencia/configuracao'
+      preLoaderRoute: typeof AuthenticatedInteligenciaConfiguracaoRouteImport
+      parentRoute: typeof AuthenticatedInteligenciaRoute
+    }
     '/_authenticated/configuracoes/tipos-ausencia': {
       id: '/_authenticated/configuracoes/tipos-ausencia'
       path: '/tipos-ausencia'
@@ -1155,6 +1175,21 @@ const AuthenticatedConfiguracoesRouteWithChildren =
     AuthenticatedConfiguracoesRouteChildren,
   )
 
+interface AuthenticatedInteligenciaRouteChildren {
+  AuthenticatedInteligenciaConfiguracaoRoute: typeof AuthenticatedInteligenciaConfiguracaoRoute
+}
+
+const AuthenticatedInteligenciaRouteChildren: AuthenticatedInteligenciaRouteChildren =
+  {
+    AuthenticatedInteligenciaConfiguracaoRoute:
+      AuthenticatedInteligenciaConfiguracaoRoute,
+  }
+
+const AuthenticatedInteligenciaRouteWithChildren =
+  AuthenticatedInteligenciaRoute._addFileChildren(
+    AuthenticatedInteligenciaRouteChildren,
+  )
+
 interface AuthenticatedUsuariosRouteChildren {
   AuthenticatedUsuariosIdPermissoesRoute: typeof AuthenticatedUsuariosIdPermissoesRoute
 }
@@ -1184,7 +1219,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDocumentacaoRoute: typeof AuthenticatedDocumentacaoRoute
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
   AuthenticatedHomologacaoRoute: typeof AuthenticatedHomologacaoRoute
-  AuthenticatedInteligenciaRoute: typeof AuthenticatedInteligenciaRoute
+  AuthenticatedInteligenciaRoute: typeof AuthenticatedInteligenciaRouteWithChildren
   AuthenticatedNotificacoesRoute: typeof AuthenticatedNotificacoesRoute
   AuthenticatedNovaAusenciaRoute: typeof AuthenticatedNovaAusenciaRoute
   AuthenticatedObservabilidadeRoute: typeof AuthenticatedObservabilidadeRoute
@@ -1216,7 +1251,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDocumentacaoRoute: AuthenticatedDocumentacaoRoute,
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
   AuthenticatedHomologacaoRoute: AuthenticatedHomologacaoRoute,
-  AuthenticatedInteligenciaRoute: AuthenticatedInteligenciaRoute,
+  AuthenticatedInteligenciaRoute: AuthenticatedInteligenciaRouteWithChildren,
   AuthenticatedNotificacoesRoute: AuthenticatedNotificacoesRoute,
   AuthenticatedNovaAusenciaRoute: AuthenticatedNovaAusenciaRoute,
   AuthenticatedObservabilidadeRoute: AuthenticatedObservabilidadeRoute,
