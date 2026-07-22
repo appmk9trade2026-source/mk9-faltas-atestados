@@ -822,6 +822,8 @@ export const reenviarConviteUsuario = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await gateUsuario(context, PERMISSION_MAP.updateUser, "/usuarios#reenviar-convite");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Reutiliza a identidade existente — jamais chama createUser/inviteUserByEmail.
     const prof = await supabaseAdmin
       .from("profiles")
       .select("email, ativo")
@@ -830,16 +832,50 @@ export const reenviarConviteUsuario = createServerFn({ method: "POST" })
     if (!prof.data?.email) throw new Error("E-mail do usuário não encontrado.");
     if (prof.data.ativo === false) throw new Error("Usuário desativado; reative antes de reenviar convite.");
 
-    // Não recria o usuário — apenas dispara novo link de convite.
-    const gen = await supabaseAdmin.auth.admin.generateLink({
-      type: "invite",
-      email: prof.data.email,
-    });
-    if (gen.error) throw new Error(gen.error.message);
+    // Confirma que a identidade de auth já existe (não recria em hipótese alguma).
+    const authUser = await supabaseAdmin.auth.admin.getUserById(data.id);
+    if (authUser.error || !authUser.data?.user) {
+      throw new Error("Identidade de autenticação não encontrada para este usuário.");
+    }
+
+    // Re-enfileira a mensagem oficial de boas-vindas (WhatsApp) reutilizando o pipeline existente.
+    const idem = `usuario:${data.id}:boas_vindas:v1`;
+    const existing = await supabaseAdmin
+      .from("whatsapp_outbox")
+      .select("id")
+      .eq("idempotency_key", idem)
+      .maybeSingle();
+    if (existing.data) {
+      const carimbo = `:reenviada:${Date.now()}`;
+      const upd = await supabaseAdmin
+        .from("whatsapp_outbox")
+        .update({ idempotency_key: idem + carimbo })
+        .eq("id", existing.data.id);
+      if (upd.error) throw new Error(upd.error.message);
+    }
+
+    const link = getAppPublicUrl();
+    const { data: matData, error: matErr } = await supabaseAdmin.rpc(
+      "materializar_whatsapp_usuario_boas_vindas",
+      {
+        p_user_id: data.id,
+        p_link_sistema: link,
+        p_senha_temporaria: null,
+      } as never,
+    );
+    if (matErr) throw new Error(matErr.message);
+    const res = (matData ?? {}) as { ok?: boolean; motivo?: string; outbox_id?: string };
+    if (!res.ok) {
+      await audit(context.supabase, "USUARIO_CONVITE_REENVIADO", data.id,
+        `Reenvio de convite bloqueado: ${res.motivo}`,
+        null, { canal: "whatsapp", motivo: res.motivo });
+      throw new Error(`Não foi possível reenviar convite: ${res.motivo}`);
+    }
 
     await audit(context.supabase, "USUARIO_CONVITE_REENVIADO", data.id,
-      `Convite reenviado para ${prof.data.email}`);
-    return { ok: true };
+      `Convite reenviado (WhatsApp outbox ${res.outbox_id}) para ${prof.data.email}`,
+      null, { canal: "whatsapp", outbox_id: res.outbox_id });
+    return { ok: true, outbox_id: res.outbox_id };
   });
 
 // ---------------- SESSÕES ATIVAS ----------------
