@@ -580,9 +580,15 @@ function ColaboradoresPage() {
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
                         <Users className="h-5 w-5 text-muted-foreground" />
                       </div>
-                      <p className="text-sm font-medium">Nenhum colaborador encontrado</p>
+                      <p className="text-sm font-medium">
+                        {isSupervisorOnly
+                          ? "Nenhum colaborador está vinculado ao seu usuário."
+                          : "Nenhum colaborador encontrado"}
+                      </p>
                       <p className="text-xs text-muted-foreground">
-                        Ajuste os filtros ou cadastre um novo colaborador.
+                        {isSupervisorOnly
+                          ? "Solicite ao RH ou ao Super Admin o vínculo de supervisão dos colaboradores sob sua responsabilidade."
+                          : "Ajuste os filtros ou cadastre um novo colaborador."}
                       </p>
                     </div>
                   </TableCell>
