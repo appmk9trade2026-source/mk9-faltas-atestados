@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { requirePermission } from "@/lib/rbac/guards.server";
 import { PERMISSION_MAP } from "@/lib/permissions-map";
+import { getAppPublicUrl } from "@/lib/app-url";
 import type { PermissionCode } from "@/lib/permissions";
 
 type AppRole = "super_admin" | "rh" | "supervisor" | "compliance" | "operacao" | "visualizador";
@@ -198,7 +199,7 @@ export const createUsuario = createServerFn({ method: "POST" })
     let whatsapp_motivo: string | null = null;
     if (data.enviar_whatsapp) {
       try {
-        const link = process.env.APP_PUBLIC_URL || "https://mk9-staff-hub.lovable.app";
+        const link = getAppPublicUrl();
         const { data: matData, error: matErr } = await supabaseAdmin.rpc(
           "materializar_whatsapp_usuario_boas_vindas",
           {
@@ -922,7 +923,7 @@ export const reenviarBoasVindasWhatsapp = createServerFn({ method: "POST" })
       if (upd.error) throw new Error(upd.error.message);
     }
 
-    const link = process.env.APP_PUBLIC_URL || "https://mk9-staff-hub.lovable.app";
+    const link = getAppPublicUrl();
     const { data: matData, error: matErr } = await supabaseAdmin.rpc(
       "materializar_whatsapp_usuario_boas_vindas",
       {
@@ -1066,7 +1067,7 @@ export const reprocessarConviteWhatsapp = createServerFn({ method: "POST" })
 
     // Caso 1: nada existe → materializa novo convite (comportamento igual ao reenviar)
     if (!last) {
-      const link = process.env.APP_PUBLIC_URL || "https://mk9-staff-hub.lovable.app";
+      const link = getAppPublicUrl();
       const { data: matData, error: matErr } = await supabaseAdmin.rpc(
         "materializar_whatsapp_usuario_boas_vindas",
         { p_user_id: data.id, p_link_sistema: link, p_senha_temporaria: null } as never,
