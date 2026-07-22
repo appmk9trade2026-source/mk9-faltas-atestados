@@ -698,6 +698,18 @@ function NovaAusenciaPage() {
     },
   });
 
+  if (sessionLoading) {
+    return (
+      <AppShell title="Nova Ausência" breadcrumb={["CRM", "Nova Ausência"]}>
+        <div className="space-y-4 p-6" aria-busy="true" aria-live="polite">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-48 w-full" />
+        </div>
+      </AppShell>
+    );
+  }
+
   if (!podeCadastrar) {
     return (
       <AppShell title="Nova Ausência" breadcrumb={["CRM", "Nova Ausência"]}>
