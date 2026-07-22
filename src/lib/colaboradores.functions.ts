@@ -106,6 +106,7 @@ function normalizePayload(input: z.infer<typeof baseSchema>) {
     supervisor_nome: trim(input.supervisor_nome),
     supervisor_telefone: digits(input.supervisor_telefone),
     supervisor_email: lower(input.supervisor_email),
+    supervisor_usuario_id: input.supervisor_usuario_id ?? null,
     ativo: input.ativo,
   };
 }
