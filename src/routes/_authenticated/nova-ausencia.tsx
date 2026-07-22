@@ -641,6 +641,13 @@ function NovaAusenciaPage() {
         arquivo_tamanho = null;
       }
 
+      const isAcidente = tipoSelecionado?.codigo === "ACIDENTE_TRABALHO";
+      if (isAcidente) {
+        if (!acidenteData || !acidenteHora || !acidenteLocal.trim() || !acidenteDescricao.trim()) {
+          throw new Error("Para Acidente de Trabalho, informe data, hora, local e descrição.");
+        }
+      }
+
       const payload = {
         colaborador_id: values.colaborador_id,
         tipo_ausencia_id: values.tipo_ausencia_id,
@@ -655,7 +662,19 @@ function NovaAusenciaPage() {
         arquivo_nome: arquivo_nome ?? null,
         arquivo_mime: arquivo_mime ?? null,
         arquivo_tamanho: arquivo_tamanho ?? null,
+        ...(isAcidente ? {
+          acidente_data: acidenteData,
+          acidente_hora: acidenteHora.length === 5 ? `${acidenteHora}:00` : acidenteHora,
+          acidente_local: acidenteLocal.trim(),
+          acidente_descricao: acidenteDescricao.trim(),
+          acidente_atendimento_medico: acidenteAtendMedico,
+          acidente_houve_afastamento: acidenteAfastamento,
+          acidente_dias_afastamento_inicial: acidenteDiasAfast.trim() ? Number(acidenteDiasAfast) : null,
+          acidente_cat_emitida: acidenteCatEmitida,
+          acidente_observacoes: acidenteObs.trim() || null,
+        } : {}),
       };
+
 
       if (isEdit && editId) {
         await updateFn({ data: { ...payload, id: editId } });
