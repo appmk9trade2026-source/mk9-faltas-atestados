@@ -127,7 +127,13 @@ export function AppShell({ title, breadcrumb, children }: { title: string; bread
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    setConfirmOpen(true);
+                  }}
+                  className="text-destructive focus:text-destructive"
+                >
                   <LogOut className="mr-2 h-4 w-4" /> Sair
                 </DropdownMenuItem>
               </DropdownMenuContent>
