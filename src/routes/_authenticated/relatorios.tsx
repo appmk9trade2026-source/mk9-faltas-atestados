@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { useSessionScope } from "@/hooks/use-session-scope";
 import { exportReport, type ExportFormat, type ReportPayload } from "@/lib/relatorios-export";
 
 export const Route = createFileRoute("/_authenticated/relatorios")({
@@ -123,6 +124,7 @@ function RelatoriosPage() {
 }
 
 function ReportRunner({ report, usuarioNome, onRun }: { report: ReportDef; usuarioNome: string | null; onRun: () => void }) {
+  const scope = useSessionScope();
   const [inicio, setInicio] = useState(firstOfMonth());
   const [fim, setFim] = useState(today());
   const [empresaId, setEmpresaId] = useState<string>("");
@@ -132,7 +134,8 @@ function ReportRunner({ report, usuarioNome, onRun }: { report: ReportDef; usuar
   const [result, setResult] = useState<any>(null);
 
   const empresasQ = useQuery<Empresa[]>({
-    queryKey: ["rel-empresas"],
+    queryKey: ["rel-empresas", ...scope.keyParts],
+    enabled: scope.ready,
     queryFn: async () => {
       const { data, error } = await supabase.from("empresas").select("id, nome").eq("ativo", true).order("nome");
       if (error) throw error;
@@ -142,7 +145,8 @@ function ReportRunner({ report, usuarioNome, onRun }: { report: ReportDef; usuar
   });
 
   const projetosQ = useQuery<Projeto[]>({
-    queryKey: ["rel-projetos", empresaId],
+    queryKey: ["rel-projetos", ...scope.keyParts, empresaId],
+    enabled: scope.ready,
     queryFn: async () => {
       let q = supabase.from("projetos").select("id, nome, empresa_id").eq("ativo", true).order("nome");
       if (empresaId) q = q.eq("empresa_id", empresaId);

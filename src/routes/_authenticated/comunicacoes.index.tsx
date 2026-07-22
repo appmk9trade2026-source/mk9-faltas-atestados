@@ -181,7 +181,8 @@ function ComunicacoesPage() {
   }, [ausenciaParam, isRH, navigate]);
 
   const empresasQ = useQuery({
-    queryKey: ["empresas", "todas"],
+    queryKey: ["empresas", "todas", ...scope.keyParts],
+    enabled: scope.ready,
     queryFn: async () => {
       const { data, error } = await supabase.from("empresas").select("id, nome").order("nome");
       if (error) throw error;
@@ -189,7 +190,8 @@ function ComunicacoesPage() {
     },
   });
   const projetosQ = useQuery({
-    queryKey: ["projetos", "todos-para-filtro"],
+    queryKey: ["projetos", "todos-para-filtro", ...scope.keyParts],
+    enabled: scope.ready,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("projetos")
@@ -201,7 +203,8 @@ function ComunicacoesPage() {
   });
 
   const comunicacoesQ = useQuery({
-    queryKey: ["comunicacoes"],
+    queryKey: ["comunicacoes", ...scope.keyParts],
+    enabled: scope.ready,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("comunicacoes")
