@@ -194,7 +194,7 @@ function useDebouncedValue<T>(value: T, delay = 800): T {
 }
 
 function NovaAusenciaPage() {
-  const { profile, roles } = useSession();
+  const { profile, roles, loading: sessionLoading } = useSession();
   const podeCadastrar =
     roles.includes("super_admin") || roles.includes("rh") || roles.includes("supervisor");
   const isSupervisorOnly =
