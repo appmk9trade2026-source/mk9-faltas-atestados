@@ -191,7 +191,7 @@ type ColabForm = z.infer<typeof colabSchema>;
 const PAGE_SIZE = 10;
 
 const COLAB_SELECT =
-  "id, empresa_id, projeto_id, matricula, nome_completo, telefone, whatsapp, email, supervisor_nome, supervisor_telefone, supervisor_email, supervisor_usuario_id, ativo, created_at, updated_at, empresa:empresas(id, nome, ativo), projeto:projetos(id, nome, ativo), supervisor_usuario:profiles!colaboradores_supervisor_usuario_id_fkey(id, nome, email)";
+  "id, empresa_id, projeto_id, matricula, nome_completo, telefone, whatsapp, email, supervisor_nome, supervisor_telefone, supervisor_email, supervisor_usuario_id, ativo, created_at, updated_at, empresa:empresas(id, nome, ativo), projeto:projetos(id, nome, ativo)";
 
 /** Monta um link wa.me com código do país 55 quando necessário. */
 function waLink(numero: string | null | undefined): string | null {
