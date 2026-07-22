@@ -777,16 +777,14 @@ function CreateDialog({
       telefone: "",
       cargo: "",
       avatar_url: "",
-      senha_temporaria: "",
-      enviar_convite: true,
       enviar_whatsapp: false,
-
       ativo: true,
       roles: [],
       empresa_ids: [],
       projeto_ids: [],
     },
   });
+
   const [submitting, setSubmitting] = useState(false);
   const selectedEmpresas = form.watch("empresa_ids");
   const availableProjetos = useMemo(
