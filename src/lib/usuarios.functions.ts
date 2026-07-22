@@ -629,7 +629,9 @@ export const redefinirSenhaPadraoUsuario = createServerFn({ method: "POST" })
     return { ok: true, senha: "12345678" };
   });
 
+// ---------------- DEPENDÊNCIAS / EXCLUSÃO SEGURA ----------------
 export type DependenciasUsuario = {
+
   ausencias_registradas: number;
   comunicacoes: number;
   homologacoes: number;
