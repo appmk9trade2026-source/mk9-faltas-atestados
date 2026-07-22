@@ -60,10 +60,12 @@ const TABS: { to: string; label: string }[] = [
   { to: "/comunicacoes/whatsapp/outbox", label: "Outbox" },
   { to: "/comunicacoes/whatsapp/dead-letter", label: "Dead Letter" },
   { to: "/comunicacoes/whatsapp/execucoes", label: "Execuções" },
+  { to: "/comunicacoes/whatsapp/tst-destinatarios", label: "TST · Acidente" },
   { to: "/comunicacoes/whatsapp/testes", label: "Testes" },
   { to: "/comunicacoes/whatsapp/health", label: "Health Check" },
   { to: "/comunicacoes/whatsapp/configuracao", label: "Configuração" },
 ];
+
 
 function WhatsappAdminLayout() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });

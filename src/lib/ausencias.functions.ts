@@ -38,7 +38,19 @@ const basePayloadSchema = z.object({
   arquivo_nome: z.string().trim().max(255).nullable().optional(),
   arquivo_mime: z.string().trim().max(120).nullable().optional(),
   arquivo_tamanho: z.number().int().nullable().optional(),
+  // Campos específicos de Acidente de Trabalho (opcionais no schema; obrigatoriedade
+  // é revalidada no handler quando o tipo selecionado é ACIDENTE_TRABALHO).
+  acidente_data: iso.nullable().optional(),
+  acidente_hora: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/).nullable().optional(),
+  acidente_local: z.string().trim().max(200).nullable().optional(),
+  acidente_descricao: z.string().trim().max(2000).nullable().optional(),
+  acidente_atendimento_medico: z.boolean().nullable().optional(),
+  acidente_houve_afastamento: z.boolean().nullable().optional(),
+  acidente_dias_afastamento_inicial: z.number().int().min(0).max(3650).nullable().optional(),
+  acidente_cat_emitida: z.boolean().nullable().optional(),
+  acidente_observacoes: z.string().trim().max(2000).nullable().optional(),
 });
+
 
 function toInvalidPayload(err: unknown): Error {
   const msg = err instanceof Error ? err.message : String(err);
@@ -109,6 +121,13 @@ export const createAusencia = createServerFn({ method: "POST" })
       : tipo.codigo.startsWith("SUSPENSAO") ? "SUSPENSAO"
       : "OUTROS";
 
+    const isAcidente = tipo.codigo === "ACIDENTE_TRABALHO";
+    if (isAcidente) {
+      if (!data.acidente_data || !data.acidente_hora || !data.acidente_local?.trim() || !data.acidente_descricao?.trim()) {
+        throw new Error("INVALID_PAYLOAD: Acidente exige data, hora, local e descrição");
+      }
+    }
+
     const insertPayload = {
       empresa_id: gate.empresaId,     // derivado do colaborador, NUNCA do cliente
       projeto_id: gate.projetoId,     // idem
@@ -131,7 +150,19 @@ export const createAusencia = createServerFn({ method: "POST" })
       arquivo_tamanho: data.arquivo_tamanho ?? null,
       arquivo_criado_por: data.arquivo_url ? gate.userId : null,
       arquivo_criado_em: data.arquivo_url ? new Date().toISOString() : null,
+      ...(isAcidente ? {
+        acidente_data: data.acidente_data,
+        acidente_hora: data.acidente_hora,
+        acidente_local: data.acidente_local?.trim() ?? null,
+        acidente_descricao: data.acidente_descricao?.trim() ?? null,
+        acidente_atendimento_medico: data.acidente_atendimento_medico ?? null,
+        acidente_houve_afastamento: data.acidente_houve_afastamento ?? null,
+        acidente_dias_afastamento_inicial: data.acidente_dias_afastamento_inicial ?? null,
+        acidente_cat_emitida: data.acidente_cat_emitida ?? null,
+        acidente_observacoes: data.acidente_observacoes?.trim() ?? null,
+      } : {}),
     };
+
 
     // 7. mutação — RLS + trigger de supervisor continuam ativos como 2ª camada
     const { data: row, error } = await context.supabase
@@ -207,6 +238,13 @@ export const updateAusencia = createServerFn({ method: "POST" })
       : tipo.codigo.startsWith("SUSPENSAO") ? "SUSPENSAO"
       : "OUTROS";
 
+    const isAcidenteU = tipo.codigo === "ACIDENTE_TRABALHO";
+    if (isAcidenteU) {
+      if (!data.acidente_data || !data.acidente_hora || !data.acidente_local?.trim() || !data.acidente_descricao?.trim()) {
+        throw new Error("INVALID_PAYLOAD: Acidente exige data, hora, local e descrição");
+      }
+    }
+
     const updatePayload = {
       tipo: tipoBase,
       tipo_detalhe: tipo.nome,
@@ -224,7 +262,19 @@ export const updateAusencia = createServerFn({ method: "POST" })
       arquivo_nome: data.arquivo_nome ?? current.arquivo_nome,
       arquivo_mime: data.arquivo_mime ?? current.arquivo_mime,
       arquivo_tamanho: data.arquivo_tamanho ?? current.arquivo_tamanho,
+      ...(isAcidenteU ? {
+        acidente_data: data.acidente_data,
+        acidente_hora: data.acidente_hora,
+        acidente_local: data.acidente_local?.trim() ?? null,
+        acidente_descricao: data.acidente_descricao?.trim() ?? null,
+        acidente_atendimento_medico: data.acidente_atendimento_medico ?? null,
+        acidente_houve_afastamento: data.acidente_houve_afastamento ?? null,
+        acidente_dias_afastamento_inicial: data.acidente_dias_afastamento_inicial ?? null,
+        acidente_cat_emitida: data.acidente_cat_emitida ?? null,
+        acidente_observacoes: data.acidente_observacoes?.trim() ?? null,
+      } : {}),
     };
+
 
     const { error } = await context.supabase
       .from("ausencias")
