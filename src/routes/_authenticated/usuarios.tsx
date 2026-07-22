@@ -685,6 +685,26 @@ function UsuariosPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <SenhaTemporariaDialog
+        alvo={senhaTempAlvo ? { id: senhaTempAlvo.id, nome: senhaTempAlvo.nome, email: senhaTempAlvo.email } : null}
+        onClose={() => setSenhaTempAlvo(null)}
+      />
+      <ExcluirUsuarioDialog
+        alvo={
+          excluirAlvo
+            ? {
+                id: excluirAlvo.id,
+                nome: excluirAlvo.nome,
+                email: excluirAlvo.email,
+                roles: excluirAlvo.roles,
+                empresa_nomes: excluirAlvo.empresa_nomes,
+                projeto_nomes: excluirAlvo.projeto_nomes,
+              }
+            : null
+        }
+        onClose={() => setExcluirAlvo(null)}
+      />
     </AppShell>
   );
 }
