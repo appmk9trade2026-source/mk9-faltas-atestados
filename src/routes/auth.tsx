@@ -264,7 +264,7 @@ function PasswordEmailDialog({
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [techError, setTechError] = useState<string | null>(null);
-  const primeiroAcessoFn = useServerFn(solicitarPrimeiroAcesso);
+  const recuperacaoSenhaFn = useServerFn(solicitarRecuperacaoSenha);
 
   useEffect(() => {
     if (!open) {
@@ -283,7 +283,7 @@ function PasswordEmailDialog({
     try {
       const client_request_id =
         globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      const res = await primeiroAcessoFn({
+      const res = await recuperacaoSenhaFn({
         data: {
           email,
           redirect_to: `${window.location.origin}/reset-password`,
