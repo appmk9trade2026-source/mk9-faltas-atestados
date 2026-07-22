@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      absenteismo_config: {
+        Row: {
+          created_at: string
+          id: string
+          janela_dias: number
+          limiar_alta: number
+          limiar_atencao: number
+          limiar_critica: number
+          peso_acidente_trabalho: number
+          peso_acidente_trajeto: number
+          peso_atestado: number
+          peso_declaracao: number
+          peso_dia_perdido: number
+          peso_falta: number
+          peso_outros: number
+          peso_reincidencia: number
+          peso_suspensao: number
+          reincidencia_janela_dias: number
+          reincidencia_min_ocorrencias: number
+          singleton: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          janela_dias?: number
+          limiar_alta?: number
+          limiar_atencao?: number
+          limiar_critica?: number
+          peso_acidente_trabalho?: number
+          peso_acidente_trajeto?: number
+          peso_atestado?: number
+          peso_declaracao?: number
+          peso_dia_perdido?: number
+          peso_falta?: number
+          peso_outros?: number
+          peso_reincidencia?: number
+          peso_suspensao?: number
+          reincidencia_janela_dias?: number
+          reincidencia_min_ocorrencias?: number
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          janela_dias?: number
+          limiar_alta?: number
+          limiar_atencao?: number
+          limiar_critica?: number
+          peso_acidente_trabalho?: number
+          peso_acidente_trajeto?: number
+          peso_atestado?: number
+          peso_declaracao?: number
+          peso_dia_perdido?: number
+          peso_falta?: number
+          peso_outros?: number
+          peso_reincidencia?: number
+          peso_suspensao?: number
+          reincidencia_janela_dias?: number
+          reincidencia_min_ocorrencias?: number
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       access_reviews: {
         Row: {
           conclusao: string | null
@@ -3720,6 +3789,39 @@ export type Database = {
       bi_healthcheck: { Args: never; Returns: Json }
       bi_recorrencia_consultar: { Args: { p_filtros?: Json }; Returns: Json }
       bootstrap_first_super_admin: { Args: never; Returns: string }
+      calcular_score_colaborador: {
+        Args: { _colaborador_id: string; _janela_dias?: number }
+        Returns: {
+          breakdown: Json
+          colaborador_id: string
+          nivel: string
+          score: number
+          total_dias_perdidos: number
+          total_ocorrencias: number
+          ultima_ocorrencia: string
+        }[]
+      }
+      calcular_score_colaboradores_lote: {
+        Args: {
+          _empresa_id?: string
+          _janela_dias?: number
+          _projeto_id?: string
+        }
+        Returns: {
+          breakdown: Json
+          colaborador_id: string
+          empresa_id: string
+          matricula: string
+          nivel: string
+          nome_completo: string
+          projeto_id: string
+          score: number
+          supervisor_usuario_id: string
+          total_dias_perdidos: number
+          total_ocorrencias: number
+          ultima_ocorrencia: string
+        }[]
+      }
       check_projeto_equivalente: {
         Args: { _empresa_id: string; _exclude_id?: string; _nome: string }
         Returns: {
