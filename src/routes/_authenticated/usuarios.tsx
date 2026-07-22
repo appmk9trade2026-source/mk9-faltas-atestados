@@ -282,8 +282,10 @@ function UsuariosPage() {
   const [confirmDeactivate, setConfirmDeactivate] = useState<UsuarioRow | null>(null);
   const [confirmEncerrarSessoes, setConfirmEncerrarSessoes] = useState<UsuarioRow | null>(null);
   const [senhaTempAlvo, setSenhaTempAlvo] = useState<UsuarioRow | null>(null);
+  const [senhaPadraoAlvo, setSenhaPadraoAlvo] = useState<UsuarioRow | null>(null);
   const [excluirAlvo, setExcluirAlvo] = useState<UsuarioRow | null>(null);
   const [waDetalhesFor, setWaDetalhesFor] = useState<{ usuario: UsuarioRow; status: BoasVindasStatus | null } | null>(null);
+
   const isSuperAdmin = roles.includes("super_admin");
 
   const canResendWhatsapp = roles.includes("super_admin");
