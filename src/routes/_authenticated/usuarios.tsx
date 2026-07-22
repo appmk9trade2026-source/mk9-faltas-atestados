@@ -187,16 +187,14 @@ const createFormSchema = z.object({
   telefone: z.string().trim().optional(),
   cargo: z.string().trim().optional(),
   avatar_url: z.string().trim().url().optional().or(z.literal("")),
-  senha_temporaria: z.string().min(8).max(72).optional().or(z.literal("")),
-  enviar_convite: z.boolean(),
   enviar_whatsapp: z.boolean(),
-
   ativo: z.boolean(),
   roles: z.array(rolesEnum).min(1, "Selecione ao menos um perfil"),
   empresa_ids: z.array(z.string().uuid()),
   projeto_ids: z.array(z.string().uuid()),
 });
 type CreateForm = z.infer<typeof createFormSchema>;
+
 
 const editFormSchema = z.object({
   id: z.string().uuid(),
