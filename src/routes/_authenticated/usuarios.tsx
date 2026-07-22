@@ -354,8 +354,15 @@ function UsuariosPage() {
   });
   const redefinirSenhaPadraoMut = useMutation({
     mutationFn: async (v: { id: string }) => redefinirSenhaPadraoFn({ data: { id: v.id, motivo: null } }),
-    onSuccess: () => {
-      toast.success('Senha redefinida para "12345678". O usuário precisará trocá-la no próximo login.');
+    onSuccess: (r: { whatsapp_outbox_id?: string | null; whatsapp_motivo?: string | null }) => {
+      if (r?.whatsapp_outbox_id) {
+        toast.success("Senha temporária redefinida e mensagem de boas-vindas enfileirada.");
+      } else if (r?.whatsapp_motivo === "SEM_TELEFONE") {
+        toast.success("Senha temporária redefinida. Usuário sem WhatsApp — nenhuma mensagem foi enfileirada.");
+      } else {
+        toast.success("Senha temporária redefinida. Falha ao enfileirar WhatsApp — reenvie manualmente.");
+      }
+      qc.invalidateQueries({ queryKey: ["usuarios-whatsapp-status"] });
       invalidate();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -555,7 +562,7 @@ function UsuariosPage() {
                                   onClick={() => setSenhaPadraoAlvo(u)}
                                   disabled={u.id === user?.id || !u.ativo}
                                 >
-                                  <RefreshCw className="mr-2 h-4 w-4" /> Redefinir senha temporária (12345678)
+                                  <RefreshCw className="mr-2 h-4 w-4" /> Redefinir senha temporária e reenviar WhatsApp
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => setSenhaTempAlvo(u)}
@@ -754,22 +761,29 @@ function UsuariosPage() {
       <AlertDialog open={!!senhaPadraoAlvo} onOpenChange={(o) => !o && setSenhaPadraoAlvo(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Redefinir para a senha temporária padrão?</AlertDialogTitle>
+            <AlertDialogTitle>Redefinir senha temporária e reenviar WhatsApp?</AlertDialogTitle>
             <AlertDialogDescription>
-              A senha de <strong>{senhaPadraoAlvo?.nome}</strong> será redefinida para{" "}
-              <code className="font-mono">12345678</code>. Todas as sessões ativas serão encerradas
-              e o usuário será obrigado a escolher uma nova senha no próximo login.
+              A senha de <strong>{senhaPadraoAlvo?.nome}</strong> será redefinida para a senha
+              temporária padrão. Todas as sessões serão encerradas e será obrigatória a criação
+              de uma nova senha no próximo acesso. Uma nova mensagem de boas-vindas pelo WhatsApp
+              será enfileirada com a senha provisória.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={redefinirSenhaPadraoMut.isPending}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                if (senhaPadraoAlvo) redefinirSenhaPadraoMut.mutate({ id: senhaPadraoAlvo.id });
-                setSenhaPadraoAlvo(null);
+              disabled={redefinirSenhaPadraoMut.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (!senhaPadraoAlvo || redefinirSenhaPadraoMut.isPending) return;
+                const alvo = senhaPadraoAlvo;
+                redefinirSenhaPadraoMut.mutate(
+                  { id: alvo.id },
+                  { onSettled: () => setSenhaPadraoAlvo(null) },
+                );
               }}
             >
-              Redefinir para 12345678
+              {redefinirSenhaPadraoMut.isPending ? "Processando…" : "Redefinir e reenviar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

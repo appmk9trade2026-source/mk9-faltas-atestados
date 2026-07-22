@@ -586,13 +586,16 @@ export const redefinirSenhaPadraoUsuario = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const prof = await supabaseAdmin
       .from("profiles")
-      .select("id, email, ativo")
+      .select("id, email, ativo, telefone_whatsapp")
       .eq("id", data.id)
       .maybeSingle();
     if (!prof.data) throw new Error("Usuário não encontrado.");
     if (prof.data.ativo === false) throw new Error("Usuário está desativado — reative antes de redefinir a senha.");
 
-    const upd = await supabaseAdmin.auth.admin.updateUserById(data.id, { password: "12345678" });
+    // 1. Redefine a senha para a padrão (12345678) no provedor de autenticação.
+    //    A senha só existe em memória durante esta operação — não é persistida.
+    const SENHA_PADRAO = "12345678";
+    const upd = await supabaseAdmin.auth.admin.updateUserById(data.id, { password: SENHA_PADRAO });
     if (upd.error) throw new Error(upd.error.message);
 
     const now = new Date().toISOString();
@@ -602,6 +605,7 @@ export const redefinirSenhaPadraoUsuario = createServerFn({ method: "POST" })
       .eq("id", data.id);
     if (p.error) throw new Error(p.error.message);
 
+    // 2. Encerra todas as sessões ativas do usuário-alvo.
     try {
       const adminAny = supabaseAdmin.auth.admin as unknown as {
         signOut: (uid: string, scope?: "global" | "local" | "others") => Promise<{ error: unknown }>;
@@ -618,16 +622,80 @@ export const redefinirSenhaPadraoUsuario = createServerFn({ method: "POST" })
       .eq("user_id", data.id)
       .eq("status", "ATIVA" as never);
 
+    // 3. Auditoria — nunca registra a senha.
     await audit(
       context.supabase,
       "SENHA_TEMPORARIA_REDEFINIDA",
       data.id,
-      data.motivo?.trim() ? `Motivo: ${data.motivo.trim()}` : "Senha redefinida para a padrão do CRM (12345678)",
+      data.motivo?.trim() ? `Motivo: ${data.motivo.trim()}` : "Senha redefinida para a padrão do CRM",
       null,
       { email_alvo: prof.data.email, padrao: true, primeiro_acesso_pendente: true, sessoes_encerradas: true },
     );
 
-    return { ok: true, senha: "12345678" };
+    // 4. Materializa nova mensagem de boas-vindas COM a senha provisória.
+    //    A senha só transita pelo payload do outbox no momento do envio;
+    //    nunca é gravada em audit_logs, primeiro_acesso_logs ou similares.
+    let whatsapp_outbox_id: string | null = null;
+    let whatsapp_motivo: string | null = null;
+    if (prof.data.telefone_whatsapp && prof.data.telefone_whatsapp.trim().length > 0) {
+      try {
+        const idem = `usuario:${data.id}:boas_vindas:v1`;
+        const existing = await supabaseAdmin
+          .from("whatsapp_outbox")
+          .select("id")
+          .eq("idempotency_key", idem)
+          .maybeSingle();
+        if (existing.data) {
+          await supabaseAdmin
+            .from("whatsapp_outbox")
+            .update({ idempotency_key: `${idem}:redefinida:${Date.now()}` })
+            .eq("id", existing.data.id);
+        }
+        const link = getAppPublicUrl();
+        const { data: matData, error: matErr } = await supabaseAdmin.rpc(
+          "materializar_whatsapp_usuario_boas_vindas",
+          {
+            p_user_id: data.id,
+            p_link_sistema: link,
+            p_senha_temporaria: SENHA_PADRAO,
+          } as never,
+        );
+        if (matErr) {
+          whatsapp_motivo = matErr.message;
+        } else {
+          const res = (matData ?? {}) as { ok?: boolean; motivo?: string; outbox_id?: string };
+          whatsapp_outbox_id = res.outbox_id ?? null;
+          whatsapp_motivo = res.ok ? null : (res.motivo ?? "DESCONHECIDO");
+          await audit(
+            context.supabase,
+            "ENVIO_COMUNICACAO",
+            data.id,
+            res.ok
+              ? `WhatsApp de boas-vindas enfileirado após redefinição (outbox ${res.outbox_id})`
+              : `WhatsApp de boas-vindas não enfileirado após redefinição: ${res.motivo}`,
+            null,
+            {
+              canal: "whatsapp",
+              template: "USUARIO_CRIADO_V1",
+              outbox_id: res.outbox_id ?? null,
+              motivo: res.ok ? null : (res.motivo ?? null),
+              possui_senha_temporaria: !!res.ok,
+            },
+          );
+        }
+      } catch (e) {
+        whatsapp_motivo = e instanceof Error ? e.message : "erro desconhecido";
+      }
+    } else {
+      whatsapp_motivo = "SEM_TELEFONE";
+    }
+
+    return {
+      ok: true,
+      primeiro_acesso_pendente: true,
+      whatsapp_outbox_id,
+      whatsapp_motivo,
+    };
   });
 
 // ---------------- DEPENDÊNCIAS / EXCLUSÃO SEGURA ----------------
