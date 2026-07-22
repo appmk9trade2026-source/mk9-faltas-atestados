@@ -150,7 +150,7 @@ export const updateColaborador = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: current, error: loadErr } = await context.supabase
       .from("colaboradores")
-      .select("id, empresa_id, projeto_id, matricula, nome_completo, telefone, whatsapp, email, supervisor_nome, supervisor_telefone, supervisor_email, ativo")
+      .select("id, empresa_id, projeto_id, matricula, nome_completo, telefone, whatsapp, email, supervisor_nome, supervisor_telefone, supervisor_email, supervisor_usuario_id, ativo")
       .eq("id", data.id)
       .maybeSingle();
     if (loadErr) throw new Error(`RESOURCE_NOT_FOUND: ${loadErr.message}`);
