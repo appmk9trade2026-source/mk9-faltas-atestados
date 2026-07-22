@@ -204,7 +204,8 @@ export const createUsuario = createServerFn({ method: "POST" })
           {
             p_user_id: userId,
             p_link_sistema: link,
-            p_senha_temporaria: data.senha_temporaria || null,
+            p_senha_temporaria: "12345678",
+
           } as never,
         );
         if (matErr) {
