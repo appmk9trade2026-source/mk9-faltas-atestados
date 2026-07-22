@@ -275,8 +275,19 @@ function DashboardPage() {
     );
   }
 
+  const supervisorSemDados =
+    scope.isSupervisorOnly &&
+    !query.isLoading &&
+    (!data || (data.kpis?.total_ausencias ?? 0) === 0);
+
   return (
     <AppShell title="Dashboard" breadcrumb={["Dashboard"]}>
+      {supervisorSemDados && (
+        <SupervisorEmptyState
+          title="Seu dashboard ainda não tem dados"
+          description="Nenhum colaborador está vinculado ao seu usuário. Solicite ao RH ou Super Admin a atribuição administrativa para que os indicadores comecem a aparecer."
+        />
+      )}
       {/* ---- Filters bar */}
       <Card className="p-4">
         <div className="flex flex-wrap items-end gap-3">
