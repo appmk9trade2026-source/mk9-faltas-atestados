@@ -312,6 +312,12 @@ function PasswordEmailDialog({
           </Alert>
         ) : (
           <form onSubmit={onSubmit} className="space-y-4">
+            {techError && (
+              <Alert variant="destructive">
+                <AlertDescription>{techError}</AlertDescription>
+              </Alert>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="dlg-email">E-mail</Label>
               <div className="relative">
