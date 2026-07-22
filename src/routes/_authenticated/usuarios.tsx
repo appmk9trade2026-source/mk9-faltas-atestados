@@ -20,6 +20,7 @@ import {
   PowerOff,
   Search,
   Send,
+  Trash2,
   UserCog,
 } from "lucide-react";
 
