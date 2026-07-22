@@ -179,7 +179,8 @@ function AusenciasPage() {
   const [downloading, setDownloading] = useState<string | null>(null);
 
   const empresasQ = useQuery({
-    queryKey: ["empresas", "todas"],
+    queryKey: ["empresas", "todas", ...scope.keyParts],
+    enabled: scope.ready,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("empresas")
@@ -190,7 +191,8 @@ function AusenciasPage() {
     },
   });
   const projetosQ = useQuery({
-    queryKey: ["projetos", "todos-para-filtro"],
+    queryKey: ["projetos", "todos-para-filtro", ...scope.keyParts],
+    enabled: scope.ready,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("projetos")
@@ -202,7 +204,8 @@ function AusenciasPage() {
   });
 
   const ausenciasQ = useQuery({
-    queryKey: ["ausencias"],
+    queryKey: ["ausencias", ...scope.keyParts],
+    enabled: scope.ready,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ausencias")
