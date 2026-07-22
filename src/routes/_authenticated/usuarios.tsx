@@ -277,6 +277,9 @@ function UsuariosPage() {
 
   const [confirmDeactivate, setConfirmDeactivate] = useState<UsuarioRow | null>(null);
   const [confirmEncerrarSessoes, setConfirmEncerrarSessoes] = useState<UsuarioRow | null>(null);
+  const [senhaTempAlvo, setSenhaTempAlvo] = useState<UsuarioRow | null>(null);
+  const [excluirAlvo, setExcluirAlvo] = useState<UsuarioRow | null>(null);
+  const isSuperAdmin = roles.includes("super_admin");
 
   const canResendWhatsapp = roles.includes("super_admin");
   const canSeeWhatsapp = roles.includes("super_admin") || roles.includes("rh") || roles.includes("compliance");
