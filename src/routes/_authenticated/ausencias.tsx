@@ -68,6 +68,8 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { useSessionScope } from "@/hooks/use-session-scope";
+import { SupervisorEmptyState } from "@/components/supervisor-empty-state";
 import {
   BUCKET_ATESTADOS,
   TIPO_AUSENCIA,
@@ -155,6 +157,7 @@ function StatusBadge({ status }: { status: StatusAusencia }) {
 
 function AusenciasPage() {
   const { roles } = useSession();
+  const scope = useSessionScope();
   const podeCadastrar =
     roles.includes("super_admin") || roles.includes("rh") || roles.includes("supervisor");
   const podeLancar = roles.includes("super_admin") || roles.includes("rh");
@@ -176,7 +179,8 @@ function AusenciasPage() {
   const [downloading, setDownloading] = useState<string | null>(null);
 
   const empresasQ = useQuery({
-    queryKey: ["empresas", "todas"],
+    queryKey: ["empresas", "todas", ...scope.keyParts],
+    enabled: scope.ready,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("empresas")
@@ -187,7 +191,8 @@ function AusenciasPage() {
     },
   });
   const projetosQ = useQuery({
-    queryKey: ["projetos", "todos-para-filtro"],
+    queryKey: ["projetos", "todos-para-filtro", ...scope.keyParts],
+    enabled: scope.ready,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("projetos")
@@ -199,7 +204,8 @@ function AusenciasPage() {
   });
 
   const ausenciasQ = useQuery({
-    queryKey: ["ausencias"],
+    queryKey: ["ausencias", ...scope.keyParts],
+    enabled: scope.ready,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ausencias")
@@ -354,6 +360,15 @@ function AusenciasPage() {
           </Button>
         )}
       </div>
+
+      {scope.isSupervisorOnly &&
+        !ausenciasQ.isLoading &&
+        (ausenciasQ.data?.length ?? 0) === 0 && (
+          <SupervisorEmptyState
+            title="Você ainda não possui ausências para acompanhar"
+            description="Nenhum colaborador está vinculado ao seu usuário. Solicite ao RH ou Super Admin a atribuição administrativa para começar a lançar ausências."
+          />
+        )}
 
       <Card className="overflow-hidden">
         <div className="flex flex-col gap-3 border-b p-4">

@@ -48,6 +48,7 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { useSessionScope } from "@/hooks/use-session-scope";
 import { TIPO_LABEL, type TipoAusencia } from "@/lib/ausencias";
 import {
   CANAL_COMUNICACAO,
@@ -151,6 +152,7 @@ function StatusBadge({ status }: { status: StatusComunicacao }) {
 
 function ComunicacoesPage() {
   const { roles, user } = useSession();
+  const scope = useSessionScope();
   const isRH = roles.includes("super_admin") || roles.includes("rh");
   const queryClient = useQueryClient();
   const { ausencia: ausenciaParam } = Route.useSearch();
@@ -179,7 +181,8 @@ function ComunicacoesPage() {
   }, [ausenciaParam, isRH, navigate]);
 
   const empresasQ = useQuery({
-    queryKey: ["empresas", "todas"],
+    queryKey: ["empresas", "todas", ...scope.keyParts],
+    enabled: scope.ready,
     queryFn: async () => {
       const { data, error } = await supabase.from("empresas").select("id, nome").order("nome");
       if (error) throw error;
@@ -187,7 +190,8 @@ function ComunicacoesPage() {
     },
   });
   const projetosQ = useQuery({
-    queryKey: ["projetos", "todos-para-filtro"],
+    queryKey: ["projetos", "todos-para-filtro", ...scope.keyParts],
+    enabled: scope.ready,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("projetos")
@@ -199,7 +203,8 @@ function ComunicacoesPage() {
   });
 
   const comunicacoesQ = useQuery({
-    queryKey: ["comunicacoes"],
+    queryKey: ["comunicacoes", ...scope.keyParts],
+    enabled: scope.ready,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("comunicacoes")

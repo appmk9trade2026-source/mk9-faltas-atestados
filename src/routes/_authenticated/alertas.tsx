@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/layout/app-shell";
+import { useSessionScope } from "@/hooks/use-session-scope";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -106,6 +107,7 @@ function AlertasPage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const qc = useQueryClient();
+  const scope = useSessionScope();
 
   const listarFn = useServerFn(listarAlertas);
   const contagemFn = useServerFn(obterContagemAlertasMenu);
@@ -118,20 +120,23 @@ function AlertasPage() {
   const reabrirFn = useServerFn(reabrirAlerta);
 
   const filtros = useQuery({
-    queryKey: ["alertas", "filtros"],
+    queryKey: ["alertas", "filtros", ...scope.keyParts],
+    enabled: scope.ready,
     queryFn: () => filtrosFn(),
     staleTime: 60_000,
   });
 
   const contagem = useQuery({
-    queryKey: ["alertas", "contagem"],
+    queryKey: ["alertas", "contagem", ...scope.keyParts],
+    enabled: scope.ready,
     queryFn: () => contagemFn(),
     refetchInterval: 60_000,
   });
 
-  const listaKey = ["alertas", "lista", search] as const;
+  const listaKey = ["alertas", "lista", ...scope.keyParts, search] as const;
   const lista = useQuery({
     queryKey: listaKey,
+    enabled: scope.ready,
     queryFn: () =>
       listarFn({
         data: {
@@ -153,9 +158,9 @@ function AlertasPage() {
   });
 
   const detalhe = useQuery({
-    queryKey: ["alertas", "detalhe", search.id],
+    queryKey: ["alertas", "detalhe", ...scope.keyParts, search.id],
     queryFn: () => detalheFn({ data: { id: search.id } }),
-    enabled: !!search.id,
+    enabled: scope.ready && !!search.id,
   });
 
   function setSearch(patch: Partial<z.infer<typeof searchSchema>>) {
