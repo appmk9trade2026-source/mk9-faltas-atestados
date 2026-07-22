@@ -1104,6 +1104,7 @@ export type Database = {
           supervisor_email: string | null
           supervisor_nome: string | null
           supervisor_telefone: string | null
+          supervisor_usuario_id: string | null
           telefone: string | null
           updated_at: string
           whatsapp: string | null
@@ -1124,6 +1125,7 @@ export type Database = {
           supervisor_email?: string | null
           supervisor_nome?: string | null
           supervisor_telefone?: string | null
+          supervisor_usuario_id?: string | null
           telefone?: string | null
           updated_at?: string
           whatsapp?: string | null
@@ -1144,6 +1146,7 @@ export type Database = {
           supervisor_email?: string | null
           supervisor_nome?: string | null
           supervisor_telefone?: string | null
+          supervisor_usuario_id?: string | null
           telefone?: string | null
           updated_at?: string
           whatsapp?: string | null

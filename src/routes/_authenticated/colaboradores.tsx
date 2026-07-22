@@ -114,12 +114,16 @@ type Colaborador = {
   supervisor_nome: string | null;
   supervisor_telefone: string | null;
   supervisor_email: string | null;
+  supervisor_usuario_id: string | null;
   ativo: boolean;
   created_at: string;
   updated_at: string;
   empresa?: { id: string; nome: string; ativo: boolean } | null;
   projeto?: { id: string; nome: string; ativo: boolean } | null;
+  supervisor_usuario?: { id: string; nome: string; email: string } | null;
 };
+
+type SupervisorOption = { id: string; nome: string; email: string };
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -147,6 +151,7 @@ const colabSchema = z
       .or(z.literal("")),
     supervisor_telefone: z.string().optional().or(z.literal("")),
     supervisor_email: z.string().optional().or(z.literal("")),
+    supervisor_usuario_id: z.string().uuid().nullable().optional().or(z.literal("")),
     ativo: z.boolean(),
   })
   .superRefine((data, ctx) => {
@@ -186,7 +191,7 @@ type ColabForm = z.infer<typeof colabSchema>;
 const PAGE_SIZE = 10;
 
 const COLAB_SELECT =
-  "id, empresa_id, projeto_id, matricula, nome_completo, telefone, whatsapp, email, supervisor_nome, supervisor_telefone, supervisor_email, ativo, created_at, updated_at, empresa:empresas(id, nome, ativo), projeto:projetos(id, nome, ativo)";
+  "id, empresa_id, projeto_id, matricula, nome_completo, telefone, whatsapp, email, supervisor_nome, supervisor_telefone, supervisor_email, supervisor_usuario_id, ativo, created_at, updated_at, empresa:empresas(id, nome, ativo), projeto:projetos(id, nome, ativo)";
 
 /** Monta um link wa.me com código do país 55 quando necessário. */
 function waLink(numero: string | null | undefined): string | null {
@@ -197,8 +202,14 @@ function waLink(numero: string | null | undefined): string | null {
 }
 
 function ColaboradoresPage() {
-  const { roles } = useSession();
+  const { roles, user } = useSession();
+  const userId = user?.id ?? null;
   const canManage = roles.includes("super_admin") || roles.includes("rh");
+  const isSupervisorOnly =
+    roles.includes("supervisor") &&
+    !roles.includes("super_admin") &&
+    !roles.includes("rh") &&
+    !roles.includes("compliance");
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
@@ -239,7 +250,8 @@ function ColaboradoresPage() {
   });
 
   const colabQ = useQuery({
-    queryKey: ["colaboradores"],
+    queryKey: ["colaboradores", userId, roles.join(",")],
+    enabled: !!userId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("colaboradores")
@@ -320,6 +332,10 @@ function ColaboradoresPage() {
         supervisor_email: values.supervisor_email?.trim()
           ? values.supervisor_email.trim().toLowerCase()
           : null,
+        supervisor_usuario_id:
+          values.supervisor_usuario_id && values.supervisor_usuario_id !== ""
+            ? values.supervisor_usuario_id
+            : null,
         ativo: values.ativo,
       };
       if (values.id) {
@@ -399,6 +415,9 @@ function ColaboradoresPage() {
 
   return (
     <AppShell title="Colaboradores" breadcrumb={["Operação", "Colaboradores"]}>
+      <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+        Os colaboradores são exibidos conforme os vínculos de supervisão cadastrados.
+      </div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           Pessoas vinculadas às empresas e projetos operacionais. Colaboradores não
@@ -561,9 +580,15 @@ function ColaboradoresPage() {
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
                         <Users className="h-5 w-5 text-muted-foreground" />
                       </div>
-                      <p className="text-sm font-medium">Nenhum colaborador encontrado</p>
+                      <p className="text-sm font-medium">
+                        {isSupervisorOnly
+                          ? "Nenhum colaborador está vinculado ao seu usuário."
+                          : "Nenhum colaborador encontrado"}
+                      </p>
                       <p className="text-xs text-muted-foreground">
-                        Ajuste os filtros ou cadastre um novo colaborador.
+                        {isSupervisorOnly
+                          ? "Solicite ao RH ou ao Super Admin o vínculo de supervisão dos colaboradores sob sua responsabilidade."
+                          : "Ajuste os filtros ou cadastre um novo colaborador."}
                       </p>
                     </div>
                   </TableCell>
@@ -979,17 +1004,51 @@ function ColaboradorDialog({
         ? formatTelefone(editing.supervisor_telefone)
         : "",
       supervisor_email: editing?.supervisor_email ?? "",
+      supervisor_usuario_id: editing?.supervisor_usuario_id ?? "",
       ativo: editing?.ativo ?? true,
     },
   });
 
   const empresaId = form.watch("empresa_id");
+  const projetoIdWatch = form.watch("projeto_id");
   const matriculaInput = form.watch("matricula");
   const projetosQ = useProjetosAtivosPorEmpresa(empresaId || null);
   const duplicadoQ = useColaboradorDuplicado(empresaId || null, matriculaInput, editing?.id ?? null);
   const duplicado = duplicadoQ.duplicado;
   const checando = duplicadoQ.checking;
   const erroDup = duplicadoQ.errorMessage;
+
+  const supervisoresQ = useQuery({
+    queryKey: ["colaboradores", "supervisores-do-projeto", projetoIdWatch || null],
+    enabled: !!projetoIdWatch,
+    queryFn: async (): Promise<SupervisorOption[]> => {
+      const projetoId = projetoIdWatch as string;
+      const { data: vincs, error: e1 } = await supabase
+        .from("usuario_projetos")
+        .select("user_id")
+        .eq("projeto_id", projetoId);
+      if (e1) throw e1;
+      const userIds = Array.from(new Set((vincs ?? []).map((v) => v.user_id as string)));
+      if (userIds.length === 0) return [];
+      const { data: roles, error: e2 } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "supervisor")
+        .in("user_id", userIds);
+      if (e2) throw e2;
+      const supIds = Array.from(new Set((roles ?? []).map((r) => r.user_id as string)));
+      if (supIds.length === 0) return [];
+      const { data: profs, error: e3 } = await supabase
+        .from("profiles")
+        .select("id, nome, email, ativo")
+        .in("id", supIds);
+      if (e3) throw e3;
+      return (profs ?? [])
+        .filter((p) => p.ativo)
+        .map((p) => ({ id: p.id as string, nome: p.nome as string, email: p.email as string }))
+        .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    },
+  });
 
 
 
@@ -1296,6 +1355,58 @@ function ColaboradorDialog({
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Supervisão
                 </h3>
+                <FormField
+                  control={form.control}
+                  name="supervisor_usuario_id"
+                  render={({ field }) => {
+                    const opts = supervisoresQ.data ?? [];
+                    const disabled = !projetoIdWatch || supervisoresQ.isLoading;
+                    return (
+                      <FormItem>
+                        <FormLabel>Supervisor responsável</FormLabel>
+                        <Select
+                          value={field.value || "none"}
+                          onValueChange={(v) => field.onChange(v === "none" ? "" : v)}
+                          disabled={disabled}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue
+                                placeholder={
+                                  !projetoIdWatch
+                                    ? "Selecione um projeto primeiro"
+                                    : supervisoresQ.isLoading
+                                      ? "Carregando..."
+                                      : opts.length === 0
+                                        ? "Nenhum supervisor vinculado a este projeto"
+                                        : "Selecione o supervisor"
+                                }
+                              />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">
+                              Sem supervisor responsável
+                            </SelectItem>
+                            {opts.map((s) => (
+                              <SelectItem key={s.id} value={s.id}>
+                                {s.nome}{" "}
+                                <span className="text-xs text-muted-foreground">
+                                  ({s.email})
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Define quais colaboradores este supervisor enxerga na listagem. Somente
+                          usuários com papel Supervisor ativo e vinculados ao projeto aparecem aqui.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
                 <FormField
                   control={form.control}
                   name="supervisor_nome"
