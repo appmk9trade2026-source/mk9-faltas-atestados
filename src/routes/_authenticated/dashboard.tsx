@@ -278,7 +278,7 @@ function DashboardPage() {
   const supervisorSemDados =
     scope.isSupervisorOnly &&
     !query.isLoading &&
-    (!data || (data.kpis?.total_ausencias ?? 0) === 0);
+    (!data || (data.kpis?.total ?? 0) === 0);
 
   return (
     <AppShell title="Dashboard" breadcrumb={["Dashboard"]}>
