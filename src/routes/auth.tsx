@@ -199,7 +199,7 @@ function AuthPage() {
                 onClick={() => setFirstAccessOpen(true)}
               >
                 <UserPlus className="mr-2 h-4 w-4" />
-                Primeiro acesso? Criar senha
+                Primeiro acesso com senha temporária
               </Button>
 
               <p className="text-center text-xs text-muted-foreground">
@@ -218,14 +218,11 @@ function AuthPage() {
         icon={<KeyRound className="h-4 w-4" />}
         submitLabel="Enviar link de recuperação"
       />
-      <PasswordEmailDialog
+      <FirstAccessDialog
         open={firstAccessOpen}
         onOpenChange={setFirstAccessOpen}
-        title="Primeiro acesso"
-        description="Informe o e-mail corporativo cadastrado pelo administrador. Se houver conta ativa, enviaremos um link seguro para você definir sua senha."
-        icon={<UserPlus className="h-4 w-4" />}
-        submitLabel="Enviar link de criação de senha"
       />
+
     </div>
   );
 }
