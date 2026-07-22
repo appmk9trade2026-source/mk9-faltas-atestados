@@ -747,6 +747,32 @@ function UsuariosPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog open={!!senhaPadraoAlvo} onOpenChange={(o) => !o && setSenhaPadraoAlvo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Redefinir para a senha temporária padrão?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A senha de <strong>{senhaPadraoAlvo?.nome}</strong> será redefinida para{" "}
+              <code className="font-mono">12345678</code>. Todas as sessões ativas serão encerradas
+              e o usuário será obrigado a escolher uma nova senha no próximo login.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (senhaPadraoAlvo) redefinirSenhaPadraoMut.mutate({ id: senhaPadraoAlvo.id });
+                setSenhaPadraoAlvo(null);
+              }}
+            >
+              Redefinir para 12345678
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
+
       <SenhaTemporariaDialog
         alvo={senhaTempAlvo ? { id: senhaTempAlvo.id, nome: senhaTempAlvo.nome, email: senhaTempAlvo.email } : null}
         onClose={() => setSenhaTempAlvo(null)}
