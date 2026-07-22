@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
   History as HistoryIcon,
+  Info,
   KeyRound,
   LogOut,
   MailPlus,
@@ -18,6 +19,7 @@ import {
   Plus,
   Power,
   PowerOff,
+  RefreshCw,
   Search,
   Send,
   Trash2,
@@ -104,6 +106,7 @@ import {
   reenviarConviteUsuario,
   encerrarSessoesUsuario,
   reenviarBoasVindasWhatsapp,
+  reprocessarConviteWhatsapp,
   listarStatusBoasVindas,
   type BoasVindasStatus,
 } from "@/lib/usuarios.functions";
@@ -273,12 +276,14 @@ function UsuariosPage() {
   const reenviarFn = useServerFn(reenviarConviteUsuario);
   const encerrarSessoesFn = useServerFn(encerrarSessoesUsuario);
   const reenviarWaFn = useServerFn(reenviarBoasVindasWhatsapp);
+  const reprocessarWaFn = useServerFn(reprocessarConviteWhatsapp);
   const listarStatusWaFn = useServerFn(listarStatusBoasVindas);
 
   const [confirmDeactivate, setConfirmDeactivate] = useState<UsuarioRow | null>(null);
   const [confirmEncerrarSessoes, setConfirmEncerrarSessoes] = useState<UsuarioRow | null>(null);
   const [senhaTempAlvo, setSenhaTempAlvo] = useState<UsuarioRow | null>(null);
   const [excluirAlvo, setExcluirAlvo] = useState<UsuarioRow | null>(null);
+  const [waDetalhesFor, setWaDetalhesFor] = useState<{ usuario: UsuarioRow; status: BoasVindasStatus | null } | null>(null);
   const isSuperAdmin = roles.includes("super_admin");
 
   const canResendWhatsapp = roles.includes("super_admin");
@@ -319,7 +324,20 @@ function UsuariosPage() {
   const reenviarWaMut = useMutation({
     mutationFn: async (id: string) => reenviarWaFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("WhatsApp de boas-vindas enfileirado.");
+      toast.success("Convite enfileirado para envio.");
+      qc.invalidateQueries({ queryKey: ["usuarios-whatsapp-status"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const reprocessarWaMut = useMutation({
+    mutationFn: async (id: string) => reprocessarWaFn({ data: { id } }),
+    onSuccess: (r: { acao?: string }) => {
+      const msgs: Record<string, string> = {
+        materializado: "Novo convite enfileirado.",
+        reenfileirado: "Convite reenfileirado após falha.",
+        antecipado: "Próxima tentativa antecipada.",
+      };
+      toast.success(msgs[r?.acao ?? ""] ?? "Reprocessamento solicitado.");
       qc.invalidateQueries({ queryKey: ["usuarios-whatsapp-status"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -483,7 +501,14 @@ function UsuariosPage() {
                   </TableCell>
                   {canSeeWhatsapp && (
                     <TableCell className="whitespace-nowrap">
-                      <WhatsappStatusCell status={statusWaQ.data?.get(u.id) ?? null} />
+                      <WhatsappStatusCell
+                        status={statusWaQ.data?.get(u.id) ?? null}
+                        onOpenDetails={
+                          isSuperAdmin
+                            ? () => setWaDetalhesFor({ usuario: u, status: statusWaQ.data?.get(u.id) ?? null })
+                            : undefined
+                        }
+                      />
                     </TableCell>
                   )}
 
@@ -537,6 +562,17 @@ function UsuariosPage() {
                               disabled={!u.telefone_whatsapp || !u.ativo || reenviarWaMut.isPending}
                             >
                               <Send className="mr-2 h-4 w-4" /> Reenviar WhatsApp de boas-vindas
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => reprocessarWaMut.mutate(u.id)}
+                              disabled={!u.telefone_whatsapp || !u.ativo || reprocessarWaMut.isPending}
+                            >
+                              <RefreshCw className="mr-2 h-4 w-4" /> Tentar envio novamente
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => setWaDetalhesFor({ usuario: u, status: statusWaQ.data?.get(u.id) ?? null })}
+                            >
+                              <Info className="mr-2 h-4 w-4" /> Detalhes do envio
                             </DropdownMenuItem>
                           </>
                         )}
@@ -704,6 +740,14 @@ function UsuariosPage() {
             : null
         }
         onClose={() => setExcluirAlvo(null)}
+      />
+      <WhatsappDetalhesDialog
+        alvo={waDetalhesFor}
+        onClose={() => setWaDetalhesFor(null)}
+        onReprocessar={() => {
+          if (waDetalhesFor) reprocessarWaMut.mutate(waDetalhesFor.usuario.id);
+        }}
+        reprocessando={reprocessarWaMut.isPending}
       />
     </AppShell>
   );
@@ -1132,31 +1176,130 @@ function HistoryDrawer({ usuario, onClose }: { usuario: UsuarioRow | null; onClo
 }
 
 
-function WhatsappStatusCell({ status }: { status: BoasVindasStatus | null }) {
-  const notSent = !status || !status.outbox_id;
-  const s = status?.status ?? "NAO_ENVIADO";
-  const map: Record<string, { label: string; cls: string }> = {
-    NAO_ENVIADO: { label: "Não enviado", cls: "text-muted-foreground" },
-    LIDA: { label: "Entregue", cls: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
-    ENTREGUE: { label: "Entregue", cls: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
-    ENVIADO: { label: "Enviado", cls: "bg-sky-500/15 text-sky-700 border-sky-500/30" },
-    PENDENTE: { label: "Pendente", cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
-    PROCESSANDO: { label: "Pendente", cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
-    FALHOU_TEMPORARIO: { label: "Pendente", cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
-    FALHOU_DEFINITIVO: { label: "Falhou", cls: "bg-red-500/15 text-red-700 border-red-500/30" },
-    CANCELADO: { label: "Falhou", cls: "bg-red-500/15 text-red-700 border-red-500/30" },
-  };
-  const meta = map[notSent ? "NAO_ENVIADO" : s] ?? { label: s, cls: "text-muted-foreground" };
-  return (
+const WA_STATUS_META: Record<string, { label: string; cls: string }> = {
+  NAO_ENVIADO:       { label: "Não enviado",   cls: "text-muted-foreground" },
+  PENDENTE:          { label: "Pendente",      cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
+  ATRASADO:          { label: "Atrasado",      cls: "bg-orange-500/15 text-orange-700 border-orange-500/30" },
+  PROCESSANDO:       { label: "Processando",   cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
+  ENVIADO:           { label: "Enviado",       cls: "bg-sky-500/15 text-sky-700 border-sky-500/30" },
+  ENTREGUE:          { label: "Entregue",      cls: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
+  LIDA:              { label: "Lida",          cls: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30" },
+  FALHOU_TEMPORARIO: { label: "Retentando",    cls: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
+  FALHOU_DEFINITIVO: { label: "Falhou",        cls: "bg-red-500/15 text-red-700 border-red-500/30" },
+  CANCELADO:         { label: "Cancelado",     cls: "bg-red-500/15 text-red-700 border-red-500/30" },
+};
+
+function WhatsappStatusCell({
+  status,
+  onOpenDetails,
+}: {
+  status: BoasVindasStatus | null;
+  onOpenDetails?: () => void;
+}) {
+  const derived = status?.status_derivado ?? "NAO_ENVIADO";
+  const meta = WA_STATUS_META[derived] ?? { label: derived, cls: "text-muted-foreground" };
+  const isSent = derived !== "NAO_ENVIADO";
+  const timestamp = status?.enviado_em ?? status?.proxima_tentativa_em ?? status?.atualizado_em ?? null;
+
+  const content = (
     <div className="flex flex-col gap-0.5" title={status?.ultimo_erro ?? undefined}>
       <Badge variant="outline" className={`text-[10px] ${meta.cls}`}>
         <MessageCircle className="mr-1 h-3 w-3" />{meta.label}
       </Badge>
-      {status?.atualizado_em && !notSent && (
-        <span className="text-[10px] text-muted-foreground">{fmtDate(status.atualizado_em)}</span>
+      {isSent && timestamp && (
+        <span className="text-[10px] text-muted-foreground">{fmtDate(timestamp)}</span>
+      )}
+      {status && status.tentativas > 0 && derived !== "ENVIADO" && (
+        <span className="text-[10px] text-muted-foreground">
+          Tentativa {status.tentativas}/{status.max_tentativas}
+        </span>
       )}
     </div>
   );
+
+  if (!onOpenDetails) return content;
+  return (
+    <button
+      type="button"
+      onClick={onOpenDetails}
+      className="text-left hover:opacity-80 transition-opacity"
+      aria-label="Ver detalhes do envio de WhatsApp"
+    >
+      {content}
+    </button>
+  );
 }
+
+function WhatsappDetalhesDialog({
+  alvo,
+  onClose,
+  onReprocessar,
+  reprocessando,
+}: {
+  alvo: { usuario: UsuarioRow; status: BoasVindasStatus | null } | null;
+  onClose: () => void;
+  onReprocessar: () => void;
+  reprocessando: boolean;
+}) {
+  const open = !!alvo;
+  const s = alvo?.status ?? null;
+  const derived = s?.status_derivado ?? "NAO_ENVIADO";
+  const meta = WA_STATUS_META[derived] ?? { label: derived, cls: "text-muted-foreground" };
+
+  const rows: Array<[string, React.ReactNode]> = s
+    ? [
+        ["Status", <Badge key="s" variant="outline" className={`text-[10px] ${meta.cls}`}>{meta.label}</Badge>],
+        ["Status interno", <code key="si" className="text-[11px]">{s.status ?? "—"}</code>],
+        ["Telefone", s.telefone_mascarado ?? "—"],
+        ["Template", s.template_codigo ?? "—"],
+        ["Tentativas", `${s.tentativas} / ${s.max_tentativas}`],
+        ["Próxima tentativa", s.proxima_tentativa_em ? fmtDate(s.proxima_tentativa_em) : "—"],
+        ["Enviado em", s.enviado_em ? fmtDate(s.enviado_em) : "—"],
+        ["Criado em", s.created_at ? fmtDate(s.created_at) : "—"],
+        ["ID do provedor", <code key="pm" className="text-[11px] break-all">{s.provider_message_id ?? "—"}</code>],
+        ["Código do erro", <code key="ec" className="text-[11px]">{s.ultimo_erro_codigo ?? "—"}</code>],
+        ["Erro (resumo)", <span key="er" className="text-[11px] break-words">{s.ultimo_erro ?? "—"}</span>],
+        ["Outbox ID", <code key="oid" className="text-[11px] break-all">{s.outbox_id ?? "—"}</code>],
+      ]
+    : [];
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Envio do convite por WhatsApp</DialogTitle>
+          <DialogDescription>
+            {alvo?.usuario.nome} · {alvo?.usuario.email}
+          </DialogDescription>
+        </DialogHeader>
+        {s ? (
+          <div className="grid grid-cols-[140px_1fr] gap-x-3 gap-y-2 text-sm">
+            {rows.map(([k, v]) => (
+              <>
+                <div key={`k-${k}`} className="text-muted-foreground">{k}</div>
+                <div key={`v-${k}`} className="min-w-0">{v}</div>
+              </>
+            ))}
+          </div>
+        ) : (
+          <div className="text-sm text-muted-foreground py-4">
+            Nenhum envio foi registrado para este usuário ainda.
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Fechar</Button>
+          <Button
+            onClick={onReprocessar}
+            disabled={reprocessando || !alvo?.usuario.telefone_whatsapp || !alvo?.usuario.ativo}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            {reprocessando ? "Enviando..." : "Tentar novamente"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 

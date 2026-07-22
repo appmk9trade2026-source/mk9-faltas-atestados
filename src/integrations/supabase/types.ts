@@ -3044,6 +3044,30 @@ export type Database = {
           },
         ]
       }
+      whatsapp_cron_config: {
+        Row: {
+          enabled: boolean
+          endpoint_url: string
+          id: boolean
+          updated_at: string
+          worker_secret: string
+        }
+        Insert: {
+          enabled?: boolean
+          endpoint_url: string
+          id?: boolean
+          updated_at?: string
+          worker_secret: string
+        }
+        Update: {
+          enabled?: boolean
+          endpoint_url?: string
+          id?: boolean
+          updated_at?: string
+          worker_secret?: string
+        }
+        Relationships: []
+      }
       whatsapp_destinatario_config: {
         Row: {
           base_envio: Database["public"]["Enums"]["whatsapp_base_envio"]
@@ -3741,6 +3765,7 @@ export type Database = {
       cron_healthcheck: { Args: never; Returns: Json }
       cron_refresh_bi_absenteismo_tick: { Args: never; Returns: Json }
       cron_run_escalonamentos_tick: { Args: never; Returns: undefined }
+      cron_tick_whatsapp_outbox: { Args: never; Returns: number }
       dashboard_metrics: {
         Args: {
           _categoria_id?: string

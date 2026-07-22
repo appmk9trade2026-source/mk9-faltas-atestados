@@ -882,15 +882,49 @@ export const reenviarBoasVindasWhatsapp = createServerFn({ method: "POST" })
   });
 
 // ---------------- WhatsApp: status por usuário ----------------
+export type WhatsappDerivedStatus =
+  | "NAO_ENVIADO"
+  | "PENDENTE"
+  | "ATRASADO"
+  | "PROCESSANDO"
+  | "ENVIADO"
+  | "ENTREGUE"
+  | "LIDA"
+  | "FALHOU_TEMPORARIO"
+  | "FALHOU_DEFINITIVO"
+  | "CANCELADO";
+
 export type BoasVindasStatus = {
   user_id: string;
   outbox_id: string | null;
   status: string | null;
+  status_derivado: WhatsappDerivedStatus;
   ultimo_erro: string | null;
+  ultimo_erro_codigo: string | null;
   telefone_mascarado: string | null;
   atualizado_em: string | null;
   provider_message_id: string | null;
+  tentativas: number;
+  max_tentativas: number;
+  proxima_tentativa_em: string | null;
+  created_at: string | null;
+  enviado_em: string | null;
+  template_codigo: string | null;
 };
+
+const ATRASADO_APOS_MIN = 5;
+
+function derivarStatus(raw: string | null, createdAt: string | null): WhatsappDerivedStatus {
+  if (!raw) return "NAO_ENVIADO";
+  if (raw === "PENDENTE") {
+    if (createdAt) {
+      const ageMs = Date.now() - new Date(createdAt).getTime();
+      if (ageMs > ATRASADO_APOS_MIN * 60_000) return "ATRASADO";
+    }
+    return "PENDENTE";
+  }
+  return raw as WhatsappDerivedStatus;
+}
 
 export const listarStatusBoasVindas = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -898,8 +932,6 @@ export const listarStatusBoasVindas = createServerFn({ method: "POST" })
     z.object({ user_ids: z.array(z.string().uuid()).max(200) }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    // Qualquer role autenticado que já veja a lista de usuários pode ver o status.
-    // Restringimos a super_admin/rh/compliance (mesmas roles que enxergam a outbox).
     const [sa, rh, cp] = await Promise.all([
       context.supabase.rpc("has_role", { _user_id: context.userId, _role: "super_admin" }),
       context.supabase.rpc("has_role", { _user_id: context.userId, _role: "rh" }),
@@ -912,7 +944,7 @@ export const listarStatusBoasVindas = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rows, error } = await supabaseAdmin
       .from("whatsapp_outbox")
-      .select("id, destinatario_usuario_id, status, telefone_mascarado, ultimo_erro_resumido, provider_message_id, created_at, enviado_em, confirmado_em, falhou_em")
+      .select("id, destinatario_usuario_id, status, telefone_mascarado, ultimo_erro_resumido, ultimo_erro_codigo, provider_message_id, created_at, enviado_em, confirmado_em, falhou_em, tentativas, max_tentativas, proxima_tentativa_em, template_codigo")
       .eq("evento_tipo", "USUARIO_CRIADO")
       .in("destinatario_usuario_id", data.user_ids)
       .order("created_at", { ascending: false });
@@ -922,15 +954,94 @@ export const listarStatusBoasVindas = createServerFn({ method: "POST" })
     for (const r of rows ?? []) {
       const uid = (r.destinatario_usuario_id as string) ?? "";
       if (!uid || byUser.has(uid)) continue;
+      const raw = (r.status as string) ?? null;
+      const createdAt = (r.created_at as string) ?? null;
       byUser.set(uid, {
         user_id: uid,
         outbox_id: (r.id as string) ?? null,
-        status: (r.status as string) ?? null,
+        status: raw,
+        status_derivado: derivarStatus(raw, createdAt),
         ultimo_erro: (r.ultimo_erro_resumido as string) ?? null,
+        ultimo_erro_codigo: (r.ultimo_erro_codigo as string) ?? null,
         telefone_mascarado: (r.telefone_mascarado as string) ?? null,
         provider_message_id: (r.provider_message_id as string) ?? null,
-        atualizado_em: ((r.confirmado_em as string) ?? (r.enviado_em as string) ?? (r.falhou_em as string) ?? (r.created_at as string)) ?? null,
+        atualizado_em: ((r.confirmado_em as string) ?? (r.enviado_em as string) ?? (r.falhou_em as string) ?? createdAt) ?? null,
+        tentativas: Number(r.tentativas ?? 0),
+        max_tentativas: Number(r.max_tentativas ?? 5),
+        proxima_tentativa_em: (r.proxima_tentativa_em as string) ?? null,
+        created_at: createdAt,
+        enviado_em: (r.enviado_em as string) ?? null,
+        template_codigo: (r.template_codigo as string) ?? null,
       });
     }
     return { itens: Array.from(byUser.values()) };
   });
+
+// ---------------- WhatsApp: reprocessar convite (apenas Super Admin) ----------------
+export const reprocessarConviteWhatsapp = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ id: z.string().uuid() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await gateUsuario(context, PERMISSION_MAP.updateUser, "/usuarios#reprocessar-whatsapp");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Última outbox do usuário
+    const { data: last, error: qErr } = await supabaseAdmin
+      .from("whatsapp_outbox")
+      .select("id, status")
+      .eq("evento_tipo", "USUARIO_CRIADO")
+      .eq("destinatario_usuario_id", data.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (qErr) throw new Error(qErr.message);
+
+    const status = (last?.status as string) ?? null;
+
+    // Caso 1: nada existe → materializa novo convite (comportamento igual ao reenviar)
+    if (!last) {
+      const link = process.env.APP_PUBLIC_URL || "https://mk9-staff-hub.lovable.app";
+      const { data: matData, error: matErr } = await supabaseAdmin.rpc(
+        "materializar_whatsapp_usuario_boas_vindas",
+        { p_user_id: data.id, p_link_sistema: link, p_senha_temporaria: null } as never,
+      );
+      if (matErr) throw new Error(matErr.message);
+      const res = (matData ?? {}) as { ok?: boolean; motivo?: string; outbox_id?: string };
+      if (!res.ok) throw new Error(`Não foi possível enfileirar: ${res.motivo}`);
+      await audit(context.supabase, "WHATSAPP_REENFILEIRADO", data.id,
+        `Convite WhatsApp materializado via reprocessamento`, null,
+        { outbox_id: res.outbox_id });
+      return { ok: true, acao: "materializado" as const, outbox_id: res.outbox_id };
+    }
+
+    // Caso 2: falha definitiva/cancelado → reenfileira via RPC existente
+    if (status === "FALHOU_DEFINITIVO" || status === "CANCELADO") {
+      const { error: rerr } = await supabaseAdmin.rpc("whatsapp_outbox_reenfileirar", {
+        p_id: last.id,
+        p_motivo: "Reprocessado por Super Admin (UI)",
+      } as never);
+      if (rerr) throw new Error(rerr.message);
+      await audit(context.supabase, "WHATSAPP_REENFILEIRADO", data.id,
+        `Convite WhatsApp reenfileirado após ${status}`, null,
+        { outbox_id: last.id });
+      return { ok: true, acao: "reenfileirado" as const, outbox_id: last.id };
+    }
+
+    // Caso 3: PENDENTE/ATRASADO/FALHOU_TEMPORARIO → força próxima tentativa agora
+    const { error: uerr } = await supabaseAdmin
+      .from("whatsapp_outbox")
+      .update({
+        proxima_tentativa_em: new Date().toISOString(),
+        locked_at: null,
+        locked_by: null,
+      })
+      .eq("id", last.id);
+    if (uerr) throw new Error(uerr.message);
+    await audit(context.supabase, "WHATSAPP_REENFILEIRADO", data.id,
+      `Convite WhatsApp: próxima tentativa antecipada (estava ${status})`, null,
+      { outbox_id: last.id });
+    return { ok: true, acao: "antecipado" as const, outbox_id: last.id };
+  });
+

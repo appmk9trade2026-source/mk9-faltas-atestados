@@ -274,21 +274,37 @@ function timingSafeEqualStr(a: string, b: string): boolean {
   return diff === 0;
 }
 
-function verifyWorkerSecret(request: Request): boolean {
-  const expected = process.env.WHATSAPP_WORKER_SECRET;
-  if (!expected) return false;
+async function verifyWorkerSecret(request: Request): Promise<boolean> {
   const got =
     request.headers.get("x-worker-secret") ??
     request.headers.get("x-cron-secret") ??
     (request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? null);
-  return !!got && timingSafeEqualStr(got, expected);
+  if (!got) return false;
+
+  const expectedEnv = process.env.WHATSAPP_WORKER_SECRET;
+  if (expectedEnv && timingSafeEqualStr(got, expectedEnv)) return true;
+
+  // Fallback: aceita segredo cadastrado em public.whatsapp_cron_config (usado pelo pg_cron).
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("whatsapp_cron_config")
+      .select("worker_secret")
+      .eq("id", true)
+      .maybeSingle();
+    const dbSecret = (data?.worker_secret as string | undefined) ?? null;
+    if (dbSecret && timingSafeEqualStr(got, dbSecret)) return true;
+  } catch {
+    /* ignore */
+  }
+  return false;
 }
 
 export const Route = createFileRoute("/api/public/hooks/process-whatsapp-outbox")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        if (!verifyWorkerSecret(request)) return jsonResponse({ ok: false, error: "unauthorized" }, 401);
+        if (!(await verifyWorkerSecret(request))) return jsonResponse({ ok: false, error: "unauthorized" }, 401);
         try {
           return await handleRun();
         } catch (err: any) {
@@ -297,7 +313,7 @@ export const Route = createFileRoute("/api/public/hooks/process-whatsapp-outbox"
       },
       GET: async ({ request }) => {
         // Health-check autenticado com o mesmo segredo dedicado do worker.
-        if (!verifyWorkerSecret(request)) return jsonResponse({ ok: false, error: "unauthorized" }, 401);
+        if (!(await verifyWorkerSecret(request))) return jsonResponse({ ok: false, error: "unauthorized" }, 401);
         return jsonResponse({ ok: true, worker: WORKER_NAME });
       },
     },
