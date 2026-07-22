@@ -26,6 +26,7 @@ import {
   ChevronDown,
   Circle,
   Bot,
+  Trophy,
 } from "lucide-react";
 import { APP_VERSION, APP_ENV, APP_ENV_LABEL } from "@/lib/app-meta";
 import {
