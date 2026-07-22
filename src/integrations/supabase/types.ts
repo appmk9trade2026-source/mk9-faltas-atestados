@@ -3613,6 +3613,10 @@ export type Database = {
         Args: { _notificacao_id: string }
         Returns: undefined
       }
+      atestado_path_visivel_para: {
+        Args: { _name: string; _user_id: string }
+        Returns: boolean
+      }
       atualizar_preferencia_notificacao: {
         Args: {
           p_habilitada: boolean
