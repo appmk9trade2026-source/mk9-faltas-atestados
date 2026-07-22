@@ -683,6 +683,9 @@ function UsuariosPage() {
           onClose={() => setEditing(null)}
           empresas={empresasQ.data ?? []}
           projetos={projetosQ.data ?? []}
+          canManageSecurity={isSuperAdmin && editing.id !== user?.id}
+          onRedefinirSenhaPadrao={() => setSenhaPadraoAlvo(editing)}
+          onEncerrarSessoes={() => setConfirmEncerrarSessoes(editing)}
           onSubmit={async (values) => {
             await updateFn({
               data: {
@@ -698,6 +701,7 @@ function UsuariosPage() {
           }}
         />
       )}
+
 
       <HistoryDrawer usuario={historyFor} onClose={() => setHistoryFor(null)} />
 
