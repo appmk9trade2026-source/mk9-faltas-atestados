@@ -4162,67 +4162,36 @@ export type Database = {
         Args: { p_conteudo: string; p_variaveis: string[] }
         Returns: undefined
       }
-      wa_tst_confirmar:
-        | {
-            Args: { p_id: string }
-            Returns: {
-              ativo: boolean
-              cargo: string
-              confirmado: boolean
-              confirmado_em: string | null
-              confirmado_ip: unknown
-              confirmado_por: string | null
-              created_at: string
-              created_by: string | null
-              destinatario_principal_acidente: boolean
-              empresa_id: string | null
-              id: string
-              nome: string
-              telefone_e164: string
-              telefone_hash: string
-              telefone_mascarado: string
-              telefone_normalizado: string
-              telefone_original: string
-              updated_at: string
-              updated_by: string | null
-            }
-            SetofOptions: {
-              from: "*"
-              to: "whatsapp_tst_destinatarios"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: { p_id: string; p_ip?: unknown }
-            Returns: {
-              ativo: boolean
-              cargo: string
-              confirmado: boolean
-              confirmado_em: string | null
-              confirmado_ip: unknown
-              confirmado_por: string | null
-              created_at: string
-              created_by: string | null
-              destinatario_principal_acidente: boolean
-              empresa_id: string | null
-              id: string
-              nome: string
-              telefone_e164: string
-              telefone_hash: string
-              telefone_mascarado: string
-              telefone_normalizado: string
-              telefone_original: string
-              updated_at: string
-              updated_by: string | null
-            }
-            SetofOptions: {
-              from: "*"
-              to: "whatsapp_tst_destinatarios"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
+      wa_tst_confirmar: {
+        Args: { p_id: string; p_ip?: unknown }
+        Returns: {
+          ativo: boolean
+          cargo: string
+          confirmado: boolean
+          confirmado_em: string | null
+          confirmado_ip: unknown
+          confirmado_por: string | null
+          created_at: string
+          created_by: string | null
+          destinatario_principal_acidente: boolean
+          empresa_id: string | null
+          id: string
+          nome: string
+          telefone_e164: string
+          telefone_hash: string
+          telefone_mascarado: string
+          telefone_normalizado: string
+          telefone_original: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "whatsapp_tst_destinatarios"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       whatsapp_calc_backoff: {
         Args: { p_base_seg: number; p_max_seg: number; p_tentativas: number }
         Returns: string
