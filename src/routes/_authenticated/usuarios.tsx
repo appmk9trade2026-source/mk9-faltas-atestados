@@ -857,22 +857,17 @@ function FormSectionsCreate({
       <Separator />
       <div>
         <h3 className="text-sm font-semibold mb-2">Acesso</h3>
+        <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs mb-3">
+          <p className="font-medium text-foreground">Senha temporária padrão do CRM: <code className="font-mono">12345678</code></p>
+          <p className="text-muted-foreground mt-1">
+            Todo novo usuário é criado com esta senha e será obrigado a defini-la no primeiro login.
+            Nenhum convite por e-mail é enviado — repasse a senha por um canal seguro.
+          </p>
+        </div>
         <div className="grid md:grid-cols-2 gap-3">
-          <FormField control={form.control} name="senha_temporaria" render={({ field }) => (
-            <FormItem>
-              <FormLabel>Senha temporária (opcional)</FormLabel>
-              <FormControl><Input type="text" placeholder="Deixe vazio para enviar convite" {...field} /></FormControl>
-              <FormMessage />
-            </FormItem>
-          )} />
           <div className="space-y-3">
-            <FormField control={form.control} name="enviar_convite" render={({ field }) => (
-              <FormItem className="flex items-center justify-between rounded-md border p-3">
-                <div><Label>Enviar convite por e-mail</Label></div>
-                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-              </FormItem>
-            )} />
             <FormField control={form.control} name="enviar_whatsapp" render={({ field }) => {
+
               const tel = (form.watch("telefone") ?? "").toString();
               const digits = tel.replace(/\D+/g, "");
               const telValido = digits.length >= 10 && digits.length <= 15;
