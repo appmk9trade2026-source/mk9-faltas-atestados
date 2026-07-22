@@ -51,21 +51,12 @@ type Resultado =
 export const solicitarPrimeiroAcesso = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => schema.parse(data))
   .handler(async ({ data }) => {
-    let headers: Record<string, string | undefined> = {};
-    try {
-      headers = getHeaders() as Record<string, string | undefined>;
-    } catch {
-      // fora de contexto de request (ex.: prerender) — mantém headers vazios
-    }
     const request_id =
-      headers["x-request-id"] ??
-      headers["cf-ray"] ??
+      data.client_request_id ??
       (globalThis.crypto?.randomUUID?.() ?? String(Date.now()));
-    const ip =
-      headers["x-forwarded-for"]?.split(",")[0]?.trim() ??
-      headers["x-real-ip"] ??
-      null;
-    const user_agent = headers["user-agent"] ?? null;
+    const ip = null;
+    const user_agent = data.user_agent ?? null;
+
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const email_masked = maskEmail(data.email);
