@@ -761,22 +761,29 @@ function UsuariosPage() {
       <AlertDialog open={!!senhaPadraoAlvo} onOpenChange={(o) => !o && setSenhaPadraoAlvo(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Redefinir para a senha temporária padrão?</AlertDialogTitle>
+            <AlertDialogTitle>Redefinir senha temporária e reenviar WhatsApp?</AlertDialogTitle>
             <AlertDialogDescription>
-              A senha de <strong>{senhaPadraoAlvo?.nome}</strong> será redefinida para{" "}
-              <code className="font-mono">12345678</code>. Todas as sessões ativas serão encerradas
-              e o usuário será obrigado a escolher uma nova senha no próximo login.
+              A senha de <strong>{senhaPadraoAlvo?.nome}</strong> será redefinida para a senha
+              temporária padrão. Todas as sessões serão encerradas e será obrigatória a criação
+              de uma nova senha no próximo acesso. Uma nova mensagem de boas-vindas pelo WhatsApp
+              será enfileirada com a senha provisória.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={redefinirSenhaPadraoMut.isPending}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                if (senhaPadraoAlvo) redefinirSenhaPadraoMut.mutate({ id: senhaPadraoAlvo.id });
-                setSenhaPadraoAlvo(null);
+              disabled={redefinirSenhaPadraoMut.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (!senhaPadraoAlvo || redefinirSenhaPadraoMut.isPending) return;
+                const alvo = senhaPadraoAlvo;
+                redefinirSenhaPadraoMut.mutate(
+                  { id: alvo.id },
+                  { onSettled: () => setSenhaPadraoAlvo(null) },
+                );
               }}
             >
-              Redefinir para 12345678
+              {redefinirSenhaPadraoMut.isPending ? "Processando…" : "Redefinir e reenviar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
