@@ -150,6 +150,42 @@ export function AppShell({ title, breadcrumb, children }: { title: string; bread
           </div>
         </main>
         <PwaInstallPrompt />
+        <AlertDialog
+          open={confirmOpen}
+          onOpenChange={(o) => {
+            if (!signingOut) setConfirmOpen(o);
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Sair do sistema</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja sair? Sua sessão será encerrada.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={signingOut}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault();
+                  void handleLogout();
+                }}
+                disabled={signingOut}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {signingOut ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saindo...
+                  </>
+                ) : (
+                  <>
+                    <LogOut className="mr-2 h-4 w-4" /> Sair
+                  </>
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </SidebarInset>
       </CommandPaletteProvider>
     </SidebarProvider>
