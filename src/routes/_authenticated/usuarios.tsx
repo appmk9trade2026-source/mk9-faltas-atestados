@@ -352,6 +352,15 @@ function UsuariosPage() {
     onSuccess: () => { toast.success("Sessões encerradas."); invalidate(); },
     onError: (e: Error) => toast.error(e.message),
   });
+  const redefinirSenhaPadraoMut = useMutation({
+    mutationFn: async (v: { id: string }) => redefinirSenhaPadraoFn({ data: { id: v.id, motivo: null } }),
+    onSuccess: () => {
+      toast.success('Senha redefinida para "12345678". O usuário precisará trocá-la no próximo login.');
+      invalidate();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
 
   return (
