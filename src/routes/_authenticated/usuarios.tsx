@@ -642,15 +642,17 @@ function UsuariosPage() {
                 telefone: values.telefone || null,
                 cargo: values.cargo || null,
                 avatar_url: values.avatar_url || null,
-                senha_temporaria: values.senha_temporaria || null,
+                senha_temporaria: null,
+                enviar_convite: false,
               },
             });
-            toast.success("Usuário criado com sucesso.");
+            toast.success('Usuário criado com a senha temporária padrão "12345678".');
             setCreateOpen(false);
             invalidate();
           }}
         />
       )}
+
 
       {editing && (
         <EditDialog
