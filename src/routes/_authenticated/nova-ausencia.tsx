@@ -446,7 +446,24 @@ function NovaAusenciaPage() {
               : (undefined as unknown as "sim"),
         motivo: ausencia.motivo ?? "",
       });
+      const a = ausencia as unknown as {
+        acidente_data?: string | null; acidente_hora?: string | null;
+        acidente_local?: string | null; acidente_descricao?: string | null;
+        acidente_atendimento_medico?: boolean | null; acidente_houve_afastamento?: boolean | null;
+        acidente_dias_afastamento_inicial?: number | null; acidente_cat_emitida?: boolean | null;
+        acidente_observacoes?: string | null;
+      };
+      setAcidenteData(a.acidente_data ?? "");
+      setAcidenteHora((a.acidente_hora ?? "").slice(0, 5));
+      setAcidenteLocal(a.acidente_local ?? "");
+      setAcidenteDescricao(a.acidente_descricao ?? "");
+      setAcidenteAtendMedico(a.acidente_atendimento_medico ?? null);
+      setAcidenteAfastamento(a.acidente_houve_afastamento ?? null);
+      setAcidenteDiasAfast(a.acidente_dias_afastamento_inicial != null ? String(a.acidente_dias_afastamento_inicial) : "");
+      setAcidenteCatEmitida(a.acidente_cat_emitida ?? null);
+      setAcidenteObs(a.acidente_observacoes ?? "");
       setPrefilled(true);
+
     })();
   }, [isEdit, ausencia, prefilled, form, applyColab]);
 
