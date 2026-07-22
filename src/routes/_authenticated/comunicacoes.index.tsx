@@ -48,6 +48,7 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { useSessionScope } from "@/hooks/use-session-scope";
 import { TIPO_LABEL, type TipoAusencia } from "@/lib/ausencias";
 import {
   CANAL_COMUNICACAO,
@@ -151,6 +152,7 @@ function StatusBadge({ status }: { status: StatusComunicacao }) {
 
 function ComunicacoesPage() {
   const { roles, user } = useSession();
+  const scope = useSessionScope();
   const isRH = roles.includes("super_admin") || roles.includes("rh");
   const queryClient = useQueryClient();
   const { ausencia: ausenciaParam } = Route.useSearch();

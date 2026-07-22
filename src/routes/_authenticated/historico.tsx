@@ -29,6 +29,7 @@ import {
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/layout/app-shell";
+import { useSessionScope } from "@/hooks/use-session-scope";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -131,6 +132,7 @@ const PAGE_SIZE = 50;
 function HistoricoPage() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
+  const scope = useSessionScope();
 
   // Debounce para busca livre
   const [qLocal, setQLocal] = useState(search.q);
@@ -150,13 +152,15 @@ function HistoricoPage() {
   const listaFiltros = useServerFn(listarFiltrosDoHistorico);
 
   const filtrosQ = useQuery({
-    queryKey: ["historico-filtros-base"],
+    queryKey: ["historico-filtros-base", ...scope.keyParts],
+    enabled: scope.ready,
     queryFn: () => listaFiltros(),
     staleTime: 5 * 60_000,
   });
 
   const historicoQ = useQuery({
-    queryKey: ["historico", filtrosServer, search.page],
+    queryKey: ["historico", ...scope.keyParts, filtrosServer, search.page],
+    enabled: scope.ready,
     queryFn: () =>
       listar({
         data: { filtros: filtrosServer, page: search.page, pageSize: PAGE_SIZE },
