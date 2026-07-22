@@ -684,35 +684,34 @@ export const excluirUsuarioSeguro = createServerFn({ method: "POST" })
 
     // 5. Remove vínculos sem histórico (roles, empresas, projetos, permissões,
     //    preferências, configurações WhatsApp, sessões, IA).
-    const cleanupTables: {
-      table:
-        | "user_roles"
-        | "usuario_empresas"
-        | "usuario_projetos"
-        | "user_permissions"
-        | "preferencias_notificacao"
-        | "notificacao_usuarios"
-        | "whatsapp_destinatario_config"
-        | "user_sessions"
-        | "ai_conversations"
-        | "ai_feedback"
-        | "ai_rate_limits";
-      col: "user_id" | "usuario_id";
-    }[] = [
-      { table: "user_roles", col: "user_id" },
-      { table: "usuario_empresas", col: "user_id" },
-      { table: "usuario_projetos", col: "user_id" },
-      { table: "user_permissions", col: "user_id" },
-      { table: "preferencias_notificacao", col: "usuario_id" },
-      { table: "notificacao_usuarios", col: "usuario_id" },
-      { table: "whatsapp_destinatario_config", col: "usuario_id" },
-      { table: "user_sessions", col: "user_id" },
-      { table: "ai_conversations", col: "user_id" },
-      { table: "ai_feedback", col: "user_id" },
-      { table: "ai_rate_limits", col: "user_id" },
-    ];
-    for (const t of cleanupTables) {
-      await supabaseAdmin.from(t.table).delete().eq(t.col, data.id);
+    const cleanupByUserId = [
+      "user_roles",
+      "usuario_empresas",
+      "usuario_projetos",
+      "user_permissions",
+      "user_sessions",
+      "ai_conversations",
+      "ai_feedback",
+      "ai_rate_limits",
+    ] as const;
+    const cleanupByUsuarioId = [
+      "preferencias_notificacao",
+      "notificacao_usuarios",
+      "whatsapp_destinatario_config",
+    ] as const;
+    for (const tbl of cleanupByUserId) {
+      await (supabaseAdmin.from(tbl) as unknown as {
+        delete: () => { eq: (c: string, v: string) => Promise<unknown> };
+      })
+        .delete()
+        .eq("user_id", data.id);
+    }
+    for (const tbl of cleanupByUsuarioId) {
+      await (supabaseAdmin.from(tbl) as unknown as {
+        delete: () => { eq: (c: string, v: string) => Promise<unknown> };
+      })
+        .delete()
+        .eq("usuario_id", data.id);
     }
 
     // 6. Exclui a identidade no provedor de autenticação PRIMEIRO.
