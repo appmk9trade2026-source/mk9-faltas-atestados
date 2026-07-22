@@ -741,6 +741,14 @@ function UsuariosPage() {
         }
         onClose={() => setExcluirAlvo(null)}
       />
+      <WhatsappDetalhesDialog
+        alvo={waDetalhesFor}
+        onClose={() => setWaDetalhesFor(null)}
+        onReprocessar={() => {
+          if (waDetalhesFor) reprocessarWaMut.mutate(waDetalhesFor.usuario.id);
+        }}
+        reprocessando={reprocessarWaMut.isPending}
+      />
     </AppShell>
   );
 }
