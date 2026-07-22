@@ -105,6 +105,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "ai_conversations_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_tst_saude"
+            referencedColumns: ["empresa_id"]
+          },
+          {
             foreignKeyName: "ai_conversations_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
@@ -346,6 +353,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alertas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_tst_saude"
+            referencedColumns: ["empresa_id"]
           },
           {
             foreignKeyName: "alertas_projeto_id_fkey"
@@ -671,6 +685,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ausencias_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_tst_saude"
+            referencedColumns: ["empresa_id"]
           },
           {
             foreignKeyName: "ausencias_opcao_periodo_id_fkey"
@@ -1134,6 +1155,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colaboradores_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_tst_saude"
+            referencedColumns: ["empresa_id"]
           },
           {
             foreignKeyName: "colaboradores_projeto_id_fkey"
@@ -2362,6 +2390,13 @@ export type Database = {
             referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "projetos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_tst_saude"
+            referencedColumns: ["empresa_id"]
+          },
         ]
       }
       regras_escalonamento: {
@@ -2929,6 +2964,13 @@ export type Database = {
             referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "usuario_empresas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_tst_saude"
+            referencedColumns: ["empresa_id"]
+          },
         ]
       }
       usuario_projetos: {
@@ -3329,10 +3371,12 @@ export type Database = {
           cargo: string
           confirmado: boolean
           confirmado_em: string | null
+          confirmado_ip: unknown
           confirmado_por: string | null
           created_at: string
           created_by: string | null
           destinatario_principal_acidente: boolean
+          empresa_id: string | null
           id: string
           nome: string
           telefone_e164: string
@@ -3348,10 +3392,12 @@ export type Database = {
           cargo?: string
           confirmado?: boolean
           confirmado_em?: string | null
+          confirmado_ip?: unknown
           confirmado_por?: string | null
           created_at?: string
           created_by?: string | null
           destinatario_principal_acidente?: boolean
+          empresa_id?: string | null
           id?: string
           nome?: string
           telefone_e164: string
@@ -3367,10 +3413,12 @@ export type Database = {
           cargo?: string
           confirmado?: boolean
           confirmado_em?: string | null
+          confirmado_ip?: unknown
           confirmado_por?: string | null
           created_at?: string
           created_by?: string | null
           destinatario_principal_acidente?: boolean
+          empresa_id?: string | null
           id?: string
           nome?: string
           telefone_e164?: string
@@ -3381,7 +3429,22 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_tst_destinatarios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_tst_destinatarios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_tst_saude"
+            referencedColumns: ["empresa_id"]
+          },
+        ]
       }
       whatsapp_worker_execucoes: {
         Row: {
@@ -3436,7 +3499,37 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      whatsapp_tst_monitor: {
+        Row: {
+          alertas_sem_tst_abertos: number | null
+          empresas_ativas: number | null
+          empresas_sem_confirmacao: number | null
+          empresas_sem_tst: number | null
+          falhas_24h: number | null
+          tsts_sem_empresa: number | null
+          ultimo_envio_em: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_tst_saude: {
+        Row: {
+          alertas_sem_tst: number | null
+          ativo: boolean | null
+          confirmado: boolean | null
+          confirmado_em: string | null
+          empresa_id: string | null
+          empresa_nome: string | null
+          enviados_total: number | null
+          falhas_total: number | null
+          principal: boolean | null
+          telefone_e164: string | null
+          telefone_mascarado: string | null
+          tst_id: string | null
+          tst_nome: string | null
+          ultimo_envio_em: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _obs_can_read: { Args: never; Returns: boolean }
@@ -4069,34 +4162,67 @@ export type Database = {
         Args: { p_conteudo: string; p_variaveis: string[] }
         Returns: undefined
       }
-      wa_tst_confirmar: {
-        Args: { p_id: string }
-        Returns: {
-          ativo: boolean
-          cargo: string
-          confirmado: boolean
-          confirmado_em: string | null
-          confirmado_por: string | null
-          created_at: string
-          created_by: string | null
-          destinatario_principal_acidente: boolean
-          id: string
-          nome: string
-          telefone_e164: string
-          telefone_hash: string
-          telefone_mascarado: string
-          telefone_normalizado: string
-          telefone_original: string
-          updated_at: string
-          updated_by: string | null
-        }
-        SetofOptions: {
-          from: "*"
-          to: "whatsapp_tst_destinatarios"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+      wa_tst_confirmar:
+        | {
+            Args: { p_id: string }
+            Returns: {
+              ativo: boolean
+              cargo: string
+              confirmado: boolean
+              confirmado_em: string | null
+              confirmado_ip: unknown
+              confirmado_por: string | null
+              created_at: string
+              created_by: string | null
+              destinatario_principal_acidente: boolean
+              empresa_id: string | null
+              id: string
+              nome: string
+              telefone_e164: string
+              telefone_hash: string
+              telefone_mascarado: string
+              telefone_normalizado: string
+              telefone_original: string
+              updated_at: string
+              updated_by: string | null
+            }
+            SetofOptions: {
+              from: "*"
+              to: "whatsapp_tst_destinatarios"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: { p_id: string; p_ip?: unknown }
+            Returns: {
+              ativo: boolean
+              cargo: string
+              confirmado: boolean
+              confirmado_em: string | null
+              confirmado_ip: unknown
+              confirmado_por: string | null
+              created_at: string
+              created_by: string | null
+              destinatario_principal_acidente: boolean
+              empresa_id: string | null
+              id: string
+              nome: string
+              telefone_e164: string
+              telefone_hash: string
+              telefone_mascarado: string
+              telefone_normalizado: string
+              telefone_original: string
+              updated_at: string
+              updated_by: string | null
+            }
+            SetofOptions: {
+              from: "*"
+              to: "whatsapp_tst_destinatarios"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       whatsapp_calc_backoff: {
         Args: { p_base_seg: number; p_max_seg: number; p_tentativas: number }
         Returns: string
