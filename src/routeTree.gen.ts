@@ -51,6 +51,7 @@ import { Route as ApiPublicHooksEvolutionWhatsappWebhookRouteImport } from './ro
 import { Route as AuthenticatedUsuariosIdPermissoesRouteImport } from './routes/_authenticated/usuarios.$id.permissoes'
 import { Route as AuthenticatedConfiguracoesProjetosImportarRouteImport } from './routes/_authenticated/configuracoes.projetos_.importar'
 import { Route as AuthenticatedConfiguracoesProjetosConsolidarRouteImport } from './routes/_authenticated/configuracoes.projetos_.consolidar'
+import { Route as AuthenticatedComunicacoesWhatsappTstDestinatariosRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.tst-destinatarios'
 import { Route as AuthenticatedComunicacoesWhatsappTestesRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.testes'
 import { Route as AuthenticatedComunicacoesWhatsappOutboxRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.outbox'
 import { Route as AuthenticatedComunicacoesWhatsappHealthRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.health'
@@ -292,6 +293,12 @@ const AuthenticatedConfiguracoesProjetosConsolidarRoute =
     path: '/projetos/consolidar',
     getParentRoute: () => AuthenticatedConfiguracoesRoute,
   } as any)
+const AuthenticatedComunicacoesWhatsappTstDestinatariosRoute =
+  AuthenticatedComunicacoesWhatsappTstDestinatariosRouteImport.update({
+    id: '/tst-destinatarios',
+    path: '/tst-destinatarios',
+    getParentRoute: () => AuthenticatedComunicacoesWhatsappRoute,
+  } as any)
 const AuthenticatedComunicacoesWhatsappTestesRoute =
   AuthenticatedComunicacoesWhatsappTestesRouteImport.update({
     id: '/testes',
@@ -371,6 +378,7 @@ export interface FileRoutesByFullPath {
   '/comunicacoes/whatsapp/health': typeof AuthenticatedComunicacoesWhatsappHealthRoute
   '/comunicacoes/whatsapp/outbox': typeof AuthenticatedComunicacoesWhatsappOutboxRoute
   '/comunicacoes/whatsapp/testes': typeof AuthenticatedComunicacoesWhatsappTestesRoute
+  '/comunicacoes/whatsapp/tst-destinatarios': typeof AuthenticatedComunicacoesWhatsappTstDestinatariosRoute
   '/configuracoes/projetos/consolidar': typeof AuthenticatedConfiguracoesProjetosConsolidarRoute
   '/configuracoes/projetos/importar': typeof AuthenticatedConfiguracoesProjetosImportarRoute
   '/usuarios/$id/permissoes': typeof AuthenticatedUsuariosIdPermissoesRoute
@@ -418,6 +426,7 @@ export interface FileRoutesByTo {
   '/comunicacoes/whatsapp/health': typeof AuthenticatedComunicacoesWhatsappHealthRoute
   '/comunicacoes/whatsapp/outbox': typeof AuthenticatedComunicacoesWhatsappOutboxRoute
   '/comunicacoes/whatsapp/testes': typeof AuthenticatedComunicacoesWhatsappTestesRoute
+  '/comunicacoes/whatsapp/tst-destinatarios': typeof AuthenticatedComunicacoesWhatsappTstDestinatariosRoute
   '/configuracoes/projetos/consolidar': typeof AuthenticatedConfiguracoesProjetosConsolidarRoute
   '/configuracoes/projetos/importar': typeof AuthenticatedConfiguracoesProjetosImportarRoute
   '/usuarios/$id/permissoes': typeof AuthenticatedUsuariosIdPermissoesRoute
@@ -469,6 +478,7 @@ export interface FileRoutesById {
   '/_authenticated/comunicacoes/whatsapp/health': typeof AuthenticatedComunicacoesWhatsappHealthRoute
   '/_authenticated/comunicacoes/whatsapp/outbox': typeof AuthenticatedComunicacoesWhatsappOutboxRoute
   '/_authenticated/comunicacoes/whatsapp/testes': typeof AuthenticatedComunicacoesWhatsappTestesRoute
+  '/_authenticated/comunicacoes/whatsapp/tst-destinatarios': typeof AuthenticatedComunicacoesWhatsappTstDestinatariosRoute
   '/_authenticated/configuracoes/projetos_/consolidar': typeof AuthenticatedConfiguracoesProjetosConsolidarRoute
   '/_authenticated/configuracoes/projetos_/importar': typeof AuthenticatedConfiguracoesProjetosImportarRoute
   '/_authenticated/usuarios/$id/permissoes': typeof AuthenticatedUsuariosIdPermissoesRoute
@@ -520,6 +530,7 @@ export interface FileRouteTypes {
     | '/comunicacoes/whatsapp/health'
     | '/comunicacoes/whatsapp/outbox'
     | '/comunicacoes/whatsapp/testes'
+    | '/comunicacoes/whatsapp/tst-destinatarios'
     | '/configuracoes/projetos/consolidar'
     | '/configuracoes/projetos/importar'
     | '/usuarios/$id/permissoes'
@@ -567,6 +578,7 @@ export interface FileRouteTypes {
     | '/comunicacoes/whatsapp/health'
     | '/comunicacoes/whatsapp/outbox'
     | '/comunicacoes/whatsapp/testes'
+    | '/comunicacoes/whatsapp/tst-destinatarios'
     | '/configuracoes/projetos/consolidar'
     | '/configuracoes/projetos/importar'
     | '/usuarios/$id/permissoes'
@@ -617,6 +629,7 @@ export interface FileRouteTypes {
     | '/_authenticated/comunicacoes/whatsapp/health'
     | '/_authenticated/comunicacoes/whatsapp/outbox'
     | '/_authenticated/comunicacoes/whatsapp/testes'
+    | '/_authenticated/comunicacoes/whatsapp/tst-destinatarios'
     | '/_authenticated/configuracoes/projetos_/consolidar'
     | '/_authenticated/configuracoes/projetos_/importar'
     | '/_authenticated/usuarios/$id/permissoes'
@@ -929,6 +942,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConfiguracoesProjetosConsolidarRouteImport
       parentRoute: typeof AuthenticatedConfiguracoesRoute
     }
+    '/_authenticated/comunicacoes/whatsapp/tst-destinatarios': {
+      id: '/_authenticated/comunicacoes/whatsapp/tst-destinatarios'
+      path: '/tst-destinatarios'
+      fullPath: '/comunicacoes/whatsapp/tst-destinatarios'
+      preLoaderRoute: typeof AuthenticatedComunicacoesWhatsappTstDestinatariosRouteImport
+      parentRoute: typeof AuthenticatedComunicacoesWhatsappRoute
+    }
     '/_authenticated/comunicacoes/whatsapp/testes': {
       id: '/_authenticated/comunicacoes/whatsapp/testes'
       path: '/testes'
@@ -981,6 +1001,7 @@ interface AuthenticatedComunicacoesWhatsappRouteChildren {
   AuthenticatedComunicacoesWhatsappHealthRoute: typeof AuthenticatedComunicacoesWhatsappHealthRoute
   AuthenticatedComunicacoesWhatsappOutboxRoute: typeof AuthenticatedComunicacoesWhatsappOutboxRoute
   AuthenticatedComunicacoesWhatsappTestesRoute: typeof AuthenticatedComunicacoesWhatsappTestesRoute
+  AuthenticatedComunicacoesWhatsappTstDestinatariosRoute: typeof AuthenticatedComunicacoesWhatsappTstDestinatariosRoute
   AuthenticatedComunicacoesWhatsappIndexRoute: typeof AuthenticatedComunicacoesWhatsappIndexRoute
 }
 
@@ -998,6 +1019,8 @@ const AuthenticatedComunicacoesWhatsappRouteChildren: AuthenticatedComunicacoesW
       AuthenticatedComunicacoesWhatsappOutboxRoute,
     AuthenticatedComunicacoesWhatsappTestesRoute:
       AuthenticatedComunicacoesWhatsappTestesRoute,
+    AuthenticatedComunicacoesWhatsappTstDestinatariosRoute:
+      AuthenticatedComunicacoesWhatsappTstDestinatariosRoute,
     AuthenticatedComunicacoesWhatsappIndexRoute:
       AuthenticatedComunicacoesWhatsappIndexRoute,
   }
@@ -1146,13 +1169,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

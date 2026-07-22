@@ -238,6 +238,19 @@ function NovaAusenciaPage() {
   const [matchCandidates, setMatchCandidates] = useState<ColabMatch[] | null>(null);
   const [searching, setSearching] = useState(false);
 
+  // Campos específicos de Acidente de Trabalho (categoria ACIDENTES).
+  // Só entram no payload quando o tipo selecionado for ACIDENTE_TRABALHO.
+  const [acidenteData, setAcidenteData] = useState<string>("");
+  const [acidenteHora, setAcidenteHora] = useState<string>("");
+  const [acidenteLocal, setAcidenteLocal] = useState<string>("");
+  const [acidenteDescricao, setAcidenteDescricao] = useState<string>("");
+  const [acidenteAtendMedico, setAcidenteAtendMedico] = useState<boolean | null>(null);
+  const [acidenteAfastamento, setAcidenteAfastamento] = useState<boolean | null>(null);
+  const [acidenteDiasAfast, setAcidenteDiasAfast] = useState<string>("");
+  const [acidenteCatEmitida, setAcidenteCatEmitida] = useState<boolean | null>(null);
+  const [acidenteObs, setAcidenteObs] = useState<string>("");
+
+
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {

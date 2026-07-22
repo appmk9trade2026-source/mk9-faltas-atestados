@@ -508,6 +508,15 @@ export type Database = {
       }
       ausencias: {
         Row: {
+          acidente_atendimento_medico: boolean | null
+          acidente_cat_emitida: boolean | null
+          acidente_data: string | null
+          acidente_descricao: string | null
+          acidente_dias_afastamento_inicial: number | null
+          acidente_hora: string | null
+          acidente_houve_afastamento: boolean | null
+          acidente_local: string | null
+          acidente_observacoes: string | null
           acidente_trabalho_trajeto: boolean | null
           arquivo_criado_em: string | null
           arquivo_criado_por: string | null
@@ -549,6 +558,15 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          acidente_atendimento_medico?: boolean | null
+          acidente_cat_emitida?: boolean | null
+          acidente_data?: string | null
+          acidente_descricao?: string | null
+          acidente_dias_afastamento_inicial?: number | null
+          acidente_hora?: string | null
+          acidente_houve_afastamento?: boolean | null
+          acidente_local?: string | null
+          acidente_observacoes?: string | null
           acidente_trabalho_trajeto?: boolean | null
           arquivo_criado_em?: string | null
           arquivo_criado_por?: string | null
@@ -590,6 +608,15 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          acidente_atendimento_medico?: boolean | null
+          acidente_cat_emitida?: boolean | null
+          acidente_data?: string | null
+          acidente_descricao?: string | null
+          acidente_dias_afastamento_inicial?: number | null
+          acidente_hora?: string | null
+          acidente_houve_afastamento?: boolean | null
+          acidente_local?: string | null
+          acidente_observacoes?: string | null
           acidente_trabalho_trajeto?: boolean | null
           arquivo_criado_em?: string | null
           arquivo_criado_por?: string | null
@@ -3296,6 +3323,66 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_tst_destinatarios: {
+        Row: {
+          ativo: boolean
+          cargo: string
+          confirmado: boolean
+          confirmado_em: string | null
+          confirmado_por: string | null
+          created_at: string
+          created_by: string | null
+          destinatario_principal_acidente: boolean
+          id: string
+          nome: string
+          telefone_e164: string
+          telefone_hash: string
+          telefone_mascarado: string
+          telefone_normalizado: string
+          telefone_original: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          cargo?: string
+          confirmado?: boolean
+          confirmado_em?: string | null
+          confirmado_por?: string | null
+          created_at?: string
+          created_by?: string | null
+          destinatario_principal_acidente?: boolean
+          id?: string
+          nome?: string
+          telefone_e164: string
+          telefone_hash: string
+          telefone_mascarado: string
+          telefone_normalizado: string
+          telefone_original: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          cargo?: string
+          confirmado?: boolean
+          confirmado_em?: string | null
+          confirmado_por?: string | null
+          created_at?: string
+          created_by?: string | null
+          destinatario_principal_acidente?: boolean
+          id?: string
+          nome?: string
+          telefone_e164?: string
+          telefone_hash?: string
+          telefone_mascarado?: string
+          telefone_normalizado?: string
+          telefone_original?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       whatsapp_worker_execucoes: {
         Row: {
           created_at: string
@@ -3701,6 +3788,10 @@ export type Database = {
         }
         Returns: Json
       }
+      materializar_whatsapp_acidente: {
+        Args: { p_ausencia_id: string }
+        Returns: Json
+      }
       materializar_whatsapp_ausencia: {
         Args: { p_ausencia_id: string; p_supervisor_id: string }
         Returns: Json
@@ -3793,6 +3884,10 @@ export type Database = {
       }
       rbac_matrix: { Args: never; Returns: Json }
       rbac_user_summary: { Args: { _user_id: string }; Returns: Json }
+      reenfileirar_acidente_para_tst: {
+        Args: { p_ausencia_id: string }
+        Returns: Json
+      }
       refresh_bi_absenteismo: { Args: { p_origem?: string }; Returns: Json }
       registrar_login_event: {
         Args: {
@@ -3974,6 +4069,34 @@ export type Database = {
         Args: { p_conteudo: string; p_variaveis: string[] }
         Returns: undefined
       }
+      wa_tst_confirmar: {
+        Args: { p_id: string }
+        Returns: {
+          ativo: boolean
+          cargo: string
+          confirmado: boolean
+          confirmado_em: string | null
+          confirmado_por: string | null
+          created_at: string
+          created_by: string | null
+          destinatario_principal_acidente: boolean
+          id: string
+          nome: string
+          telefone_e164: string
+          telefone_hash: string
+          telefone_mascarado: string
+          telefone_normalizado: string
+          telefone_original: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "whatsapp_tst_destinatarios"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       whatsapp_calc_backoff: {
         Args: { p_base_seg: number; p_max_seg: number; p_tentativas: number }
         Returns: string
@@ -3988,6 +4111,10 @@ export type Database = {
           p_tipo_lancamento: string
         }
         Returns: Json
+      }
+      whatsapp_idem_key_acidente: {
+        Args: { p_ausencia_id: string; p_tst_destinatario_id: string }
+        Returns: string
       }
       whatsapp_idem_key_ausencia: {
         Args: {
@@ -4400,7 +4527,7 @@ export type Database = {
       whatsapp_modo: "DESATIVADO" | "HOMOLOGACAO" | "PRODUCAO"
       whatsapp_prioridade: "NORMAL" | "ALTA"
       whatsapp_provider: "EVOLUTION_API"
-      whatsapp_publico: "COLABORADOR" | "RH" | "SUPERVISOR"
+      whatsapp_publico: "COLABORADOR" | "RH" | "SUPERVISOR" | "TST"
       whatsapp_status:
         | "PENDENTE"
         | "PROCESSANDO"
@@ -4822,7 +4949,7 @@ export const Constants = {
       whatsapp_modo: ["DESATIVADO", "HOMOLOGACAO", "PRODUCAO"],
       whatsapp_prioridade: ["NORMAL", "ALTA"],
       whatsapp_provider: ["EVOLUTION_API"],
-      whatsapp_publico: ["COLABORADOR", "RH", "SUPERVISOR"],
+      whatsapp_publico: ["COLABORADOR", "RH", "SUPERVISOR", "TST"],
       whatsapp_status: [
         "PENDENTE",
         "PROCESSANDO",
