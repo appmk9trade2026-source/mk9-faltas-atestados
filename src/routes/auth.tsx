@@ -71,12 +71,17 @@ function AuthPage() {
       }
       const { data: profile } = await supabase
         .from("profiles")
-        .select("ativo")
+        .select("ativo, primeiro_acesso_pendente")
         .eq("id", data.user.id)
         .maybeSingle();
       if (!profile || profile.ativo === false) {
         await supabase.auth.signOut();
         setError("Sua conta está inativa. Contate o Super Admin.");
+        return;
+      }
+      if (profile.primeiro_acesso_pendente) {
+        toast.info("Antes de continuar, defina sua senha pessoal.");
+        navigate({ to: "/auth/nova-senha", replace: true });
         return;
       }
       toast.success("Bem-vindo!");
@@ -87,6 +92,7 @@ function AuthPage() {
       setLoading(false);
     }
   }
+
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-background">
