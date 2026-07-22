@@ -41,6 +41,7 @@ import { Route as AuthenticatedAssistenteRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
 import { Route as AuthenticatedAcessosRouteImport } from './routes/_authenticated/acessos'
 import { Route as AuthenticatedComunicacoesIndexRouteImport } from './routes/_authenticated/comunicacoes.index'
+import { Route as AuthenticatedInteligenciaSupervisoresRouteImport } from './routes/_authenticated/inteligencia.supervisores'
 import { Route as AuthenticatedInteligenciaConfiguracaoRouteImport } from './routes/_authenticated/inteligencia.configuracao'
 import { Route as AuthenticatedConfiguracoesTiposAusenciaRouteImport } from './routes/_authenticated/configuracoes.tipos-ausencia'
 import { Route as AuthenticatedConfiguracoesProjetosRouteImport } from './routes/_authenticated/configuracoes.projetos'
@@ -235,6 +236,12 @@ const AuthenticatedComunicacoesIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedComunicacoesRoute,
   } as any)
+const AuthenticatedInteligenciaSupervisoresRoute =
+  AuthenticatedInteligenciaSupervisoresRouteImport.update({
+    id: '/supervisores',
+    path: '/supervisores',
+    getParentRoute: () => AuthenticatedInteligenciaRoute,
+  } as any)
 const AuthenticatedInteligenciaConfiguracaoRoute =
   AuthenticatedInteligenciaConfiguracaoRouteImport.update({
     id: '/configuracao',
@@ -408,6 +415,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
   '/inteligencia/configuracao': typeof AuthenticatedInteligenciaConfiguracaoRoute
+  '/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
   '/comunicacoes/': typeof AuthenticatedComunicacoesIndexRoute
   '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
   '/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
@@ -461,6 +469,7 @@ export interface FileRoutesByTo {
   '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
   '/inteligencia/configuracao': typeof AuthenticatedInteligenciaConfiguracaoRoute
+  '/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
   '/comunicacoes': typeof AuthenticatedComunicacoesIndexRoute
   '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
   '/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
@@ -518,6 +527,7 @@ export interface FileRoutesById {
   '/_authenticated/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/_authenticated/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
   '/_authenticated/inteligencia/configuracao': typeof AuthenticatedInteligenciaConfiguracaoRoute
+  '/_authenticated/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
   '/_authenticated/comunicacoes/': typeof AuthenticatedComunicacoesIndexRoute
   '/_authenticated/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
   '/_authenticated/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
@@ -575,6 +585,7 @@ export interface FileRouteTypes {
     | '/configuracoes/projetos'
     | '/configuracoes/tipos-ausencia'
     | '/inteligencia/configuracao'
+    | '/inteligencia/supervisores'
     | '/comunicacoes/'
     | '/comunicacoes/whatsapp/configuracao'
     | '/comunicacoes/whatsapp/dead-letter'
@@ -628,6 +639,7 @@ export interface FileRouteTypes {
     | '/configuracoes/projetos'
     | '/configuracoes/tipos-ausencia'
     | '/inteligencia/configuracao'
+    | '/inteligencia/supervisores'
     | '/comunicacoes'
     | '/comunicacoes/whatsapp/configuracao'
     | '/comunicacoes/whatsapp/dead-letter'
@@ -684,6 +696,7 @@ export interface FileRouteTypes {
     | '/_authenticated/configuracoes/projetos'
     | '/_authenticated/configuracoes/tipos-ausencia'
     | '/_authenticated/inteligencia/configuracao'
+    | '/_authenticated/inteligencia/supervisores'
     | '/_authenticated/comunicacoes/'
     | '/_authenticated/comunicacoes/whatsapp/configuracao'
     | '/_authenticated/comunicacoes/whatsapp/dead-letter'
@@ -935,6 +948,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedComunicacoesIndexRouteImport
       parentRoute: typeof AuthenticatedComunicacoesRoute
     }
+    '/_authenticated/inteligencia/supervisores': {
+      id: '/_authenticated/inteligencia/supervisores'
+      path: '/supervisores'
+      fullPath: '/inteligencia/supervisores'
+      preLoaderRoute: typeof AuthenticatedInteligenciaSupervisoresRouteImport
+      parentRoute: typeof AuthenticatedInteligenciaRoute
+    }
     '/_authenticated/inteligencia/configuracao': {
       id: '/_authenticated/inteligencia/configuracao'
       path: '/configuracao'
@@ -1177,12 +1197,15 @@ const AuthenticatedConfiguracoesRouteWithChildren =
 
 interface AuthenticatedInteligenciaRouteChildren {
   AuthenticatedInteligenciaConfiguracaoRoute: typeof AuthenticatedInteligenciaConfiguracaoRoute
+  AuthenticatedInteligenciaSupervisoresRoute: typeof AuthenticatedInteligenciaSupervisoresRoute
 }
 
 const AuthenticatedInteligenciaRouteChildren: AuthenticatedInteligenciaRouteChildren =
   {
     AuthenticatedInteligenciaConfiguracaoRoute:
       AuthenticatedInteligenciaConfiguracaoRoute,
+    AuthenticatedInteligenciaSupervisoresRoute:
+      AuthenticatedInteligenciaSupervisoresRoute,
   }
 
 const AuthenticatedInteligenciaRouteWithChildren =

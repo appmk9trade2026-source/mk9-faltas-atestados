@@ -26,6 +26,7 @@ import {
   ChevronDown,
   Circle,
   Bot,
+  Trophy,
 } from "lucide-react";
 import { APP_VERSION, APP_ENV, APP_ENV_LABEL } from "@/lib/app-meta";
 import {
@@ -83,6 +84,7 @@ const items: Item[] = [
   { title: "BI Executivo", url: "/bi-executivo", icon: Sparkles, roles: ["super_admin", "compliance", "rh"] },
   { title: "Observabilidade", url: "/observabilidade", icon: Gauge, roles: ["super_admin", "compliance"] },
   { title: "Inteligência", url: "/inteligencia", icon: Sparkles, roles: ["super_admin", "compliance", "rh", "supervisor"] },
+  { title: "Ranking Supervisores", url: "/inteligencia/supervisores", icon: Trophy, roles: ["super_admin", "compliance", "rh", "supervisor"] },
   { title: "Config. Inteligência", url: "/inteligencia/configuracao", icon: Settings, roles: ["super_admin"] },
 ];
 
@@ -105,7 +107,7 @@ const SECTIONS: Section[] = [
   {
     id: "analises",
     label: "Análises",
-    urls: ["/relatorios", "/bi-executivo", "/inteligencia", "/inteligencia/configuracao", "/auditoria"],
+    urls: ["/relatorios", "/bi-executivo", "/inteligencia", "/inteligencia/supervisores", "/inteligencia/configuracao", "/auditoria"],
   },
   {
     id: "administracao",
