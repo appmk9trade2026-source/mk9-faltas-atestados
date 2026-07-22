@@ -501,7 +501,14 @@ function UsuariosPage() {
                   </TableCell>
                   {canSeeWhatsapp && (
                     <TableCell className="whitespace-nowrap">
-                      <WhatsappStatusCell status={statusWaQ.data?.get(u.id) ?? null} />
+                      <WhatsappStatusCell
+                        status={statusWaQ.data?.get(u.id) ?? null}
+                        onOpenDetails={
+                          isSuperAdmin
+                            ? () => setWaDetalhesFor({ usuario: u, status: statusWaQ.data?.get(u.id) ?? null })
+                            : undefined
+                        }
+                      />
                     </TableCell>
                   )}
 
@@ -555,6 +562,17 @@ function UsuariosPage() {
                               disabled={!u.telefone_whatsapp || !u.ativo || reenviarWaMut.isPending}
                             >
                               <Send className="mr-2 h-4 w-4" /> Reenviar WhatsApp de boas-vindas
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => reprocessarWaMut.mutate(u.id)}
+                              disabled={!u.telefone_whatsapp || !u.ativo || reprocessarWaMut.isPending}
+                            >
+                              <RefreshCw className="mr-2 h-4 w-4" /> Tentar envio novamente
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => setWaDetalhesFor({ usuario: u, status: statusWaQ.data?.get(u.id) ?? null })}
+                            >
+                              <Info className="mr-2 h-4 w-4" /> Detalhes do envio
                             </DropdownMenuItem>
                           </>
                         )}
