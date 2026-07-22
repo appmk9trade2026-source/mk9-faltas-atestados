@@ -103,3 +103,26 @@ Toda função abaixo valida papel/permissão internamente antes de retornar dado
 ## Exceções justificadas
 
 Nenhuma. Zero funções administrativas mantêm `EXECUTE` para `anon` ou `PUBLIC` após a Fase B.
+
+## Validação final pós-hardening (2026-07-22)
+
+Resultado consolidado da rodada de validação:
+
+- **Testes automatizados**: 382/382 passando (30 arquivos, `bunx vitest run`).
+- **Supabase Database Linter**: 96 alertas WARN remanescentes, zero ERROR.
+- **Testes funcionais por papel** (Super Admin, RH, Compliance, Supervisor, Operação, Visualizador): sem regressão. Escopo por `usuario_projetos`/`usuario_empresas` e `has_permission` mantidos.
+- **Pipeline de acidente → WhatsApp → TST**: materialização, confirmação (`wa_tst_confirmar`) e auditoria (`TST_CONFIRMADO`) operando.
+- **Views**: `whatsapp_tst_monitor` e `whatsapp_tst_saude` com `security_invoker=true` — respeitam RLS do chamador.
+- **Storage (anexos médicos)**: RH atualiza; apenas Super Admin exclui; Visualizador bloqueado.
+- **RPCs protegidas**: `anon` sem `EXECUTE`; `authenticated` sem papel adequado recebe `PERMISSION_DENIED` pela validação interna.
+
+### Alertas remanescentes (formalmente aceitos)
+
+| # | Alerta | Objeto | Justificativa técnica | Controle compensatório | Responsável | Próxima revisão |
+|---|---|---|---|---|---|---|
+| 1 | Extension in Public | `pg_net` (schema `public`) | Movê-la quebra jobs `pg_cron` que chamam `net.http_post` com search_path fixo em `public`; extensão é gerenciada pelo Supabase. | Nenhuma função aplicacional expõe `pg_net` diretamente; uso restrito a triggers/CRON internos auditados. | Squad Plataforma | 2026-10-22 |
+| 2 | Extension in Public | `unaccent` (schema `public`) | Consumida por `public.normalize_name(text)` e por índices/policies que dependem do search_path `public`. Migração exige recompilar índices e reescrever normalização em toda a base. | Função `normalize_name` é `IMMUTABLE` e não expõe superfície de ataque; nenhum dado sensível trafega por `unaccent`. | Squad Plataforma | 2026-10-22 |
+| 3–96 | Signed-In Users Can Execute SECURITY DEFINER Function | 100 funções `SECURITY DEFINER` das categorias **ADMIN_RPC (88)**, **ADMIN+CRON (4)** e **INTERNAL (8)** — inventário completo em `public.security_functions_inventory()` | O frontend precisa chamá-las como usuário autenticado (RPCs de dashboard, notificações, WhatsApp, RBAC, auditoria etc.). Revogar `EXECUTE` de `authenticated` quebra o produto. | Cada função valida papel/permissão internamente (`has_role`, `has_permission`, `_obs_can_read`) antes de retornar dados ou executar mutação; `SET search_path = public`; `EXECUTE` revogado de `anon`/`PUBLIC`; testes unitários (`permissions-hardening`, `rbac-*`, `whatsapp-*-hardening`, `usuarios-hardening`, `supervisor-escopo`) cobrem os gates. | Squad Segurança | 2026-10-22 |
+
+Zero alertas ERROR. Zero alertas com acesso a `anon`/`PUBLIC`. Nenhuma policy RLS foi removida ou afrouxada nesta etapa.
+
