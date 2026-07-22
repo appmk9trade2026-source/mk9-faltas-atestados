@@ -467,7 +467,291 @@ export const resetUsuarioSenha = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// ---------------- REENVIAR CONVITE ----------------
+// ---------------- DEFINIR NOVA SENHA TEMPORÁRIA ----------------
+// Super Admin: substitui a senha do usuário no provedor de autenticação,
+// marca primeiro_acesso_pendente = true, encerra todas as sessões e
+// registra auditoria SEM armazenar a senha em lugar algum.
+export const definirSenhaTemporariaUsuario = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        nova_senha: z
+          .string()
+          .min(8, "Senha muito curta")
+          .max(72, "Senha muito longa")
+          .refine((s) => /[A-Za-z]/.test(s) && /\d/.test(s), {
+            message: "A senha deve conter letras e números.",
+          }),
+        motivo: z.string().trim().max(500).optional().nullable(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await gateUsuario(context, PERMISSION_MAP.updateUser, "/usuarios#senha-temporaria");
+    await requireSuperAdmin(context);
+
+    if (data.id === context.userId) {
+      await audit(
+        context.supabase,
+        "USUARIO_AUTOALTERACAO_BLOQUEADA",
+        data.id,
+        "Tentativa de redefinir a própria senha via painel administrativo",
+      );
+      throw new Error(
+        "Use a área do seu perfil para trocar a própria senha; este fluxo é para outros usuários.",
+      );
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const prof = await supabaseAdmin
+      .from("profiles")
+      .select("id, nome, email, ativo")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!prof.data) throw new Error("Usuário não encontrado.");
+    if (prof.data.ativo === false)
+      throw new Error("Usuário está desativado — reative antes de redefinir a senha.");
+
+    // 1. Atualiza a senha somente no provedor de autenticação.
+    const upd = await supabaseAdmin.auth.admin.updateUserById(data.id, {
+      password: data.nova_senha,
+    });
+    if (upd.error) throw new Error(upd.error.message);
+
+    // 2. Marca primeiro_acesso_pendente = true (força troca no próximo login).
+    const now = new Date().toISOString();
+    const p = await supabaseAdmin
+      .from("profiles")
+      .update({
+        primeiro_acesso_pendente: true,
+        senha_temporaria_redefinida_em: now,
+      })
+      .eq("id", data.id);
+    if (p.error) throw new Error(p.error.message);
+
+    // 3. Encerra todas as sessões ativas do usuário-alvo.
+    try {
+      const adminAny = supabaseAdmin.auth.admin as unknown as {
+        signOut: (uid: string, scope?: "global" | "local" | "others") => Promise<{ error: unknown }>;
+      };
+      await adminAny.signOut(data.id, "global").catch(() => {});
+    } catch { /* noop */ }
+    await supabaseAdmin
+      .from("user_sessions")
+      .update({
+        status: "ENCERRADA" as never,
+        encerrada_em: now,
+        motivo_encerramento: "senha_temporaria_redefinida",
+      })
+      .eq("user_id", data.id)
+      .eq("status", "ATIVA" as never);
+
+    // 4. Auditoria — jamais registrar a senha, hash ou token.
+    await audit(
+      context.supabase,
+      "SENHA_TEMPORARIA_REDEFINIDA",
+      data.id,
+      data.motivo?.trim() ? `Motivo: ${data.motivo.trim()}` : "Senha temporária redefinida pelo administrador",
+      null,
+      {
+        email_alvo: prof.data.email,
+        primeiro_acesso_pendente: true,
+        sessoes_encerradas: true,
+      },
+    );
+
+    return { ok: true, primeiro_acesso_pendente: true };
+  });
+
+// ---------------- DEPENDÊNCIAS / EXCLUSÃO SEGURA ----------------
+export type DependenciasUsuario = {
+  ausencias_registradas: number;
+  comunicacoes: number;
+  homologacoes: number;
+  importacoes: number;
+  alertas_eventos: number;
+  operacao_alertas: number;
+  operacao_incidentes: number;
+  auditorias: number;
+  access_reviews: number;
+  bi_visoes_salvas: number;
+  notificacao_eventos: number;
+  login_events: number;
+  vinculos_empresas: number;
+  vinculos_projetos: number;
+  roles: number;
+  total_bloqueante: number;
+};
+
+export const contarDependenciasUsuario = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    await requireSuperAdmin(context);
+    const { data: rpcData, error } = await context.supabase.rpc(
+      "contar_dependencias_usuario" as never,
+      { p_user_id: data.id } as never,
+    );
+    if (error) throw new Error(error.message);
+    return (rpcData ?? {}) as unknown as DependenciasUsuario;
+  });
+
+export const excluirUsuarioSeguro = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        confirmacao: z.literal("EXCLUIR"),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await requireSuperAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // 1. Proteção — não excluir a si mesmo.
+    if (data.id === context.userId) {
+      await audit(
+        context.supabase,
+        "USUARIO_AUTOALTERACAO_BLOQUEADA",
+        data.id,
+        "Tentativa de auto-exclusão pelo painel administrativo",
+      );
+      throw new Error("Você não pode excluir a si mesmo.");
+    }
+
+    const prof = await supabaseAdmin
+      .from("profiles")
+      .select("id, nome, email")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!prof.data) throw new Error("Usuário não encontrado.");
+
+    // 2. Último Super Admin ativo protegido.
+    const rolesRow = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.id);
+    const alvoIsSuper = (rolesRow.data ?? []).some((r) => r.role === "super_admin");
+    if (alvoIsSuper) {
+      const { data: countData } = await supabaseAdmin.rpc("count_active_super_admins");
+      const count = Number(countData ?? 0);
+      if (count <= 1) {
+        await audit(
+          context.supabase,
+          "USUARIO_ULTIMO_SUPER_ADMIN_BLOQUEADO",
+          data.id,
+          "Tentativa de excluir o último Super Admin ativo",
+        );
+        throw new Error("Não é possível excluir o último Super Admin ativo.");
+      }
+    }
+
+    // 3. Dependências históricas/operacionais bloqueiam a exclusão física.
+    const { data: depData, error: depErr } = await context.supabase.rpc(
+      "contar_dependencias_usuario" as never,
+      { p_user_id: data.id } as never,
+    );
+    if (depErr) throw new Error(depErr.message);
+    const dep = (depData ?? {}) as DependenciasUsuario;
+    if ((dep.total_bloqueante ?? 0) > 0) {
+      await audit(
+        context.supabase,
+        "USUARIO_EXCLUSAO_BLOQUEADA",
+        data.id,
+        `Exclusão bloqueada por dependências (total=${dep.total_bloqueante})`,
+        null,
+        dep as unknown,
+      );
+      throw new Error(
+        "USUARIO_COM_HISTORICO: Este usuário possui registros históricos e não pode ser excluído. Use 'Desativar' para remover o acesso preservando o histórico.",
+      );
+    }
+
+    // 4. Registra a tentativa (auditoria antes da remoção).
+    await audit(
+      context.supabase,
+      "USUARIO_EXCLUSAO_TENTATIVA",
+      data.id,
+      `Exclusão física iniciada para ${prof.data.email}`,
+      { email: prof.data.email, nome: prof.data.nome },
+      null,
+    );
+
+    // 5. Remove vínculos sem histórico (roles, empresas, projetos, permissões,
+    //    preferências, configurações WhatsApp, sessões, IA).
+    const cleanupTables: {
+      table:
+        | "user_roles"
+        | "usuario_empresas"
+        | "usuario_projetos"
+        | "user_permissions"
+        | "preferencias_notificacao"
+        | "notificacao_usuarios"
+        | "whatsapp_destinatario_config"
+        | "user_sessions"
+        | "ai_conversations"
+        | "ai_feedback"
+        | "ai_rate_limits";
+      col: "user_id" | "usuario_id";
+    }[] = [
+      { table: "user_roles", col: "user_id" },
+      { table: "usuario_empresas", col: "user_id" },
+      { table: "usuario_projetos", col: "user_id" },
+      { table: "user_permissions", col: "user_id" },
+      { table: "preferencias_notificacao", col: "usuario_id" },
+      { table: "notificacao_usuarios", col: "usuario_id" },
+      { table: "whatsapp_destinatario_config", col: "usuario_id" },
+      { table: "user_sessions", col: "user_id" },
+      { table: "ai_conversations", col: "user_id" },
+      { table: "ai_feedback", col: "user_id" },
+      { table: "ai_rate_limits", col: "user_id" },
+    ];
+    for (const t of cleanupTables) {
+      await supabaseAdmin.from(t.table).delete().eq(t.col, data.id);
+    }
+
+    // 6. Exclui a identidade no provedor de autenticação PRIMEIRO.
+    //    Se falhar, o profile permanece intacto (sem órfão de auth).
+    const delAuth = await supabaseAdmin.auth.admin.deleteUser(data.id);
+    if (delAuth.error) {
+      await audit(
+        context.supabase,
+        "USUARIO_EXCLUSAO_BLOQUEADA",
+        data.id,
+        `Falha ao excluir identidade de autenticação: ${delAuth.error.message}`,
+      );
+      throw new Error("Falha ao excluir a identidade de autenticação. Nenhum dado foi removido.");
+    }
+
+    // 7. Remove o profile — depois de auth removido.
+    const delProf = await supabaseAdmin.from("profiles").delete().eq("id", data.id);
+    if (delProf.error) {
+      // Não há como reverter o auth deletado. Registrar e relatar.
+      await audit(
+        context.supabase,
+        "USUARIO_EXCLUSAO_BLOQUEADA",
+        data.id,
+        `Auth removido, mas falha ao remover profile: ${delProf.error.message}`,
+      );
+      throw new Error(
+        "Identidade removida, mas houve falha ao remover o perfil. Contate o administrador do sistema.",
+      );
+    }
+
+    await audit(
+      context.supabase,
+      "USUARIO_EXCLUIDO",
+      data.id,
+      `Usuário ${prof.data.email} excluído fisicamente (sem histórico).`,
+    );
+
+    return { ok: true };
+  });
 export const reenviarConviteUsuario = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
