@@ -278,6 +278,9 @@ function UsuariosPage() {
   const reenviarWaFn = useServerFn(reenviarBoasVindasWhatsapp);
   const reprocessarWaFn = useServerFn(reprocessarConviteWhatsapp);
   const listarStatusWaFn = useServerFn(listarStatusBoasVindas);
+  const redefinirSenhaPadraoFn = useServerFn(redefinirSenhaPadraoUsuario);
+
+
 
   const [confirmDeactivate, setConfirmDeactivate] = useState<UsuarioRow | null>(null);
   const [confirmEncerrarSessoes, setConfirmEncerrarSessoes] = useState<UsuarioRow | null>(null);
