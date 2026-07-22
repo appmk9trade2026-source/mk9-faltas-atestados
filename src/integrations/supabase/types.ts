@@ -4446,6 +4446,7 @@ export type Database = {
         | "PROJETO_EXCLUIDO"
         | "PROJETO_ARQUIVADO_AUTOMATICO"
         | "PROJETOS_EXCLUSAO_LOTE"
+        | "TST_CONFIRMADO"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       changelog_tipo:
         | "NOVA_FUNCIONALIDADE"
@@ -4857,6 +4858,7 @@ export const Constants = {
         "PROJETO_EXCLUIDO",
         "PROJETO_ARQUIVADO_AUTOMATICO",
         "PROJETOS_EXCLUSAO_LOTE",
+        "TST_CONFIRMADO",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       changelog_tipo: [
