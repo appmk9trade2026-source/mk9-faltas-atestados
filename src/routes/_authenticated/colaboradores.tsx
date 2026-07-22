@@ -151,6 +151,7 @@ const colabSchema = z
       .or(z.literal("")),
     supervisor_telefone: z.string().optional().or(z.literal("")),
     supervisor_email: z.string().optional().or(z.literal("")),
+    supervisor_usuario_id: z.string().uuid().nullable().optional().or(z.literal("")),
     ativo: z.boolean(),
   })
   .superRefine((data, ctx) => {
