@@ -30,7 +30,9 @@ export type ProfileRow = {
   nome: string;
   email: string;
   ativo: boolean;
+  primeiro_acesso_pendente: boolean;
 };
+
 
 export type SessionState = {
   loading: boolean;
