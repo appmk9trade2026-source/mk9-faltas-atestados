@@ -68,6 +68,8 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { useSessionScope } from "@/hooks/use-session-scope";
+import { SupervisorEmptyState } from "@/components/supervisor-empty-state";
 import {
   BUCKET_ATESTADOS,
   TIPO_AUSENCIA,
@@ -155,6 +157,7 @@ function StatusBadge({ status }: { status: StatusAusencia }) {
 
 function AusenciasPage() {
   const { roles } = useSession();
+  const scope = useSessionScope();
   const podeCadastrar =
     roles.includes("super_admin") || roles.includes("rh") || roles.includes("supervisor");
   const podeLancar = roles.includes("super_admin") || roles.includes("rh");
