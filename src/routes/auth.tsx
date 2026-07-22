@@ -248,12 +248,15 @@ function PasswordEmailDialog({
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [techError, setTechError] = useState<string | null>(null);
+  const primeiroAcessoFn = useServerFn(solicitarPrimeiroAcesso);
 
   useEffect(() => {
     if (!open) {
       setEmail("");
       setSending(false);
       setSent(false);
+      setTechError(null);
     }
   }, [open]);
 
@@ -261,14 +264,29 @@ function PasswordEmailDialog({
     e.preventDefault();
     if (sending) return;
     setSending(true);
+    setTechError(null);
     try {
-      await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const client_request_id =
+        globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const res = await primeiroAcessoFn({
+        data: {
+          email,
+          redirect_to: `${window.location.origin}/reset-password`,
+          client_request_id,
+          user_agent: navigator.userAgent.slice(0, 500),
+        },
       });
-      // Sempre mensagem neutra — não expor existência do e-mail.
-      setSent(true);
+      if (res?.ok) {
+        setSent(true);
+      } else {
+        setTechError(
+          "Não foi possível concluir a solicitação neste momento. Tente novamente em alguns minutos.",
+        );
+      }
     } catch {
-      setSent(true);
+      setTechError(
+        "Não foi possível concluir a solicitação neste momento. Tente novamente em alguns minutos.",
+      );
     } finally {
       setSending(false);
     }
@@ -276,6 +294,7 @@ function PasswordEmailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
