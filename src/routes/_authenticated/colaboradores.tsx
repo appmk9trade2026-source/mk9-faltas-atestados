@@ -1010,12 +1010,45 @@ function ColaboradorDialog({
   });
 
   const empresaId = form.watch("empresa_id");
+  const projetoIdWatch = form.watch("projeto_id");
   const matriculaInput = form.watch("matricula");
   const projetosQ = useProjetosAtivosPorEmpresa(empresaId || null);
   const duplicadoQ = useColaboradorDuplicado(empresaId || null, matriculaInput, editing?.id ?? null);
   const duplicado = duplicadoQ.duplicado;
   const checando = duplicadoQ.checking;
   const erroDup = duplicadoQ.errorMessage;
+
+  const supervisoresQ = useQuery({
+    queryKey: ["colaboradores", "supervisores-do-projeto", projetoIdWatch || null],
+    enabled: !!projetoIdWatch,
+    queryFn: async (): Promise<SupervisorOption[]> => {
+      const projetoId = projetoIdWatch as string;
+      const { data: vincs, error: e1 } = await supabase
+        .from("usuario_projetos")
+        .select("user_id")
+        .eq("projeto_id", projetoId);
+      if (e1) throw e1;
+      const userIds = Array.from(new Set((vincs ?? []).map((v) => v.user_id as string)));
+      if (userIds.length === 0) return [];
+      const { data: roles, error: e2 } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "supervisor")
+        .in("user_id", userIds);
+      if (e2) throw e2;
+      const supIds = Array.from(new Set((roles ?? []).map((r) => r.user_id as string)));
+      if (supIds.length === 0) return [];
+      const { data: profs, error: e3 } = await supabase
+        .from("profiles")
+        .select("id, nome, email, ativo")
+        .in("id", supIds);
+      if (e3) throw e3;
+      return (profs ?? [])
+        .filter((p) => p.ativo)
+        .map((p) => ({ id: p.id as string, nome: p.nome as string, email: p.email as string }))
+        .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    },
+  });
 
 
 
