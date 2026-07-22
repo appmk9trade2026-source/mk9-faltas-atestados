@@ -53,10 +53,22 @@ function AuthPage() {
   const [firstAccessOpen, setFirstAccessOpen] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard", replace: true });
-    });
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) return;
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("primeiro_acesso_pendente")
+        .eq("id", data.session.user.id)
+        .maybeSingle();
+      if (prof?.primeiro_acesso_pendente) {
+        navigate({ to: "/auth/nova-senha", replace: true });
+      } else {
+        navigate({ to: "/dashboard", replace: true });
+      }
+    })();
   }, [navigate]);
+
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -71,12 +83,17 @@ function AuthPage() {
       }
       const { data: profile } = await supabase
         .from("profiles")
-        .select("ativo")
+        .select("ativo, primeiro_acesso_pendente")
         .eq("id", data.user.id)
         .maybeSingle();
       if (!profile || profile.ativo === false) {
         await supabase.auth.signOut();
         setError("Sua conta está inativa. Contate o Super Admin.");
+        return;
+      }
+      if (profile.primeiro_acesso_pendente) {
+        toast.info("Antes de continuar, defina sua senha pessoal.");
+        navigate({ to: "/auth/nova-senha", replace: true });
         return;
       }
       toast.success("Bem-vindo!");
@@ -87,6 +104,7 @@ function AuthPage() {
       setLoading(false);
     }
   }
+
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-background">
@@ -199,7 +217,7 @@ function AuthPage() {
                 onClick={() => setFirstAccessOpen(true)}
               >
                 <UserPlus className="mr-2 h-4 w-4" />
-                Primeiro acesso? Criar senha
+                Primeiro acesso com senha temporária
               </Button>
 
               <p className="text-center text-xs text-muted-foreground">
@@ -218,14 +236,11 @@ function AuthPage() {
         icon={<KeyRound className="h-4 w-4" />}
         submitLabel="Enviar link de recuperação"
       />
-      <PasswordEmailDialog
+      <FirstAccessDialog
         open={firstAccessOpen}
         onOpenChange={setFirstAccessOpen}
-        title="Primeiro acesso"
-        description="Informe o e-mail corporativo cadastrado pelo administrador. Se houver conta ativa, enviaremos um link seguro para você definir sua senha."
-        icon={<UserPlus className="h-4 w-4" />}
-        submitLabel="Enviar link de criação de senha"
       />
+
     </div>
   );
 }
@@ -349,3 +364,172 @@ function PasswordEmailDialog({
     </Dialog>
   );
 }
+
+function FirstAccessDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}) {
+  const navigate = useNavigate();
+  const [step, setStep] = useState<"intro" | "form">("intro");
+  const [email, setEmail] = useState("");
+  const [tempPw, setTempPw] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      setStep("intro");
+      setEmail("");
+      setTempPw("");
+      setShowPw(false);
+      setLoading(false);
+      setError(null);
+    }
+  }, [open]);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (loading) return;
+    setError(null);
+    setLoading(true);
+    try {
+      const { data, error: signErr } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password: tempPw,
+      });
+      if (signErr || !data.user) {
+        setError("E-mail ou senha temporária inválidos.");
+        return;
+      }
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("ativo, primeiro_acesso_pendente")
+        .eq("id", data.user.id)
+        .maybeSingle();
+      if (!prof || prof.ativo === false) {
+        await supabase.auth.signOut();
+        setError("Sua conta está inativa. Contate o Super Admin.");
+        return;
+      }
+      if (!prof.primeiro_acesso_pendente) {
+        toast.info("Seu primeiro acesso já foi concluído. Use o login normal.");
+        onOpenChange(false);
+        navigate({ to: "/dashboard", replace: true });
+        return;
+      }
+      onOpenChange(false);
+      navigate({ to: "/auth/nova-senha", replace: true });
+    } catch {
+      setError("Não foi possível continuar. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <UserPlus className="h-4 w-4" />
+            Primeiro acesso com senha temporária
+          </DialogTitle>
+          <DialogDescription>
+            {step === "intro"
+              ? "Use a senha temporária fornecida pelo Super Admin para entrar."
+              : "Entre com sua senha temporária. Depois será solicitado que você crie uma senha pessoal."}
+          </DialogDescription>
+        </DialogHeader>
+
+        {step === "intro" ? (
+          <div className="space-y-4">
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li className="flex gap-2">
+                <span className="text-primary">1.</span>
+                Informe seu e-mail corporativo.
+              </li>
+              <li className="flex gap-2">
+                <span className="text-primary">2.</span>
+                Informe a senha temporária fornecida pelo Super Admin.
+              </li>
+              <li className="flex gap-2">
+                <span className="text-primary">3.</span>
+                Após entrar, será obrigatório criar uma nova senha pessoal.
+              </li>
+            </ul>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+                Cancelar
+              </Button>
+              <Button type="button" onClick={() => setStep("form")}>
+                Continuar para o primeiro acesso
+              </Button>
+            </DialogFooter>
+          </div>
+        ) : (
+          <form onSubmit={onSubmit} className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="fa-email">E-mail corporativo</Label>
+              <div className="relative">
+                <Mail className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="fa-email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="voce@mk9.com.br"
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="fa-pw">Senha temporária</Label>
+              <div className="relative">
+                <Lock className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="fa-pw"
+                  type={showPw ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  value={tempPw}
+                  onChange={(e) => setTempPw(e.target.value)}
+                  className="pl-9 pr-10"
+                  placeholder="Senha fornecida pelo Super Admin"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw((s) => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
+                  aria-label={showPw ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setStep("intro")} disabled={loading}>
+                Voltar
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {loading ? "Entrando..." : "Entrar e criar nova senha"}
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
