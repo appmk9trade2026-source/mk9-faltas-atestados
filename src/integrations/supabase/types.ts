@@ -2316,6 +2316,7 @@ export type Database = {
           email: string
           id: string
           nome: string
+          primeiro_acesso_pendente: boolean
           telefone_whatsapp: string | null
           updated_at: string
         }
@@ -2327,6 +2328,7 @@ export type Database = {
           email: string
           id: string
           nome: string
+          primeiro_acesso_pendente?: boolean
           telefone_whatsapp?: string | null
           updated_at?: string
         }
@@ -2338,6 +2340,7 @@ export type Database = {
           email?: string
           id?: string
           nome?: string
+          primeiro_acesso_pendente?: boolean
           telefone_whatsapp?: string | null
           updated_at?: string
         }
@@ -4487,6 +4490,7 @@ export type Database = {
         | "PROJETO_ARQUIVADO_AUTOMATICO"
         | "PROJETOS_EXCLUSAO_LOTE"
         | "TST_CONFIRMADO"
+        | "PRIMEIRO_ACESSO_CONCLUIDO"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       changelog_tipo:
         | "NOVA_FUNCIONALIDADE"
@@ -4899,6 +4903,7 @@ export const Constants = {
         "PROJETO_ARQUIVADO_AUTOMATICO",
         "PROJETOS_EXCLUSAO_LOTE",
         "TST_CONFIRMADO",
+        "PRIMEIRO_ACESSO_CONCLUIDO",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       changelog_tipo: [
