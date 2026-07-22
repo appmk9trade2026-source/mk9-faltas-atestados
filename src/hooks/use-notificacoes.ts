@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useSessionScope } from "@/hooks/use-session-scope";
 
 export type NotifStatus = "NAO_LIDA" | "LIDA" | "ARQUIVADA";
 export type NotifSeveridade = "INFO" | "ATENCAO" | "ALTA" | "CRITICA";
@@ -21,8 +22,10 @@ export type NotificacaoItem = {
 };
 
 export function useNotificacoesNaoLidas(refetchMs = 60_000) {
+  const scope = useSessionScope();
   return useQuery({
-    queryKey: ["notif", "unread-count"],
+    queryKey: ["notif", "unread-count", ...scope.keyParts],
+    enabled: scope.ready,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("contar_notificacoes_nao_lidas");
       if (error) throw error;
@@ -34,8 +37,10 @@ export function useNotificacoesNaoLidas(refetchMs = 60_000) {
 }
 
 export function useNotificacoes(status?: NotifStatus, limit = 50) {
+  const scope = useSessionScope();
   return useQuery({
-    queryKey: ["notif", "list", status ?? "all", limit],
+    queryKey: ["notif", "list", ...scope.keyParts, status ?? "all", limit],
+    enabled: scope.ready,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("listar_notificacoes_usuario", {
         _status: status ?? null,
