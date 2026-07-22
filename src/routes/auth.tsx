@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
-import { Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
+import { createFileRoute, useNavigate, useSearch, Link } from "@tanstack/react-router";
+import { Eye, EyeOff, Loader2, ShieldCheck, Mail, Lock, KeyRound, UserPlus } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 const searchSchema = z.object({
@@ -34,9 +42,13 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(inactive ? "Sua conta está inativa. Contate o Super Admin." : null);
+  const [error, setError] = useState<string | null>(
+    inactive ? "Sua conta está inativa. Contate o Super Admin." : null,
+  );
 
-  // Redireciona se já logado
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [firstAccessOpen, setFirstAccessOpen] = useState(false);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/dashboard", replace: true });
@@ -45,6 +57,7 @@ function AuthPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return;
     setError(null);
     setLoading(true);
     try {
@@ -53,7 +66,6 @@ function AuthPage() {
         setError("E-mail ou senha inválidos.");
         return;
       }
-      // Verifica se ativo
       const { data: profile } = await supabase
         .from("profiles")
         .select("ativo")
@@ -75,7 +87,6 @@ function AuthPage() {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-background">
-      {/* Lateral visual */}
       <div className="hidden lg:flex flex-col justify-between p-10 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground relative overflow-hidden">
         <div className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary-foreground/10 backdrop-blur">
@@ -92,10 +103,11 @@ function AuthPage() {
             rastreabilidade e uma operação de RH mais leve.
           </p>
         </div>
-        <p className="text-xs text-primary-foreground/60">© {new Date().getFullYear()} MK9. Acesso restrito.</p>
+        <p className="text-xs text-primary-foreground/60">
+          © {new Date().getFullYear()} MK9. Acesso restrito.
+        </p>
       </div>
 
-      {/* Formulário */}
       <div className="flex items-center justify-center p-6">
         <Card className="w-full max-w-md border-border/60 shadow-sm">
           <CardHeader className="space-y-1">
@@ -117,19 +129,33 @@ function AuthPage() {
               )}
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="voce@mk9.com.br"
-                />
+                <div className="relative">
+                  <Mail className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="voce@mk9.com.br"
+                    className="pl-9"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Senha</Label>
+                  <button
+                    type="button"
+                    onClick={() => setForgotOpen(true)}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Esqueci minha senha
+                  </button>
+                </div>
                 <div className="relative">
+                  <Lock className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="password"
                     type={showPw ? "text" : "password"}
@@ -137,7 +163,7 @@ function AuthPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pr-10"
+                    className="pl-9 pr-10"
                   />
                   <button
                     type="button"
@@ -151,8 +177,28 @@ function AuthPage() {
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Entrar
+                {loading ? "Entrando..." : "Entrar"}
               </Button>
+
+              <div className="relative py-1">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border/60" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-card px-2 text-muted-foreground">ou</span>
+                </div>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => setFirstAccessOpen(true)}
+              >
+                <UserPlus className="mr-2 h-4 w-4" />
+                Primeiro acesso? Criar senha
+              </Button>
+
               <p className="text-center text-xs text-muted-foreground">
                 O acesso é criado pelo Super Admin. Sem cadastro público.
               </p>
@@ -160,6 +206,118 @@ function AuthPage() {
           </CardContent>
         </Card>
       </div>
+
+      <PasswordEmailDialog
+        open={forgotOpen}
+        onOpenChange={setForgotOpen}
+        title="Recuperar senha"
+        description="Informe seu e-mail corporativo. Se houver uma conta associada, enviaremos instruções para redefinir a senha."
+        icon={<KeyRound className="h-4 w-4" />}
+        submitLabel="Enviar link de recuperação"
+      />
+      <PasswordEmailDialog
+        open={firstAccessOpen}
+        onOpenChange={setFirstAccessOpen}
+        title="Primeiro acesso"
+        description="Informe o e-mail corporativo cadastrado pelo administrador. Se houver conta ativa, enviaremos um link seguro para você definir sua senha."
+        icon={<UserPlus className="h-4 w-4" />}
+        submitLabel="Enviar link de criação de senha"
+      />
     </div>
+  );
+}
+
+function PasswordEmailDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  icon,
+  submitLabel,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  submitLabel: string;
+}) {
+  const [email, setEmail] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setEmail("");
+      setSending(false);
+      setSent(false);
+    }
+  }, [open]);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (sending) return;
+    setSending(true);
+    try {
+      await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      // Sempre mensagem neutra — não expor existência do e-mail.
+      setSent(true);
+    } catch {
+      setSent(true);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {icon}
+            {title}
+          </DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        {sent ? (
+          <Alert>
+            <AlertDescription>
+              Caso exista uma conta ativa para este e-mail, você receberá em instantes um link
+              seguro para prosseguir. Verifique também a caixa de spam.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <form onSubmit={onSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="dlg-email">E-mail</Label>
+              <div className="relative">
+                <Mail className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="dlg-email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="voce@mk9.com.br"
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={sending}>
+                {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {submitLabel}
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
