@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, LogOut } from "lucide-react";
+import { KeyRound, Loader2, LogOut, UserCircle } from "lucide-react";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -126,6 +126,26 @@ export function AppShell({ title, breadcrumb, children }: { title: string; bread
                     ))}
                   </div>
                 </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={() => navigate({ to: "/perfil" })}
+                >
+                  <UserCircle className="mr-2 h-4 w-4" /> Meu Perfil
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={sendingReset || !email}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    void handleChangePassword();
+                  }}
+                >
+                  {sendingReset ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <KeyRound className="mr-2 h-4 w-4" />
+                  )}
+                  Alterar Senha
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onSelect={(e) => {
