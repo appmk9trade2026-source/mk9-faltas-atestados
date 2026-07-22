@@ -113,17 +113,15 @@ export const createUsuario = createServerFn({ method: "POST" })
       }
     }
 
+    // Regra do CRM MK9: todo novo usuário nasce com a senha temporária padrão
+    // "12345678" e com primeiro_acesso_pendente = true. O admin não escolhe a
+    // senha inicial e nenhum convite por e-mail é enviado.
+    const SENHA_PADRAO = "12345678";
     let userId: string;
-    if (data.enviar_convite && !data.senha_temporaria) {
-      const inv = await supabaseAdmin.auth.admin.inviteUserByEmail(data.email, {
-        data: { nome: data.nome },
-      });
-      if (inv.error || !inv.data.user) throw new Error(inv.error?.message ?? "Falha ao convidar usuário.");
-      userId = inv.data.user.id;
-    } else {
+    {
       const cr = await supabaseAdmin.auth.admin.createUser({
         email: data.email,
-        password: data.senha_temporaria ?? undefined,
+        password: SENHA_PADRAO,
         email_confirm: true,
         user_metadata: { nome: data.nome },
       });
@@ -154,10 +152,10 @@ export const createUsuario = createServerFn({ method: "POST" })
         cargo: data.cargo || null,
         avatar_url: data.avatar_url || null,
         ativo: data.ativo,
-        // Marca troca obrigatória no primeiro acesso quando o admin definiu
-        // uma senha temporária (fluxo sem envio de e-mail).
-        primeiro_acesso_pendente: !!data.senha_temporaria,
+        // Força troca obrigatória no primeiro login — senha padrão do CRM.
+        primeiro_acesso_pendente: true,
       };
+
       const up = await supabaseAdmin.from("profiles").upsert(profilePayload, { onConflict: "id" });
       if (up.error) throw new Error(up.error.message);
 
@@ -206,7 +204,8 @@ export const createUsuario = createServerFn({ method: "POST" })
           {
             p_user_id: userId,
             p_link_sistema: link,
-            p_senha_temporaria: data.senha_temporaria || null,
+            p_senha_temporaria: "12345678",
+
           } as never,
         );
         if (matErr) {
@@ -219,7 +218,7 @@ export const createUsuario = createServerFn({ method: "POST" })
             await audit(context.supabase, "ENVIO_COMUNICACAO", userId,
               `WhatsApp de boas-vindas enfileirado (outbox ${res.outbox_id})`,
               null,
-              { canal: "whatsapp", template: "USUARIO_CRIADO_V1", outbox_id: res.outbox_id, possui_senha_temporaria: !!data.senha_temporaria });
+              { canal: "whatsapp", template: "USUARIO_CRIADO_V1", outbox_id: res.outbox_id, possui_senha_temporaria: true });
           } else {
             await audit(context.supabase, "ENVIO_COMUNICACAO", userId,
               `WhatsApp de boas-vindas não enfileirado: ${res.motivo}`,
@@ -566,8 +565,73 @@ export const definirSenhaTemporariaUsuario = createServerFn({ method: "POST" })
     return { ok: true, primeiro_acesso_pendente: true };
   });
 
+// ---------------- REDEFINIR PARA SENHA PADRÃO DO CRM (12345678) ----------------
+// Atalho para Super Admin: repõe a senha do usuário para a senha temporária
+// padrão "12345678", força primeiro_acesso_pendente = true e encerra sessões.
+export const redefinirSenhaPadraoUsuario = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({
+      id: z.string().uuid(),
+      motivo: z.string().trim().max(500).optional().nullable(),
+    }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await gateUsuario(context, PERMISSION_MAP.updateUser, "/usuarios#senha-padrao");
+    await requireSuperAdmin(context);
+    if (data.id === context.userId) {
+      throw new Error("Você não pode redefinir a própria senha por este fluxo.");
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const prof = await supabaseAdmin
+      .from("profiles")
+      .select("id, email, ativo")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!prof.data) throw new Error("Usuário não encontrado.");
+    if (prof.data.ativo === false) throw new Error("Usuário está desativado — reative antes de redefinir a senha.");
+
+    const upd = await supabaseAdmin.auth.admin.updateUserById(data.id, { password: "12345678" });
+    if (upd.error) throw new Error(upd.error.message);
+
+    const now = new Date().toISOString();
+    const p = await supabaseAdmin
+      .from("profiles")
+      .update({ primeiro_acesso_pendente: true, senha_temporaria_redefinida_em: now })
+      .eq("id", data.id);
+    if (p.error) throw new Error(p.error.message);
+
+    try {
+      const adminAny = supabaseAdmin.auth.admin as unknown as {
+        signOut: (uid: string, scope?: "global" | "local" | "others") => Promise<{ error: unknown }>;
+      };
+      await adminAny.signOut(data.id, "global").catch(() => {});
+    } catch { /* noop */ }
+    await supabaseAdmin
+      .from("user_sessions")
+      .update({
+        status: "ENCERRADA" as never,
+        encerrada_em: now,
+        motivo_encerramento: "senha_padrao_redefinida",
+      })
+      .eq("user_id", data.id)
+      .eq("status", "ATIVA" as never);
+
+    await audit(
+      context.supabase,
+      "SENHA_TEMPORARIA_REDEFINIDA",
+      data.id,
+      data.motivo?.trim() ? `Motivo: ${data.motivo.trim()}` : "Senha redefinida para a padrão do CRM (12345678)",
+      null,
+      { email_alvo: prof.data.email, padrao: true, primeiro_acesso_pendente: true, sessoes_encerradas: true },
+    );
+
+    return { ok: true, senha: "12345678" };
+  });
+
 // ---------------- DEPENDÊNCIAS / EXCLUSÃO SEGURA ----------------
 export type DependenciasUsuario = {
+
   ausencias_registradas: number;
   comunicacoes: number;
   homologacoes: number;

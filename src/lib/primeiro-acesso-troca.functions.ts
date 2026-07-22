@@ -19,8 +19,12 @@ const schema = z.object({
     .max(72)
     .refine((v) => /[A-Za-z]/.test(v) && /\d/.test(v), {
       message: "A senha deve conter letras e números.",
+    })
+    .refine((v) => v !== "12345678", {
+      message: "Você não pode manter a senha temporária padrão. Escolha uma senha pessoal.",
     }),
 });
+
 
 export const concluirPrimeiroAcesso = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

@@ -108,8 +108,10 @@ import {
   reenviarBoasVindasWhatsapp,
   reprocessarConviteWhatsapp,
   listarStatusBoasVindas,
+  redefinirSenhaPadraoUsuario,
   type BoasVindasStatus,
 } from "@/lib/usuarios.functions";
+
 import { SenhaTemporariaDialog } from "@/components/usuarios/senha-temporaria-dialog";
 import { ExcluirUsuarioDialog } from "@/components/usuarios/excluir-usuario-dialog";
 
@@ -185,16 +187,14 @@ const createFormSchema = z.object({
   telefone: z.string().trim().optional(),
   cargo: z.string().trim().optional(),
   avatar_url: z.string().trim().url().optional().or(z.literal("")),
-  senha_temporaria: z.string().min(8).max(72).optional().or(z.literal("")),
-  enviar_convite: z.boolean(),
   enviar_whatsapp: z.boolean(),
-
   ativo: z.boolean(),
   roles: z.array(rolesEnum).min(1, "Selecione ao menos um perfil"),
   empresa_ids: z.array(z.string().uuid()),
   projeto_ids: z.array(z.string().uuid()),
 });
 type CreateForm = z.infer<typeof createFormSchema>;
+
 
 const editFormSchema = z.object({
   id: z.string().uuid(),
@@ -278,12 +278,17 @@ function UsuariosPage() {
   const reenviarWaFn = useServerFn(reenviarBoasVindasWhatsapp);
   const reprocessarWaFn = useServerFn(reprocessarConviteWhatsapp);
   const listarStatusWaFn = useServerFn(listarStatusBoasVindas);
+  const redefinirSenhaPadraoFn = useServerFn(redefinirSenhaPadraoUsuario);
+
+
 
   const [confirmDeactivate, setConfirmDeactivate] = useState<UsuarioRow | null>(null);
   const [confirmEncerrarSessoes, setConfirmEncerrarSessoes] = useState<UsuarioRow | null>(null);
   const [senhaTempAlvo, setSenhaTempAlvo] = useState<UsuarioRow | null>(null);
+  const [senhaPadraoAlvo, setSenhaPadraoAlvo] = useState<UsuarioRow | null>(null);
   const [excluirAlvo, setExcluirAlvo] = useState<UsuarioRow | null>(null);
   const [waDetalhesFor, setWaDetalhesFor] = useState<{ usuario: UsuarioRow; status: BoasVindasStatus | null } | null>(null);
+
   const isSuperAdmin = roles.includes("super_admin");
 
   const canResendWhatsapp = roles.includes("super_admin");
@@ -347,6 +352,15 @@ function UsuariosPage() {
     onSuccess: () => { toast.success("Sessões encerradas."); invalidate(); },
     onError: (e: Error) => toast.error(e.message),
   });
+  const redefinirSenhaPadraoMut = useMutation({
+    mutationFn: async (v: { id: string }) => redefinirSenhaPadraoFn({ data: { id: v.id, motivo: null } }),
+    onSuccess: () => {
+      toast.success('Senha redefinida para "12345678". O usuário precisará trocá-la no próximo login.');
+      invalidate();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
 
   return (
@@ -536,13 +550,22 @@ function UsuariosPage() {
                               <KeyRound className="mr-2 h-4 w-4" /> Enviar reset de senha
                             </DropdownMenuItem>
                             {isSuperAdmin && (
-                              <DropdownMenuItem
-                                onClick={() => setSenhaTempAlvo(u)}
-                                disabled={u.id === user?.id}
-                              >
-                                <KeyRound className="mr-2 h-4 w-4" /> Definir nova senha temporária
-                              </DropdownMenuItem>
+                              <>
+                                <DropdownMenuItem
+                                  onClick={() => setSenhaPadraoAlvo(u)}
+                                  disabled={u.id === user?.id || !u.ativo}
+                                >
+                                  <RefreshCw className="mr-2 h-4 w-4" /> Redefinir senha temporária (12345678)
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => setSenhaTempAlvo(u)}
+                                  disabled={u.id === user?.id}
+                                >
+                                  <KeyRound className="mr-2 h-4 w-4" /> Definir senha personalizada…
+                                </DropdownMenuItem>
+                              </>
                             )}
+
                             <DropdownMenuItem
                               onClick={() => reenviarMut.mutate(u.id)}
                               disabled={!u.email || !u.ativo}
@@ -642,15 +665,17 @@ function UsuariosPage() {
                 telefone: values.telefone || null,
                 cargo: values.cargo || null,
                 avatar_url: values.avatar_url || null,
-                senha_temporaria: values.senha_temporaria || null,
+                senha_temporaria: null,
+                enviar_convite: false,
               },
             });
-            toast.success("Usuário criado com sucesso.");
+            toast.success('Usuário criado com a senha temporária padrão "12345678".');
             setCreateOpen(false);
             invalidate();
           }}
         />
       )}
+
 
       {editing && (
         <EditDialog
@@ -658,6 +683,9 @@ function UsuariosPage() {
           onClose={() => setEditing(null)}
           empresas={empresasQ.data ?? []}
           projetos={projetosQ.data ?? []}
+          canManageSecurity={isSuperAdmin && editing.id !== user?.id}
+          onRedefinirSenhaPadrao={() => setSenhaPadraoAlvo(editing)}
+          onEncerrarSessoes={() => setConfirmEncerrarSessoes(editing)}
           onSubmit={async (values) => {
             await updateFn({
               data: {
@@ -673,6 +701,7 @@ function UsuariosPage() {
           }}
         />
       )}
+
 
       <HistoryDrawer usuario={historyFor} onClose={() => setHistoryFor(null)} />
 
@@ -721,6 +750,32 @@ function UsuariosPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!senhaPadraoAlvo} onOpenChange={(o) => !o && setSenhaPadraoAlvo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Redefinir para a senha temporária padrão?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A senha de <strong>{senhaPadraoAlvo?.nome}</strong> será redefinida para{" "}
+              <code className="font-mono">12345678</code>. Todas as sessões ativas serão encerradas
+              e o usuário será obrigado a escolher uma nova senha no próximo login.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (senhaPadraoAlvo) redefinirSenhaPadraoMut.mutate({ id: senhaPadraoAlvo.id });
+                setSenhaPadraoAlvo(null);
+              }}
+            >
+              Redefinir para 12345678
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+
 
       <SenhaTemporariaDialog
         alvo={senhaTempAlvo ? { id: senhaTempAlvo.id, nome: senhaTempAlvo.nome, email: senhaTempAlvo.email } : null}
@@ -775,16 +830,14 @@ function CreateDialog({
       telefone: "",
       cargo: "",
       avatar_url: "",
-      senha_temporaria: "",
-      enviar_convite: true,
       enviar_whatsapp: false,
-
       ativo: true,
       roles: [],
       empresa_ids: [],
       projeto_ids: [],
     },
   });
+
   const [submitting, setSubmitting] = useState(false);
   const selectedEmpresas = form.watch("empresa_ids");
   const availableProjetos = useMemo(
@@ -857,22 +910,17 @@ function FormSectionsCreate({
       <Separator />
       <div>
         <h3 className="text-sm font-semibold mb-2">Acesso</h3>
+        <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs mb-3">
+          <p className="font-medium text-foreground">Senha temporária padrão do CRM: <code className="font-mono">12345678</code></p>
+          <p className="text-muted-foreground mt-1">
+            Todo novo usuário é criado com esta senha e será obrigado a defini-la no primeiro login.
+            Nenhum convite por e-mail é enviado — repasse a senha por um canal seguro.
+          </p>
+        </div>
         <div className="grid md:grid-cols-2 gap-3">
-          <FormField control={form.control} name="senha_temporaria" render={({ field }) => (
-            <FormItem>
-              <FormLabel>Senha temporária (opcional)</FormLabel>
-              <FormControl><Input type="text" placeholder="Deixe vazio para enviar convite" {...field} /></FormControl>
-              <FormMessage />
-            </FormItem>
-          )} />
           <div className="space-y-3">
-            <FormField control={form.control} name="enviar_convite" render={({ field }) => (
-              <FormItem className="flex items-center justify-between rounded-md border p-3">
-                <div><Label>Enviar convite por e-mail</Label></div>
-                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-              </FormItem>
-            )} />
             <FormField control={form.control} name="enviar_whatsapp" render={({ field }) => {
+
               const tel = (form.watch("telefone") ?? "").toString();
               const digits = tel.replace(/\D+/g, "");
               const telValido = digits.length >= 10 && digits.length <= 15;
@@ -945,13 +993,20 @@ function EditDialog({
   empresas,
   projetos,
   onSubmit,
+  canManageSecurity,
+  onRedefinirSenhaPadrao,
+  onEncerrarSessoes,
 }: {
   usuario: UsuarioRow;
   onClose: () => void;
   empresas: { id: string; nome: string; ativo: boolean }[];
   projetos: { id: string; nome: string; empresa_id: string; ativo: boolean }[];
   onSubmit: (v: EditForm) => Promise<void>;
+  canManageSecurity?: boolean;
+  onRedefinirSenhaPadrao?: () => void;
+  onEncerrarSessoes?: () => void;
 }) {
+
   const form = useForm<EditForm>({
     resolver: zodResolver(editFormSchema),
     defaultValues: {
@@ -1030,7 +1085,58 @@ function EditDialog({
               emptyLabel="Selecione empresas para liberar projetos."
             />
 
+            {canManageSecurity && (
+              <>
+                <Separator />
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Segurança e acesso</h4>
+                  <div className="rounded-md border p-3 space-y-3 text-sm">
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                      <div>
+                        <div className="text-muted-foreground">Status</div>
+                        <div className="font-medium">
+                          {usuario.ativo ? (
+                            <Badge className="bg-emerald-500/15 text-emerald-700 border-emerald-500/30">Ativo</Badge>
+                          ) : (
+                            <Badge variant="outline">Desativado</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Último acesso</div>
+                        <div className="font-medium">{fmtDate(usuario.last_sign_in_at)}</div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Senha temporária padrão: <code className="font-mono">12345678</code>. Ao redefinir,
+                      todas as sessões ativas são encerradas e o usuário deve escolher uma nova senha no próximo login.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onRedefinirSenhaPadrao?.()}
+                        disabled={!usuario.ativo}
+                      >
+                        <RefreshCw className="mr-2 h-4 w-4" /> Redefinir para 12345678
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onEncerrarSessoes?.()}
+                      >
+                        <LogOut className="mr-2 h-4 w-4" /> Encerrar sessões
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
             <DialogFooter>
+
               <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
               <Button type="submit" disabled={submitting}>{submitting ? "Salvando..." : "Salvar alterações"}</Button>
             </DialogFooter>

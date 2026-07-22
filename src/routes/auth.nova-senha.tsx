@@ -120,6 +120,11 @@ function NovaSenhaPage() {
       setError("A senha deve conter letras e números.");
       return;
     }
+    if (novaSenha === "12345678") {
+      setError("Você não pode manter a senha temporária padrão. Escolha uma senha pessoal.");
+      return;
+    }
+
     if (novaSenha !== confirmar) {
       setError("As senhas não coincidem.");
       return;
