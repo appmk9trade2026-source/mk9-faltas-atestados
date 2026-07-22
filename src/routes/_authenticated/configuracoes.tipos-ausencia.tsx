@@ -70,7 +70,7 @@ type Vinculo = {
 };
 
 function TiposAusenciaPage() {
-  const { roles } = useSession();
+  const { roles, loading: sessionLoading } = useSession();
   const isAdmin = roles.includes("super_admin");
   const podeVer = isAdmin || roles.includes("rh") || roles.includes("compliance");
   const qc = useQueryClient();
@@ -130,6 +130,17 @@ function TiposAusenciaPage() {
         description: e instanceof Error ? e.message : String(e),
       }),
   });
+
+  if (sessionLoading) {
+    return (
+      <AppShell title="Tipos de Ausência" breadcrumb={["Configurações", "Tipos de Ausência"]}>
+        <div className="space-y-4 p-6" aria-busy="true" aria-live="polite">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </AppShell>
+    );
+  }
 
   if (!podeVer) {
     return (

@@ -38,6 +38,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -194,7 +195,7 @@ function useDebouncedValue<T>(value: T, delay = 800): T {
 }
 
 function NovaAusenciaPage() {
-  const { profile, roles } = useSession();
+  const { profile, roles, loading: sessionLoading } = useSession();
   const podeCadastrar =
     roles.includes("super_admin") || roles.includes("rh") || roles.includes("supervisor");
   const isSupervisorOnly =
@@ -697,6 +698,18 @@ function NovaAusenciaPage() {
       });
     },
   });
+
+  if (sessionLoading) {
+    return (
+      <AppShell title="Nova Ausência" breadcrumb={["CRM", "Nova Ausência"]}>
+        <div className="space-y-4 p-6" aria-busy="true" aria-live="polite">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-48 w-full" />
+        </div>
+      </AppShell>
+    );
+  }
 
   if (!podeCadastrar) {
     return (
