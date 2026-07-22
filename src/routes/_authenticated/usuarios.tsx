@@ -108,8 +108,10 @@ import {
   reenviarBoasVindasWhatsapp,
   reprocessarConviteWhatsapp,
   listarStatusBoasVindas,
+  redefinirSenhaPadraoUsuario,
   type BoasVindasStatus,
 } from "@/lib/usuarios.functions";
+
 import { SenhaTemporariaDialog } from "@/components/usuarios/senha-temporaria-dialog";
 import { ExcluirUsuarioDialog } from "@/components/usuarios/excluir-usuario-dialog";
 
