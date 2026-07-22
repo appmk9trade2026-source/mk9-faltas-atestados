@@ -993,13 +993,20 @@ function EditDialog({
   empresas,
   projetos,
   onSubmit,
+  canManageSecurity,
+  onRedefinirSenhaPadrao,
+  onEncerrarSessoes,
 }: {
   usuario: UsuarioRow;
   onClose: () => void;
   empresas: { id: string; nome: string; ativo: boolean }[];
   projetos: { id: string; nome: string; empresa_id: string; ativo: boolean }[];
   onSubmit: (v: EditForm) => Promise<void>;
+  canManageSecurity?: boolean;
+  onRedefinirSenhaPadrao?: () => void;
+  onEncerrarSessoes?: () => void;
 }) {
+
   const form = useForm<EditForm>({
     resolver: zodResolver(editFormSchema),
     defaultValues: {
