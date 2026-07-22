@@ -42,6 +42,7 @@ import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAcessosRouteImport } from './routes/_authenticated/acessos'
 import { Route as AuthenticatedComunicacoesIndexRouteImport } from './routes/_authenticated/comunicacoes.index'
 import { Route as AuthenticatedInteligenciaSupervisoresRouteImport } from './routes/_authenticated/inteligencia.supervisores'
+import { Route as AuthenticatedInteligenciaDashboardRouteImport } from './routes/_authenticated/inteligencia.dashboard'
 import { Route as AuthenticatedInteligenciaConfiguracaoRouteImport } from './routes/_authenticated/inteligencia.configuracao'
 import { Route as AuthenticatedConfiguracoesTiposAusenciaRouteImport } from './routes/_authenticated/configuracoes.tipos-ausencia'
 import { Route as AuthenticatedConfiguracoesProjetosRouteImport } from './routes/_authenticated/configuracoes.projetos'
@@ -242,6 +243,12 @@ const AuthenticatedInteligenciaSupervisoresRoute =
     path: '/supervisores',
     getParentRoute: () => AuthenticatedInteligenciaRoute,
   } as any)
+const AuthenticatedInteligenciaDashboardRoute =
+  AuthenticatedInteligenciaDashboardRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => AuthenticatedInteligenciaRoute,
+  } as any)
 const AuthenticatedInteligenciaConfiguracaoRoute =
   AuthenticatedInteligenciaConfiguracaoRouteImport.update({
     id: '/configuracao',
@@ -415,6 +422,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
   '/inteligencia/configuracao': typeof AuthenticatedInteligenciaConfiguracaoRoute
+  '/inteligencia/dashboard': typeof AuthenticatedInteligenciaDashboardRoute
   '/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
   '/comunicacoes/': typeof AuthenticatedComunicacoesIndexRoute
   '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
@@ -469,6 +477,7 @@ export interface FileRoutesByTo {
   '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
   '/inteligencia/configuracao': typeof AuthenticatedInteligenciaConfiguracaoRoute
+  '/inteligencia/dashboard': typeof AuthenticatedInteligenciaDashboardRoute
   '/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
   '/comunicacoes': typeof AuthenticatedComunicacoesIndexRoute
   '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
@@ -527,6 +536,7 @@ export interface FileRoutesById {
   '/_authenticated/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/_authenticated/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
   '/_authenticated/inteligencia/configuracao': typeof AuthenticatedInteligenciaConfiguracaoRoute
+  '/_authenticated/inteligencia/dashboard': typeof AuthenticatedInteligenciaDashboardRoute
   '/_authenticated/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
   '/_authenticated/comunicacoes/': typeof AuthenticatedComunicacoesIndexRoute
   '/_authenticated/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
@@ -585,6 +595,7 @@ export interface FileRouteTypes {
     | '/configuracoes/projetos'
     | '/configuracoes/tipos-ausencia'
     | '/inteligencia/configuracao'
+    | '/inteligencia/dashboard'
     | '/inteligencia/supervisores'
     | '/comunicacoes/'
     | '/comunicacoes/whatsapp/configuracao'
@@ -639,6 +650,7 @@ export interface FileRouteTypes {
     | '/configuracoes/projetos'
     | '/configuracoes/tipos-ausencia'
     | '/inteligencia/configuracao'
+    | '/inteligencia/dashboard'
     | '/inteligencia/supervisores'
     | '/comunicacoes'
     | '/comunicacoes/whatsapp/configuracao'
@@ -696,6 +708,7 @@ export interface FileRouteTypes {
     | '/_authenticated/configuracoes/projetos'
     | '/_authenticated/configuracoes/tipos-ausencia'
     | '/_authenticated/inteligencia/configuracao'
+    | '/_authenticated/inteligencia/dashboard'
     | '/_authenticated/inteligencia/supervisores'
     | '/_authenticated/comunicacoes/'
     | '/_authenticated/comunicacoes/whatsapp/configuracao'
@@ -955,6 +968,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInteligenciaSupervisoresRouteImport
       parentRoute: typeof AuthenticatedInteligenciaRoute
     }
+    '/_authenticated/inteligencia/dashboard': {
+      id: '/_authenticated/inteligencia/dashboard'
+      path: '/dashboard'
+      fullPath: '/inteligencia/dashboard'
+      preLoaderRoute: typeof AuthenticatedInteligenciaDashboardRouteImport
+      parentRoute: typeof AuthenticatedInteligenciaRoute
+    }
     '/_authenticated/inteligencia/configuracao': {
       id: '/_authenticated/inteligencia/configuracao'
       path: '/configuracao'
@@ -1197,6 +1217,7 @@ const AuthenticatedConfiguracoesRouteWithChildren =
 
 interface AuthenticatedInteligenciaRouteChildren {
   AuthenticatedInteligenciaConfiguracaoRoute: typeof AuthenticatedInteligenciaConfiguracaoRoute
+  AuthenticatedInteligenciaDashboardRoute: typeof AuthenticatedInteligenciaDashboardRoute
   AuthenticatedInteligenciaSupervisoresRoute: typeof AuthenticatedInteligenciaSupervisoresRoute
 }
 
@@ -1204,6 +1225,8 @@ const AuthenticatedInteligenciaRouteChildren: AuthenticatedInteligenciaRouteChil
   {
     AuthenticatedInteligenciaConfiguracaoRoute:
       AuthenticatedInteligenciaConfiguracaoRoute,
+    AuthenticatedInteligenciaDashboardRoute:
+      AuthenticatedInteligenciaDashboardRoute,
     AuthenticatedInteligenciaSupervisoresRoute:
       AuthenticatedInteligenciaSupervisoresRoute,
   }
@@ -1320,13 +1343,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
