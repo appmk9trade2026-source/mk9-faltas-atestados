@@ -276,12 +276,14 @@ function UsuariosPage() {
   const reenviarFn = useServerFn(reenviarConviteUsuario);
   const encerrarSessoesFn = useServerFn(encerrarSessoesUsuario);
   const reenviarWaFn = useServerFn(reenviarBoasVindasWhatsapp);
+  const reprocessarWaFn = useServerFn(reprocessarConviteWhatsapp);
   const listarStatusWaFn = useServerFn(listarStatusBoasVindas);
 
   const [confirmDeactivate, setConfirmDeactivate] = useState<UsuarioRow | null>(null);
   const [confirmEncerrarSessoes, setConfirmEncerrarSessoes] = useState<UsuarioRow | null>(null);
   const [senhaTempAlvo, setSenhaTempAlvo] = useState<UsuarioRow | null>(null);
   const [excluirAlvo, setExcluirAlvo] = useState<UsuarioRow | null>(null);
+  const [waDetalhesFor, setWaDetalhesFor] = useState<{ usuario: UsuarioRow; status: BoasVindasStatus | null } | null>(null);
   const isSuperAdmin = roles.includes("super_admin");
 
   const canResendWhatsapp = roles.includes("super_admin");
@@ -322,7 +324,20 @@ function UsuariosPage() {
   const reenviarWaMut = useMutation({
     mutationFn: async (id: string) => reenviarWaFn({ data: { id } }),
     onSuccess: () => {
-      toast.success("WhatsApp de boas-vindas enfileirado.");
+      toast.success("Convite enfileirado para envio.");
+      qc.invalidateQueries({ queryKey: ["usuarios-whatsapp-status"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const reprocessarWaMut = useMutation({
+    mutationFn: async (id: string) => reprocessarWaFn({ data: { id } }),
+    onSuccess: (r: { acao?: string }) => {
+      const msgs: Record<string, string> = {
+        materializado: "Novo convite enfileirado.",
+        reenfileirado: "Convite reenfileirado após falha.",
+        antecipado: "Próxima tentativa antecipada.",
+      };
+      toast.success(msgs[r?.acao ?? ""] ?? "Reprocessamento solicitado.");
       qc.invalidateQueries({ queryKey: ["usuarios-whatsapp-status"] });
     },
     onError: (e: Error) => toast.error(e.message),
