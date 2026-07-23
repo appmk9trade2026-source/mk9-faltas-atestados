@@ -63,6 +63,7 @@ export function IntelligenceNav({ current }: { current: NavItem["to"] }) {
   const embedded = useContext(EmbeddedAppShellContext);
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   if (embedded) return null;
+  return (
     <nav
       aria-label="Navegação do módulo de Inteligência"
       className="flex flex-wrap items-center gap-1 rounded-lg border bg-card p-1"
