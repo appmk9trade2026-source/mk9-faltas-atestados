@@ -563,7 +563,7 @@ function DashboardPage() {
                 <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
                 <YAxis type="category" dataKey="nome" width={140} tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="total" fill="#84cc16" radius={[0, 4, 4, 0]}
+                <Bar dataKey="total" fill={MK9_BRAND.primary} radius={[0, 4, 4, 0]}
                   onClick={(d: { nome?: string }) => d.nome && d.nome !== "(Sem supervisor)" && setFilters((f) => ({ ...f, supervisor: d.nome }))}
                   cursor="pointer" />
               </BarChart>
