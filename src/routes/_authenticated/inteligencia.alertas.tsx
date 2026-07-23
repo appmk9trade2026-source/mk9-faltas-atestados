@@ -540,7 +540,7 @@ function AlertaDrawer({
     mutationFn: async (payload: { status: Status; motivo?: string }) => {
       if (!alerta) return;
       const { error } = await supabase.rpc("inteligencia_alerta_status", {
-        _alerta_id: alerta.id, _status: payload.status, _motivo: payload.motivo ?? null,
+        _alerta_id: alerta.id, _status: payload.status, _motivo: payload.motivo ?? undefined,
       });
       if (error) throw error;
     },
