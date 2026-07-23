@@ -42,6 +42,7 @@ import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAcessosRouteImport } from './routes/_authenticated/acessos'
 import { Route as AuthenticatedComunicacoesIndexRouteImport } from './routes/_authenticated/comunicacoes.index'
 import { Route as AuthenticatedInteligenciaSupervisoresRouteImport } from './routes/_authenticated/inteligencia.supervisores'
+import { Route as AuthenticatedInteligenciaGovernancaRouteImport } from './routes/_authenticated/inteligencia.governanca'
 import { Route as AuthenticatedInteligenciaDashboardRouteImport } from './routes/_authenticated/inteligencia.dashboard'
 import { Route as AuthenticatedInteligenciaConfiguracaoRouteImport } from './routes/_authenticated/inteligencia.configuracao'
 import { Route as AuthenticatedInteligenciaAlertasRouteImport } from './routes/_authenticated/inteligencia.alertas'
@@ -245,6 +246,12 @@ const AuthenticatedInteligenciaSupervisoresRoute =
     path: '/supervisores',
     getParentRoute: () => AuthenticatedInteligenciaRoute,
   } as any)
+const AuthenticatedInteligenciaGovernancaRoute =
+  AuthenticatedInteligenciaGovernancaRouteImport.update({
+    id: '/governanca',
+    path: '/governanca',
+    getParentRoute: () => AuthenticatedInteligenciaRoute,
+  } as any)
 const AuthenticatedInteligenciaDashboardRoute =
   AuthenticatedInteligenciaDashboardRouteImport.update({
     id: '/dashboard',
@@ -438,6 +445,7 @@ export interface FileRoutesByFullPath {
   '/inteligencia/alertas': typeof AuthenticatedInteligenciaAlertasRoute
   '/inteligencia/configuracao': typeof AuthenticatedInteligenciaConfiguracaoRoute
   '/inteligencia/dashboard': typeof AuthenticatedInteligenciaDashboardRoute
+  '/inteligencia/governanca': typeof AuthenticatedInteligenciaGovernancaRoute
   '/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
   '/comunicacoes/': typeof AuthenticatedComunicacoesIndexRoute
   '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
@@ -495,6 +503,7 @@ export interface FileRoutesByTo {
   '/inteligencia/alertas': typeof AuthenticatedInteligenciaAlertasRoute
   '/inteligencia/configuracao': typeof AuthenticatedInteligenciaConfiguracaoRoute
   '/inteligencia/dashboard': typeof AuthenticatedInteligenciaDashboardRoute
+  '/inteligencia/governanca': typeof AuthenticatedInteligenciaGovernancaRoute
   '/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
   '/comunicacoes': typeof AuthenticatedComunicacoesIndexRoute
   '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
@@ -556,6 +565,7 @@ export interface FileRoutesById {
   '/_authenticated/inteligencia/alertas': typeof AuthenticatedInteligenciaAlertasRoute
   '/_authenticated/inteligencia/configuracao': typeof AuthenticatedInteligenciaConfiguracaoRoute
   '/_authenticated/inteligencia/dashboard': typeof AuthenticatedInteligenciaDashboardRoute
+  '/_authenticated/inteligencia/governanca': typeof AuthenticatedInteligenciaGovernancaRoute
   '/_authenticated/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
   '/_authenticated/comunicacoes/': typeof AuthenticatedComunicacoesIndexRoute
   '/_authenticated/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
@@ -617,6 +627,7 @@ export interface FileRouteTypes {
     | '/inteligencia/alertas'
     | '/inteligencia/configuracao'
     | '/inteligencia/dashboard'
+    | '/inteligencia/governanca'
     | '/inteligencia/supervisores'
     | '/comunicacoes/'
     | '/comunicacoes/whatsapp/configuracao'
@@ -674,6 +685,7 @@ export interface FileRouteTypes {
     | '/inteligencia/alertas'
     | '/inteligencia/configuracao'
     | '/inteligencia/dashboard'
+    | '/inteligencia/governanca'
     | '/inteligencia/supervisores'
     | '/comunicacoes'
     | '/comunicacoes/whatsapp/configuracao'
@@ -734,6 +746,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inteligencia/alertas'
     | '/_authenticated/inteligencia/configuracao'
     | '/_authenticated/inteligencia/dashboard'
+    | '/_authenticated/inteligencia/governanca'
     | '/_authenticated/inteligencia/supervisores'
     | '/_authenticated/comunicacoes/'
     | '/_authenticated/comunicacoes/whatsapp/configuracao'
@@ -992,6 +1005,13 @@ declare module '@tanstack/react-router' {
       path: '/supervisores'
       fullPath: '/inteligencia/supervisores'
       preLoaderRoute: typeof AuthenticatedInteligenciaSupervisoresRouteImport
+      parentRoute: typeof AuthenticatedInteligenciaRoute
+    }
+    '/_authenticated/inteligencia/governanca': {
+      id: '/_authenticated/inteligencia/governanca'
+      path: '/governanca'
+      fullPath: '/inteligencia/governanca'
+      preLoaderRoute: typeof AuthenticatedInteligenciaGovernancaRouteImport
       parentRoute: typeof AuthenticatedInteligenciaRoute
     }
     '/_authenticated/inteligencia/dashboard': {
@@ -1259,6 +1279,7 @@ interface AuthenticatedInteligenciaRouteChildren {
   AuthenticatedInteligenciaAlertasRoute: typeof AuthenticatedInteligenciaAlertasRoute
   AuthenticatedInteligenciaConfiguracaoRoute: typeof AuthenticatedInteligenciaConfiguracaoRoute
   AuthenticatedInteligenciaDashboardRoute: typeof AuthenticatedInteligenciaDashboardRoute
+  AuthenticatedInteligenciaGovernancaRoute: typeof AuthenticatedInteligenciaGovernancaRoute
   AuthenticatedInteligenciaSupervisoresRoute: typeof AuthenticatedInteligenciaSupervisoresRoute
   AuthenticatedInteligenciaColaboradoresColaboradorIdRoute: typeof AuthenticatedInteligenciaColaboradoresColaboradorIdRoute
 }
@@ -1271,6 +1292,8 @@ const AuthenticatedInteligenciaRouteChildren: AuthenticatedInteligenciaRouteChil
       AuthenticatedInteligenciaConfiguracaoRoute,
     AuthenticatedInteligenciaDashboardRoute:
       AuthenticatedInteligenciaDashboardRoute,
+    AuthenticatedInteligenciaGovernancaRoute:
+      AuthenticatedInteligenciaGovernancaRoute,
     AuthenticatedInteligenciaSupervisoresRoute:
       AuthenticatedInteligenciaSupervisoresRoute,
     AuthenticatedInteligenciaColaboradoresColaboradorIdRoute:
