@@ -146,7 +146,7 @@ function DashboardTab({ data, loading }: { data: Record<string, unknown> | undef
   const porStatus = (data?.por_status ?? []) as { nome: string; total: number }[];
   const porVersao = (data?.por_versao ?? []) as { versao: string; total: number; bugs: number }[];
   const porPrioridade = (data?.por_prioridade ?? []) as { nome: string; total: number }[];
-  const COLORS = ["hsl(var(--primary))","hsl(var(--secondary))","hsl(var(--muted-foreground))","hsl(var(--destructive))","#22c55e","#eab308","#a855f7"];
+  const COLORS = ["var(--mk9-primary)","var(--mk9-primary-dark)","var(--mk9-surface-muted)","hsl(var(--destructive))","#10b981","#f59e0b","var(--mk9-surface-dark)"];
 
   const kpiCards = [
     { label: "Backlog", value: kpis.backlog ?? 0 },
