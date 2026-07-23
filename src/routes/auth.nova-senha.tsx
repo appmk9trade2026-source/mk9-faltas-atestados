@@ -125,6 +125,10 @@ function NovaSenhaPage() {
       setError("Você não pode manter a senha temporária padrão. Escolha uma senha pessoal.");
       return;
     }
+    if (isSameAsFirstLoginPassword(novaSenha) || isSameAsFirstLoginPassword(confirmar)) {
+      setError("A nova senha deve ser diferente da senha temporária utilizada no primeiro acesso.");
+      return;
+    }
 
     if (novaSenha !== confirmar) {
       setError("As senhas não coincidem.");
