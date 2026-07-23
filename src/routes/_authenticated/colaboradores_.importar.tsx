@@ -723,6 +723,49 @@ function ImportarPage() {
         </div>
       </Card>
 
+      {headerDiag && (headerDiag.faltando.length > 0 || suspectUnmappedSupervisorEmail(headerDiag)) && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Cabeçalhos da planilha precisam de atenção</AlertTitle>
+          <AlertDescription>
+            {headerDiag.faltando.length > 0 && (
+              <p>
+                Colunas obrigatórias não encontradas:{" "}
+                <b>{headerDiag.faltando.join(", ")}</b>. A importação está bloqueada
+                até que a planilha contenha esses campos.
+              </p>
+            )}
+            {suspectUnmappedSupervisorEmail(headerDiag) && (
+              <p className="mt-1">
+                Detectamos uma coluna parecida com "email supervisor" que não pôde
+                ser reconhecida. Renomeie o cabeçalho exatamente para{" "}
+                <b>Email Supervisor</b>.
+              </p>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {headerDiag && headerDiag.faltando.length === 0 && !suspectUnmappedSupervisorEmail(headerDiag) && (
+        <Alert>
+          <CheckCircle2 className="h-4 w-4" />
+          <AlertTitle>Cabeçalhos reconhecidos</AlertTitle>
+          <AlertDescription className="text-xs">
+            {(Object.entries(headerDiag.encontrados) as [string, string | null][])
+              .filter(([, v]) => v)
+              .map(([k, v]) => `${k} ← "${v}"`)
+              .join(" · ")}
+            {headerDiag.desconhecidos.length > 0 && (
+              <span className="text-muted-foreground">
+                {" · "}Ignorados: {headerDiag.desconhecidos.join(", ")}
+              </span>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+
+
+
       {rows.length > 0 && diagnostico && diagnostico.total_grupos > 0 && (
         <Card className="border-sky-400/40 bg-sky-500/5 p-5">
           <h3 className="flex items-center gap-2 text-base font-semibold">
