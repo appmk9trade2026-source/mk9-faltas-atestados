@@ -1895,7 +1895,6 @@ function NovaAusenciaPage() {
             <Button
               onClick={() => {
                 // Grava imediatamente o estado atual como rascunho
-                scheduleDraftSave.length; // no-op ref
                 saveDraftNow({
                   values: form.getValues(),
                   matriculaInput,
