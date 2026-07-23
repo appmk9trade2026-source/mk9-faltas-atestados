@@ -723,7 +723,15 @@ function ImportarPage() {
             <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
           </Button>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className="border-sky-400/50 text-sky-700 dark:text-sky-300">
+            Parser XLSX v2
+          </Badge>
+          <Button asChild variant="outline">
+            <Link to="/colaboradores_/reprocessar-supervisores">
+              <RefreshCw className="mr-2 h-4 w-4" /> Reprocessar supervisores
+            </Link>
+          </Button>
           <Button variant="outline" onClick={baixarModelo}>
             <Download className="mr-2 h-4 w-4" /> Baixar modelo
           </Button>
@@ -816,11 +824,11 @@ function ImportarPage() {
         </Alert>
       )}
 
-      {import.meta.env.DEV && supEmailTrace && (
+      {supEmailTrace && (
         <Card className="border-sky-400/40 bg-sky-500/5 p-4">
           <div className="flex items-center gap-2 text-sm font-semibold">
             <FileSpreadsheet className="h-4 w-4 text-sky-500" />
-            Trace do e-mail do supervisor (apenas em desenvolvimento)
+            Trace do e-mail do supervisor · Parser XLSX v2
           </div>
           <div className="mt-2 grid gap-1 text-xs sm:grid-cols-2">
             <div><span className="text-muted-foreground">Cabeçalho bruto:</span> <code className="rounded bg-muted px-1">{supEmailTrace.headerBruto ?? "—"}</code></div>
