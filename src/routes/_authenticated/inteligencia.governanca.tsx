@@ -13,7 +13,7 @@
 //    `buildInsights`, `buildSaude`) reutilizáveis por endpoints/exports futuros.
 
 import * as React from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
