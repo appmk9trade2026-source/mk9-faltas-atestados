@@ -1831,6 +1831,98 @@ function NovaAusenciaPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog: restaurar rascunho não enviado */}
+      <Dialog
+        open={restoreOpen}
+        onOpenChange={(open) => {
+          if (!open) setRestoreOpen(false);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rascunho encontrado</DialogTitle>
+            <DialogDescription>
+              Foi encontrado um rascunho não enviado deste formulário. Deseja continuar
+              de onde parou?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={handleDiscardRestoredDraft}>
+              Descartar
+            </Button>
+            <Button
+              onClick={handleRestoreDraft}
+              className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:from-blue-700 hover:to-indigo-800"
+            >
+              Continuar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: cancelar preenchimento */}
+      <Dialog
+        open={cancelOpen}
+        onOpenChange={(open) => {
+          if (!open) setCancelOpen(false);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sair do formulário?</DialogTitle>
+            <DialogDescription>
+              Você tem informações preenchidas. Escolha o que deseja fazer:
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="ghost"
+              onClick={() => setCancelOpen(false)}
+            >
+              Continuar preenchendo
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                clearDraft();
+                setCancelOpen(false);
+                navigate({ to: "/ausencias" });
+              }}
+            >
+              Descartar
+            </Button>
+            <Button
+              onClick={() => {
+                // Grava imediatamente o estado atual como rascunho
+                scheduleDraftSave({
+                  values: form.getValues(),
+                  matriculaInput,
+                  colab,
+                  acidente: {
+                    data: acidenteData,
+                    hora: acidenteHora,
+                    local: acidenteLocal,
+                    descricao: acidenteDescricao,
+                    atendMedico: acidenteAtendMedico,
+                    afastamento: acidenteAfastamento,
+                    diasAfast: acidenteDiasAfast,
+                    catEmitida: acidenteCatEmitida,
+                    obs: acidenteObs,
+                  },
+                  fileName: file?.name ?? null,
+                });
+                setCancelOpen(false);
+                toast.success("Rascunho salvo. Você pode continuar depois.");
+                navigate({ to: "/ausencias" });
+              }}
+              className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:from-blue-700 hover:to-indigo-800"
+            >
+              Salvar como rascunho
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
