@@ -162,6 +162,8 @@ function ImportarPage() {
     erros: number;
     ms: number;
   } | null>(null);
+  const [headerDiag, setHeaderDiag] = useState<HeaderDiagnostic | null>(null);
+
 
   const { data: empresas = [] } = useQuery<Empresa[]>({
     queryKey: ["empresas-all"],
