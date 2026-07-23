@@ -723,7 +723,15 @@ function ImportarPage() {
             <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
           </Button>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className="border-sky-400/50 text-sky-700 dark:text-sky-300">
+            Parser XLSX v2
+          </Badge>
+          <Button asChild variant="outline">
+            <Link to="/colaboradores_/reprocessar-supervisores">
+              <RefreshCw className="mr-2 h-4 w-4" /> Reprocessar supervisores
+            </Link>
+          </Button>
           <Button variant="outline" onClick={baixarModelo}>
             <Download className="mr-2 h-4 w-4" /> Baixar modelo
           </Button>
