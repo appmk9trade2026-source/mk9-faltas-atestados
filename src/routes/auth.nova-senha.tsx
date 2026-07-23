@@ -156,8 +156,19 @@ function NovaSenhaPage() {
       setAutorizado(false);
       navigate({ to: "/dashboard", replace: true });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Não foi possível concluir. Tente novamente.";
-      setError(msg);
+      const raw = err instanceof Error ? err.message : "";
+      const isEqualsTemp =
+        raw.includes("PASSWORD_EQUALS_TEMPORARY") ||
+        raw.toLowerCase().includes("diferente da senha temporária");
+      if (isEqualsTemp) {
+        setError("A nova senha deve ser diferente da senha temporária.");
+        setNovaSenha("");
+        setConfirmar("");
+        // devolve o foco ao campo de nova senha
+        setTimeout(() => document.getElementById("pw")?.focus(), 0);
+      } else {
+        setError(raw || "Não foi possível concluir. Tente novamente.");
+      }
     } finally {
       setSaving(false);
     }
@@ -213,9 +224,11 @@ function NovaSenhaPage() {
                   required
                   value={novaSenha}
                   onChange={(e) => setNovaSenha(e.target.value)}
-                  className="pl-9 pr-10"
+                  className={`pl-9 pr-10 ${error ? "border-destructive focus-visible:ring-destructive" : ""}`}
                   placeholder="Crie uma senha forte"
+                  aria-invalid={error ? true : undefined}
                 />
+
                 <button
                   type="button"
                   onClick={() => setShowPw((s) => !s)}
