@@ -224,9 +224,11 @@ function NovaSenhaPage() {
                   required
                   value={novaSenha}
                   onChange={(e) => setNovaSenha(e.target.value)}
-                  className="pl-9 pr-10"
+                  className={`pl-9 pr-10 ${error ? "border-destructive focus-visible:ring-destructive" : ""}`}
                   placeholder="Crie uma senha forte"
+                  aria-invalid={error ? true : undefined}
                 />
+
                 <button
                   type="button"
                   onClick={() => setShowPw((s) => !s)}
