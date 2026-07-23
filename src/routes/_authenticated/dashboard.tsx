@@ -109,7 +109,8 @@ function presetRange(p: Preset, custom?: { i: string; f: string }): { i: string;
   }
 }
 
-const COLORS = ["#3b82f6", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#84cc16"];
+import { MK9_BRAND, MK9_CHART_EXTENDED } from "@/lib/mk9-palette";
+const COLORS = MK9_CHART_EXTENDED;
 const DOW = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 function delta(curr: number, prev: number): { pct: number; up: boolean } {
