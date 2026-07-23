@@ -35,7 +35,7 @@ export const concluirPrimeiroAcesso = createServerFn({ method: "POST" })
     // 1) Só executa quando de fato há um primeiro acesso pendente.
     const prof = await supabase
       .from("profiles")
-      .select("id, primeiro_acesso_pendente, ativo")
+      .select("id, primeiro_acesso_pendente, ativo, created_at")
       .eq("id", userId)
       .maybeSingle();
 
