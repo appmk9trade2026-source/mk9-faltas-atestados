@@ -835,6 +835,7 @@ function NovaAusenciaPage() {
       }
     },
     onSuccess: () => {
+      clearDraft();
       toast.success(isEdit ? "Ausência atualizada." : "Ausência registrada.", {
         description: isEdit ? undefined : "Status inicial: PENDENTE.",
       });
