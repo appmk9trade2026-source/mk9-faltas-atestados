@@ -327,6 +327,33 @@ function ImportarPage() {
       });
       const diag = diagnoseHeaders(raw[0]);
       setHeaderDiag(diag);
+
+      // Trace do e-mail do supervisor na primeira linha com valor.
+      const sample = raw.find((r) => {
+        const idx = buildRowIndex(r);
+        const v = String(pickField(idx, COLABORADOR_HEADER_ALIASES.supervisor_email) ?? "").trim();
+        return v.length > 0;
+      }) ?? raw[0];
+      if (sample) {
+        const idx = buildRowIndex(sample);
+        const { value, matched } = pickFieldWithSource(idx, COLABORADOR_HEADER_ALIASES.supervisor_email);
+        const rawKey = Object.keys(sample).find((k) => normalizeHeader(k) === matched) ?? null;
+        const val = String(value ?? "").trim();
+        const mask = (e: string) => {
+          const [u, d] = e.split("@");
+          if (!u || !d) return e ? "***" : "";
+          const uMasked = u.length <= 2 ? u[0] + "*" : u.slice(0, 2) + "***";
+          return `${uMasked}@${d}`;
+        };
+        setSupEmailTrace({
+          headerBruto: rawKey,
+          headerNormalizado: matched,
+          aliasResolvido: matched ? "supervisor_email" : null,
+          valorMascarado: val ? mask(val.toLowerCase()) : "(vazio)",
+          valorPresente: val.length > 0,
+        });
+      }
+
       const parsed = validar(raw, {});
       setRows(parsed);
       if (diag.faltando.length > 0) {
