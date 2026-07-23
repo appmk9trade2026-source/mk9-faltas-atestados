@@ -44,6 +44,7 @@ import { Route as AuthenticatedComunicacoesIndexRouteImport } from './routes/_au
 import { Route as AuthenticatedInteligenciaSupervisoresRouteImport } from './routes/_authenticated/inteligencia.supervisores'
 import { Route as AuthenticatedInteligenciaDashboardRouteImport } from './routes/_authenticated/inteligencia.dashboard'
 import { Route as AuthenticatedInteligenciaConfiguracaoRouteImport } from './routes/_authenticated/inteligencia.configuracao'
+import { Route as AuthenticatedInteligenciaAlertasRouteImport } from './routes/_authenticated/inteligencia.alertas'
 import { Route as AuthenticatedConfiguracoesTiposAusenciaRouteImport } from './routes/_authenticated/configuracoes.tipos-ausencia'
 import { Route as AuthenticatedConfiguracoesProjetosRouteImport } from './routes/_authenticated/configuracoes.projetos'
 import { Route as AuthenticatedConfiguracoesPreferenciasRouteImport } from './routes/_authenticated/configuracoes.preferencias'
@@ -256,6 +257,12 @@ const AuthenticatedInteligenciaConfiguracaoRoute =
     path: '/configuracao',
     getParentRoute: () => AuthenticatedInteligenciaRoute,
   } as any)
+const AuthenticatedInteligenciaAlertasRoute =
+  AuthenticatedInteligenciaAlertasRouteImport.update({
+    id: '/alertas',
+    path: '/alertas',
+    getParentRoute: () => AuthenticatedInteligenciaRoute,
+  } as any)
 const AuthenticatedConfiguracoesTiposAusenciaRoute =
   AuthenticatedConfiguracoesTiposAusenciaRouteImport.update({
     id: '/tipos-ausencia',
@@ -428,6 +435,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes/preferencias': typeof AuthenticatedConfiguracoesPreferenciasRoute
   '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
+  '/inteligencia/alertas': typeof AuthenticatedInteligenciaAlertasRoute
   '/inteligencia/configuracao': typeof AuthenticatedInteligenciaConfiguracaoRoute
   '/inteligencia/dashboard': typeof AuthenticatedInteligenciaDashboardRoute
   '/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
@@ -484,6 +492,7 @@ export interface FileRoutesByTo {
   '/configuracoes/preferencias': typeof AuthenticatedConfiguracoesPreferenciasRoute
   '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
+  '/inteligencia/alertas': typeof AuthenticatedInteligenciaAlertasRoute
   '/inteligencia/configuracao': typeof AuthenticatedInteligenciaConfiguracaoRoute
   '/inteligencia/dashboard': typeof AuthenticatedInteligenciaDashboardRoute
   '/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
@@ -544,6 +553,7 @@ export interface FileRoutesById {
   '/_authenticated/configuracoes/preferencias': typeof AuthenticatedConfiguracoesPreferenciasRoute
   '/_authenticated/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
   '/_authenticated/configuracoes/tipos-ausencia': typeof AuthenticatedConfiguracoesTiposAusenciaRoute
+  '/_authenticated/inteligencia/alertas': typeof AuthenticatedInteligenciaAlertasRoute
   '/_authenticated/inteligencia/configuracao': typeof AuthenticatedInteligenciaConfiguracaoRoute
   '/_authenticated/inteligencia/dashboard': typeof AuthenticatedInteligenciaDashboardRoute
   '/_authenticated/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
@@ -604,6 +614,7 @@ export interface FileRouteTypes {
     | '/configuracoes/preferencias'
     | '/configuracoes/projetos'
     | '/configuracoes/tipos-ausencia'
+    | '/inteligencia/alertas'
     | '/inteligencia/configuracao'
     | '/inteligencia/dashboard'
     | '/inteligencia/supervisores'
@@ -660,6 +671,7 @@ export interface FileRouteTypes {
     | '/configuracoes/preferencias'
     | '/configuracoes/projetos'
     | '/configuracoes/tipos-ausencia'
+    | '/inteligencia/alertas'
     | '/inteligencia/configuracao'
     | '/inteligencia/dashboard'
     | '/inteligencia/supervisores'
@@ -719,6 +731,7 @@ export interface FileRouteTypes {
     | '/_authenticated/configuracoes/preferencias'
     | '/_authenticated/configuracoes/projetos'
     | '/_authenticated/configuracoes/tipos-ausencia'
+    | '/_authenticated/inteligencia/alertas'
     | '/_authenticated/inteligencia/configuracao'
     | '/_authenticated/inteligencia/dashboard'
     | '/_authenticated/inteligencia/supervisores'
@@ -995,6 +1008,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInteligenciaConfiguracaoRouteImport
       parentRoute: typeof AuthenticatedInteligenciaRoute
     }
+    '/_authenticated/inteligencia/alertas': {
+      id: '/_authenticated/inteligencia/alertas'
+      path: '/alertas'
+      fullPath: '/inteligencia/alertas'
+      preLoaderRoute: typeof AuthenticatedInteligenciaAlertasRouteImport
+      parentRoute: typeof AuthenticatedInteligenciaRoute
+    }
     '/_authenticated/configuracoes/tipos-ausencia': {
       id: '/_authenticated/configuracoes/tipos-ausencia'
       path: '/tipos-ausencia'
@@ -1236,6 +1256,7 @@ const AuthenticatedConfiguracoesRouteWithChildren =
   )
 
 interface AuthenticatedInteligenciaRouteChildren {
+  AuthenticatedInteligenciaAlertasRoute: typeof AuthenticatedInteligenciaAlertasRoute
   AuthenticatedInteligenciaConfiguracaoRoute: typeof AuthenticatedInteligenciaConfiguracaoRoute
   AuthenticatedInteligenciaDashboardRoute: typeof AuthenticatedInteligenciaDashboardRoute
   AuthenticatedInteligenciaSupervisoresRoute: typeof AuthenticatedInteligenciaSupervisoresRoute
@@ -1244,6 +1265,8 @@ interface AuthenticatedInteligenciaRouteChildren {
 
 const AuthenticatedInteligenciaRouteChildren: AuthenticatedInteligenciaRouteChildren =
   {
+    AuthenticatedInteligenciaAlertasRoute:
+      AuthenticatedInteligenciaAlertasRoute,
     AuthenticatedInteligenciaConfiguracaoRoute:
       AuthenticatedInteligenciaConfiguracaoRoute,
     AuthenticatedInteligenciaDashboardRoute:

@@ -86,6 +86,7 @@ const items: Item[] = [
   { title: "Dashboard Executivo", url: "/inteligencia/dashboard", icon: Gauge, roles: ["super_admin", "compliance", "rh", "supervisor"] },
   { title: "Inteligência", url: "/inteligencia", icon: Sparkles, roles: ["super_admin", "compliance", "rh", "supervisor"] },
   { title: "Ranking Supervisores", url: "/inteligencia/supervisores", icon: Trophy, roles: ["super_admin", "compliance", "rh", "supervisor"] },
+  { title: "Alertas Inteligentes", url: "/inteligencia/alertas", icon: BellRing, roles: ["super_admin", "compliance", "rh", "supervisor"] },
   { title: "Config. Inteligência", url: "/inteligencia/configuracao", icon: Settings, roles: ["super_admin"] },
 ];
 
@@ -108,7 +109,7 @@ const SECTIONS: Section[] = [
   {
     id: "analises",
     label: "Análises",
-    urls: ["/relatorios", "/bi-executivo", "/inteligencia/dashboard", "/inteligencia", "/inteligencia/supervisores", "/inteligencia/configuracao", "/auditoria"],
+    urls: ["/relatorios", "/bi-executivo", "/inteligencia/dashboard", "/inteligencia", "/inteligencia/supervisores", "/inteligencia/alertas", "/inteligencia/configuracao", "/auditoria"],
   },
   {
     id: "administracao",

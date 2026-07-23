@@ -41,6 +41,14 @@ type Config = {
   limiar_atencao: number;
   limiar_alta: number;
   limiar_critica: number;
+  alerta_janela_dias: number;
+  alerta_crescimento_pct: number;
+  alerta_limite_reincidencia: number;
+  alerta_limite_dias_perdidos: number;
+  alerta_limite_mudanca_criticidade: number;
+  alerta_limite_criticos_equipe: number;
+  alerta_limite_absenteismo_projeto: number;
+  alerta_sensibilidade: "BAIXA" | "MEDIA" | "ALTA";
 };
 
 const PESO_FIELDS: Array<{ key: keyof Config; label: string; hint?: string }> = [
@@ -278,6 +286,65 @@ function ConfiguracaoPage() {
                 Os limiares devem obedecer: Atenção &lt; Alta &lt; Crítica, todos positivos.
               </p>
             )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Alertas Inteligentes</CardTitle>
+            <CardDescription>
+              Parâmetros usados pelo motor para detectar situações relevantes automaticamente.
+              Alterações valem para a próxima execução da detecção.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Janela de análise dos alertas (dias)</Label>
+              <Input type="number" min="7" max="365" value={form.alerta_janela_dias}
+                onChange={(e) => update("alerta_janela_dias", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Crescimento significativo (%)</Label>
+              <Input type="number" min="0" step="1" value={form.alerta_crescimento_pct}
+                onChange={(e) => update("alerta_crescimento_pct", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Limite de reincidência (faltas + atestados)</Label>
+              <Input type="number" min="1" value={form.alerta_limite_reincidencia}
+                onChange={(e) => update("alerta_limite_reincidencia", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Limite de dias perdidos</Label>
+              <Input type="number" min="1" value={form.alerta_limite_dias_perdidos}
+                onChange={(e) => update("alerta_limite_dias_perdidos", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Mudança de criticidade (níveis)</Label>
+              <Input type="number" min="1" value={form.alerta_limite_mudanca_criticidade}
+                onChange={(e) => update("alerta_limite_mudanca_criticidade", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Colaboradores críticos por equipe</Label>
+              <Input type="number" min="1" value={form.alerta_limite_criticos_equipe}
+                onChange={(e) => update("alerta_limite_criticos_equipe", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Concentração de criticidade por projeto (%)</Label>
+              <Input type="number" min="0" max="100" value={form.alerta_limite_absenteismo_projeto}
+                onChange={(e) => update("alerta_limite_absenteismo_projeto", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Sensibilidade da detecção</Label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={form.alerta_sensibilidade}
+                onChange={(e) => setForm((f) => f ? { ...f, alerta_sensibilidade: e.target.value as Config["alerta_sensibilidade"] } : f)}
+              >
+                <option value="BAIXA">Baixa (menos alertas)</option>
+                <option value="MEDIA">Média (equilibrado)</option>
+                <option value="ALTA">Alta (mais sensível)</option>
+              </select>
+            </div>
           </CardContent>
         </Card>
 
