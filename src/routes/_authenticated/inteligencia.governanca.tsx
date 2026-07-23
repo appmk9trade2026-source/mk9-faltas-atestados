@@ -538,7 +538,7 @@ function MatrizCritStatus({ rows }: { rows: Alerta[] }) {
 }
 
 // ─── Qualidade dos Dados ──────────────────────────────────────────────
-function QualidadeTab({ scopeReady, keyParts, isSupervisorOnly }: { scopeReady: boolean; keyParts: readonly string[]; isSupervisorOnly: boolean }) {
+function QualidadeTab({ scopeReady, keyParts, isSupervisorOnly, canReconciliar }: { scopeReady: boolean; keyParts: readonly string[]; isSupervisorOnly: boolean; canReconciliar: boolean }) {
   const q = useQuery({
     queryKey: ["gov", "qualidade", ...keyParts],
     enabled: scopeReady,
