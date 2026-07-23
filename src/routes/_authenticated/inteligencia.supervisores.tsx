@@ -61,10 +61,14 @@ export const Route = createFileRoute("/_authenticated/inteligencia/supervisores"
       },
     ],
   }),
-  component: RankingSupervisoresPage,
+  component: RedirectToInteligencia,
 });
 
-function RankingSupervisoresPage() {
+function RedirectToInteligencia() {
+  return <Navigate to="/inteligencia" search={{ tab: "supervisores" }} replace />;
+}
+
+export function RankingSupervisoresPage() {
   const scope = useSessionScope();
   const [sortKey, setSortKey] = React.useState<SortKey>("pctCritico");
 
