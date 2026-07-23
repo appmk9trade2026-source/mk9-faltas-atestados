@@ -551,7 +551,7 @@ function DashboardPage() {
                 <XAxis dataKey="dia" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Line type="monotone" dataKey="horas" stroke="#ec4899" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="horas" stroke={MK9_BRAND.primaryDark} strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
