@@ -352,16 +352,20 @@ function ImportarPage() {
     return raw
       .map((r, idx) => {
         const linha = idx + 2;
-        const matricula = normalizeMatricula(norm(r["Matrícula"] ?? r["Matricula"]));
-        const nome_completo = norm(r["Nome Completo"]);
-        const projeto = norm(r["Projeto"]);
-        const empresa = norm(r["Empresa"]);
-        const telefone = digitsOnly(norm(r["Telefone do Colaborador"]));
-        const whatsapp = digitsOnly(norm(r["WhatsApp"]));
-        const email = norm(r["Email"]).toLowerCase();
-        const supervisor_nome = norm(r["Supervisor(a)"] ?? r["Supervisor"]);
-        const supervisor_telefone = digitsOnly(norm(r["Telefone do Supervisor"]));
-        const supervisor_email = norm(r["Email Supervisor"]).toLowerCase();
+        const rowIdx = buildRowIndex(r);
+        const pick = (f: keyof typeof COLABORADOR_HEADER_ALIASES) =>
+          norm(pickField(rowIdx, COLABORADOR_HEADER_ALIASES[f]) as unknown);
+        const matricula = normalizeMatricula(pick("matricula"));
+        const nome_completo = pick("nome_completo");
+        const projeto = pick("projeto");
+        const empresa = pick("empresa");
+        const telefone = digitsOnly(pick("telefone"));
+        const whatsapp = digitsOnly(pick("whatsapp"));
+        const email = pick("email").toLowerCase();
+        const supervisor_nome = pick("supervisor_nome");
+        const supervisor_telefone = digitsOnly(pick("supervisor_telefone"));
+        const supervisor_email = pick("supervisor_email").toLowerCase();
+
 
         const vazia = ![matricula, nome_completo, projeto, empresa, telefone, whatsapp, email, supervisor_nome].some(
           (v) => v && v.length > 0,
