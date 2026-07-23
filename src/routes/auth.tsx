@@ -93,10 +93,12 @@ function AuthPage() {
         return;
       }
       if (profile.primeiro_acesso_pendente) {
+        setFirstLoginPassword(password);
         toast.info("Antes de continuar, defina sua senha pessoal.");
         navigate({ to: "/auth/nova-senha", replace: true });
         return;
       }
+      clearFirstLoginPassword();
       toast.success("Bem-vindo!");
       navigate({ to: "/dashboard", replace: true });
     } catch {
