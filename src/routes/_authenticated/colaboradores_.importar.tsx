@@ -49,7 +49,9 @@ import {
   COLABORADOR_HEADER_ALIASES,
   buildRowIndex,
   diagnoseHeaders,
+  normalizeHeader,
   pickField,
+  pickFieldWithSource,
   suspectUnmappedSupervisorEmail,
   type HeaderDiagnostic,
 } from "@/lib/xlsx-headers";
@@ -104,6 +106,7 @@ type ErrorCode =
   | "NOME_OBRIGATORIO"
   | "EMAIL_INVALIDO"
   | "SUPERVISOR_EMAIL_INVALIDO"
+  | "SUPERVISOR_EMAIL_AUSENTE"
   | "TELEFONE_INVALIDO"
   | "WHATSAPP_INVALIDO";
 
@@ -164,6 +167,13 @@ function ImportarPage() {
     ms: number;
   } | null>(null);
   const [headerDiag, setHeaderDiag] = useState<HeaderDiagnostic | null>(null);
+  const [supEmailTrace, setSupEmailTrace] = useState<{
+    headerBruto: string | null;
+    headerNormalizado: string | null;
+    aliasResolvido: string | null;
+    valorMascarado: string;
+    valorPresente: boolean;
+  } | null>(null);
 
 
   const { data: empresas = [] } = useQuery<Empresa[]>({
@@ -304,6 +314,7 @@ function ImportarPage() {
     setResultado(null);
     setResolucoes({});
     setHeaderDiag(null);
+    setSupEmailTrace(null);
     setFileName(f.name);
     setFileSize(f.size);
     try {
@@ -316,6 +327,33 @@ function ImportarPage() {
       });
       const diag = diagnoseHeaders(raw[0]);
       setHeaderDiag(diag);
+
+      // Trace do e-mail do supervisor na primeira linha com valor.
+      const sample = raw.find((r) => {
+        const idx = buildRowIndex(r);
+        const v = String(pickField(idx, COLABORADOR_HEADER_ALIASES.supervisor_email) ?? "").trim();
+        return v.length > 0;
+      }) ?? raw[0];
+      if (sample) {
+        const idx = buildRowIndex(sample);
+        const { value, matched } = pickFieldWithSource(idx, COLABORADOR_HEADER_ALIASES.supervisor_email);
+        const rawKey = Object.keys(sample).find((k) => normalizeHeader(k) === matched) ?? null;
+        const val = String(value ?? "").trim();
+        const mask = (e: string) => {
+          const [u, d] = e.split("@");
+          if (!u || !d) return e ? "***" : "";
+          const uMasked = u.length <= 2 ? u[0] + "*" : u.slice(0, 2) + "***";
+          return `${uMasked}@${d}`;
+        };
+        setSupEmailTrace({
+          headerBruto: rawKey,
+          headerNormalizado: matched,
+          aliasResolvido: matched ? "supervisor_email" : null,
+          valorMascarado: val ? mask(val.toLowerCase()) : "(vazio)",
+          valorPresente: val.length > 0,
+        });
+      }
+
       const parsed = validar(raw, {});
       setRows(parsed);
       if (diag.faltando.length > 0) {
@@ -403,6 +441,19 @@ function ImportarPage() {
           erros.push({ code: "EMAIL_INVALIDO", msg: `E-mail inválido ("${email}").` });
         if (supervisor_email && !isValidEmail(supervisor_email))
           erros.push({ code: "SUPERVISOR_EMAIL_INVALIDO", msg: `E-mail do supervisor inválido ("${supervisor_email}").` });
+        // Guarda: se a coluna de e-mail do supervisor foi reconhecida na planilha
+        // e a linha traz nome ou telefone do supervisor, o e-mail não pode vir vazio.
+        // Isso evita gravar vínculo parcial silenciosamente por falha de leitura.
+        if (
+          headerDiag?.encontrados.supervisor_email &&
+          !supervisor_email &&
+          (supervisor_nome || supervisor_telefone)
+        ) {
+          erros.push({
+            code: "SUPERVISOR_EMAIL_AUSENTE",
+            msg: "Coluna 'Email Supervisor' foi reconhecida mas a linha veio sem e-mail; corrija a planilha para evitar vínculo incompleto.",
+          });
+        }
         if (telefone && (telefone.length < 10 || telefone.length > 13))
           erros.push({ code: "TELEFONE_INVALIDO", msg: "Telefone inválido (10 a 13 dígitos)." });
         if (whatsapp && (whatsapp.length < 10 || whatsapp.length > 13))
@@ -763,6 +814,27 @@ function ImportarPage() {
             )}
           </AlertDescription>
         </Alert>
+      )}
+
+      {import.meta.env.DEV && supEmailTrace && (
+        <Card className="border-sky-400/40 bg-sky-500/5 p-4">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <FileSpreadsheet className="h-4 w-4 text-sky-500" />
+            Trace do e-mail do supervisor (apenas em desenvolvimento)
+          </div>
+          <div className="mt-2 grid gap-1 text-xs sm:grid-cols-2">
+            <div><span className="text-muted-foreground">Cabeçalho bruto:</span> <code className="rounded bg-muted px-1">{supEmailTrace.headerBruto ?? "—"}</code></div>
+            <div><span className="text-muted-foreground">Cabeçalho normalizado:</span> <code className="rounded bg-muted px-1">{supEmailTrace.headerNormalizado ?? "—"}</code></div>
+            <div><span className="text-muted-foreground">Alias resolvido:</span> <code className="rounded bg-muted px-1">{supEmailTrace.aliasResolvido ?? "—"}</code></div>
+            <div><span className="text-muted-foreground">Chave canônica no payload:</span> <code className="rounded bg-muted px-1">supervisor_email</code></div>
+            <div className="sm:col-span-2"><span className="text-muted-foreground">Valor lido (mascarado):</span> <code className="rounded bg-muted px-1">{supEmailTrace.valorMascarado}</code></div>
+          </div>
+          {!supEmailTrace.valorPresente && supEmailTrace.headerNormalizado && (
+            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+              A coluna foi reconhecida, mas nenhuma linha trouxe e-mail preenchido. Verifique a planilha antes de importar.
+            </p>
+          )}
+        </Card>
       )}
 
 
