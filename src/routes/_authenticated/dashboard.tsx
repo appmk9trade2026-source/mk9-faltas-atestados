@@ -480,7 +480,7 @@ function DashboardPage() {
                 <XAxis dataKey="dia" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                 <Tooltip />
-                <Line type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="total" stroke={MK9_BRAND.primary} strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
