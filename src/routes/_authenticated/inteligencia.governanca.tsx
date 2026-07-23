@@ -26,6 +26,7 @@ import {
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/layout/app-shell";
+import { IntelligenceNav } from "@/components/inteligencia/intelligence-nav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -80,7 +81,7 @@ type Evento = {
 
 // ─── Route ────────────────────────────────────────────────────────────
 const searchSchema = z.object({
-  tab:       fallback(z.string(), "governanca").default("governanca"),
+  tab:       fallback(z.string(), "fluxo").default("fluxo"),
   periodo:   fallback(z.string(), "30").default("30"),
   empresa:   fallback(z.string(), "").default(""),
   projeto:   fallback(z.string(), "").default(""),
@@ -94,8 +95,12 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/_authenticated/inteligencia/governanca")({
   head: () => ({
     meta: [
-      { title: "Governança & Qualidade · Inteligência · CRM MK9" },
-      { name: "description", content: "Governança operacional, qualidade dos dados, eficiência do processo e auditoria executiva do módulo de Inteligência de Absenteísmo." },
+      { title: "Governança · Inteligência · CRM MK9" },
+      { name: "description", content: "Acompanhamento operacional dos alertas do módulo de Inteligência: fluxo, SLA, operação por RH/Supervisor/Empresa/Projeto e auditoria." },
+      { property: "og:title", content: "Governança · CRM MK9" },
+      { property: "og:description", content: "Painel operacional dos alertas e processos do módulo de Inteligência de Absenteísmo." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   validateSearch: zodValidator(searchSchema),
