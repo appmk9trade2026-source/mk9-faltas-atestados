@@ -197,7 +197,7 @@ export const updateColaborador = createServerFn({ method: "POST" })
       });
     }
 
-    const payload = normalizePayload(data);
+    const payload = await resolveSupervisorFromEmail(context.supabase, normalizePayload(data));
     const { error } = await context.supabase
       .from("colaboradores")
       .update(payload as never)
