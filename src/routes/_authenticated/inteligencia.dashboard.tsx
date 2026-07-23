@@ -351,7 +351,7 @@ function KpiCard({
 }
 
 // ─── Page ────────────────────────────────────────────────────────────
-function DashboardPage() {
+export function DashboardPage() {
   const { loading, roles } = useSession();
   const scope = useSessionScope();
   const search = Route.useSearch();
