@@ -1258,19 +1258,21 @@ function DashboardPage() {
               }))}
               emptyText="Nenhum colaborador no período."
             />
-            <RankingWidget
-              title="Top supervisores"
-              subtitle="Por % crítico"
-              icon={UserCog}
-              items={topSupervisores.map((s) => ({
-                id: s.id,
-                title: s.nome,
-                subtitle: `${s.colabs} colab. · score médio ${s.scoreMedio.toFixed(1)}`,
-                value: `${s.pctCritico.toFixed(1)}%`,
-                href: supervisorLink({ supervisor: s.id === "__sem__" ? "" : s.id }),
-              }))}
-              emptyText="Nenhum supervisor no período."
-            />
+            <div id="ranking-supervisores" className="scroll-mt-24">
+              <RankingWidget
+                title="Top supervisores"
+                subtitle="Por % crítico"
+                icon={UserCog}
+                items={topSupervisores.map((s) => ({
+                  id: s.id,
+                  title: s.nome,
+                  subtitle: `${s.colabs} colab. · score médio ${s.scoreMedio.toFixed(1)}`,
+                  value: `${s.pctCritico.toFixed(1)}%`,
+                  href: supervisorLink({ supervisor: s.id === "__sem__" ? "" : s.id }),
+                }))}
+                emptyText="Nenhum supervisor no período."
+              />
+            </div>
             <RankingWidget
               title="Top projetos"
               subtitle="Por score médio"

@@ -84,8 +84,6 @@ const items: Item[] = [
   { title: "BI Executivo", url: "/bi-executivo", icon: Sparkles, roles: ["super_admin", "compliance", "rh"] },
   { title: "Observabilidade", url: "/observabilidade", icon: Gauge, roles: ["super_admin", "compliance"] },
   { title: "Dashboard Executivo", url: "/inteligencia/dashboard", icon: Gauge, roles: ["super_admin", "compliance", "rh", "supervisor"] },
-  { title: "Inteligência", url: "/inteligencia", icon: Sparkles, roles: ["super_admin", "compliance", "rh", "supervisor"] },
-  { title: "Ranking Supervisores", url: "/inteligencia/supervisores", icon: Trophy, roles: ["super_admin", "compliance", "rh", "supervisor"] },
   { title: "Alertas Inteligentes", url: "/inteligencia/alertas", icon: BellRing, roles: ["super_admin", "compliance", "rh", "supervisor"] },
   { title: "Governança", url: "/inteligencia/governanca", icon: ShieldCheck, roles: ["super_admin", "compliance", "rh", "supervisor"] },
   { title: "Qualidade dos Dados", url: "/inteligencia/qualidade", icon: ClipboardList, roles: ["super_admin", "compliance", "rh"] },
@@ -113,7 +111,7 @@ const SECTIONS: Section[] = [
   {
     id: "analises",
     label: "Análises",
-    urls: ["/relatorios", "/bi-executivo", "/inteligencia/dashboard", "/inteligencia", "/inteligencia/supervisores", "/inteligencia/alertas", "/inteligencia/governanca", "/inteligencia/qualidade", "/inteligencia/configuracao", "/auditoria"],
+    urls: ["/relatorios", "/bi-executivo", "/inteligencia/dashboard", "/inteligencia/alertas", "/inteligencia/governanca", "/inteligencia/qualidade", "/inteligencia/configuracao", "/auditoria"],
   },
   {
     id: "administracao",
