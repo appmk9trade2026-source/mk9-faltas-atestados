@@ -404,6 +404,19 @@ function ImportarPage() {
           erros.push({ code: "EMAIL_INVALIDO", msg: `E-mail inválido ("${email}").` });
         if (supervisor_email && !isValidEmail(supervisor_email))
           erros.push({ code: "SUPERVISOR_EMAIL_INVALIDO", msg: `E-mail do supervisor inválido ("${supervisor_email}").` });
+        // Guarda: se a coluna de e-mail do supervisor foi reconhecida na planilha
+        // e a linha traz nome ou telefone do supervisor, o e-mail não pode vir vazio.
+        // Isso evita gravar vínculo parcial silenciosamente por falha de leitura.
+        if (
+          headerDiag?.encontrados.supervisor_email &&
+          !supervisor_email &&
+          (supervisor_nome || supervisor_telefone)
+        ) {
+          erros.push({
+            code: "SUPERVISOR_EMAIL_AUSENTE",
+            msg: "Coluna 'Email Supervisor' foi reconhecida mas a linha veio sem e-mail; corrija a planilha para evitar vínculo incompleto.",
+          });
+        }
         if (telefone && (telefone.length < 10 || telefone.length > 13))
           erros.push({ code: "TELEFONE_INVALIDO", msg: "Telefone inválido (10 a 13 dígitos)." });
         if (whatsapp && (whatsapp.length < 10 || whatsapp.length > 13))
