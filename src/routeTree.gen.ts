@@ -30,6 +30,7 @@ import { Route as AuthenticatedHomologacaoRouteImport } from './routes/_authenti
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
 import { Route as AuthenticatedDocumentacaoRouteImport } from './routes/_authenticated/documentacao'
 import { Route as AuthenticatedDeployRouteImport } from './routes/_authenticated/deploy'
+import { Route as AuthenticatedDashboardExecutivoRouteImport } from './routes/_authenticated/dashboard-executivo'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedComunicacoesRouteImport } from './routes/_authenticated/comunicacoes'
@@ -183,6 +184,12 @@ const AuthenticatedDeployRoute = AuthenticatedDeployRouteImport.update({
   path: '/deploy',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDashboardExecutivoRoute =
+  AuthenticatedDashboardExecutivoRouteImport.update({
+    id: '/dashboard-executivo',
+    path: '/dashboard-executivo',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -438,6 +445,7 @@ export interface FileRoutesByFullPath {
   '/comunicacoes': typeof AuthenticatedComunicacoesRouteWithChildren
   '/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/dashboard-executivo': typeof AuthenticatedDashboardExecutivoRoute
   '/deploy': typeof AuthenticatedDeployRoute
   '/documentacao': typeof AuthenticatedDocumentacaoRoute
   '/historico': typeof AuthenticatedHistoricoRoute
@@ -500,6 +508,7 @@ export interface FileRoutesByTo {
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/dashboard-executivo': typeof AuthenticatedDashboardExecutivoRoute
   '/deploy': typeof AuthenticatedDeployRoute
   '/documentacao': typeof AuthenticatedDocumentacaoRoute
   '/historico': typeof AuthenticatedHistoricoRoute
@@ -564,6 +573,7 @@ export interface FileRoutesById {
   '/_authenticated/comunicacoes': typeof AuthenticatedComunicacoesRouteWithChildren
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/dashboard-executivo': typeof AuthenticatedDashboardExecutivoRoute
   '/_authenticated/deploy': typeof AuthenticatedDeployRoute
   '/_authenticated/documentacao': typeof AuthenticatedDocumentacaoRoute
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
@@ -629,6 +639,7 @@ export interface FileRouteTypes {
     | '/comunicacoes'
     | '/configuracoes'
     | '/dashboard'
+    | '/dashboard-executivo'
     | '/deploy'
     | '/documentacao'
     | '/historico'
@@ -691,6 +702,7 @@ export interface FileRouteTypes {
     | '/colaboradores'
     | '/configuracoes'
     | '/dashboard'
+    | '/dashboard-executivo'
     | '/deploy'
     | '/documentacao'
     | '/historico'
@@ -754,6 +766,7 @@ export interface FileRouteTypes {
     | '/_authenticated/comunicacoes'
     | '/_authenticated/configuracoes'
     | '/_authenticated/dashboard'
+    | '/_authenticated/dashboard-executivo'
     | '/_authenticated/deploy'
     | '/_authenticated/documentacao'
     | '/_authenticated/historico'
@@ -960,6 +973,13 @@ declare module '@tanstack/react-router' {
       path: '/deploy'
       fullPath: '/deploy'
       preLoaderRoute: typeof AuthenticatedDeployRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard-executivo': {
+      id: '/_authenticated/dashboard-executivo'
+      path: '/dashboard-executivo'
+      fullPath: '/dashboard-executivo'
+      preLoaderRoute: typeof AuthenticatedDashboardExecutivoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -1393,6 +1413,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedComunicacoesRoute: typeof AuthenticatedComunicacoesRouteWithChildren
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDashboardExecutivoRoute: typeof AuthenticatedDashboardExecutivoRoute
   AuthenticatedDeployRoute: typeof AuthenticatedDeployRoute
   AuthenticatedDocumentacaoRoute: typeof AuthenticatedDocumentacaoRoute
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
@@ -1427,6 +1448,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedComunicacoesRoute: AuthenticatedComunicacoesRouteWithChildren,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDashboardExecutivoRoute: AuthenticatedDashboardExecutivoRoute,
   AuthenticatedDeployRoute: AuthenticatedDeployRoute,
   AuthenticatedDocumentacaoRoute: AuthenticatedDocumentacaoRoute,
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
@@ -1480,3 +1502,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
