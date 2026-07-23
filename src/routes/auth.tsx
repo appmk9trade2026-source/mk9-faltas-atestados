@@ -5,6 +5,7 @@ import { Eye, EyeOff, Loader2, ShieldCheck, Mail, Lock, KeyRound, UserPlus } fro
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { solicitarRecuperacaoSenha } from "@/lib/recuperacao-senha.functions";
+import { setFirstLoginPassword, clearFirstLoginPassword } from "@/lib/first-login-password";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
