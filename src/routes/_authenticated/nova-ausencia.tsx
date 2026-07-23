@@ -95,6 +95,7 @@ import {
 } from "@/lib/ai.functions";
 import { createAusencia, updateAusencia } from "@/lib/ausencias.functions";
 import { friendlyRbacError } from "@/lib/rbac/errors";
+import { useFormDraft } from "@/hooks/use-form-draft";
 
 const formatPhoneBR = formatTelefone;
 
