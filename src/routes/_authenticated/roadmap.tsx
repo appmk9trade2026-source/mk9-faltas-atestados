@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { Plus, Download, Rocket, FileText, Kanban as KanbanIcon } from "lucide-react";
 import { exportReport, type ExportFormat } from "@/lib/relatorios-export";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { MK9_CHART_EXTENDED } from "@/lib/mk9-palette";
 
 export const Route = createFileRoute("/_authenticated/roadmap")({
   component: RoadmapPage,
