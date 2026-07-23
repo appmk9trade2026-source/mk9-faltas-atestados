@@ -162,7 +162,7 @@ function GovernancaPage() {
 
   const setSearch = React.useCallback(
     (patch: Partial<z.infer<typeof searchSchema>>) => {
-      navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true });
+      navigate({ search: (prev: z.infer<typeof searchSchema>) => ({ ...prev, ...patch }), replace: true });
     },
     [navigate],
   );
