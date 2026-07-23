@@ -16,6 +16,14 @@ export type Database = {
     Tables: {
       absenteismo_config: {
         Row: {
+          alerta_crescimento_pct: number
+          alerta_janela_dias: number
+          alerta_limite_absenteismo_projeto: number
+          alerta_limite_criticos_equipe: number
+          alerta_limite_dias_perdidos: number
+          alerta_limite_mudanca_criticidade: number
+          alerta_limite_reincidencia: number
+          alerta_sensibilidade: string
           created_at: string
           id: string
           janela_dias: number
@@ -38,6 +46,14 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          alerta_crescimento_pct?: number
+          alerta_janela_dias?: number
+          alerta_limite_absenteismo_projeto?: number
+          alerta_limite_criticos_equipe?: number
+          alerta_limite_dias_perdidos?: number
+          alerta_limite_mudanca_criticidade?: number
+          alerta_limite_reincidencia?: number
+          alerta_sensibilidade?: string
           created_at?: string
           id?: string
           janela_dias?: number
@@ -60,6 +76,14 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          alerta_crescimento_pct?: number
+          alerta_janela_dias?: number
+          alerta_limite_absenteismo_projeto?: number
+          alerta_limite_criticos_equipe?: number
+          alerta_limite_dias_perdidos?: number
+          alerta_limite_mudanca_criticidade?: number
+          alerta_limite_reincidencia?: number
+          alerta_sensibilidade?: string
           created_at?: string
           id?: string
           janela_dias?: number
@@ -1567,6 +1591,171 @@ export type Database = {
           usuario_id?: string
         }
         Relationships: []
+      }
+      inteligencia_alerta_eventos: {
+        Row: {
+          alerta_id: string
+          comentario: string | null
+          created_at: string
+          dados: Json
+          id: string
+          tipo: Database["public"]["Enums"]["inteligencia_alerta_evento_tipo"]
+          usuario_id: string | null
+        }
+        Insert: {
+          alerta_id: string
+          comentario?: string | null
+          created_at?: string
+          dados?: Json
+          id?: string
+          tipo: Database["public"]["Enums"]["inteligencia_alerta_evento_tipo"]
+          usuario_id?: string | null
+        }
+        Update: {
+          alerta_id?: string
+          comentario?: string | null
+          created_at?: string
+          dados?: Json
+          id?: string
+          tipo?: Database["public"]["Enums"]["inteligencia_alerta_evento_tipo"]
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inteligencia_alerta_eventos_alerta_id_fkey"
+            columns: ["alerta_id"]
+            isOneToOne: false
+            referencedRelation: "inteligencia_alertas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inteligencia_alerta_leituras: {
+        Row: {
+          alerta_id: string
+          lido_em: string
+          usuario_id: string
+        }
+        Insert: {
+          alerta_id: string
+          lido_em?: string
+          usuario_id: string
+        }
+        Update: {
+          alerta_id?: string
+          lido_em?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inteligencia_alerta_leituras_alerta_id_fkey"
+            columns: ["alerta_id"]
+            isOneToOne: false
+            referencedRelation: "inteligencia_alertas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inteligencia_alertas: {
+        Row: {
+          assumido_em: string | null
+          colaborador_id: string | null
+          created_at: string
+          criticidade: Database["public"]["Enums"]["inteligencia_alerta_criticidade"]
+          dados: Json
+          descricao: string
+          detectado_em: string
+          empresa_id: string | null
+          escopo: Database["public"]["Enums"]["inteligencia_alerta_escopo"]
+          id: string
+          motivo_resolucao: string | null
+          projeto_id: string | null
+          ref_key: string
+          resolvido_em: string | null
+          resolvido_por: string | null
+          responsavel_id: string | null
+          status: Database["public"]["Enums"]["inteligencia_alerta_status"]
+          supervisor_usuario_id: string | null
+          tipo: Database["public"]["Enums"]["inteligencia_alerta_tipo"]
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          assumido_em?: string | null
+          colaborador_id?: string | null
+          created_at?: string
+          criticidade?: Database["public"]["Enums"]["inteligencia_alerta_criticidade"]
+          dados?: Json
+          descricao: string
+          detectado_em?: string
+          empresa_id?: string | null
+          escopo: Database["public"]["Enums"]["inteligencia_alerta_escopo"]
+          id?: string
+          motivo_resolucao?: string | null
+          projeto_id?: string | null
+          ref_key: string
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          responsavel_id?: string | null
+          status?: Database["public"]["Enums"]["inteligencia_alerta_status"]
+          supervisor_usuario_id?: string | null
+          tipo: Database["public"]["Enums"]["inteligencia_alerta_tipo"]
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          assumido_em?: string | null
+          colaborador_id?: string | null
+          created_at?: string
+          criticidade?: Database["public"]["Enums"]["inteligencia_alerta_criticidade"]
+          dados?: Json
+          descricao?: string
+          detectado_em?: string
+          empresa_id?: string | null
+          escopo?: Database["public"]["Enums"]["inteligencia_alerta_escopo"]
+          id?: string
+          motivo_resolucao?: string | null
+          projeto_id?: string | null
+          ref_key?: string
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          responsavel_id?: string | null
+          status?: Database["public"]["Enums"]["inteligencia_alerta_status"]
+          supervisor_usuario_id?: string | null
+          tipo?: Database["public"]["Enums"]["inteligencia_alerta_tipo"]
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inteligencia_alertas_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inteligencia_alertas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inteligencia_alertas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_tst_saude"
+            referencedColumns: ["empresa_id"]
+          },
+          {
+            foreignKeyName: "inteligencia_alertas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       login_events: {
         Row: {
@@ -3967,6 +4156,37 @@ export type Database = {
         Args: { _correlation_id: string; _rows: Json }
         Returns: Json
       }
+      inteligencia_alerta_atribuir: {
+        Args: { _alerta_id: string; _responsavel: string }
+        Returns: undefined
+      }
+      inteligencia_alerta_comentar: {
+        Args: { _alerta_id: string; _texto: string }
+        Returns: string
+      }
+      inteligencia_alerta_marcar_lido: {
+        Args: { _alerta_id: string }
+        Returns: undefined
+      }
+      inteligencia_alerta_marcar_todos_lidos: { Args: never; Returns: number }
+      inteligencia_alerta_status: {
+        Args: {
+          _alerta_id: string
+          _motivo?: string
+          _status: Database["public"]["Enums"]["inteligencia_alerta_status"]
+        }
+        Returns: undefined
+      }
+      inteligencia_alerta_visivel: {
+        Args: {
+          _colaborador_id: string
+          _empresa_id: string
+          _projeto_id: string
+          _supervisor_id: string
+        }
+        Returns: boolean
+      }
+      inteligencia_detectar_alertas: { Args: never; Returns: Json }
       is_active_user: { Args: { _user_id: string }; Returns: boolean }
       listar_notificacoes_usuario: {
         Args: {
@@ -4649,6 +4869,33 @@ export type Database = {
         | "APROVADO"
         | "REPROVADO"
         | "NAO_APLICAVEL"
+      inteligencia_alerta_criticidade: "BAIXA" | "ATENCAO" | "ALTA" | "CRITICA"
+      inteligencia_alerta_escopo:
+        | "COLABORADOR"
+        | "SUPERVISOR"
+        | "PROJETO"
+        | "EMPRESA"
+      inteligencia_alerta_evento_tipo:
+        | "CRIADO"
+        | "COMENTARIO"
+        | "STATUS_ALTERADO"
+        | "ATRIBUIDO"
+        | "LIDO"
+      inteligencia_alerta_status:
+        | "NOVO"
+        | "EM_ANALISE"
+        | "RESOLVIDO"
+        | "IGNORADO"
+      inteligencia_alerta_tipo:
+        | "COLAB_CRITICIDADE"
+        | "COLAB_REINCIDENCIA"
+        | "COLAB_DIAS_PERDIDOS"
+        | "COLAB_CRESCIMENTO_SCORE"
+        | "SUPERVISOR_EQUIPE_CRITICA"
+        | "SUPERVISOR_CRESCIMENTO"
+        | "PROJETO_CONCENTRACAO"
+        | "PROJETO_ACIDENTES"
+        | "EMPRESA_CONCENTRACAO"
       login_event_resultado: "SUCESSO" | "FALHA" | "BLOQUEADO"
       login_event_tipo:
         | "LOGIN"
@@ -5068,6 +5315,37 @@ export const Constants = {
         "APROVADO",
         "REPROVADO",
         "NAO_APLICAVEL",
+      ],
+      inteligencia_alerta_criticidade: ["BAIXA", "ATENCAO", "ALTA", "CRITICA"],
+      inteligencia_alerta_escopo: [
+        "COLABORADOR",
+        "SUPERVISOR",
+        "PROJETO",
+        "EMPRESA",
+      ],
+      inteligencia_alerta_evento_tipo: [
+        "CRIADO",
+        "COMENTARIO",
+        "STATUS_ALTERADO",
+        "ATRIBUIDO",
+        "LIDO",
+      ],
+      inteligencia_alerta_status: [
+        "NOVO",
+        "EM_ANALISE",
+        "RESOLVIDO",
+        "IGNORADO",
+      ],
+      inteligencia_alerta_tipo: [
+        "COLAB_CRITICIDADE",
+        "COLAB_REINCIDENCIA",
+        "COLAB_DIAS_PERDIDOS",
+        "COLAB_CRESCIMENTO_SCORE",
+        "SUPERVISOR_EQUIPE_CRITICA",
+        "SUPERVISOR_CRESCIMENTO",
+        "PROJETO_CONCENTRACAO",
+        "PROJETO_ACIDENTES",
+        "EMPRESA_CONCENTRACAO",
       ],
       login_event_resultado: ["SUCESSO", "FALHA", "BLOQUEADO"],
       login_event_tipo: [
