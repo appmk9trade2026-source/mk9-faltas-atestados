@@ -50,6 +50,7 @@ import {
 
 import { AppShell } from "@/components/layout/app-shell";
 import { IntelligenceNav } from "@/components/inteligencia/intelligence-nav";
+import { RankingWidget } from "@/components/inteligencia/ranking-widget";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -1141,7 +1142,7 @@ function DashboardPage() {
             />
           </div>
 
-          {/* Distribuição + Evolução */}
+          {/* Distribuição + Top colaboradores */}
           <div className="grid gap-4 lg:grid-cols-3">
             <Card className="lg:col-span-1">
               <CardHeader className="pb-2">
@@ -1191,232 +1192,51 @@ function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="lg:col-span-2">
-              <CardHeader className="pb-2">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <CardTitle className="text-base">Evolução temporal (12 meses)</CardTitle>
-                    <CardDescription className="text-xs">Distribuição mensal — alterne a métrica exibida.</CardDescription>
-                  </div>
-                  <Select value={search.metrica} onValueChange={(v) => setSearch({ metrica: v })}>
-                    <SelectTrigger className="h-8 w-[180px] text-xs"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ocorrencias">Ocorrências</SelectItem>
-                      <SelectItem value="faltas">Faltas</SelectItem>
-                      <SelectItem value="atestados">Atestados</SelectItem>
-                      <SelectItem value="dias">Dias perdidos</SelectItem>
-                      <SelectItem value="taxa">Taxa absenteísmo (%)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={serie} margin={{ top: 10, right: 8, bottom: 0, left: -12 }}>
-                      <defs>
-                        <linearGradient id="grad-metrica" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
-                          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.02} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
-                      <XAxis dataKey="mes" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={38} />
-                      <ReTooltip
-                        contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                        labelStyle={{ color: "hsl(var(--foreground))" }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey={search.metrica}
-                        stroke="hsl(var(--primary))"
-                        strokeWidth={2}
-                        fill="url(#grad-metrica)"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Rankings resumidos */}
-          <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
-            <RankingWidget
-              title="Top colaboradores"
-              subtitle="Por score"
-              icon={Users2}
-              items={topColaboradores.map((r) => ({
-                id: r.colaborador_id,
-                title: r.nome_completo,
-                subtitle: `${empresaMap.get(r.empresa_id) ?? "—"} · ${projetoMap.get(r.projeto_id) ?? "—"}`,
-                value: r.score.toFixed(1),
-                badge: NIVEL_META[r.nivel].label,
-                badgeCls: NIVEL_META[r.nivel].badge,
-                href: rankingLink({}),
-              }))}
-              emptyText="Nenhum colaborador no período."
-            />
-            <div id="ranking-supervisores" className="scroll-mt-24">
+            <div className="lg:col-span-2">
               <RankingWidget
-                title="Top supervisores"
-                subtitle="Por % crítico"
-                icon={UserCog}
-                items={topSupervisores.map((s) => ({
-                  id: s.id,
-                  title: s.nome,
-                  subtitle: `${s.colabs} colab. · score médio ${s.scoreMedio.toFixed(1)}`,
-                  value: `${s.pctCritico.toFixed(1)}%`,
-                  href: supervisorLink({ supervisor: s.id === "__sem__" ? "" : s.id }),
+                title="Top colaboradores"
+                subtitle="Ranking analítico por score de risco"
+                icon={Users2}
+                items={topColaboradores.map((r) => ({
+                  id: r.colaborador_id,
+                  title: r.nome_completo,
+                  subtitle: `${empresaMap.get(r.empresa_id) ?? "—"} · ${projetoMap.get(r.projeto_id) ?? "—"}`,
+                  value: r.score.toFixed(1),
+                  badge: NIVEL_META[r.nivel].label,
+                  badgeCls: NIVEL_META[r.nivel].badge,
+                  href: rankingLink({}),
                 }))}
-                emptyText="Nenhum supervisor no período."
+                emptyText="Nenhum colaborador no período."
               />
             </div>
+          </div>
+
+          {/* Ranking resumido de supervisores → tela dedicada */}
+          <div id="ranking-supervisores" className="scroll-mt-24">
             <RankingWidget
-              title="Top projetos"
-              subtitle="Por score médio"
-              icon={Building2}
-              items={topProjetos.map((p) => ({
-                id: p.id,
-                title: p.nome,
-                subtitle: `${p.colabs} colab. · ${p.diasPorColab.toFixed(1)} dias/colab.`,
-                value: p.scoreMedio.toFixed(1),
-                href: rankingLink({ projeto: p.id }),
+              title="Ranking resumido de supervisores"
+              subtitle="Top 5 por % crítico · abra a tela dedicada para o ranking completo"
+              icon={UserCog}
+              items={topSupervisores.slice(0, 5).map((s) => ({
+                id: s.id,
+                title: s.nome,
+                subtitle: `${s.colabs} colab. · score médio ${s.scoreMedio.toFixed(1)}`,
+                value: `${s.pctCritico.toFixed(1)}%`,
+                href: supervisorLink({ supervisor: s.id === "__sem__" ? "" : s.id }),
               }))}
-              emptyText="Nenhum projeto no período."
-            />
-            <RankingWidget
-              title="Top empresas"
-              subtitle="Por score médio"
-              icon={Building2}
-              items={topEmpresas.map((e) => ({
-                id: e.id,
-                title: e.nome,
-                subtitle: `${e.colabs} colab. · ${e.diasPorColab.toFixed(1)} dias/colab.`,
-                value: e.scoreMedio.toFixed(1),
-                href: rankingLink({ empresa: e.id }),
-              }))}
-              emptyText="Nenhuma empresa no período."
+              emptyText="Nenhum supervisor no período."
+              action={
+                <Link
+                  to="/inteligencia/supervisores"
+                  className="text-[11px] font-medium text-primary hover:underline"
+                >
+                  Ver ranking completo →
+                </Link>
+              }
             />
           </div>
 
-          {/* Tipos + Heatmap */}
-          <div className="grid gap-4 lg:grid-cols-3">
-            <Card className="lg:col-span-1">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Principais tipos de ocorrência</CardTitle>
-                <CardDescription className="text-xs">Volume no período atual.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {topTipos.length === 0 ? (
-                  <div className="py-8 text-center text-xs text-muted-foreground">Sem ocorrências no período.</div>
-                ) : (
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={topTipos} layout="vertical" margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} horizontal={false} />
-                        <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                        <YAxis type="category" dataKey="nome" tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }} axisLine={false} tickLine={false} width={130} />
-                        <ReTooltip
-                          contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
-                          formatter={(v: number, _n, item: any) => [`${v} · ${item?.payload?.dias ?? 0} dias`, "Ocorrências"]}
-                        />
-                        <Bar dataKey="qtd" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
 
-            <Card className="lg:col-span-2">
-              <CardHeader className="pb-2">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <CardTitle className="text-base">Concentração de risco</CardTitle>
-                    <CardDescription className="text-xs">Heatmap por dia da semana. Passe o mouse para ver detalhes.</CardDescription>
-                  </div>
-                  <Select value={search.heat} onValueChange={(v) => setSearch({ heat: v })}>
-                    <SelectTrigger className="h-8 w-[180px] text-xs"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="mes_dow">Mês × Dia da semana</SelectItem>
-                      <SelectItem value="empresa_dow">Empresa × Dia</SelectItem>
-                      <SelectItem value="projeto_dow">Projeto × Dia</SelectItem>
-                      <SelectItem value="supervisor_dow">Supervisor × Dia</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {heatmap.rows.length === 0 ? (
-                  <div className="py-8 text-center text-xs text-muted-foreground">Sem dados para o heatmap.</div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[520px] border-separate" style={{ borderSpacing: "3px" }}>
-                      <thead>
-                        <tr>
-                          <th className="text-left text-[10px] uppercase tracking-wider text-muted-foreground font-medium pr-2"></th>
-                          {DOW_LABELS.map((d) => (
-                            <th key={d} className="text-center text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{d}</th>
-                          ))}
-                          <th className="text-right text-[10px] uppercase tracking-wider text-muted-foreground font-medium pl-2">Σ</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {heatmap.rows.map((row) => (
-                          <tr key={row.key}>
-                            <td className="pr-2 text-xs font-medium truncate max-w-[140px]" title={row.label}>{row.label}</td>
-                            {row.cells.map((c) => {
-                              const intensity = heatmap.max > 0 ? c.ocor / heatmap.max : 0;
-                              const bg = c.ocor === 0
-                                ? "hsl(var(--muted) / 0.35)"
-                                : `color-mix(in oklab, hsl(var(--primary)) ${Math.round(15 + intensity * 75)}%, transparent)`;
-                              return (
-                                <td key={c.dow} className="p-0">
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div
-                                        className="h-8 rounded-md flex items-center justify-center text-[10.5px] font-medium tabular-nums transition-transform hover:scale-105 cursor-default"
-                                        style={{ background: bg, color: intensity > 0.55 ? "white" : "hsl(var(--foreground))" }}
-                                      >
-                                        {c.ocor > 0 ? c.ocor : ""}
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent className="text-xs">
-                                      <div className="font-medium">{row.label} · {DOW_LABELS[c.dow]}</div>
-                                      <div className="text-muted-foreground">
-                                        {c.ocor} ocor. · {c.colabs} colab. · {c.dias} dias
-                                        {c.scoreMedio > 0 && ` · score ${c.scoreMedio.toFixed(1)}`}
-                                      </div>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </td>
-                              );
-                            })}
-                            <td className="pl-2 text-right text-xs tabular-nums text-muted-foreground">{row.total}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    <div className="mt-3 flex items-center gap-2 text-[10px] text-muted-foreground">
-                      <span>menos</span>
-                      <div className="flex gap-0.5">
-                        {[0.15, 0.35, 0.55, 0.75, 0.95].map((o) => (
-                          <span
-                            key={o}
-                            className="h-3 w-6 rounded-sm"
-                            style={{ background: `color-mix(in oklab, hsl(var(--primary)) ${Math.round(o * 100)}%, transparent)` }}
-                          />
-                        ))}
-                      </div>
-                      <span>mais</span>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
 
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
             <Info className="h-3.5 w-3.5" />
@@ -1429,77 +1249,6 @@ function DashboardPage() {
   );
 }
 
-// ─── Ranking widget ──────────────────────────────────────────────────
-type RankItem = {
-  id: string;
-  title: string;
-  subtitle: string;
-  value: string;
-  badge?: string;
-  badgeCls?: string;
-  href: any;
-};
+// RankingWidget agora vive em src/components/inteligencia/ranking-widget.tsx
+// para reuso pelas telas dedicadas de Inteligência e Ranking de Supervisores.
 
-function RankingWidget({
-  title,
-  subtitle,
-  icon: Icon,
-  items,
-  emptyText,
-}: {
-  title: string;
-  subtitle: string;
-  icon: React.ComponentType<{ className?: string }>;
-  items: RankItem[];
-  emptyText: string;
-}) {
-  return (
-    <Card className="border-border/60">
-      <CardHeader className="pb-2">
-        <div className="flex items-center gap-2">
-          <div className="rounded-md bg-primary/10 p-1.5">
-            <Icon className="h-3.5 w-3.5 text-primary" />
-          </div>
-          <div>
-            <CardTitle className="text-sm">{title}</CardTitle>
-            <CardDescription className="text-[11px]">{subtitle}</CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="pt-0">
-        {items.length === 0 ? (
-          <div className="py-6 text-center text-xs text-muted-foreground">{emptyText}</div>
-        ) : (
-          <ol className="space-y-1">
-            {items.map((it, i) => (
-              <li key={it.id}>
-                <Link
-                  {...it.href}
-                  className="group flex items-center gap-2 rounded-md px-1.5 py-1.5 transition-colors hover:bg-muted/60"
-                >
-                  <span className={cn(
-                    "flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-semibold tabular-nums",
-                    i === 0 ? "bg-amber-500/20 text-amber-600 dark:text-amber-400"
-                      : i === 1 ? "bg-slate-400/20 text-slate-500"
-                      : i === 2 ? "bg-orange-500/20 text-orange-600 dark:text-orange-400"
-                      : "bg-muted text-muted-foreground",
-                  )}>
-                    {i + 1}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[12.5px] font-medium leading-tight group-hover:text-primary">{it.title}</div>
-                    <div className="truncate text-[10.5px] text-muted-foreground">{it.subtitle}</div>
-                  </div>
-                  {it.badge && (
-                    <Badge variant="outline" className={cn("text-[9.5px] px-1.5 py-0", it.badgeCls)}>{it.badge}</Badge>
-                  )}
-                  <span className="text-xs font-semibold tabular-nums">{it.value}</span>
-                </Link>
-              </li>
-            ))}
-          </ol>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
