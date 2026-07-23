@@ -111,6 +111,26 @@ function normalizePayload(input: z.infer<typeof baseSchema>) {
   };
 }
 
+/**
+ * Resolve supervisor_usuario_id via e-mail quando o UI não forneceu.
+ * Chave oficial: supervisor_email → profiles.email (papel supervisor) → profiles.id.
+ * Nunca cria usuários. Nunca sobrescreve um ID explicitamente informado.
+ */
+async function resolveSupervisorFromEmail(
+  supabase: import("@/lib/rbac/guards.server").MiddlewareContext["supabase"],
+  payload: ReturnType<typeof normalizePayload>,
+): Promise<ReturnType<typeof normalizePayload>> {
+  if (payload.supervisor_usuario_id || !payload.supervisor_email) return payload;
+  try {
+    const { data } = await supabase.rpc("resolve_supervisor_usuario_id", {
+      _email: payload.supervisor_email,
+    } as never);
+    if (data) return { ...payload, supervisor_usuario_id: data as string };
+  } catch { /* best-effort — não bloqueia o salvamento */ }
+  return payload;
+}
+
+
 // ==================== CREATE ====================
 export const createColaborador = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
