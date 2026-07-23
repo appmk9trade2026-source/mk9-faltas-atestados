@@ -165,6 +165,13 @@ function ImportarPage() {
     ms: number;
   } | null>(null);
   const [headerDiag, setHeaderDiag] = useState<HeaderDiagnostic | null>(null);
+  const [supEmailTrace, setSupEmailTrace] = useState<{
+    headerBruto: string | null;
+    headerNormalizado: string | null;
+    aliasResolvido: string | null;
+    valorMascarado: string;
+    valorPresente: boolean;
+  } | null>(null);
 
 
   const { data: empresas = [] } = useQuery<Empresa[]>({
