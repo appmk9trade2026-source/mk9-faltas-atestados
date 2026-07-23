@@ -95,6 +95,7 @@ import {
 } from "@/lib/ai.functions";
 import { createAusencia, updateAusencia } from "@/lib/ausencias.functions";
 import { friendlyRbacError } from "@/lib/rbac/errors";
+import { useFormDraft } from "@/hooks/use-form-draft";
 
 const formatPhoneBR = formatTelefone;
 
@@ -609,6 +610,156 @@ function NovaAusenciaPage() {
     cidSuggestMut.mutate(c);
   }
 
+  // ============= Rascunho automático (Auto Save) =============
+  type DraftShape = {
+    values: FormData;
+    matriculaInput: string;
+    colab: ColabMatch | null;
+    acidente: {
+      data: string; hora: string; local: string; descricao: string;
+      atendMedico: boolean | null; afastamento: boolean | null;
+      diasAfast: string; catEmitida: boolean | null; obs: string;
+    };
+    fileName: string | null;
+  };
+  const draftEnabled = !isEdit && !!profile?.id;
+  const draftKey = draftEnabled ? `mk9:draft:nova-ausencia:${profile?.id}` : null;
+  const { load: loadDraft, clear: clearDraft, scheduleSave: scheduleDraftSave, save: saveDraftNow } =
+    useFormDraft<DraftShape>(draftKey, { debounceMs: 500, enabled: draftEnabled });
+
+  const [restoreOpen, setRestoreOpen] = useState(false);
+  const [restoredDraft, setRestoredDraft] = useState<DraftShape | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const restoreCheckedRef = useRef(false);
+
+  // Verifica rascunho existente ao montar (apenas cadastro novo)
+  useEffect(() => {
+    if (!draftEnabled || restoreCheckedRef.current) return;
+    restoreCheckedRef.current = true;
+    const env = loadDraft();
+    if (env?.data) {
+      setRestoredDraft(env.data);
+      setRestoreOpen(true);
+    }
+  }, [draftEnabled, loadDraft]);
+
+  // Salva rascunho a cada mudança (debounce 500 ms)
+  const watched = form.watch();
+  useEffect(() => {
+    if (!draftEnabled) return;
+    // Não gravar rascunho vazio antes do usuário digitar nada
+    const anyContent =
+      !!matriculaInput ||
+      !!colab ||
+      !!watched.motivo ||
+      !!watched.data_inicio ||
+      !!watched.tipo_ausencia_id ||
+      !!watched.localidade ||
+      !!watched.loja_codigo_nome ||
+      !!watched.cid ||
+      !!acidenteData ||
+      !!acidenteHora ||
+      !!acidenteLocal ||
+      !!acidenteDescricao ||
+      !!acidenteObs;
+    if (!anyContent) return;
+    scheduleDraftSave({
+      values: watched as FormData,
+      matriculaInput,
+      colab,
+      acidente: {
+        data: acidenteData,
+        hora: acidenteHora,
+        local: acidenteLocal,
+        descricao: acidenteDescricao,
+        atendMedico: acidenteAtendMedico,
+        afastamento: acidenteAfastamento,
+        diasAfast: acidenteDiasAfast,
+        catEmitida: acidenteCatEmitida,
+        obs: acidenteObs,
+      },
+      fileName: file?.name ?? null,
+    });
+  }, [
+    draftEnabled,
+    scheduleDraftSave,
+    watched,
+    matriculaInput,
+    colab,
+    file,
+    acidenteData,
+    acidenteHora,
+    acidenteLocal,
+    acidenteDescricao,
+    acidenteAtendMedico,
+    acidenteAfastamento,
+    acidenteDiasAfast,
+    acidenteCatEmitida,
+    acidenteObs,
+  ]);
+
+  const handleRestoreDraft = useCallback(() => {
+    const d = restoredDraft;
+    if (!d) return;
+    if (d.colab) applyColab(d.colab);
+    else setMatriculaInput(d.matriculaInput || "");
+    form.reset(d.values);
+    setAcidenteData(d.acidente.data ?? "");
+    setAcidenteHora(d.acidente.hora ?? "");
+    setAcidenteLocal(d.acidente.local ?? "");
+    setAcidenteDescricao(d.acidente.descricao ?? "");
+    setAcidenteAtendMedico(d.acidente.atendMedico ?? null);
+    setAcidenteAfastamento(d.acidente.afastamento ?? null);
+    setAcidenteDiasAfast(d.acidente.diasAfast ?? "");
+    setAcidenteCatEmitida(d.acidente.catEmitida ?? null);
+    setAcidenteObs(d.acidente.obs ?? "");
+    setRestoreOpen(false);
+    if (d.fileName) {
+      toast.info("Rascunho restaurado.", {
+        description: "Os anexos precisam ser selecionados novamente.",
+      });
+    } else {
+      toast.success("Rascunho restaurado.");
+    }
+  }, [restoredDraft, applyColab, form]);
+
+  const handleDiscardRestoredDraft = useCallback(() => {
+    clearDraft();
+    setRestoredDraft(null);
+    setRestoreOpen(false);
+  }, [clearDraft]);
+
+  const handleCancelClick = useCallback(() => {
+    if (isEdit) {
+      navigate({ to: "/ausencias" });
+      return;
+    }
+    const hasContent =
+      form.formState.isDirty ||
+      !!matriculaInput ||
+      !!colab ||
+      !!acidenteData ||
+      !!acidenteDescricao ||
+      !!acidenteLocal;
+    if (!hasContent) {
+      clearDraft();
+      navigate({ to: "/ausencias" });
+      return;
+    }
+    setCancelOpen(true);
+  }, [
+    isEdit,
+    navigate,
+    clearDraft,
+    form.formState.isDirty,
+    matriculaInput,
+    colab,
+    acidenteData,
+    acidenteDescricao,
+    acidenteLocal,
+  ]);
+
+
   // ============= Submit (server functions com hardening RBAC) =============
   const createFn = useServerFn(createAusencia);
   const updateFn = useServerFn(updateAusencia);
@@ -684,6 +835,7 @@ function NovaAusenciaPage() {
       }
     },
     onSuccess: () => {
+      clearDraft();
       toast.success(isEdit ? "Ausência atualizada." : "Ausência registrada.", {
         description: isEdit ? undefined : "Status inicial: PENDENTE.",
       });
@@ -1601,7 +1753,7 @@ function NovaAusenciaPage() {
                       <Button
                         type="button"
                         variant="ghost"
-                        onClick={() => navigate({ to: "/ausencias" })}
+                        onClick={handleCancelClick}
                         disabled={salvarMut.isPending}
                       >
                         Cancelar
@@ -1675,6 +1827,98 @@ function NovaAusenciaPage() {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setMatchCandidates(null)}>
               Cancelar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: restaurar rascunho não enviado */}
+      <Dialog
+        open={restoreOpen}
+        onOpenChange={(open) => {
+          if (!open) setRestoreOpen(false);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rascunho encontrado</DialogTitle>
+            <DialogDescription>
+              Foi encontrado um rascunho não enviado deste formulário. Deseja continuar
+              de onde parou?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={handleDiscardRestoredDraft}>
+              Descartar
+            </Button>
+            <Button
+              onClick={handleRestoreDraft}
+              className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:from-blue-700 hover:to-indigo-800"
+            >
+              Continuar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: cancelar preenchimento */}
+      <Dialog
+        open={cancelOpen}
+        onOpenChange={(open) => {
+          if (!open) setCancelOpen(false);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sair do formulário?</DialogTitle>
+            <DialogDescription>
+              Você tem informações preenchidas. Escolha o que deseja fazer:
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="ghost"
+              onClick={() => setCancelOpen(false)}
+            >
+              Continuar preenchendo
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                clearDraft();
+                setCancelOpen(false);
+                navigate({ to: "/ausencias" });
+              }}
+            >
+              Descartar
+            </Button>
+            <Button
+              onClick={() => {
+                // Grava imediatamente o estado atual como rascunho
+                saveDraftNow({
+                  values: form.getValues(),
+                  matriculaInput,
+                  colab,
+                  acidente: {
+                    data: acidenteData,
+                    hora: acidenteHora,
+                    local: acidenteLocal,
+                    descricao: acidenteDescricao,
+                    atendMedico: acidenteAtendMedico,
+                    afastamento: acidenteAfastamento,
+                    diasAfast: acidenteDiasAfast,
+                    catEmitida: acidenteCatEmitida,
+                    obs: acidenteObs,
+                  },
+                  fileName: file?.name ?? null,
+                });
+                setCancelOpen(false);
+                toast.success("Rascunho salvo. Você pode continuar depois.");
+                navigate({ to: "/ausencias" });
+              }}
+              className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:from-blue-700 hover:to-indigo-800"
+            >
+              Salvar como rascunho
             </Button>
           </DialogFooter>
         </DialogContent>
