@@ -4136,6 +4136,14 @@ export type Database = {
           nome: string
         }[]
       }
+      get_supervisor_ids_visiveis: { Args: never; Returns: string[] }
+      get_supervisores_visiveis: {
+        Args: never
+        Returns: {
+          id: string
+          nome: string
+        }[]
+      }
       has_permission: {
         Args: { _code: string; _user_id: string }
         Returns: boolean

@@ -310,16 +310,13 @@ function InteligenciaPage() {
     queryKey: ["inteligencia", "ref", "supervisores", ...scope.keyParts],
     enabled: scope.ready,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, nome")
-        .eq("ativo", true)
-        .order("nome");
+      const { data, error } = await supabase.rpc("get_supervisores_visiveis");
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as Array<{ id: string; nome: string }>;
     },
     staleTime: 5 * 60_000,
   });
+
 
   const tiposQuery = useQuery({
     queryKey: ["inteligencia", "ref", "tipos", ...scope.keyParts],
@@ -391,11 +388,12 @@ function InteligenciaPage() {
           return (projetoMap.get(a.projeto_id) ?? "").localeCompare(projetoMap.get(b.projeto_id) ?? "", "pt-BR") * dir;
         case "supervisor":
           return (
-            (supervisorMap.get(a.supervisor_usuario_id ?? "") ?? "").localeCompare(
-              supervisorMap.get(b.supervisor_usuario_id ?? "") ?? "",
+            resolveSupervisorLabel(a.supervisor_usuario_id, supervisorMap).localeCompare(
+              resolveSupervisorLabel(b.supervisor_usuario_id, supervisorMap),
               "pt-BR",
             ) * dir
           );
+
         case "total":
           return (a.total_ocorrencias - b.total_ocorrencias) * dir;
         case "faltas":
@@ -698,9 +696,13 @@ function InteligenciaPage() {
                                 <td className="py-2.5 px-3 text-muted-foreground">
                                   {projetoMap.get(r.projeto_id) ?? "—"}
                                 </td>
-                                <td className="py-2.5 px-3 text-muted-foreground">
-                                  {supervisorMap.get(r.supervisor_usuario_id ?? "") ?? "—"}
+                                <td className="py-2.5 px-3">
+                                  <SupervisorCell
+                                    supervisorId={r.supervisor_usuario_id}
+                                    supervisorMap={supervisorMap}
+                                  />
                                 </td>
+
                                 <td className="py-2.5 px-3 text-right tabular-nums">{r.total_ocorrencias}</td>
                                 <td className="py-2.5 px-3 text-right tabular-nums">
                                   {r.breakdown?.faltas ?? 0}
@@ -771,8 +773,9 @@ function InteligenciaPage() {
           empresaNome={selectedRow ? empresaMap.get(selectedRow.empresa_id) ?? "—" : ""}
           projetoNome={selectedRow ? projetoMap.get(selectedRow.projeto_id) ?? "—" : ""}
           supervisorNome={
-            selectedRow ? supervisorMap.get(selectedRow.supervisor_usuario_id ?? "") ?? "—" : ""
+            selectedRow ? resolveSupervisorLabel(selectedRow.supervisor_usuario_id, supervisorMap) : ""
           }
+
           onClose={() => setSearch({ det: "" })}
         />
       </TooltipProvider>
@@ -780,7 +783,62 @@ function InteligenciaPage() {
   );
 }
 
+// ─── Supervisor helpers ──────────────────────────────────────────────
+const SUPERVISOR_LABEL_UNASSIGNED = "Não atribuído";
+const SUPERVISOR_LABEL_MISSING = "Supervisor não encontrado";
+
+function resolveSupervisorLabel(
+  supervisorId: string | null | undefined,
+  map: Map<string, string>,
+): string {
+  if (!supervisorId) return SUPERVISOR_LABEL_UNASSIGNED;
+  const nome = map.get(supervisorId);
+  if (nome && nome.trim()) return nome;
+  return SUPERVISOR_LABEL_MISSING;
+}
+
+function SupervisorCell({
+  supervisorId,
+  supervisorMap,
+}: {
+  supervisorId: string | null | undefined;
+  supervisorMap: Map<string, string>;
+}) {
+  const label = resolveSupervisorLabel(supervisorId, supervisorMap);
+  if (label === SUPERVISOR_LABEL_UNASSIGNED) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge variant="outline" className="font-normal text-muted-foreground">
+            {SUPERVISOR_LABEL_UNASSIGNED}
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent>Colaborador sem supervisor vinculado.</TooltipContent>
+      </Tooltip>
+    );
+  }
+  if (label === SUPERVISOR_LABEL_MISSING) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge
+            variant="outline"
+            className="font-normal border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+          >
+            {SUPERVISOR_LABEL_MISSING}
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent>
+          Existe supervisor_usuario_id, mas o perfil não foi localizado ou está fora do seu escopo.
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+  return <span className="text-foreground">{label}</span>;
+}
+
 // ─── Subcomponents ───────────────────────────────────────────────────
+
 function KpiCard({
   icon: Icon,
   label,
