@@ -1895,7 +1895,8 @@ function NovaAusenciaPage() {
             <Button
               onClick={() => {
                 // Grava imediatamente o estado atual como rascunho
-                scheduleDraftSave({
+                scheduleDraftSave.length; // no-op ref
+                saveDraftNow({
                   values: form.getValues(),
                   matriculaInput,
                   colab,
