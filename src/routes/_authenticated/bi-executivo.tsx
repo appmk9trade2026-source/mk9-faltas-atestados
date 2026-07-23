@@ -51,7 +51,8 @@ export const Route = createFileRoute("/_authenticated/bi-executivo")({
 
 type Granularidade = "DIA" | "SEMANA" | "MES" | "TRIMESTRE" | "ANO";
 
-const CORES = ["#2563eb", "#dc2626", "#16a34a", "#7c3aed", "#ea580c", "#6b7280", "#0891b2", "#db2777"];
+import { MK9_BRAND, MK9_CHART_EXTENDED } from "@/lib/mk9-palette";
+const CORES = MK9_CHART_EXTENDED;
 const DOW_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 type Filtros = {
