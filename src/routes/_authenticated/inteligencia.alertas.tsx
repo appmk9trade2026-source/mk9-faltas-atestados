@@ -6,7 +6,7 @@
 //  • Notificações internas = registros lidos/não-lidos via inteligencia_alerta_leituras.
 
 import * as React from "react";
-import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useNavigate, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
@@ -171,7 +171,7 @@ function relTime(iso: string): string {
 export function AlertasPage() {
   const { loading, roles } = useSession();
   const scope = useSessionScope();
-  const search = Route.useSearch();
+  const search = useSearch({ strict: false }) as any;
   const navigate = useNavigate({ from: Route.fullPath });
   const qc = useQueryClient();
   const isSuperAdmin = roles.includes("super_admin");
