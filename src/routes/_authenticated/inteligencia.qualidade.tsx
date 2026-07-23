@@ -191,7 +191,7 @@ function QualidadeContent({
     staleTime: 60_000,
   });
 
-  if (q.isLoading) {
+  if (q.isLoading || !q.data) {
     return (
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <Skeleton className="h-32" />
