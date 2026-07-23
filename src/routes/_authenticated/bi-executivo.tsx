@@ -438,7 +438,7 @@ function BIExecutivoPage() {
                         <XAxis type="number" fontSize={11} />
                         <YAxis type="category" dataKey="tipo_nome" fontSize={10} width={140} />
                         <ReTooltip />
-                        <Bar dataKey="ausencias" fill="#2563eb" />
+                        <Bar dataKey="ausencias" fill={MK9_BRAND.primary} />
                       </BarChart>
                     </ResponsiveContainer>
                   )}
@@ -459,7 +459,7 @@ function BIExecutivoPage() {
                         <XAxis dataKey="empresa_nome" fontSize={11} />
                         <YAxis fontSize={11} />
                         <ReTooltip />
-                        <Bar dataKey="ausencias" fill="#2563eb" name="Ausências" />
+                        <Bar dataKey="ausencias" fill={MK9_BRAND.primary} name="Ausências" />
                       </BarChart>
                     </ResponsiveContainer>
                   )}
@@ -475,7 +475,7 @@ function BIExecutivoPage() {
                         <XAxis type="number" fontSize={11} />
                         <YAxis type="category" dataKey="projeto_nome" fontSize={10} width={140} />
                         <ReTooltip />
-                        <Bar dataKey="ausencias" fill="#7c3aed" />
+                        <Bar dataKey="ausencias" fill={MK9_BRAND.primaryDark} />
                       </BarChart>
                     </ResponsiveContainer>
                   )}
@@ -496,7 +496,7 @@ function BIExecutivoPage() {
                         <XAxis dataKey="dia" fontSize={11} />
                         <YAxis fontSize={11} />
                         <ReTooltip />
-                        <Bar dataKey="ausencias" fill="#0891b2" />
+                        <Bar dataKey="ausencias" fill={CORES[2]} />
                       </BarChart>
                     </ResponsiveContainer>
                   )}
@@ -513,7 +513,7 @@ function BIExecutivoPage() {
                         <XAxis dataKey="label" fontSize={11} />
                         <YAxis fontSize={11} />
                         <ReTooltip />
-                        <Bar dataKey="ausencias" fill="#ea580c" />
+                        <Bar dataKey="ausencias" fill={MK9_BRAND.surfaceDark} />
                       </BarChart>
                     </ResponsiveContainer>
                   )}
