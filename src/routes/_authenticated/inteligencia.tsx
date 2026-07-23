@@ -41,7 +41,7 @@ const TAB_KEYS = [
 type TabKey = (typeof TAB_KEYS)[number];
 
 const searchSchema = z.object({
-  tab: z.enum(TAB_KEYS).optional(),
+  tab: fallback(z.string(), "dashboard").optional(),
 });
 
 export const Route = createFileRoute("/_authenticated/inteligencia")({
