@@ -50,6 +50,7 @@ import {
 
 import { AppShell } from "@/components/layout/app-shell";
 import { IntelligenceNav } from "@/components/inteligencia/intelligence-nav";
+import { RankingWidget } from "@/components/inteligencia/ranking-widget";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
