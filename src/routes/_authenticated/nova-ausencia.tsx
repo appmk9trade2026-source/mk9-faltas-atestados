@@ -1753,7 +1753,7 @@ function NovaAusenciaPage() {
                       <Button
                         type="button"
                         variant="ghost"
-                        onClick={() => navigate({ to: "/ausencias" })}
+                        onClick={handleCancelClick}
                         disabled={salvarMut.isPending}
                       >
                         Cancelar
