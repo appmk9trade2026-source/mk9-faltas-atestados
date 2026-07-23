@@ -49,6 +49,7 @@ import {
 } from "recharts";
 
 import { AppShell } from "@/components/layout/app-shell";
+import { IntelligenceNav } from "@/components/inteligencia/intelligence-nav";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -911,6 +912,7 @@ function DashboardPage() {
     <AppShell title="Dashboard Executivo · Inteligência">
       <TooltipProvider delayDuration={200}>
         <div className="space-y-6">
+          <IntelligenceNav current="/inteligencia/dashboard" />
           {/* Cabeçalho */}
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="space-y-1">
@@ -924,8 +926,10 @@ function DashboardPage() {
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground max-w-2xl">
-                Visão consolidada de riscos, tendências e comparativos entre o período atual e o
-                período anterior equivalente. Todos os widgets respeitam RLS e os filtros globais.
+                Visão estratégica do absenteísmo — KPIs, comparação com o período anterior,
+                evolução, heatmap, criticidade, rankings e tendências. Para acompanhamento
+                operacional acesse <strong>Governança</strong>; para integridade dos dados,
+                <strong> Qualidade dos Dados</strong>.
               </p>
             </div>
             <div className="flex gap-2">

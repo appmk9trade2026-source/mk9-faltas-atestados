@@ -46,6 +46,9 @@ const CRITICAL_URLS = [
   "/usuarios",
   "/alertas",
   "/historico",
+  "/inteligencia/dashboard",
+  "/inteligencia/governanca",
+  "/inteligencia/qualidade",
 ];
 
 describe("route registry", () => {
