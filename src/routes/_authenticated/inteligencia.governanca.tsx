@@ -13,7 +13,7 @@
 //    `buildInsights`, `buildSaude`) reutilizáveis por endpoints/exports futuros.
 
 import * as React from "react";
-import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
@@ -167,7 +167,7 @@ function slaMs(c: Crit) { return SLA_HOURS[c] * HOUR_MS; }
 export function GovernancaPage() {
   const { loading, roles } = useSession();
   const scope = useSessionScope();
-  const search = Route.useSearch();
+  const search = useSearch({ strict: false }) as any;
   const navigate = Route.useNavigate();
   const isSuperAdmin = roles.includes("super_admin");
   const isSupervisorOnly = roles.length > 0 && roles.every((r) => r === "supervisor");

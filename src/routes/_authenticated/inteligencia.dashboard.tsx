@@ -6,7 +6,7 @@
 // Não recalcula score no cliente. Não altera RLS/RBAC.
 // Supervisor enxerga apenas dados do próprio escopo (RLS + client scope).
 import * as React from "react";
-import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useNavigate, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
@@ -354,7 +354,7 @@ function KpiCard({
 export function DashboardPage() {
   const { loading, roles } = useSession();
   const scope = useSessionScope();
-  const search = Route.useSearch();
+  const search = useSearch({ strict: false }) as any;
   const navigate = useNavigate({ from: Route.fullPath });
 
   const setSearch = React.useCallback(
