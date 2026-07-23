@@ -6,7 +6,7 @@
 import * as React from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
-import { zodValidator } from "@tanstack/zod-adapter";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import {
   Gauge,
   Trophy,
@@ -41,7 +41,7 @@ const TAB_KEYS = [
 type TabKey = (typeof TAB_KEYS)[number];
 
 const searchSchema = z.object({
-  tab: z.enum(TAB_KEYS).optional(),
+  tab: fallback(z.string(), "dashboard").optional(),
 });
 
 export const Route = createFileRoute("/_authenticated/inteligencia")({
