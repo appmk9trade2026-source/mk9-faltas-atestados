@@ -310,16 +310,13 @@ function InteligenciaPage() {
     queryKey: ["inteligencia", "ref", "supervisores", ...scope.keyParts],
     enabled: scope.ready,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, nome")
-        .eq("ativo", true)
-        .order("nome");
+      const { data, error } = await supabase.rpc("get_supervisores_visiveis");
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as Array<{ id: string; nome: string }>;
     },
     staleTime: 5 * 60_000,
   });
+
 
   const tiposQuery = useQuery({
     queryKey: ["inteligencia", "ref", "tipos", ...scope.keyParts],
