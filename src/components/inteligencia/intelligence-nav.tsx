@@ -1,6 +1,8 @@
+import { useContext } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Gauge, ShieldCheck, ClipboardCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmbeddedAppShellContext } from "@/components/layout/app-shell";
 
 /**
  * Sub-navegação compartilhada entre os três painéis do módulo de Inteligência:
