@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
@@ -1050,7 +1050,55 @@ function ColaboradorDialog({
     },
   });
 
-
+  // Autorrecuperação — ETAPA 5:
+  // Se o colaborador foi salvo sem supervisor_usuario_id porém possui supervisor_email,
+  // resolvemos o vínculo automaticamente ao abrir o modal (uma única vez por edição).
+  // Nenhuma regra de negócio nova — apenas usa a RPC oficial `resolve_supervisor_usuario_id`.
+  const autoRecoveredRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!open || !editing) return;
+    if (editing.supervisor_usuario_id) return;
+    const email = (editing.supervisor_email ?? "").trim().toLowerCase();
+    if (!email || !email.includes("@")) return;
+    if (autoRecoveredRef.current === editing.id) return;
+    autoRecoveredRef.current = editing.id;
+    (async () => {
+      try {
+        const { data: uid, error } = await supabase.rpc("resolve_supervisor_usuario_id", {
+          _email: email,
+        });
+        if (error || !uid) return;
+        // Prefill do formulário — o usuário confirma clicando em Salvar.
+        form.setValue("supervisor_usuario_id", uid as string, {
+          shouldDirty: true,
+          shouldTouch: true,
+        });
+        // Persistência imediata + auditoria (best-effort, sem bloquear a UI).
+        const { error: upErr } = await supabase
+          .from("colaboradores")
+          .update({ supervisor_usuario_id: uid as string })
+          .eq("id", editing.id);
+        if (!upErr) {
+          try {
+            await supabase.rpc("log_audit_event", {
+              _modulo: "colaboradores",
+              _acao: "COLABORADOR_EDITADO",
+              _entidade: "Colaborador",
+              _registro_id: editing.id,
+              _empresa_id: editing.empresa_id,
+              _projeto_id: editing.projeto_id,
+              _antes: { supervisor_usuario_id: null },
+              _depois: { supervisor_usuario_id: uid },
+              _sucesso: true,
+              _observacoes: `autorrecuperação de supervisor via e-mail (${email})`,
+              _origem: "client",
+            } as never);
+          } catch { /* auditoria best-effort */ }
+          toast.success("Supervisor responsável recuperado automaticamente pelo e-mail.");
+        }
+      } catch { /* silencioso — recuperação best-effort */ }
+    })();
+  }, [open, editing, form]);
 
   const empresasSelect = useMemo(() => {
     if (editing?.empresa && !editing.empresa.ativo) {
