@@ -314,6 +314,7 @@ function ImportarPage() {
     setResultado(null);
     setResolucoes({});
     setHeaderDiag(null);
+    setSupEmailTrace(null);
     setFileName(f.name);
     setFileSize(f.size);
     try {
