@@ -49,7 +49,9 @@ import {
   COLABORADOR_HEADER_ALIASES,
   buildRowIndex,
   diagnoseHeaders,
+  normalizeHeader,
   pickField,
+  pickFieldWithSource,
   suspectUnmappedSupervisorEmail,
   type HeaderDiagnostic,
 } from "@/lib/xlsx-headers";
