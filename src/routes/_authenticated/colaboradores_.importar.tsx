@@ -728,7 +728,7 @@ function ImportarPage() {
             Parser XLSX v2
           </Badge>
           <Button asChild variant="outline">
-            <Link to="/colaboradores_/reprocessar-supervisores">
+            <Link to="/colaboradores/reprocessar-supervisores">
               <RefreshCw className="mr-2 h-4 w-4" /> Reprocessar supervisores
             </Link>
           </Button>

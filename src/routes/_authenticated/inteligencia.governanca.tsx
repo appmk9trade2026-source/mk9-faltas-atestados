@@ -725,7 +725,7 @@ function QualidadeTab({ scopeReady, keyParts, isSupervisorOnly, canReconciliar }
       <div className="flex items-center justify-end gap-2">
         {canReconciliar && (
           <Link
-            to="/colaboradores_/reprocessar-supervisores"
+            to="/colaboradores/reprocessar-supervisores"
             className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
           >
             Reprocessar por planilha
