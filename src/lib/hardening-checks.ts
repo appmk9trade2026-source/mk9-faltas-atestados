@@ -236,7 +236,7 @@ export async function runDataValidation(): Promise<DataIssue[]> {
   }
 
   // Empresas ativas sem colaborador
-  const empresas = await supabase.from("empresas").select("id").eq("ativa", true);
+  const empresas = await supabase.from("empresas").select("id").eq("ativo", true);
   if (!empresas.error && empresas.data) {
     const empIds = empresas.data.map((e) => e.id);
     let orfas = 0;
