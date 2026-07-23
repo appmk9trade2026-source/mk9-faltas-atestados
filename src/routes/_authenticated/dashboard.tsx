@@ -109,7 +109,8 @@ function presetRange(p: Preset, custom?: { i: string; f: string }): { i: string;
   }
 }
 
-const COLORS = ["#3b82f6", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#84cc16"];
+import { MK9_BRAND, MK9_CHART_EXTENDED } from "@/lib/mk9-palette";
+const COLORS = MK9_CHART_EXTENDED;
 const DOW = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 function delta(curr: number, prev: number): { pct: number; up: boolean } {
@@ -479,7 +480,7 @@ function DashboardPage() {
                 <XAxis dataKey="dia" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                 <Tooltip />
-                <Line type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="total" stroke={MK9_BRAND.primary} strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -491,7 +492,7 @@ function DashboardPage() {
                 <XAxis dataKey="nome" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                 <Tooltip />
-                <Bar dataKey="total" fill="#8b5cf6" radius={[4, 4, 0, 0]}
+                <Bar dataKey="total" fill={MK9_BRAND.primaryDark} radius={[4, 4, 0, 0]}
                   onClick={(d: { empresa_id?: string }) => d.empresa_id && setFilters((f) => ({ ...f, empresa_id: d.empresa_id, projeto_id: undefined }))}
                   cursor="pointer" />
               </BarChart>
@@ -505,7 +506,7 @@ function DashboardPage() {
                 <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
                 <YAxis type="category" dataKey="nome" width={140} tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="total" fill="#06b6d4" radius={[0, 4, 4, 0]}
+                <Bar dataKey="total" fill={MK9_BRAND.primary} radius={[0, 4, 4, 0]}
                   onClick={(d: { projeto_id?: string }) => d.projeto_id && setFilters((f) => ({ ...f, projeto_id: d.projeto_id }))}
                   cursor="pointer" />
               </BarChart>
@@ -550,7 +551,7 @@ function DashboardPage() {
                 <XAxis dataKey="dia" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Line type="monotone" dataKey="horas" stroke="#ec4899" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="horas" stroke={MK9_BRAND.primaryDark} strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -562,7 +563,7 @@ function DashboardPage() {
                 <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
                 <YAxis type="category" dataKey="nome" width={140} tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="total" fill="#84cc16" radius={[0, 4, 4, 0]}
+                <Bar dataKey="total" fill={MK9_BRAND.primary} radius={[0, 4, 4, 0]}
                   onClick={(d: { nome?: string }) => d.nome && d.nome !== "(Sem supervisor)" && setFilters((f) => ({ ...f, supervisor: d.nome }))}
                   cursor="pointer" />
               </BarChart>
@@ -576,7 +577,7 @@ function DashboardPage() {
                 <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
                 <YAxis type="category" dataKey="nome" width={160} tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="total" fill="#ef4444" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="total" fill={MK9_BRAND.primaryDark} radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>

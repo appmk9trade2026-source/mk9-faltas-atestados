@@ -51,7 +51,8 @@ export const Route = createFileRoute("/_authenticated/bi-executivo")({
 
 type Granularidade = "DIA" | "SEMANA" | "MES" | "TRIMESTRE" | "ANO";
 
-const CORES = ["#2563eb", "#dc2626", "#16a34a", "#7c3aed", "#ea580c", "#6b7280", "#0891b2", "#db2777"];
+import { MK9_BRAND, MK9_CHART_EXTENDED } from "@/lib/mk9-palette";
+const CORES = MK9_CHART_EXTENDED;
 const DOW_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 type Filtros = {
@@ -398,9 +399,9 @@ function BIExecutivoPage() {
                       <YAxis fontSize={11} />
                       <ReTooltip />
                       <Legend />
-                      <Line type="monotone" dataKey="ausencias" stroke="#2563eb" name="Ausências" strokeWidth={2} />
-                      <Line type="monotone" dataKey="colaboradores" stroke="#16a34a" name="Colaboradores" strokeWidth={2} />
-                      <Line type="monotone" dataKey="dias" stroke="#ea580c" name="Dias" strokeWidth={2} />
+                      <Line type="monotone" dataKey="ausencias" stroke={MK9_BRAND.primary} name="Ausências" strokeWidth={2} />
+                      <Line type="monotone" dataKey="colaboradores" stroke={MK9_BRAND.primaryDark} name="Colaboradores" strokeWidth={2} />
+                      <Line type="monotone" dataKey="dias" stroke={MK9_BRAND.surfaceDark} name="Dias" strokeWidth={2} />
                     </LineChart>
                   </ResponsiveContainer>
                 )}

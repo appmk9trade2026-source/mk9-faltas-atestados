@@ -91,7 +91,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "CRM MK9 para gestão de faltas, atestados, colaboradores, projetos e indicadores operacionais." },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/88LhPAm9z3SKerHmlu9ec4FqtA82/social-images/social-1784747763313-THUMBNAIL_FALTAS_E_ATESTADOS.webp" },
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/88LhPAm9z3SKerHmlu9ec4FqtA82/social-images/social-1784747763313-THUMBNAIL_FALTAS_E_ATESTADOS.webp" },
-      { name: "theme-color", content: "#1e3a8a" },
+      { name: "theme-color", content: "#006BA6" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "CRM MK9" },

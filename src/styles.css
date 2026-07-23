@@ -4,11 +4,23 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ————————————————————————————————————————————
+   MK9 · Identidade Visual Oficial
+   Paleta:
+     #009CDE  azul claro         (ações, links, destaques)
+     #006BA6  azul institucional (navegação, hover, headers)
+     #F8F8F9  branco gelo        (fundo claro, cards)
+     #C9CBCB  cinza médio        (bordas, disabled, secundário)
+     #36424A  cinza escuro       (sidebar, textos fortes)
+     #191C1F  preto grafite      (fundo escuro, cards escuros)
+   ———————————————————————————————————————————— */
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -42,84 +54,120 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Marca MK9 — expostos como utilitários (bg-mk9-primary etc.) */
+  --color-mk9-primary: var(--mk9-primary);
+  --color-mk9-primary-dark: var(--mk9-primary-dark);
+  --color-mk9-surface-light: var(--mk9-surface-light);
+  --color-mk9-surface-muted: var(--mk9-surface-muted);
+  --color-mk9-surface-dark: var(--mk9-surface-dark);
+  --color-mk9-surface-deep: var(--mk9-surface-deep);
+
+  /* Séries de gráficos harmonizadas com a marca */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 }
 
 :root {
   --radius: 0.625rem;
 
-  /* Neutro slate — base sóbrio e profissional */
-  --background: oklch(0.995 0.002 260);
-  --foreground: oklch(0.18 0.03 260);
+  /* Tokens de marca MK9 (fonte única da verdade) */
+  --mk9-primary: #009CDE;        /* Azul claro */
+  --mk9-primary-dark: #006BA6;   /* Azul institucional */
+  --mk9-surface-light: #F8F8F9;  /* Branco gelo */
+  --mk9-surface-muted: #C9CBCB;  /* Cinza médio */
+  --mk9-surface-dark: #36424A;   /* Cinza escuro */
+  --mk9-surface-deep: #191C1F;   /* Preto grafite */
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.03 260);
+  /* Superfícies */
+  --background: var(--mk9-surface-light);
+  --foreground: var(--mk9-surface-deep);
 
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.03 260);
+  --card: #ffffff;
+  --card-foreground: var(--mk9-surface-deep);
 
-  /* Primária MK9 (slate escuro provisório) */
-  --primary: oklch(0.28 0.04 260);
-  --primary-foreground: oklch(0.985 0.003 250);
+  --popover: #ffffff;
+  --popover-foreground: var(--mk9-surface-deep);
 
-  --secondary: oklch(0.96 0.008 255);
-  --secondary-foreground: oklch(0.22 0.03 260);
+  /* Ações principais — azul claro MK9 */
+  --primary: var(--mk9-primary);
+  --primary-foreground: #ffffff;
 
-  --muted: oklch(0.965 0.006 255);
-  --muted-foreground: oklch(0.48 0.02 260);
+  /* Secundário — azul institucional (áreas fortes) */
+  --secondary: var(--mk9-primary-dark);
+  --secondary-foreground: #ffffff;
 
-  --accent: oklch(0.94 0.012 255);
-  --accent-foreground: oklch(0.22 0.03 260);
+  /* Neutros suaves derivados do branco gelo / cinza médio */
+  --muted: color-mix(in oklab, var(--mk9-surface-muted) 30%, #ffffff);
+  --muted-foreground: var(--mk9-surface-dark);
 
+  --accent: color-mix(in oklab, var(--mk9-primary) 12%, #ffffff);
+  --accent-foreground: var(--mk9-primary-dark);
+
+  /* Estados semânticos — preservados */
   --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0.003 250);
+  --destructive-foreground: #ffffff;
 
   --success: oklch(0.62 0.15 150);
-  --success-foreground: oklch(0.985 0.003 150);
+  --success-foreground: #ffffff;
 
   --warning: oklch(0.78 0.15 75);
   --warning-foreground: oklch(0.22 0.03 60);
 
-  --info: oklch(0.62 0.15 240);
-  --info-foreground: oklch(0.985 0.003 240);
+  --info: var(--mk9-primary);
+  --info-foreground: #ffffff;
 
-  --border: oklch(0.91 0.01 255);
-  --input: oklch(0.91 0.01 255);
-  --ring: oklch(0.55 0.03 260);
+  /* Bordas e foco */
+  --border: color-mix(in oklab, var(--mk9-surface-muted) 70%, #ffffff);
+  --input: color-mix(in oklab, var(--mk9-surface-muted) 65%, #ffffff);
+  --ring: var(--mk9-primary);
 
-  --sidebar: oklch(0.985 0.003 250);
-  --sidebar-foreground: oklch(0.22 0.03 260);
-  --sidebar-primary: oklch(0.28 0.04 260);
-  --sidebar-primary-foreground: oklch(0.985 0.003 250);
-  --sidebar-accent: oklch(0.94 0.012 255);
-  --sidebar-accent-foreground: oklch(0.22 0.03 260);
-  --sidebar-border: oklch(0.91 0.01 255);
-  --sidebar-ring: oklch(0.55 0.03 260);
+  /* Sidebar — institucional (cinza escuro com destaques azul claro) */
+  --sidebar: var(--mk9-surface-dark);
+  --sidebar-foreground: var(--mk9-surface-light);
+  --sidebar-primary: var(--mk9-primary);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: color-mix(in oklab, var(--mk9-primary) 25%, var(--mk9-surface-dark));
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: color-mix(in oklab, var(--mk9-surface-light) 12%, var(--mk9-surface-dark));
+  --sidebar-ring: var(--mk9-primary);
+
+  /* Gráficos */
+  --chart-1: var(--mk9-primary);
+  --chart-2: var(--mk9-primary-dark);
+  --chart-3: var(--mk9-surface-muted);
+  --chart-4: var(--mk9-surface-dark);
+  --chart-5: var(--mk9-surface-deep);
 }
 
 .dark {
-  --background: oklch(0.16 0.02 260);
-  --foreground: oklch(0.97 0.003 250);
+  --background: var(--mk9-surface-deep);
+  --foreground: var(--mk9-surface-light);
 
-  --card: oklch(0.21 0.025 260);
-  --card-foreground: oklch(0.97 0.003 250);
+  --card: var(--mk9-surface-dark);
+  --card-foreground: var(--mk9-surface-light);
 
-  --popover: oklch(0.21 0.025 260);
-  --popover-foreground: oklch(0.97 0.003 250);
+  --popover: var(--mk9-surface-dark);
+  --popover-foreground: var(--mk9-surface-light);
 
-  --primary: oklch(0.92 0.01 255);
-  --primary-foreground: oklch(0.20 0.03 260);
+  /* No escuro, ações continuam em azul claro (bom contraste sobre fundo escuro) */
+  --primary: var(--mk9-primary);
+  --primary-foreground: #ffffff;
 
-  --secondary: oklch(0.26 0.03 260);
-  --secondary-foreground: oklch(0.97 0.003 250);
+  --secondary: var(--mk9-primary-dark);
+  --secondary-foreground: #ffffff;
 
-  --muted: oklch(0.26 0.03 260);
-  --muted-foreground: oklch(0.72 0.015 255);
+  --muted: color-mix(in oklab, var(--mk9-surface-dark) 70%, var(--mk9-surface-deep));
+  --muted-foreground: var(--mk9-surface-muted);
 
-  --accent: oklch(0.28 0.03 260);
-  --accent-foreground: oklch(0.97 0.003 250);
+  --accent: color-mix(in oklab, var(--mk9-primary) 20%, var(--mk9-surface-dark));
+  --accent-foreground: var(--mk9-surface-light);
 
   --destructive: oklch(0.68 0.19 25);
-  --destructive-foreground: oklch(0.985 0.003 250);
+  --destructive-foreground: #ffffff;
 
   --success: oklch(0.72 0.14 150);
   --success-foreground: oklch(0.16 0.03 150);
@@ -127,21 +175,27 @@
   --warning: oklch(0.82 0.14 75);
   --warning-foreground: oklch(0.20 0.05 60);
 
-  --info: oklch(0.72 0.13 240);
-  --info-foreground: oklch(0.16 0.03 240);
+  --info: var(--mk9-primary);
+  --info-foreground: #ffffff;
 
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.60 0.02 260);
+  --border: color-mix(in oklab, var(--mk9-surface-light) 14%, transparent);
+  --input: color-mix(in oklab, var(--mk9-surface-light) 18%, transparent);
+  --ring: var(--mk9-primary);
 
-  --sidebar: oklch(0.19 0.025 260);
-  --sidebar-foreground: oklch(0.95 0.005 250);
-  --sidebar-primary: oklch(0.92 0.01 255);
-  --sidebar-primary-foreground: oklch(0.20 0.03 260);
-  --sidebar-accent: oklch(0.26 0.03 260);
-  --sidebar-accent-foreground: oklch(0.97 0.003 250);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.60 0.02 260);
+  --sidebar: var(--mk9-surface-deep);
+  --sidebar-foreground: var(--mk9-surface-light);
+  --sidebar-primary: var(--mk9-primary);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: color-mix(in oklab, var(--mk9-primary) 22%, var(--mk9-surface-dark));
+  --sidebar-accent-foreground: var(--mk9-surface-light);
+  --sidebar-border: color-mix(in oklab, var(--mk9-surface-light) 10%, transparent);
+  --sidebar-ring: var(--mk9-primary);
+
+  --chart-1: var(--mk9-primary);
+  --chart-2: color-mix(in oklab, var(--mk9-primary-dark) 75%, var(--mk9-surface-light));
+  --chart-3: var(--mk9-surface-muted);
+  --chart-4: color-mix(in oklab, var(--mk9-surface-muted) 40%, var(--mk9-surface-dark));
+  --chart-5: var(--mk9-surface-light);
 }
 
 @layer base {
@@ -196,3 +250,11 @@
   }
 }
 
+/* Hover institucional para botões primários — passa para azul institucional */
+@utility btn-mk9-primary {
+  background-color: var(--mk9-primary);
+  color: #ffffff;
+  &:hover {
+    background-color: var(--mk9-primary-dark);
+  }
+}
