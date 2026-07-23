@@ -772,8 +772,9 @@ function InteligenciaPage() {
           empresaNome={selectedRow ? empresaMap.get(selectedRow.empresa_id) ?? "—" : ""}
           projetoNome={selectedRow ? projetoMap.get(selectedRow.projeto_id) ?? "—" : ""}
           supervisorNome={
-            selectedRow ? supervisorMap.get(selectedRow.supervisor_usuario_id ?? "") ?? "—" : ""
+            selectedRow ? resolveSupervisorLabel(selectedRow.supervisor_usuario_id, supervisorMap) : ""
           }
+
           onClose={() => setSearch({ det: "" })}
         />
       </TooltipProvider>
