@@ -148,8 +148,10 @@ function NovaSenhaPage() {
       if (res?.ja_concluido) {
         toast.info("Seu primeiro acesso já havia sido concluído.");
       } else {
-        toast.success("Senha definida! Bem-vindo(a) ao CRM MK9.");
+        toast.success("Senha alterada com sucesso. Sua conta foi ativada.");
       }
+      // Descarta a senha temporária capturada — nunca deve persistir após a troca.
+      clearFirstLoginPassword();
       // Libera o bloqueio de "Voltar" antes de navegar para o Dashboard.
       setAutorizado(false);
       navigate({ to: "/dashboard", replace: true });
