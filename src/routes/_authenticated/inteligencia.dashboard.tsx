@@ -193,7 +193,12 @@ export const Route = createFileRoute("/_authenticated/inteligencia/dashboard")({
     ],
   }),
   validateSearch: zodValidator(searchSchema),
-  component: DashboardPage,
+  component: RedirectToInteligencia,
+});
+
+function RedirectToInteligencia() {
+  return <Navigate to="/inteligencia" search={{ tab: "dashboard" }} replace />;
+}
 });
 
 // ─── Helpers ─────────────────────────────────────────────────────────
