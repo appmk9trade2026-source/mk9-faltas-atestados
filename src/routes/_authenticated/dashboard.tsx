@@ -492,7 +492,7 @@ function DashboardPage() {
                 <XAxis dataKey="nome" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                 <Tooltip />
-                <Bar dataKey="total" fill="#8b5cf6" radius={[4, 4, 0, 0]}
+                <Bar dataKey="total" fill={MK9_BRAND.primaryDark} radius={[4, 4, 0, 0]}
                   onClick={(d: { empresa_id?: string }) => d.empresa_id && setFilters((f) => ({ ...f, empresa_id: d.empresa_id, projeto_id: undefined }))}
                   cursor="pointer" />
               </BarChart>
