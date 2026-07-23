@@ -164,7 +164,7 @@ const SLA_HOURS: Record<Crit, number> = { CRITICA: 24, ALTA: 48, ATENCAO: 96, BA
 function slaMs(c: Crit) { return SLA_HOURS[c] * HOUR_MS; }
 
 // ─── Página ───────────────────────────────────────────────────────────
-function GovernancaPage() {
+export function GovernancaPage() {
   const { loading, roles } = useSession();
   const scope = useSessionScope();
   const search = Route.useSearch();
