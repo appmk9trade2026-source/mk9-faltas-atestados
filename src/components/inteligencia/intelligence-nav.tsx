@@ -1,6 +1,8 @@
+import { useContext } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Gauge, ShieldCheck, ClipboardCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmbeddedAppShellContext } from "@/components/layout/app-shell";
 
 /**
  * Sub-navegação compartilhada entre os três painéis do módulo de Inteligência:
@@ -58,7 +60,9 @@ const TONE: Record<NavItem["tone"], { active: string; idle: string }> = {
 };
 
 export function IntelligenceNav({ current }: { current: NavItem["to"] }) {
+  const embedded = useContext(EmbeddedAppShellContext);
   const pathname = useRouterState({ select: (r) => r.location.pathname });
+  if (embedded) return null;
   return (
     <nav
       aria-label="Navegação do módulo de Inteligência"
