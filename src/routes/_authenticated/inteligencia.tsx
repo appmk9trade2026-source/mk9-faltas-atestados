@@ -783,7 +783,62 @@ function InteligenciaPage() {
   );
 }
 
+// ─── Supervisor helpers ──────────────────────────────────────────────
+const SUPERVISOR_LABEL_UNASSIGNED = "Não atribuído";
+const SUPERVISOR_LABEL_MISSING = "Supervisor não encontrado";
+
+function resolveSupervisorLabel(
+  supervisorId: string | null | undefined,
+  map: Map<string, string>,
+): string {
+  if (!supervisorId) return SUPERVISOR_LABEL_UNASSIGNED;
+  const nome = map.get(supervisorId);
+  if (nome && nome.trim()) return nome;
+  return SUPERVISOR_LABEL_MISSING;
+}
+
+function SupervisorCell({
+  supervisorId,
+  supervisorMap,
+}: {
+  supervisorId: string | null | undefined;
+  supervisorMap: Map<string, string>;
+}) {
+  const label = resolveSupervisorLabel(supervisorId, supervisorMap);
+  if (label === SUPERVISOR_LABEL_UNASSIGNED) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge variant="outline" className="font-normal text-muted-foreground">
+            {SUPERVISOR_LABEL_UNASSIGNED}
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent>Colaborador sem supervisor vinculado.</TooltipContent>
+      </Tooltip>
+    );
+  }
+  if (label === SUPERVISOR_LABEL_MISSING) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge
+            variant="outline"
+            className="font-normal border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+          >
+            {SUPERVISOR_LABEL_MISSING}
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent>
+          Existe supervisor_usuario_id, mas o perfil não foi localizado ou está fora do seu escopo.
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+  return <span className="text-foreground">{label}</span>;
+}
+
 // ─── Subcomponents ───────────────────────────────────────────────────
+
 function KpiCard({
   icon: Icon,
   label,
