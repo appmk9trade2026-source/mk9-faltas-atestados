@@ -245,7 +245,7 @@ export function AlertasPage() {
 
   // Filtros
   const filtered = React.useMemo(() => {
-    const q = search.q.trim().toLowerCase();
+    const q = (search.q ?? "").trim().toLowerCase();
     const lidos = leiturasQuery.data ?? new Set<string>();
     return (alertasQuery.data ?? []).filter((a) => {
       if (search.crit && a.criticidade !== search.crit) return false;
