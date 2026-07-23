@@ -624,7 +624,7 @@ function NovaAusenciaPage() {
   };
   const draftEnabled = !isEdit && !!profile?.id;
   const draftKey = draftEnabled ? `mk9:draft:nova-ausencia:${profile?.id}` : null;
-  const { load: loadDraft, clear: clearDraft, scheduleSave: scheduleDraftSave } =
+  const { load: loadDraft, clear: clearDraft, scheduleSave: scheduleDraftSave, save: saveDraftNow } =
     useFormDraft<DraftShape>(draftKey, { debounceMs: 500, enabled: draftEnabled });
 
   const [restoreOpen, setRestoreOpen] = useState(false);
