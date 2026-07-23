@@ -108,7 +108,7 @@ const SECTIONS: Section[] = [
   {
     id: "analises",
     label: "Análises",
-    urls: ["/relatorios", "/bi-executivo", "/inteligencia/dashboard", "/inteligencia", "/inteligencia/supervisores", "/inteligencia/alertas", "/inteligencia/governanca", "/inteligencia/qualidade", "/inteligencia/configuracao", "/auditoria"],
+    urls: ["/relatorios", "/bi-executivo", "/inteligencia", "/auditoria"],
   },
   {
     id: "administracao",
