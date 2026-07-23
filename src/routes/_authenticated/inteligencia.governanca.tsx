@@ -277,23 +277,24 @@ function GovernancaPage() {
   const insights = React.useMemo(() => buildInsights(filtered, prevFiltered, empresaMap, projetoMap, supervisorMap), [filtered, prevFiltered, empresaMap, projetoMap, supervisorMap]);
 
   if (loading) {
-    return <AppShell title="Governança & Qualidade"><Skeleton className="h-96 w-full" /></AppShell>;
+    return <AppShell title="Governança"><Skeleton className="h-96 w-full" /></AppShell>;
   }
 
   return (
-    <AppShell title="Governança & Qualidade">
+    <AppShell title="Governança">
       <TooltipProvider delayDuration={250}>
         <div className="space-y-6">
+          <IntelligenceNav current="/inteligencia/governanca" />
           {/* Header */}
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <div className="rounded-lg bg-primary/10 p-2"><ShieldCheck className="h-5 w-5 text-primary" /></div>
-                <h1 className="text-2xl font-semibold tracking-tight">Governança & Qualidade</h1>
+                <h1 className="text-2xl font-semibold tracking-tight">Governança</h1>
               </div>
               <p className="text-sm text-muted-foreground max-w-3xl">
-                Indicadores de processo, qualidade dos dados, auditoria executiva e saúde do módulo de Inteligência.
-                Nenhuma criticidade é recalculada aqui — a visão respeita integralmente o escopo de acesso do usuário.
+                Acompanhamento operacional dos alertas — fluxo, SLA, operação por RH/Supervisor/Empresa/Projeto e auditoria.
+                Métricas estratégicas ficam no <strong>Dashboard Executivo</strong>; integridade de cadastros, em <strong>Qualidade dos Dados</strong>.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -346,28 +347,22 @@ function GovernancaPage() {
             </CardContent>
           </Card>
 
-          {/* Tabs */}
+          {/* Tabs — foco operacional: Fluxo & SLA · Operação · Auditoria · Saúde */}
           <Tabs value={search.tab} onValueChange={(v) => setSearch({ tab: v })}>
             <TabsList className="flex flex-wrap h-auto">
-              <TabsTrigger value="governanca"><Gauge className="h-4 w-4 mr-1.5" /> Governança</TabsTrigger>
-              <TabsTrigger value="qualidade"><ClipboardList className="h-4 w-4 mr-1.5" /> Qualidade</TabsTrigger>
-              <TabsTrigger value="eficiencia"><Timer className="h-4 w-4 mr-1.5" /> Eficiência</TabsTrigger>
+              <TabsTrigger value="fluxo"><Gauge className="h-4 w-4 mr-1.5" /> Fluxo & SLA</TabsTrigger>
+              <TabsTrigger value="operacao"><Timer className="h-4 w-4 mr-1.5" /> Operação</TabsTrigger>
               <TabsTrigger value="auditoria"><ShieldCheck className="h-4 w-4 mr-1.5" /> Auditoria</TabsTrigger>
-              <TabsTrigger value="insights"><Sparkles className="h-4 w-4 mr-1.5" /> Insights</TabsTrigger>
               {isSuperAdmin && (
                 <TabsTrigger value="saude"><Activity className="h-4 w-4 mr-1.5" /> Saúde do Módulo</TabsTrigger>
               )}
             </TabsList>
 
-            <TabsContent value="governanca" className="mt-6">
+            <TabsContent value="fluxo" className="mt-6">
               <GovernancaTab gov={gov} isLoading={alertasQuery.isLoading} periodoDias={periodoDias} filtered={filtered} />
             </TabsContent>
 
-            <TabsContent value="qualidade" className="mt-6">
-              <QualidadeTab scopeReady={scope.ready} keyParts={scope.keyParts} isSupervisorOnly={isSupervisorOnly} canReconciliar={roles.includes("super_admin") || roles.includes("rh")} />
-            </TabsContent>
-
-            <TabsContent value="eficiencia" className="mt-6">
+            <TabsContent value="operacao" className="mt-6">
               <EficienciaTab eff={eff} isLoading={alertasQuery.isLoading} filtered={filtered} eventos={eventosQuery.data ?? []} sinceIso={sinceIso} />
             </TabsContent>
 
@@ -383,10 +378,6 @@ function GovernancaPage() {
                 sinceIso={sinceIso}
                 isLoading={alertasQuery.isLoading || eventosQuery.isLoading}
               />
-            </TabsContent>
-
-            <TabsContent value="insights" className="mt-6">
-              <InsightsTab insights={insights} isLoading={alertasQuery.isLoading} />
             </TabsContent>
 
             {isSuperAdmin && (
