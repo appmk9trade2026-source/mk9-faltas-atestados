@@ -1100,7 +1100,7 @@ function ColaboradorDialog({
     })();
   }, [open, editing, form]);
 
-
+  const empresasSelect = useMemo(() => {
     if (editing?.empresa && !editing.empresa.ativo) {
       const existe = empresasAtivas.find((e) => e.id === editing.empresa_id);
       if (!existe) return [...empresasAtivas, editing.empresa];
