@@ -1496,7 +1496,7 @@ function ColaboradorDialog({
                         <FormControl>
                           <Input
                             type="email"
-                            placeholder="supervisor@empresa.com"
+                            placeholder="email@empresa.com"
                             {...field}
                           />
                         </FormControl>
