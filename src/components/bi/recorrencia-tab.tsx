@@ -80,7 +80,7 @@ export function RecorrenciaTab({ dataInicio, dataFim }: { dataInicio: string; da
                 <XAxis dataKey="faixa" fontSize={11} />
                 <YAxis fontSize={11} />
                 <ReTooltip />
-                <Bar dataKey="qtd" fill="#7c3aed" />
+                <Bar dataKey="qtd" fill="var(--mk9-primary)" />
               </BarChart>
             </ResponsiveContainer>
             {r.por_faixa_ocorrencias.some((f) => f.suprimido) && (
