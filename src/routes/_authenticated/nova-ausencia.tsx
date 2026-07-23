@@ -1229,7 +1229,27 @@ function NovaAusenciaPage() {
                                 <Command>
                                   <CommandInput placeholder="Buscar tipo..." />
                                   <CommandList>
-                                    <CommandEmpty>Nenhum tipo encontrado.</CommandEmpty>
+                                    <CommandEmpty>
+                                      {tiposQ.isLoading ? (
+                                        <span className="text-muted-foreground">Carregando tipos...</span>
+                                      ) : tiposQ.isError ? (
+                                        <div className="flex flex-col items-center gap-2 py-2">
+                                          <span className="text-destructive text-sm">Não foi possível carregar os tipos</span>
+                                          <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => tiposQ.refetch()}
+                                          >
+                                            Tentar novamente
+                                          </Button>
+                                        </div>
+                                      ) : (tiposQ.data ?? []).length === 0 ? (
+                                        <span className="text-muted-foreground">Nenhum tipo ativo disponível</span>
+                                      ) : (
+                                        <span className="text-muted-foreground">Nenhum resultado para a busca</span>
+                                      )}
+                                    </CommandEmpty>
                                     <CommandGroup>
                                       {(tiposQ.data ?? []).map((t) => (
                                         <CommandItem
@@ -1255,6 +1275,7 @@ function NovaAusenciaPage() {
                                     </CommandGroup>
                                   </CommandList>
                                 </Command>
+
                               </PopoverContent>
                             </Popover>
                             <FormMessage />
