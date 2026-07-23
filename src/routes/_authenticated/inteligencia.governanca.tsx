@@ -13,7 +13,7 @@
 //    `buildInsights`, `buildSaude`) reutilizáveis por endpoints/exports futuros.
 
 import * as React from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
@@ -104,8 +104,12 @@ export const Route = createFileRoute("/_authenticated/inteligencia/governanca")(
     ],
   }),
   validateSearch: zodValidator(searchSchema),
-  component: GovernancaPage,
+  component: RedirectToInteligencia,
 });
+
+function RedirectToInteligencia() {
+  return <Navigate to="/inteligencia" search={{ tab: "governanca" }} replace />;
+}
 
 // ─── Utils ────────────────────────────────────────────────────────────
 const DAY_MS = 86_400_000;
@@ -160,7 +164,7 @@ const SLA_HOURS: Record<Crit, number> = { CRITICA: 24, ALTA: 48, ATENCAO: 96, BA
 function slaMs(c: Crit) { return SLA_HOURS[c] * HOUR_MS; }
 
 // ─── Página ───────────────────────────────────────────────────────────
-function GovernancaPage() {
+export function GovernancaPage() {
   const { loading, roles } = useSession();
   const scope = useSessionScope();
   const search = Route.useSearch();

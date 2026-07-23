@@ -6,7 +6,7 @@
 //  • Notificações internas = registros lidos/não-lidos via inteligencia_alerta_leituras.
 
 import * as React from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
@@ -143,8 +143,12 @@ export const Route = createFileRoute("/_authenticated/inteligencia/alertas")({
     ],
   }),
   validateSearch: zodValidator(searchSchema),
-  component: AlertasPage,
+  component: RedirectToInteligencia,
 });
+
+function RedirectToInteligencia() {
+  return <Navigate to="/inteligencia" search={{ tab: "alertas" }} replace />;
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 function fmtDateTime(iso: string | null): string {
@@ -164,7 +168,7 @@ function relTime(iso: string): string {
 }
 
 // ─── Página ───────────────────────────────────────────────────────────
-function AlertasPage() {
+export function AlertasPage() {
   const { loading, roles } = useSession();
   const scope = useSessionScope();
   const search = Route.useSearch();

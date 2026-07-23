@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { KeyRound, Loader2, LogOut, UserCircle } from "lucide-react";
@@ -53,7 +53,18 @@ function initials(name: string) {
     .join("");
 }
 
+/**
+ * Contexto que permite renderizar páginas dentro de outra AppShell (ex.: tabs
+ * da tela de Inteligência Analítica) sem duplicar Sidebar/Header. Quando
+ * `EmbeddedAppShellContext` é true, AppShell renderiza apenas os children.
+ */
+export const EmbeddedAppShellContext = createContext(false);
+
 export function AppShell({ title, breadcrumb, children }: { title: string; breadcrumb?: string[]; children: ReactNode }) {
+  const embedded = useContext(EmbeddedAppShellContext);
+  if (embedded) {
+    return <>{children}</>;
+  }
   const { profile, roles, primaryRole } = useSession();
   const navigate = useNavigate();
   const queryClient = useQueryClient();

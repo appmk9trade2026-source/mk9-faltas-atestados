@@ -6,7 +6,7 @@
 // Não recalcula score no cliente. Não altera RLS/RBAC.
 // Supervisor enxerga apenas dados do próprio escopo (RLS + client scope).
 import * as React from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
@@ -193,8 +193,12 @@ export const Route = createFileRoute("/_authenticated/inteligencia/dashboard")({
     ],
   }),
   validateSearch: zodValidator(searchSchema),
-  component: DashboardPage,
+  component: RedirectToInteligencia,
 });
+
+function RedirectToInteligencia() {
+  return <Navigate to="/inteligencia" search={{ tab: "dashboard" }} replace />;
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 function nivelFromScore(score: number, cfg: Config | null): Nivel {
@@ -347,7 +351,7 @@ function KpiCard({
 }
 
 // ─── Page ────────────────────────────────────────────────────────────
-function DashboardPage() {
+export function DashboardPage() {
   const { loading, roles } = useSession();
   const scope = useSessionScope();
   const search = Route.useSearch();

@@ -2,7 +2,7 @@
 // Agrega colaboradores por supervisor_usuario_id a partir da RPC
 // calcular_score_colaboradores_lote (SECURITY INVOKER). Não altera cálculos/RLS/RBAC.
 import * as React from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Trophy, UserCog, Users2, ArrowUpDown, ExternalLink } from "lucide-react";
 
@@ -61,10 +61,14 @@ export const Route = createFileRoute("/_authenticated/inteligencia/supervisores"
       },
     ],
   }),
-  component: RankingSupervisoresPage,
+  component: RedirectToInteligencia,
 });
 
-function RankingSupervisoresPage() {
+function RedirectToInteligencia() {
+  return <Navigate to="/inteligencia" search={{ tab: "supervisores" }} replace />;
+}
+
+export function RankingSupervisoresPage() {
   const scope = useSessionScope();
   const [sortKey, setSortKey] = React.useState<SortKey>("pctCritico");
 

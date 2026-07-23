@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Save, Sparkles } from "lucide-react";
@@ -21,8 +21,12 @@ export const Route = createFileRoute("/_authenticated/inteligencia/configuracao"
       { name: "description", content: "Pesos e limiares do score de absenteísmo." },
     ],
   }),
-  component: ConfiguracaoPage,
+  component: RedirectToInteligencia,
 });
+
+function RedirectToInteligencia() {
+  return <Navigate to="/inteligencia" search={{ tab: "configuracao" }} replace />;
+}
 
 type Config = {
   id: string;
@@ -61,7 +65,7 @@ const PESO_FIELDS: Array<{ key: keyof Config; label: string; hint?: string }> = 
   { key: "peso_outros", label: "Outros" },
 ];
 
-function ConfiguracaoPage() {
+export function ConfiguracaoPage() {
   const { loading, roles } = useSession();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
