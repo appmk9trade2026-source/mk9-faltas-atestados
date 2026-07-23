@@ -66,14 +66,27 @@ export const concluirPrimeiroAcesso = createServerFn({ method: "POST" })
       throw new Error("Sua senha foi atualizada, mas houve uma falha ao concluir o processo. Faça login novamente.");
     }
 
-    // 4) Auditoria — nunca inclui a senha.
+    // 4) Auditoria — nunca inclui a senha. Apenas metadados administrativos.
+    const criadoEm = prof.data.created_at ? new Date(prof.data.created_at as string) : null;
+    const concluidoEm = new Date();
+    const tempoAteAtivacaoMs = criadoEm ? concluidoEm.getTime() - criadoEm.getTime() : null;
+    const tempoAteAtivacaoHoras =
+      tempoAteAtivacaoMs !== null ? Math.round((tempoAteAtivacaoMs / 3_600_000) * 10) / 10 : null;
+
+    const partesObs = [
+      "Usuário concluiu troca obrigatória da senha temporária.",
+      criadoEm ? `Conta criada em ${criadoEm.toISOString()}.` : null,
+      `Ativada em ${concluidoEm.toISOString()}.`,
+      tempoAteAtivacaoHoras !== null ? `Tempo até ativação: ${tempoAteAtivacaoHoras}h.` : null,
+    ].filter(Boolean);
+
     await supabase
       .rpc("log_audit_event", {
         _modulo: "auth",
         _acao: "PRIMEIRO_ACESSO_CONCLUIDO" as never,
         _entidade: "Sessão",
         _registro_id: userId,
-        _observacoes: "Usuário concluiu troca obrigatória da senha temporária.",
+        _observacoes: partesObs.join(" "),
         _origem: "web",
       } as never)
       .then(() => {}, () => {});
