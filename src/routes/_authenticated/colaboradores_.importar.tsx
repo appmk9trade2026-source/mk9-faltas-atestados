@@ -828,7 +828,7 @@ function ImportarPage() {
         <Card className="border-sky-400/40 bg-sky-500/5 p-4">
           <div className="flex items-center gap-2 text-sm font-semibold">
             <FileSpreadsheet className="h-4 w-4 text-sky-500" />
-            Trace do e-mail do supervisor (apenas em desenvolvimento)
+            Trace do e-mail do supervisor · Parser XLSX v2
           </div>
           <div className="mt-2 grid gap-1 text-xs sm:grid-cols-2">
             <div><span className="text-muted-foreground">Cabeçalho bruto:</span> <code className="rounded bg-muted px-1">{supEmailTrace.headerBruto ?? "—"}</code></div>
