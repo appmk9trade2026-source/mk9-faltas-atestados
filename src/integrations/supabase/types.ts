@@ -3969,6 +3969,7 @@ export type Database = {
         Args: { p_limite?: number }
         Returns: Json
       }
+      backfill_supervisor_usuario_id: { Args: never; Returns: Json }
       bi_analisar_tendencias: { Args: { p_filtros?: Json }; Returns: Json }
       bi_detectar_variacoes_atipicas: {
         Args: { p_filtros?: Json }
@@ -4484,6 +4485,10 @@ export type Database = {
           _rota?: string
         }
         Returns: Json
+      }
+      resolve_supervisor_usuario_id: {
+        Args: { _email: string }
+        Returns: string
       }
       resolver_destinatarios_rh_ausencia: {
         Args: { p_ausencia_id: string }
