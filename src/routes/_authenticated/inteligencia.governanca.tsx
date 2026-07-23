@@ -692,7 +692,8 @@ function QualidadeTab({ scopeReady, keyParts, isSupervisorOnly, canReconciliar }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-end gap-2">
+        {canReconciliar && <ReconciliarSupervisoresButton keyParts={keyParts} />}
         <ExportMenu filename={`qualidade_${new Date().toISOString().slice(0,10)}`}
           rows={rows}
           columns={[
@@ -711,6 +712,82 @@ function QualidadeTab({ scopeReady, keyParts, isSupervisorOnly, canReconciliar }
     </div>
   );
 }
+
+function ReconciliarSupervisoresButton({ keyParts }: { keyParts: readonly string[] }) {
+  const call = useServerFn(reconciliarSupervisores);
+  const qc = useQueryClient();
+  const [loading, setLoading] = React.useState(false);
+  const [report, setReport] = React.useState<ReconciliarSupervisoresResultado | null>(null);
+
+  async function run() {
+    setLoading(true);
+    try {
+      const r = await call();
+      setReport(r);
+      toast.success(`Reconciliação concluída — ${r.atualizados} de ${r.processados} vínculos preenchidos.`);
+      await qc.invalidateQueries({ queryKey: ["gov", "qualidade", ...keyParts] });
+      await qc.invalidateQueries({ queryKey: ["inteligencia"] });
+      await qc.invalidateQueries({ queryKey: ["colaboradores"] });
+    } catch (e) {
+      toast.error((e as Error)?.message ?? "Falha ao reconciliar supervisores.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function exportCsv() {
+    if (!report) return;
+    const header = ["colaborador_id", "matricula", "email", "motivo"];
+    const lines = [header.join(";")].concat(
+      report.detalhes.map((d) =>
+        [d.colaborador_id, d.matricula ?? "", d.email ?? "", d.motivo]
+          .map((v) => `"${String(v).replaceAll('"', '""')}"`).join(";"),
+      ),
+    );
+    const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `reconciliacao_supervisores_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      {report && (
+        <div className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Badge variant="secondary">Processados {report.processados}</Badge>
+          <Badge variant="default">Atualizados {report.atualizados}</Badge>
+          {report.inexistente > 0 && <Badge variant="outline">Inexistente {report.inexistente}</Badge>}
+          {report.sem_papel_supervisor > 0 && <Badge variant="outline">Sem papel {report.sem_papel_supervisor}</Badge>}
+          {report.duplicidade > 0 && <Badge variant="outline">Duplicidade {report.duplicidade}</Badge>}
+          {report.email_vazio > 0 && <Badge variant="outline">E-mail vazio {report.email_vazio}</Badge>}
+          {report.email_invalido > 0 && <Badge variant="outline">E-mail inválido {report.email_invalido}</Badge>}
+          {report.detalhes.length > 0 && (
+            <Button size="sm" variant="ghost" onClick={exportCsv} className="h-7 px-2">
+              <Download className="h-3.5 w-3.5 mr-1" /> CSV
+            </Button>
+          )}
+        </div>
+      )}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button size="sm" variant="outline" onClick={run} disabled={loading}>
+            <RefreshCw className={cn("h-4 w-4 mr-1.5", loading && "animate-spin")} />
+            {loading ? "Reconciliando…" : "Reconciliar Supervisores"}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-xs">
+          Percorre colaboradores sem supervisor vinculado e preenche <code>supervisor_usuario_id</code>
+          pelo e-mail do supervisor, somente quando existe um perfil ativo com papel Supervisor correspondente.
+          Nada mais é alterado.
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  );
+}
+
 
 function QualidadeCard({ label, count, hint, severity, link, sample }: {
   label: string; count: number; hint: string;
