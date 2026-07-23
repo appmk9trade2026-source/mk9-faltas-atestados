@@ -178,7 +178,7 @@ function InteligenciaAnaliticaPage() {
   const totalAltos = distribuicao.find((d) => d.nivel === "ALTA")?.qtd ?? 0;
 
   return (
-    <AppShell title="Inteligência Analítica" description="Score de risco, fatores e alertas preditivos">
+    <AppShell title="Inteligência Analítica">
       <div className="space-y-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">

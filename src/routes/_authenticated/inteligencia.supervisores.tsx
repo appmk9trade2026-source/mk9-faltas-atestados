@@ -149,7 +149,7 @@ function RankingSupervisoresPage() {
   const loading = rankingQuery.isLoading || supervisoresQuery.isLoading || !scope.ready;
 
   return (
-    <AppShell title="Ranking de Supervisores" description="Visão dedicada por gestor da equipe">
+    <AppShell title="Ranking de Supervisores">
       <div className="space-y-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
@@ -273,9 +273,10 @@ function RankingSupervisoresPage() {
                         <TableCell>
                           <Link
                             to="/inteligencia/dashboard"
-                            search={(prev) => ({ ...prev, supervisor: isSem ? "" : s.id })}
+                            search={{ supervisor: isSem ? "" : s.id }}
                             aria-label={`Abrir dashboard filtrado por ${s.nome}`}
                             className="inline-flex items-center justify-center rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
+
                           >
                             <ExternalLink className="h-3.5 w-3.5" />
                           </Link>
