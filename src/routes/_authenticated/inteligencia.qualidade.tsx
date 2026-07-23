@@ -78,8 +78,12 @@ export const Route = createFileRoute("/_authenticated/inteligencia/qualidade")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: QualidadePage,
+  component: RedirectToInteligencia,
 });
+
+function RedirectToInteligencia() {
+  return <Navigate to="/inteligencia" search={{ tab: "qualidade" }} replace />;
+}
 
 // ─── Tipos ────────────────────────────────────────────────────────────
 type Severity = "info" | "warn" | "critical";
@@ -97,7 +101,7 @@ type CheckCard = {
 };
 
 // ─── Página ───────────────────────────────────────────────────────────
-function QualidadePage() {
+export function QualidadePage() {
   const { loading, roles } = useSession();
   const scope = useSessionScope();
   const isSupervisorOnly =

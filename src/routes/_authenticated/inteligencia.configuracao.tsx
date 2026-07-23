@@ -21,8 +21,12 @@ export const Route = createFileRoute("/_authenticated/inteligencia/configuracao"
       { name: "description", content: "Pesos e limiares do score de absenteísmo." },
     ],
   }),
-  component: ConfiguracaoPage,
+  component: RedirectToInteligencia,
 });
+
+function RedirectToInteligencia() {
+  return <Navigate to="/inteligencia" search={{ tab: "configuracao" }} replace />;
+}
 
 type Config = {
   id: string;
