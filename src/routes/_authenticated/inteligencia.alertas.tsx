@@ -168,7 +168,7 @@ function relTime(iso: string): string {
 }
 
 // ─── Página ───────────────────────────────────────────────────────────
-function AlertasPage() {
+export function AlertasPage() {
   const { loading, roles } = useSession();
   const scope = useSessionScope();
   const search = Route.useSearch();
