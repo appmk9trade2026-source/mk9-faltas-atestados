@@ -65,7 +65,7 @@ const PESO_FIELDS: Array<{ key: keyof Config; label: string; hint?: string }> = 
   { key: "peso_outros", label: "Outros" },
 ];
 
-function ConfiguracaoPage() {
+export function ConfiguracaoPage() {
   const { loading, roles } = useSession();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
