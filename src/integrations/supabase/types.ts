@@ -4023,6 +4023,10 @@ export type Database = {
           nome: string
         }[]
       }
+      confirmar_vinculo_supervisor: {
+        Args: { _colaborador_id: string; _supervisor_usuario_id: string }
+        Returns: Json
+      }
       consolidar_projetos: {
         Args: {
           p_duplicado_id: string
@@ -4473,6 +4477,7 @@ export type Database = {
         Returns: Json
       }
       report_projetos_colisoes_ativas: { Args: never; Returns: Json }
+      reprocess_supervisor_batch: { Args: { _rows: Json }; Returns: Json }
       reprocessar_escalonamentos: { Args: never; Returns: Json }
       require_permission: {
         Args: {
