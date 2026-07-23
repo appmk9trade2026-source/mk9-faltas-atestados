@@ -1014,6 +1014,14 @@ function ColaboradorDrawer({
                   {meta.label}
                 </Badge>
               </div>
+              <Button asChild size="sm" variant="outline" className="self-start">
+                <Link
+                  to="/inteligencia/colaboradores/$colaboradorId"
+                  params={{ colaboradorId: row.colaborador_id }}
+                >
+                  Abrir perfil analítico completo
+                </Link>
+              </Button>
             </SheetHeader>
 
             <div className="mt-6 space-y-6">
