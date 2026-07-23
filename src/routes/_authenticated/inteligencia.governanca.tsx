@@ -201,7 +201,10 @@ export function GovernancaPage() {
 
   const setSearch = React.useCallback(
     (patch: Partial<z.infer<typeof searchSchema>>) => {
-      navigate({ search: (prev) => ({ ...prev, tab: "governanca", ...patch }), replace: true });
+      navigate({
+        search: (prev: Partial<GovernancaSearch> & { tab?: string }) => ({ ...prev, tab: "governanca", ...patch }),
+        replace: true,
+      });
     },
     [navigate],
   );
