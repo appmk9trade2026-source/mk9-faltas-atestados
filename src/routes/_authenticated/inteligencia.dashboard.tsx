@@ -199,7 +199,6 @@ export const Route = createFileRoute("/_authenticated/inteligencia/dashboard")({
 function RedirectToInteligencia() {
   return <Navigate to="/inteligencia" search={{ tab: "dashboard" }} replace />;
 }
-});
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 function nivelFromScore(score: number, cfg: Config | null): Nivel {
