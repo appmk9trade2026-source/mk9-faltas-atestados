@@ -824,7 +824,7 @@ function ImportarPage() {
         </Alert>
       )}
 
-      {import.meta.env.DEV && supEmailTrace && (
+      {supEmailTrace && (
         <Card className="border-sky-400/40 bg-sky-500/5 p-4">
           <div className="flex items-center gap-2 text-sm font-semibold">
             <FileSpreadsheet className="h-4 w-4 text-sky-500" />
