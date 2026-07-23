@@ -816,6 +816,27 @@ function ImportarPage() {
         </Alert>
       )}
 
+      {import.meta.env.DEV && supEmailTrace && (
+        <Card className="border-sky-400/40 bg-sky-500/5 p-4">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <FileSpreadsheet className="h-4 w-4 text-sky-500" />
+            Trace do e-mail do supervisor (apenas em desenvolvimento)
+          </div>
+          <div className="mt-2 grid gap-1 text-xs sm:grid-cols-2">
+            <div><span className="text-muted-foreground">Cabeçalho bruto:</span> <code className="rounded bg-muted px-1">{supEmailTrace.headerBruto ?? "—"}</code></div>
+            <div><span className="text-muted-foreground">Cabeçalho normalizado:</span> <code className="rounded bg-muted px-1">{supEmailTrace.headerNormalizado ?? "—"}</code></div>
+            <div><span className="text-muted-foreground">Alias resolvido:</span> <code className="rounded bg-muted px-1">{supEmailTrace.aliasResolvido ?? "—"}</code></div>
+            <div><span className="text-muted-foreground">Chave canônica no payload:</span> <code className="rounded bg-muted px-1">supervisor_email</code></div>
+            <div className="sm:col-span-2"><span className="text-muted-foreground">Valor lido (mascarado):</span> <code className="rounded bg-muted px-1">{supEmailTrace.valorMascarado}</code></div>
+          </div>
+          {!supEmailTrace.valorPresente && supEmailTrace.headerNormalizado && (
+            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+              A coluna foi reconhecida, mas nenhuma linha trouxe e-mail preenchido. Verifique a planilha antes de importar.
+            </p>
+          )}
+        </Card>
+      )}
+
 
 
       {rows.length > 0 && diagnostico && diagnostico.total_grupos > 0 && (
