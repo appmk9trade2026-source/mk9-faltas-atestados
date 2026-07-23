@@ -47,8 +47,61 @@ export const concluirPrimeiroAcesso = createServerFn({ method: "POST" })
       return { ok: true as const, ja_concluido: true as const };
     }
 
-    // 2) Troca a senha via Auth Admin (substitui a temporária).
+    // 2) Validação servidor: nova senha NÃO pode ser igual à senha temporária.
+    //    Estratégia: tentar signInWithPassword num cliente isolado (sem sessão
+    //    persistida) usando a nova senha. Se autenticar, significa que ela é
+    //    idêntica à senha atual (a temporária) → rejeitar. Nunca registramos
+    //    a senha em log/auditoria.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const uinfo = await supabaseAdmin.auth.admin.getUserById(userId);
+    const email = uinfo.data?.user?.email ?? null;
+    if (!email) {
+      throw new Error("Não foi possível validar sua conta. Faça login novamente.");
+    }
+
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY!;
+      const scratch = createClient(process.env.SUPABASE_URL!, publishableKey, {
+        auth: { persistSession: false, autoRefreshToken: false, storage: undefined },
+        global: {
+          fetch: (input, init) => {
+            const h = new Headers(init?.headers);
+            if (publishableKey.startsWith("sb_") && h.get("Authorization") === `Bearer ${publishableKey}`) {
+              h.delete("Authorization");
+            }
+            h.set("apikey", publishableKey);
+            return fetch(input, { ...init, headers: h });
+          },
+        },
+      });
+      const probe = await scratch.auth.signInWithPassword({ email, password: data.nova_senha });
+      if (probe.data?.session) {
+        // Igualdade confirmada — invalida a sessão de teste e registra auditoria.
+        await scratch.auth.signOut().catch(() => {});
+        await supabase
+          .rpc("log_audit_event", {
+            _modulo: "auth",
+            _acao: "PRIMEIRO_ACESSO_CONCLUIDO" as never,
+            _entidade: "Sessão",
+            _registro_id: userId,
+            _observacoes: "Tentativa bloqueada: nova senha igual à senha temporária (PASSWORD_EQUALS_TEMPORARY).",
+            _origem: "web",
+          } as never)
+          .then(() => {}, () => {});
+        const err = new Error("A nova senha deve ser diferente da senha temporária.") as Error & {
+          code?: string;
+        };
+        err.code = "PASSWORD_EQUALS_TEMPORARY";
+        throw err;
+      }
+      // probe.error significa "credenciais inválidas" → senha diferente. Segue o fluxo.
+    } catch (e) {
+      if ((e as { code?: string })?.code === "PASSWORD_EQUALS_TEMPORARY") throw e;
+      // Falha de rede/serviço na sonda não pode travar a troca legítima.
+    }
+
+    // 3) Troca a senha via Auth Admin (substitui a temporária).
     const upd = await supabaseAdmin.auth.admin.updateUserById(userId, {
       password: data.nova_senha,
     });
