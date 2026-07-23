@@ -156,8 +156,19 @@ function NovaSenhaPage() {
       setAutorizado(false);
       navigate({ to: "/dashboard", replace: true });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Não foi possível concluir. Tente novamente.";
-      setError(msg);
+      const raw = err instanceof Error ? err.message : "";
+      const isEqualsTemp =
+        raw.includes("PASSWORD_EQUALS_TEMPORARY") ||
+        raw.toLowerCase().includes("diferente da senha temporária");
+      if (isEqualsTemp) {
+        setError("A nova senha deve ser diferente da senha temporária.");
+        setNovaSenha("");
+        setConfirmar("");
+        // devolve o foco ao campo de nova senha
+        setTimeout(() => document.getElementById("pw")?.focus(), 0);
+      } else {
+        setError(raw || "Não foi possível concluir. Tente novamente.");
+      }
     } finally {
       setSaving(false);
     }
