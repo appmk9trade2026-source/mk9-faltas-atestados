@@ -51,6 +51,7 @@ import { Route as AuthenticatedConfiguracoesProjetosRouteImport } from './routes
 import { Route as AuthenticatedConfiguracoesPreferenciasRouteImport } from './routes/_authenticated/configuracoes.preferencias'
 import { Route as AuthenticatedConfiguracoesEmpresasRouteImport } from './routes/_authenticated/configuracoes.empresas'
 import { Route as AuthenticatedComunicacoesWhatsappRouteImport } from './routes/_authenticated/comunicacoes.whatsapp'
+import { Route as AuthenticatedColaboradoresReprocessarSupervisoresRouteImport } from './routes/_authenticated/colaboradores_.reprocessar-supervisores'
 import { Route as AuthenticatedColaboradoresImportarRouteImport } from './routes/_authenticated/colaboradores_.importar'
 import { Route as AuthenticatedColaboradoresImportacoesRouteImport } from './routes/_authenticated/colaboradores_.importacoes'
 import { Route as AuthenticatedAdministracaoPermissoesRouteImport } from './routes/_authenticated/administracao.permissoes'
@@ -301,6 +302,12 @@ const AuthenticatedComunicacoesWhatsappRoute =
     path: '/whatsapp',
     getParentRoute: () => AuthenticatedComunicacoesRoute,
   } as any)
+const AuthenticatedColaboradoresReprocessarSupervisoresRoute =
+  AuthenticatedColaboradoresReprocessarSupervisoresRouteImport.update({
+    id: '/colaboradores_/reprocessar-supervisores',
+    path: '/colaboradores/reprocessar-supervisores',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedColaboradoresImportarRoute =
   AuthenticatedColaboradoresImportarRouteImport.update({
     id: '/colaboradores_/importar',
@@ -445,6 +452,7 @@ export interface FileRoutesByFullPath {
   '/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/colaboradores/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/colaboradores/importar': typeof AuthenticatedColaboradoresImportarRoute
+  '/colaboradores/reprocessar-supervisores': typeof AuthenticatedColaboradoresReprocessarSupervisoresRoute
   '/comunicacoes/whatsapp': typeof AuthenticatedComunicacoesWhatsappRouteWithChildren
   '/configuracoes/empresas': typeof AuthenticatedConfiguracoesEmpresasRoute
   '/configuracoes/preferencias': typeof AuthenticatedConfiguracoesPreferenciasRoute
@@ -505,6 +513,7 @@ export interface FileRoutesByTo {
   '/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/colaboradores/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/colaboradores/importar': typeof AuthenticatedColaboradoresImportarRoute
+  '/colaboradores/reprocessar-supervisores': typeof AuthenticatedColaboradoresReprocessarSupervisoresRoute
   '/configuracoes/empresas': typeof AuthenticatedConfiguracoesEmpresasRoute
   '/configuracoes/preferencias': typeof AuthenticatedConfiguracoesPreferenciasRoute
   '/configuracoes/projetos': typeof AuthenticatedConfiguracoesProjetosRoute
@@ -567,6 +576,7 @@ export interface FileRoutesById {
   '/_authenticated/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/_authenticated/colaboradores_/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/_authenticated/colaboradores_/importar': typeof AuthenticatedColaboradoresImportarRoute
+  '/_authenticated/colaboradores_/reprocessar-supervisores': typeof AuthenticatedColaboradoresReprocessarSupervisoresRoute
   '/_authenticated/comunicacoes/whatsapp': typeof AuthenticatedComunicacoesWhatsappRouteWithChildren
   '/_authenticated/configuracoes/empresas': typeof AuthenticatedConfiguracoesEmpresasRoute
   '/_authenticated/configuracoes/preferencias': typeof AuthenticatedConfiguracoesPreferenciasRoute
@@ -630,6 +640,7 @@ export interface FileRouteTypes {
     | '/administracao/permissoes'
     | '/colaboradores/importacoes'
     | '/colaboradores/importar'
+    | '/colaboradores/reprocessar-supervisores'
     | '/comunicacoes/whatsapp'
     | '/configuracoes/empresas'
     | '/configuracoes/preferencias'
@@ -690,6 +701,7 @@ export interface FileRouteTypes {
     | '/administracao/permissoes'
     | '/colaboradores/importacoes'
     | '/colaboradores/importar'
+    | '/colaboradores/reprocessar-supervisores'
     | '/configuracoes/empresas'
     | '/configuracoes/preferencias'
     | '/configuracoes/projetos'
@@ -751,6 +763,7 @@ export interface FileRouteTypes {
     | '/_authenticated/administracao/permissoes'
     | '/_authenticated/colaboradores_/importacoes'
     | '/_authenticated/colaboradores_/importar'
+    | '/_authenticated/colaboradores_/reprocessar-supervisores'
     | '/_authenticated/comunicacoes/whatsapp'
     | '/_authenticated/configuracoes/empresas'
     | '/_authenticated/configuracoes/preferencias'
@@ -1083,6 +1096,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedComunicacoesWhatsappRouteImport
       parentRoute: typeof AuthenticatedComunicacoesRoute
     }
+    '/_authenticated/colaboradores_/reprocessar-supervisores': {
+      id: '/_authenticated/colaboradores_/reprocessar-supervisores'
+      path: '/colaboradores/reprocessar-supervisores'
+      fullPath: '/colaboradores/reprocessar-supervisores'
+      preLoaderRoute: typeof AuthenticatedColaboradoresReprocessarSupervisoresRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/colaboradores_/importar': {
       id: '/_authenticated/colaboradores_/importar'
       path: '/colaboradores/importar'
@@ -1370,6 +1390,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdministracaoPermissoesRoute: typeof AuthenticatedAdministracaoPermissoesRoute
   AuthenticatedColaboradoresImportacoesRoute: typeof AuthenticatedColaboradoresImportacoesRoute
   AuthenticatedColaboradoresImportarRoute: typeof AuthenticatedColaboradoresImportarRoute
+  AuthenticatedColaboradoresReprocessarSupervisoresRoute: typeof AuthenticatedColaboradoresReprocessarSupervisoresRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1406,6 +1427,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedColaboradoresImportacoesRoute,
   AuthenticatedColaboradoresImportarRoute:
     AuthenticatedColaboradoresImportarRoute,
+  AuthenticatedColaboradoresReprocessarSupervisoresRoute:
+    AuthenticatedColaboradoresReprocessarSupervisoresRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -1434,13 +1457,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -693,6 +693,14 @@ function QualidadeTab({ scopeReady, keyParts, isSupervisorOnly, canReconciliar }
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-end gap-2">
+        {canReconciliar && (
+          <Link
+            to="/colaboradores_/reprocessar-supervisores"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground"
+          >
+            Reprocessar por planilha
+          </Link>
+        )}
         {canReconciliar && <ReconciliarSupervisoresButton keyParts={keyParts} />}
         <ExportMenu filename={`qualidade_${new Date().toISOString().slice(0,10)}`}
           rows={rows}

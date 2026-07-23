@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import {
+  AlertTriangle,
   ArrowLeft,
   CheckCircle2,
   Download,
@@ -44,6 +45,14 @@ import { normalizeMatricula } from "@/lib/matricula";
 import { normalizeName } from "@/lib/normalize-name";
 import { importColaboradoresBulk } from "@/lib/colaboradores.functions";
 import { friendlyRbacError } from "@/lib/rbac/errors";
+import {
+  COLABORADOR_HEADER_ALIASES,
+  buildRowIndex,
+  diagnoseHeaders,
+  pickField,
+  suspectUnmappedSupervisorEmail,
+  type HeaderDiagnostic,
+} from "@/lib/xlsx-headers";
 
 
 export const Route = createFileRoute("/_authenticated/colaboradores_/importar")({
@@ -154,6 +163,8 @@ function ImportarPage() {
     erros: number;
     ms: number;
   } | null>(null);
+  const [headerDiag, setHeaderDiag] = useState<HeaderDiagnostic | null>(null);
+
 
   const { data: empresas = [] } = useQuery<Empresa[]>({
     queryKey: ["empresas-all"],
@@ -292,6 +303,7 @@ function ImportarPage() {
     }
     setResultado(null);
     setResolucoes({});
+    setHeaderDiag(null);
     setFileName(f.name);
     setFileSize(f.size);
     try {
@@ -302,14 +314,27 @@ function ImportarPage() {
         defval: "",
         raw: false,
       });
+      const diag = diagnoseHeaders(raw[0]);
+      setHeaderDiag(diag);
       const parsed = validar(raw, {});
       setRows(parsed);
-      toast.success(`Planilha carregada: ${parsed.length} linha(s).`);
+      if (diag.faltando.length > 0) {
+        toast.warning(
+          `Cabeçalhos obrigatórios faltando: ${diag.faltando.join(", ")}. Corrija a planilha antes de confirmar.`,
+        );
+      } else if (suspectUnmappedSupervisorEmail(diag)) {
+        toast.warning(
+          "A planilha contém uma coluna parecida com 'email supervisor' mas não pôde ser mapeada. Renomeie para 'Email Supervisor'.",
+        );
+      } else {
+        toast.success(`Planilha carregada: ${parsed.length} linha(s).`);
+      }
     } catch (err) {
       console.error(err);
       toast.error("Não foi possível ler o arquivo.");
     }
   }
+
 
   function validar(
     raw: Record<string, unknown>[],
@@ -344,16 +369,20 @@ function ImportarPage() {
     return raw
       .map((r, idx) => {
         const linha = idx + 2;
-        const matricula = normalizeMatricula(norm(r["Matrícula"] ?? r["Matricula"]));
-        const nome_completo = norm(r["Nome Completo"]);
-        const projeto = norm(r["Projeto"]);
-        const empresa = norm(r["Empresa"]);
-        const telefone = digitsOnly(norm(r["Telefone do Colaborador"]));
-        const whatsapp = digitsOnly(norm(r["WhatsApp"]));
-        const email = norm(r["Email"]).toLowerCase();
-        const supervisor_nome = norm(r["Supervisor(a)"] ?? r["Supervisor"]);
-        const supervisor_telefone = digitsOnly(norm(r["Telefone do Supervisor"]));
-        const supervisor_email = norm(r["Email Supervisor"]).toLowerCase();
+        const rowIdx = buildRowIndex(r);
+        const pick = (f: keyof typeof COLABORADOR_HEADER_ALIASES) =>
+          norm(pickField(rowIdx, COLABORADOR_HEADER_ALIASES[f]) as unknown);
+        const matricula = normalizeMatricula(pick("matricula"));
+        const nome_completo = pick("nome_completo");
+        const projeto = pick("projeto");
+        const empresa = pick("empresa");
+        const telefone = digitsOnly(pick("telefone"));
+        const whatsapp = digitsOnly(pick("whatsapp"));
+        const email = pick("email").toLowerCase();
+        const supervisor_nome = pick("supervisor_nome");
+        const supervisor_telefone = digitsOnly(pick("supervisor_telefone"));
+        const supervisor_email = pick("supervisor_email").toLowerCase();
+
 
         const vazia = ![matricula, nome_completo, projeto, empresa, telefone, whatsapp, email, supervisor_nome].some(
           (v) => v && v.length > 0,
@@ -695,6 +724,49 @@ function ImportarPage() {
         </div>
       </Card>
 
+      {headerDiag && (headerDiag.faltando.length > 0 || suspectUnmappedSupervisorEmail(headerDiag)) && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Cabeçalhos da planilha precisam de atenção</AlertTitle>
+          <AlertDescription>
+            {headerDiag.faltando.length > 0 && (
+              <p>
+                Colunas obrigatórias não encontradas:{" "}
+                <b>{headerDiag.faltando.join(", ")}</b>. A importação está bloqueada
+                até que a planilha contenha esses campos.
+              </p>
+            )}
+            {suspectUnmappedSupervisorEmail(headerDiag) && (
+              <p className="mt-1">
+                Detectamos uma coluna parecida com "email supervisor" que não pôde
+                ser reconhecida. Renomeie o cabeçalho exatamente para{" "}
+                <b>Email Supervisor</b>.
+              </p>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {headerDiag && headerDiag.faltando.length === 0 && !suspectUnmappedSupervisorEmail(headerDiag) && (
+        <Alert>
+          <CheckCircle2 className="h-4 w-4" />
+          <AlertTitle>Cabeçalhos reconhecidos</AlertTitle>
+          <AlertDescription className="text-xs">
+            {(Object.entries(headerDiag.encontrados) as [string, string | null][])
+              .filter(([, v]) => v)
+              .map(([k, v]) => `${k} ← "${v}"`)
+              .join(" · ")}
+            {headerDiag.desconhecidos.length > 0 && (
+              <span className="text-muted-foreground">
+                {" · "}Ignorados: {headerDiag.desconhecidos.join(", ")}
+              </span>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+
+
+
       {rows.length > 0 && diagnostico && diagnostico.total_grupos > 0 && (
         <Card className="border-sky-400/40 bg-sky-500/5 p-5">
           <h3 className="flex items-center gap-2 text-base font-semibold">
@@ -920,7 +992,7 @@ function ImportarPage() {
               </div>
               <Button
                 onClick={() => importar.mutate()}
-                disabled={!canImport || importar.isPending || summary.ok + (atualizar ? summary.dup : 0) === 0}
+                disabled={!canImport || importar.isPending || summary.ok + (atualizar ? summary.dup : 0) === 0 || (headerDiag ? headerDiag.faltando.length > 0 || suspectUnmappedSupervisorEmail(headerDiag) : false)}
               >
                 <Upload className="mr-2 h-4 w-4" />
                 Importar {summary.ok + (atualizar ? summary.dup : 0)} linha(s)
