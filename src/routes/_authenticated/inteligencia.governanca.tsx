@@ -38,6 +38,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { useSessionScope } from "@/hooks/use-session-scope";
+import { useServerFn } from "@tanstack/react-start";
+import { reconciliarSupervisores, type ReconciliarSupervisoresResultado } from "@/lib/reconciliar-supervisores.functions";
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
 // ─── Tipos ────────────────────────────────────────────────────────────
