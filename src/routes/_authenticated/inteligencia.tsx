@@ -6,7 +6,7 @@
 import * as React from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
-import { zodValidator } from "@tanstack/zod-adapter";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import {
   Gauge,
   Trophy,
