@@ -695,9 +695,13 @@ function InteligenciaPage() {
                                 <td className="py-2.5 px-3 text-muted-foreground">
                                   {projetoMap.get(r.projeto_id) ?? "—"}
                                 </td>
-                                <td className="py-2.5 px-3 text-muted-foreground">
-                                  {supervisorMap.get(r.supervisor_usuario_id ?? "") ?? "—"}
+                                <td className="py-2.5 px-3">
+                                  <SupervisorCell
+                                    supervisorId={r.supervisor_usuario_id}
+                                    supervisorMap={supervisorMap}
+                                  />
                                 </td>
+
                                 <td className="py-2.5 px-3 text-right tabular-nums">{r.total_ocorrencias}</td>
                                 <td className="py-2.5 px-3 text-right tabular-nums">
                                   {r.breakdown?.faltas ?? 0}
