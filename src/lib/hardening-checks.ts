@@ -25,6 +25,12 @@ async function timed<T>(fn: () => Promise<T>): Promise<{ value?: T; error?: unkn
   }
 }
 
+// Small helper: awaits a Supabase builder and normalizes as {error, value}
+async function q<T>(builder: PromiseLike<T>): Promise<T> {
+  return await builder;
+}
+
+
 // ------- Health Check -------
 export async function runHealthChecks(): Promise<CheckResult[]> {
   const out: CheckResult[] = [];
