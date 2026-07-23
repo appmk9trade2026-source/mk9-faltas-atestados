@@ -388,11 +388,12 @@ function InteligenciaPage() {
           return (projetoMap.get(a.projeto_id) ?? "").localeCompare(projetoMap.get(b.projeto_id) ?? "", "pt-BR") * dir;
         case "supervisor":
           return (
-            (supervisorMap.get(a.supervisor_usuario_id ?? "") ?? "").localeCompare(
-              supervisorMap.get(b.supervisor_usuario_id ?? "") ?? "",
+            resolveSupervisorLabel(a.supervisor_usuario_id, supervisorMap).localeCompare(
+              resolveSupervisorLabel(b.supervisor_usuario_id, supervisorMap),
               "pt-BR",
             ) * dir
           );
+
         case "total":
           return (a.total_ocorrencias - b.total_ocorrencias) * dir;
         case "faltas":
