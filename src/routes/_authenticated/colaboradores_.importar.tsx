@@ -302,6 +302,7 @@ function ImportarPage() {
     }
     setResultado(null);
     setResolucoes({});
+    setHeaderDiag(null);
     setFileName(f.name);
     setFileSize(f.size);
     try {
@@ -312,14 +313,27 @@ function ImportarPage() {
         defval: "",
         raw: false,
       });
+      const diag = diagnoseHeaders(raw[0]);
+      setHeaderDiag(diag);
       const parsed = validar(raw, {});
       setRows(parsed);
-      toast.success(`Planilha carregada: ${parsed.length} linha(s).`);
+      if (diag.faltando.length > 0) {
+        toast.warning(
+          `Cabeçalhos obrigatórios faltando: ${diag.faltando.join(", ")}. Corrija a planilha antes de confirmar.`,
+        );
+      } else if (suspectUnmappedSupervisorEmail(diag)) {
+        toast.warning(
+          "A planilha contém uma coluna parecida com 'email supervisor' mas não pôde ser mapeada. Renomeie para 'Email Supervisor'.",
+        );
+      } else {
+        toast.success(`Planilha carregada: ${parsed.length} linha(s).`);
+      }
     } catch (err) {
       console.error(err);
       toast.error("Não foi possível ler o arquivo.");
     }
   }
+
 
   function validar(
     raw: Record<string, unknown>[],
