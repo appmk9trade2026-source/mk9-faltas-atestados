@@ -143,8 +143,12 @@ export const Route = createFileRoute("/_authenticated/inteligencia/alertas")({
     ],
   }),
   validateSearch: zodValidator(searchSchema),
-  component: AlertasPage,
+  component: RedirectToInteligencia,
 });
+
+function RedirectToInteligencia() {
+  return <Navigate to="/inteligencia" search={{ tab: "alertas" }} replace />;
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 function fmtDateTime(iso: string | null): string {
