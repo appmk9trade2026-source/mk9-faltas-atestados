@@ -992,7 +992,7 @@ function ImportarPage() {
               </div>
               <Button
                 onClick={() => importar.mutate()}
-                disabled={!canImport || importar.isPending || summary.ok + (atualizar ? summary.dup : 0) === 0}
+                disabled={!canImport || importar.isPending || summary.ok + (atualizar ? summary.dup : 0) === 0 || (headerDiag ? headerDiag.faltando.length > 0 || suspectUnmappedSupervisorEmail(headerDiag) : false)}
               >
                 <Upload className="mr-2 h-4 w-4" />
                 Importar {summary.ok + (atualizar ? summary.dup : 0)} linha(s)
