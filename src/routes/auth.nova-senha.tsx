@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Eye, EyeOff, Loader2, Lock, ShieldCheck, CheckCircle2, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { concluirPrimeiroAcesso } from "@/lib/primeiro-acesso-troca.functions";
+import { isSameAsFirstLoginPassword, clearFirstLoginPassword } from "@/lib/first-login-password";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -124,6 +125,10 @@ function NovaSenhaPage() {
       setError("Você não pode manter a senha temporária padrão. Escolha uma senha pessoal.");
       return;
     }
+    if (isSameAsFirstLoginPassword(novaSenha) || isSameAsFirstLoginPassword(confirmar)) {
+      setError("A nova senha deve ser diferente da senha temporária utilizada no primeiro acesso.");
+      return;
+    }
 
     if (novaSenha !== confirmar) {
       setError("As senhas não coincidem.");
@@ -143,8 +148,10 @@ function NovaSenhaPage() {
       if (res?.ja_concluido) {
         toast.info("Seu primeiro acesso já havia sido concluído.");
       } else {
-        toast.success("Senha definida! Bem-vindo(a) ao CRM MK9.");
+        toast.success("Senha alterada com sucesso. Sua conta foi ativada.");
       }
+      // Descarta a senha temporária capturada — nunca deve persistir após a troca.
+      clearFirstLoginPassword();
       // Libera o bloqueio de "Voltar" antes de navegar para o Dashboard.
       setAutorizado(false);
       navigate({ to: "/dashboard", replace: true });
