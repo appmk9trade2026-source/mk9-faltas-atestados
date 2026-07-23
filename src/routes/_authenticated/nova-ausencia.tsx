@@ -610,6 +610,156 @@ function NovaAusenciaPage() {
     cidSuggestMut.mutate(c);
   }
 
+  // ============= Rascunho automático (Auto Save) =============
+  type DraftShape = {
+    values: FormData;
+    matriculaInput: string;
+    colab: ColabMatch | null;
+    acidente: {
+      data: string; hora: string; local: string; descricao: string;
+      atendMedico: boolean | null; afastamento: boolean | null;
+      diasAfast: string; catEmitida: boolean | null; obs: string;
+    };
+    fileName: string | null;
+  };
+  const draftEnabled = !isEdit && !!profile?.id;
+  const draftKey = draftEnabled ? `mk9:draft:nova-ausencia:${profile?.id}` : null;
+  const { load: loadDraft, clear: clearDraft, scheduleSave: scheduleDraftSave } =
+    useFormDraft<DraftShape>(draftKey, { debounceMs: 500, enabled: draftEnabled });
+
+  const [restoreOpen, setRestoreOpen] = useState(false);
+  const [restoredDraft, setRestoredDraft] = useState<DraftShape | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const restoreCheckedRef = useRef(false);
+
+  // Verifica rascunho existente ao montar (apenas cadastro novo)
+  useEffect(() => {
+    if (!draftEnabled || restoreCheckedRef.current) return;
+    restoreCheckedRef.current = true;
+    const env = loadDraft();
+    if (env?.data) {
+      setRestoredDraft(env.data);
+      setRestoreOpen(true);
+    }
+  }, [draftEnabled, loadDraft]);
+
+  // Salva rascunho a cada mudança (debounce 500 ms)
+  const watched = form.watch();
+  useEffect(() => {
+    if (!draftEnabled) return;
+    // Não gravar rascunho vazio antes do usuário digitar nada
+    const anyContent =
+      !!matriculaInput ||
+      !!colab ||
+      !!watched.motivo ||
+      !!watched.data_inicio ||
+      !!watched.tipo_ausencia_id ||
+      !!watched.localidade ||
+      !!watched.loja_codigo_nome ||
+      !!watched.cid ||
+      !!acidenteData ||
+      !!acidenteHora ||
+      !!acidenteLocal ||
+      !!acidenteDescricao ||
+      !!acidenteObs;
+    if (!anyContent) return;
+    scheduleDraftSave({
+      values: watched as FormData,
+      matriculaInput,
+      colab,
+      acidente: {
+        data: acidenteData,
+        hora: acidenteHora,
+        local: acidenteLocal,
+        descricao: acidenteDescricao,
+        atendMedico: acidenteAtendMedico,
+        afastamento: acidenteAfastamento,
+        diasAfast: acidenteDiasAfast,
+        catEmitida: acidenteCatEmitida,
+        obs: acidenteObs,
+      },
+      fileName: file?.name ?? null,
+    });
+  }, [
+    draftEnabled,
+    scheduleDraftSave,
+    watched,
+    matriculaInput,
+    colab,
+    file,
+    acidenteData,
+    acidenteHora,
+    acidenteLocal,
+    acidenteDescricao,
+    acidenteAtendMedico,
+    acidenteAfastamento,
+    acidenteDiasAfast,
+    acidenteCatEmitida,
+    acidenteObs,
+  ]);
+
+  const handleRestoreDraft = useCallback(() => {
+    const d = restoredDraft;
+    if (!d) return;
+    if (d.colab) applyColab(d.colab);
+    else setMatriculaInput(d.matriculaInput || "");
+    form.reset(d.values);
+    setAcidenteData(d.acidente.data ?? "");
+    setAcidenteHora(d.acidente.hora ?? "");
+    setAcidenteLocal(d.acidente.local ?? "");
+    setAcidenteDescricao(d.acidente.descricao ?? "");
+    setAcidenteAtendMedico(d.acidente.atendMedico ?? null);
+    setAcidenteAfastamento(d.acidente.afastamento ?? null);
+    setAcidenteDiasAfast(d.acidente.diasAfast ?? "");
+    setAcidenteCatEmitida(d.acidente.catEmitida ?? null);
+    setAcidenteObs(d.acidente.obs ?? "");
+    setRestoreOpen(false);
+    if (d.fileName) {
+      toast.info("Rascunho restaurado.", {
+        description: "Os anexos precisam ser selecionados novamente.",
+      });
+    } else {
+      toast.success("Rascunho restaurado.");
+    }
+  }, [restoredDraft, applyColab, form]);
+
+  const handleDiscardRestoredDraft = useCallback(() => {
+    clearDraft();
+    setRestoredDraft(null);
+    setRestoreOpen(false);
+  }, [clearDraft]);
+
+  const handleCancelClick = useCallback(() => {
+    if (isEdit) {
+      navigate({ to: "/ausencias" });
+      return;
+    }
+    const hasContent =
+      form.formState.isDirty ||
+      !!matriculaInput ||
+      !!colab ||
+      !!acidenteData ||
+      !!acidenteDescricao ||
+      !!acidenteLocal;
+    if (!hasContent) {
+      clearDraft();
+      navigate({ to: "/ausencias" });
+      return;
+    }
+    setCancelOpen(true);
+  }, [
+    isEdit,
+    navigate,
+    clearDraft,
+    form.formState.isDirty,
+    matriculaInput,
+    colab,
+    acidenteData,
+    acidenteDescricao,
+    acidenteLocal,
+  ]);
+
+
   // ============= Submit (server functions com hardening RBAC) =============
   const createFn = useServerFn(createAusencia);
   const updateFn = useServerFn(updateAusencia);
