@@ -60,8 +60,9 @@ const TONE: Record<NavItem["tone"], { active: string; idle: string }> = {
 };
 
 export function IntelligenceNav({ current }: { current: NavItem["to"] }) {
+  const embedded = useContext(EmbeddedAppShellContext);
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  return (
+  if (embedded) return null;
     <nav
       aria-label="Navegação do módulo de Inteligência"
       className="flex flex-wrap items-center gap-1 rounded-lg border bg-card p-1"
