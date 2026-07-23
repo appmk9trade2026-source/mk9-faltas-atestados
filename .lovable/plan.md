@@ -1,82 +1,70 @@
-# Módulo Inteligência de Absenteísmo — Entrega fatiada
+## Reestruturação — Dashboard Executivo · Governança · Qualidade
 
-Vou entregar por etapas, cada uma testável e reversível. Esta primeira entrega cobre **Etapa 1 + fundação de navegação**. As etapas 2 a 9 virão nas próximas rodadas, cada uma validada por você antes da próxima.
+Antes de tocar em ~4.300 linhas de código, quero alinhar o plano. Nada de banco, RLS, RBAC, RPC ou score muda — apenas rearranjo de UI/rotas/queries existentes.
 
-## Regras invariantes (valem para todas as etapas)
+### Estado atual
 
-- **Nunca** alterar RLS, RBAC ou matriz de permissões existentes.
-- Todas as novas RPCs em `SECURITY INVOKER` — os rankings herdam automaticamente o escopo do Supervisor (`supervisor_usuario_id = auth.uid()`), RH/Compliance/Super Admin/Visualizador seguem regras atuais.
-- CID nunca aparece para papéis não autorizados (respeitando policy atual de `ausencias`).
-- Nada de indicador punitivo: sempre taxa/média proporcional, nunca só absoluto.
-- Zero regressão: não altero tabelas ou funções existentes; apenas adiciono.
+- `inteligencia.dashboard.tsx` (Dashboard Executivo) — KPIs, evolução, heatmap, rankings, tipos, tendências. Já é o "executivo".
+- `inteligencia.governanca.tsx` — 1.590 linhas, **4 abas**: `governanca` (fluxo alertas + SLA + operação), `qualidade` (integridade dos dados + reconciliação), `eficiencia`, `auditoria` + painéis de insights e saúde. É a origem da sobreposição.
+- Sidebar aponta para "Governança & Qualidade" (item único).
 
-## Entrega 1 (esta rodada) — Fundação + Etapa 1
+### Mudanças propostas
 
-### Backend
+**ETAPA 1 — Dashboard Executivo (`inteligencia.dashboard.tsx`)**
+- Auditar cabeçalho e remover qualquer bloco operacional/qualidade que tenha vazado (SLA, contadores de alertas, integridade). Preservar KPIs, comparação PoP, evolução, heatmap, distribuição de criticidade, rankings, tipos, tendências, drill-downs.
+- Adicionar subtítulo "Visão estratégica do absenteísmo." + navegação lateral para Governança e Qualidade.
 
-Nova tabela `public.absenteismo_config` (singleton, Super Admin edita):
-- pesos por tipo base: `peso_falta`, `peso_atestado`, `peso_declaracao`, `peso_acidente_trabalho`, `peso_acidente_trajeto`, `peso_suspensao`, `peso_outros`
-- `peso_dia_perdido` (multiplicado por dias)
-- `peso_reincidencia` (bônus quando 3+ ocorrências em 30d)
-- `janela_dias` (padrão 90)
-- limiares: `limiar_atencao`, `limiar_alta`, `limiar_critica`
-- audit trigger + `updated_at`
-- RLS: SELECT para authenticated, UPDATE só Super Admin
-- Seed inicial com os padrões abaixo
+**ETAPA 2 — Governança (`inteligencia.governanca.tsx` reescrita como painel operacional)**
+- Remover a aba `qualidade` (migrada para nova rota) e os blocos de insights/rankings que duplicam o executivo.
+- Reorganizar em 4 seções (tabs ou blocos empilhados com identidade "workflow/timeline"):
+  1. **Fluxo dos Alertas** — abertos, em análise, resolvidos, ignorados, reabertos, pendentes.
+  2. **SLA** — tempo médio até assumir/resolver, vencidos, backlog, cumprimento.
+  3. **Operação** — alertas por RH, supervisor, empresa, projeto, volume por período.
+  4. **Auditoria** — últimas alterações, comentários, mudanças de status, histórico resumido.
+- Subtítulo "Acompanhamento operacional dos processos e alertas."
+- Reutiliza queries já existentes em `buildGovernanca` / `buildAuditoria`.
 
-Padrões iniciais sugeridos (editáveis pela UI depois):
-```
-falta=3, atestado=1, declaracao=1, suspensao=4,
-acidente_trabalho=6, acidente_trajeto=4, outros=1,
-peso_dia_perdido=0.5, peso_reincidencia=3, janela=90d
-limiares: <5 Baixa, 5–10 Atenção, 11–20 Alta, >20 Crítica
-```
+**ETAPA 3 — Qualidade dos Dados (nova rota `inteligencia.qualidade.tsx`)**
+- Nova rota separada (mesmo gate de roles atual da aba qualidade: RH, Compliance, Super Admin; supervisor vê empty state).
+- Categorias (cards + listas com badges/checklist):
+  - **Cadastros** — colaboradores sem supervisor / empresa / projeto; supervisores sem equipe.
+  - **Vínculos** — supervisor inexistente, empresa/projeto inválidos, órfãos.
+  - **Importação** — última importação, linhas rejeitadas, erros, divergências.
+  - **Reconciliação** — botões "Reconciliar Supervisores" e "Reprocessar por planilha" (já existentes) + histórico das últimas execuções.
+  - **Configuração** — configs ausentes/inválidas (a partir de `absenteismo_config` e checks já existentes).
+- Reutiliza a `buildQualidade` já implementada; drill-downs para cadastros de colaborador.
+- Subtítulo "Monitoramento da integridade e consistência das informações."
 
-Nova RPC `public.calcular_score_colaborador(_colaborador_id uuid, _janela_dias int default null)`:
-- `SECURITY INVOKER` — só retorna se o caller enxerga o colaborador via RLS
-- lê config, agrega ausências na janela, devolve `{ score numeric, nivel text, breakdown jsonb, ultima_ocorrencia timestamptz }`
+**ETAPA 4 — Navegação**
+- Adicionar um "IntelligenceNav" compartilhado no topo das 3 telas com links entre Executivo ↔ Governança ↔ Qualidade + subtítulo.
+- Atualizar `app-sidebar.tsx`: separar "Governança" e "Qualidade dos Dados" em dois itens (ambos sob "Inteligência").
 
-Nova RPC `public.calcular_score_colaboradores_lote(_empresa_id uuid?, _projeto_id uuid?)`:
-- devolve `SETOF` com score de cada colaborador visível ao caller (batch para o ranking futuro)
+**ETAPA 5 — Drill-down**
+- Cards de qualidade linkam para telas analíticas apropriadas (colaboradores, alertas). Cards de governança linkam para `/inteligencia/alertas?...`.
 
-### Frontend
+**ETAPA 6 — UX / identidade**
+- Executivo: ícones analíticos (Gauge, TrendingUp), gráficos.
+- Governança: ícones de workflow (Timer, Activity, Clock, GitBranch), timeline visual, cards de SLA.
+- Qualidade: badges de severidade, listas de inconsistências, checklists, botões de ação corretiva.
+- Todos usando tokens MK9 já em `src/styles.css` e `src/lib/mk9-palette.ts`.
 
-Nova entrada de menu **"Inteligência"** com sub-rotas (só as duas primeiras já ativas nesta rodada; demais renderizam placeholder até implementarem):
+**ETAPAS 7-8 — Segurança e testes**
+- Zero mudança em RLS/RBAC/score/RPCs/`useSessionScope`.
+- Rodar `bun typecheck` e `bun test:unit` (a suíte de rotas em `tests/unit/routes.test.ts` precisará conhecer a nova rota `inteligencia.qualidade`).
 
-```
-/inteligencia                → redireciona para /inteligencia/colaboradores
-/inteligencia/configuracao   → UI de pesos/limiares (Super Admin)
-/inteligencia/colaboradores  → placeholder (Etapa 2)
-/inteligencia/supervisores   → placeholder (Etapa 3)
-/inteligencia/executivo      → placeholder (Etapa 4)
-/inteligencia/alertas        → placeholder (Etapa 5)
-```
+### Arquivos afetados
 
-- Sidebar: novo item com ícone `Brain` / `Activity`, visível para roles que já veem BI/Dashboard (Super Admin, RH, Compliance, Supervisor). Sub-item "Configuração" só para Super Admin.
-- Tela **Configuração**: form com sliders/inputs para cada peso, janela, e 3 limiares; preview do card de níveis (Baixa/Atenção/Alta/Crítica) com cores oficiais 🟢🟡🟠🔴.
-- Badge/utilitário reutilizável `<CriticidadeBadge nivel="..." />` para as próximas etapas.
+- `src/routes/_authenticated/inteligencia.dashboard.tsx` — remoção de blocos duplicados + subheader/nav.
+- `src/routes/_authenticated/inteligencia.governanca.tsx` — reescrita focada em operação (mantendo dataset builders existentes; remover aba qualidade e blocos redundantes).
+- `src/routes/_authenticated/inteligencia.qualidade.tsx` — **novo**, extraído do `QualidadeTab` atual + expansão em categorias.
+- `src/components/inteligencia/intelligence-nav.tsx` — **novo**, sub-nav compartilhada + subtítulo.
+- `src/components/layout/app-sidebar.tsx` — separar itens.
+- `tests/unit/routes.test.ts` — registrar a nova rota.
 
-### Testes
+### Pontos que quero confirmar antes de codar
 
-- RPC de score retorna zero quando não há ausências.
-- Supervisor sem colaborador → RPC lote devolve vazio.
-- Alteração de peso na config muda o score no próximo cálculo.
+1. **Rota nova "Qualidade dos Dados"**: OK criar `/inteligencia/qualidade` como rota separada (em vez de manter tudo em abas dentro de Governança)? A spec descreve "cada tela" com identidade própria, então assumo que sim.
+2. **Aba "Eficiência" e painéis de "Insights Executivos" / "Saúde do Módulo"** hoje dentro de Governança: mover para Dashboard Executivo (Insights) e manter Saúde do Módulo em Governança (é operacional). OK?
+3. **Sidebar**: separo "Governança" e "Qualidade dos Dados" em dois itens ou mantenho um único "Governança & Qualidade" que abre a Governança e navega dali? Vou por dois itens separados salvo indicação contrária.
 
-## Etapas seguintes (rodadas futuras, uma por vez)
-
-- **Etapa 2** — Ranking de Colaboradores com filtros/ordenação + badge de criticidade.
-- **Etapa 3** — Ranking de Supervisores com métricas proporcionais e SLA.
-- **Etapa 4** — Dashboard Executivo com widgets Top 10 e evolução 12 meses.
-- **Etapa 5** — Alertas inteligentes com limiares parametrizáveis.
-- **Etapa 6** — Aba Análise no perfil do colaborador.
-- **Etapa 7** — Inteligência executiva (Top Empresas/Projetos/CID/crescimento).
-- **Etapas 8+9** — Auditoria final de RLS por rota + otimização (materialized view só se medir gargalo real).
-
-## O que NÃO vou fazer
-
-- Não crio ranking punitivo nem exposição de dados que fujam da RLS.
-- Não toco em `ausencias`, `colaboradores`, `user_roles`, ou qualquer policy existente.
-- Não crio materialized view agora — só se a Etapa 4 mostrar necessidade real.
-- Não exponho CID em rankings; se aparecer, filtro pela mesma regra da tela atual.
-
-Confirma que posso executar **Entrega 1** exatamente assim?
+Se essas 3 premissas estiverem OK, executo. Caso contrário, ajuste antes de aprovar.
