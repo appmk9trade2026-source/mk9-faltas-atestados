@@ -13,7 +13,7 @@
 //    `buildInsights`, `buildSaude`) reutilizáveis por endpoints/exports futuros.
 
 import * as React from "react";
-import { createFileRoute, Link, Navigate, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useNavigate, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
@@ -81,7 +81,7 @@ type Evento = {
 
 // ─── Route ────────────────────────────────────────────────────────────
 const searchSchema = z.object({
-  tab:       fallback(z.string(), "fluxo").default("fluxo"),
+  govTab:   fallback(z.string(), "fluxo").default("fluxo"),
   periodo:   fallback(z.string(), "30").default("30"),
   empresa:   fallback(z.string(), "").default(""),
   projeto:   fallback(z.string(), "").default(""),
@@ -91,6 +91,18 @@ const searchSchema = z.object({
   usuario:   fallback(z.string(), "").default(""),
   q:         fallback(z.string(), "").default(""),
 });
+
+type GovernancaSearch = z.infer<typeof searchSchema>;
+const GOVERNANCA_TAB_KEYS = ["fluxo", "operacao", "auditoria", "saude"] as const;
+type GovernancaTabKey = (typeof GOVERNANCA_TAB_KEYS)[number];
+
+function isGovernancaTab(value: string): value is GovernancaTabKey {
+  return (GOVERNANCA_TAB_KEYS as readonly string[]).includes(value);
+}
+
+function safeSearchString(value: unknown, fallbackValue = "") {
+  return typeof value === "string" ? value : fallbackValue;
+}
 
 export const Route = createFileRoute("/_authenticated/inteligencia/governanca")({
   head: () => ({
@@ -167,14 +179,29 @@ function slaMs(c: Crit) { return SLA_HOURS[c] * HOUR_MS; }
 export function GovernancaPage() {
   const { loading, roles } = useSession();
   const scope = useSessionScope();
-  const search = useSearch({ strict: false }) as any;
-  const navigate = Route.useNavigate();
+  const rawSearch = useSearch({ strict: false }) as Partial<GovernancaSearch>;
+  const navigate = useNavigate({ from: "/inteligencia" });
+  const search = React.useMemo<GovernancaSearch>(() => {
+    const rawGovTab = safeSearchString(rawSearch.govTab, "fluxo");
+
+    return {
+      govTab: isGovernancaTab(rawGovTab) ? rawGovTab : "fluxo",
+      periodo: safeSearchString(rawSearch.periodo, "30"),
+      empresa: safeSearchString(rawSearch.empresa),
+      projeto: safeSearchString(rawSearch.projeto),
+      supervisor: safeSearchString(rawSearch.supervisor),
+      status: safeSearchString(rawSearch.status),
+      crit: safeSearchString(rawSearch.crit),
+      usuario: safeSearchString(rawSearch.usuario),
+      q: safeSearchString(rawSearch.q),
+    };
+  }, [rawSearch]);
   const isSuperAdmin = roles.includes("super_admin");
   const isSupervisorOnly = roles.length > 0 && roles.every((r) => r === "supervisor");
 
   const setSearch = React.useCallback(
     (patch: Partial<z.infer<typeof searchSchema>>) => {
-      navigate({ search: (prev: z.infer<typeof searchSchema>) => ({ ...prev, ...patch }), replace: true });
+      navigate({ search: (prev) => ({ ...prev, tab: "governanca", ...patch }), replace: true });
     },
     [navigate],
   );
@@ -352,7 +379,7 @@ export function GovernancaPage() {
           </Card>
 
           {/* Tabs — foco operacional: Fluxo & SLA · Operação · Auditoria · Saúde */}
-          <Tabs value={search.tab} onValueChange={(v) => setSearch({ tab: v })}>
+          <Tabs value={search.govTab} onValueChange={(v) => setSearch({ govTab: v })}>
             <TabsList className="flex flex-wrap h-auto">
               <TabsTrigger value="fluxo"><Gauge className="h-4 w-4 mr-1.5" /> Fluxo & SLA</TabsTrigger>
               <TabsTrigger value="operacao"><Timer className="h-4 w-4 mr-1.5" /> Operação</TabsTrigger>

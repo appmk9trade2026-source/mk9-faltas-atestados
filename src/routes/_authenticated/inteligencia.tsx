@@ -41,7 +41,16 @@ const TAB_KEYS = [
 type TabKey = (typeof TAB_KEYS)[number];
 
 const searchSchema = z.object({
-  tab: fallback(z.string(), "dashboard").optional(),
+  tab: fallback(z.string(), "dashboard").default("dashboard"),
+  govTab: fallback(z.string(), "fluxo").default("fluxo"),
+  periodo: fallback(z.string(), "30").default("30"),
+  empresa: fallback(z.string(), "").default(""),
+  projeto: fallback(z.string(), "").default(""),
+  supervisor: fallback(z.string(), "").default(""),
+  status: fallback(z.string(), "").default(""),
+  crit: fallback(z.string(), "").default(""),
+  usuario: fallback(z.string(), "").default(""),
+  q: fallback(z.string(), "").default(""),
 });
 
 export const Route = createFileRoute("/_authenticated/inteligencia")({
