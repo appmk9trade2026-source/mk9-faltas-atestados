@@ -146,7 +146,7 @@ export const createColaborador = createServerFn({ method: "POST" })
       route: "/colaboradores",
     });
 
-    const payload = normalizePayload(data);
+    const payload = await resolveSupervisorFromEmail(context.supabase, normalizePayload(data));
     const { data: row, error } = await context.supabase
       .from("colaboradores")
       .insert(payload as never)
