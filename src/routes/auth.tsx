@@ -419,11 +419,13 @@ function FirstAccessDialog({
         return;
       }
       if (!prof.primeiro_acesso_pendente) {
+        clearFirstLoginPassword();
         toast.info("Seu primeiro acesso já foi concluído. Use o login normal.");
         onOpenChange(false);
         navigate({ to: "/dashboard", replace: true });
         return;
       }
+      setFirstLoginPassword(tempPw);
       onOpenChange(false);
       navigate({ to: "/auth/nova-senha", replace: true });
     } catch {
