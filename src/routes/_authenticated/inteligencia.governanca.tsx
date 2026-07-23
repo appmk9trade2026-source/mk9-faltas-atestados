@@ -104,8 +104,12 @@ export const Route = createFileRoute("/_authenticated/inteligencia/governanca")(
     ],
   }),
   validateSearch: zodValidator(searchSchema),
-  component: GovernancaPage,
+  component: RedirectToInteligencia,
 });
+
+function RedirectToInteligencia() {
+  return <Navigate to="/inteligencia" search={{ tab: "governanca" }} replace />;
+}
 
 // ─── Utils ────────────────────────────────────────────────────────────
 const DAY_MS = 86_400_000;
