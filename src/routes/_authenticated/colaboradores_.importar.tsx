@@ -44,6 +44,14 @@ import { normalizeMatricula } from "@/lib/matricula";
 import { normalizeName } from "@/lib/normalize-name";
 import { importColaboradoresBulk } from "@/lib/colaboradores.functions";
 import { friendlyRbacError } from "@/lib/rbac/errors";
+import {
+  COLABORADOR_HEADER_ALIASES,
+  buildRowIndex,
+  diagnoseHeaders,
+  pickField,
+  suspectUnmappedSupervisorEmail,
+  type HeaderDiagnostic,
+} from "@/lib/xlsx-headers";
 
 
 export const Route = createFileRoute("/_authenticated/colaboradores_/importar")({
