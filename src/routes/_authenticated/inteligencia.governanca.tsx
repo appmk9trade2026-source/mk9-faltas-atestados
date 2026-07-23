@@ -359,7 +359,7 @@ function GovernancaPage() {
             </TabsContent>
 
             <TabsContent value="qualidade" className="mt-6">
-              <QualidadeTab scopeReady={scope.ready} keyParts={scope.keyParts} isSupervisorOnly={isSupervisorOnly} />
+              <QualidadeTab scopeReady={scope.ready} keyParts={scope.keyParts} isSupervisorOnly={isSupervisorOnly} canReconciliar={roles.includes("super_admin") || roles.includes("rh")} />
             </TabsContent>
 
             <TabsContent value="eficiencia" className="mt-6">
