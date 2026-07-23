@@ -89,7 +89,9 @@ const items: Item[] = [
   { title: "Alertas Inteligentes", url: "/inteligencia/alertas", icon: BellRing, roles: ["super_admin", "compliance", "rh", "supervisor"] },
   { title: "Governança & Qualidade", url: "/inteligencia/governanca", icon: ShieldCheck, roles: ["super_admin", "compliance", "rh", "supervisor"] },
   { title: "Config. Inteligência", url: "/inteligencia/configuracao", icon: Settings, roles: ["super_admin"] },
+  { title: "Hardening & Produção", url: "/admin/hardening", icon: Gauge, roles: ["super_admin"] },
 ];
+
 
 const itemByUrl = new Map(items.map((i) => [i.url, i]));
 
@@ -124,12 +126,14 @@ const SECTIONS: Section[] = [
       "/homologacao",
       "/saude",
       "/observabilidade",
+      "/admin/hardening",
       "/operacao-assistida",
       "/documentacao",
       "/deploy",
       "/roadmap",
     ],
   },
+
 ];
 
 const STORAGE_KEY = "mk9.sidebar.groups.v1";
