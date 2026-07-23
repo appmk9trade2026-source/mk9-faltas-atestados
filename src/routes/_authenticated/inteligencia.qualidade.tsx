@@ -376,7 +376,7 @@ function QualidadeContent({
       hint: "Sem supervisor_email a reconciliação por planilha não consegue vincular automaticamente.",
       severity: "info",
       link: {
-        to: "/colaboradores_/reprocessar-supervisores",
+        to: "/colaboradores/reprocessar-supervisores",
         label: "Reprocessar por planilha",
       },
     },
@@ -551,7 +551,7 @@ function ReconciliacaoSection({
             </CardHeader>
             <CardContent>
               <Button asChild size="sm" variant="outline">
-                <Link to="/colaboradores_/reprocessar-supervisores">
+                <Link to="/colaboradores/reprocessar-supervisores">
                   Abrir ferramenta
                   <ArrowRight className="h-3 w-3 ml-1.5" />
                 </Link>
