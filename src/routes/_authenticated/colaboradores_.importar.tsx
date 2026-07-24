@@ -165,6 +165,9 @@ function ImportarPage() {
     ignoradas: number;
     erros: number;
     ms: number;
+    supervisores_vinculados: number;
+    supervisores_pendentes: number;
+    pendencias_por_motivo: Record<string, number>;
   } | null>(null);
   const [headerDiag, setHeaderDiag] = useState<HeaderDiagnostic | null>(null);
   const [supEmailTrace, setSupEmailTrace] = useState<{
