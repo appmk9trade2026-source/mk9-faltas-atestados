@@ -454,7 +454,13 @@ function CoordenadoresTable({ scopeKey }: { scopeKey: string }) {
           ))}
         </div>
       ) : q.isError ? (
-        <div className="p-6 text-sm text-destructive">Erro ao carregar Coordenadores.</div>
+        <RpcErrorState
+          title="Não foi possível carregar os Coordenadores."
+          rpc="coordenacao_listar_coordenadores"
+          error={q.error}
+          params={{ _busca: busca.trim() || null }}
+          onRetry={() => q.refetch()}
+        />
       ) : rows.length === 0 ? (
         <EmptyState
           icon={Trophy}
@@ -609,7 +615,15 @@ function ExpandSupervisores({
     );
   }
   if (q.isError) {
-    return <div className="p-4 text-sm text-destructive">Erro ao carregar Supervisores.</div>;
+    return (
+      <RpcErrorState
+        title="Não foi possível carregar os Supervisores."
+        rpc="coordenacao_supervisores_por_coordenador"
+        error={q.error}
+        params={{ _coord_id: coordenadorId }}
+        onRetry={() => q.refetch()}
+      />
+    );
   }
   if ((q.data ?? []).length === 0) {
     return (
@@ -780,7 +794,19 @@ function SupervisoresPanel({
           ))}
         </div>
       ) : q.isError ? (
-        <div className="p-6 text-sm text-destructive">Erro ao carregar Supervisores.</div>
+        <RpcErrorState
+          title="Não foi possível carregar os Supervisores."
+          rpc="coordenacao_listar_supervisores"
+          error={q.error}
+          params={{
+            _vinculo: vinculo,
+            _coordenador_id: coordenadorId || null,
+            _busca: busca.trim() || null,
+            _limit: PAGE_SIZE,
+            _offset: page * PAGE_SIZE,
+          }}
+          onRetry={() => q.refetch()}
+        />
       ) : (q.data ?? []).length === 0 ? (
         <EmptyState
           icon={vinculo === "sem" ? UserCheck : Users}
@@ -1305,3 +1331,49 @@ function EmptyState({
 
 // Keep imports referenced (lucide FolderKanban is used in future filters; guard tree-shake noise)
 void FolderKanban;
+
+function RpcErrorState({
+  title,
+  rpc,
+  error,
+  params,
+  onRetry,
+}: {
+  title: string;
+  rpc: string;
+  error: unknown;
+  params?: Record<string, unknown>;
+  onRetry: () => void;
+}) {
+  React.useEffect(() => {
+    if (import.meta.env.DEV) {
+      const e = error as { code?: string; message?: string; details?: string; hint?: string } | null;
+      // eslint-disable-next-line no-console
+      console.error(`[RPC ${rpc}] falhou`, {
+        code: e?.code,
+        message: e?.message,
+        details: e?.details,
+        hint: e?.hint,
+        params,
+        raw: error,
+      });
+    }
+  }, [rpc, error, params]);
+
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 p-8 text-center">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+        <ShieldAlert className="h-5 w-5" />
+      </div>
+      <div className="text-sm font-medium">{title}</div>
+      <p className="max-w-sm text-xs text-muted-foreground">
+        Ocorreu um erro ao consultar o serviço. Verifique sua conexão e tente novamente.
+      </p>
+      <Button size="sm" variant="outline" onClick={onRetry} className="mt-1">
+        <RefreshCcw className="mr-2 h-3.5 w-3.5" />
+        Tentar novamente
+      </Button>
+    </div>
+  );
+}
+
