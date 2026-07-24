@@ -101,7 +101,7 @@ const SECTIONS: Section[] = [
   {
     id: "operacao",
     label: "Operação",
-    urls: ["/nova-ausencia", "/ausencias", "/painel-rh", "/colaboradores", "/colaboradores/importacoes"],
+    urls: ["/nova-ausencia", "/ausencias", "/painel-rh", "/colaboradores", "/coordenacao/supervisores", "/colaboradores/importacoes"],
   },
   {
     id: "comunicacao",
