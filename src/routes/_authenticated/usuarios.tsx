@@ -124,12 +124,27 @@ export const Route = createFileRoute("/_authenticated/usuarios")({
 const ROLE_OPTIONS: { value: AppRole; label: string }[] = [
   { value: "super_admin", label: "Super Admin" },
   { value: "rh", label: "RH" },
+  { value: "coordenador", label: "Coordenador(a)" },
   { value: "supervisor", label: "Supervisor" },
   { value: "compliance", label: "Compliance" },
   { value: "operacao", label: "Operação" },
   { value: "visualizador", label: "Visualizador" },
 ];
 const roleLabel = (r: AppRole) => ROLE_OPTIONS.find((o) => o.value === r)?.label ?? r;
+
+/** Traduz erros dos triggers de integridade da Coordenação para mensagens amigáveis. */
+function mapCoordenacaoError(message: string): string {
+  if (message.includes("COORDENACAO_EM_USO")) {
+    return "Não é possível remover o perfil Coordenador enquanto existirem Supervisores vinculados. Remova ou transfira os vínculos em Gestão de Coordenação.";
+  }
+  if (message.includes("COORDENACAO_SUPERVISOR_INVALIDO")) {
+    return "Apenas usuários com papel Supervisor podem ter um Coordenador vinculado.";
+  }
+  if (message.includes("COORDENACAO_ALVO_INVALIDO")) {
+    return "O usuário informado não possui o papel Coordenador.";
+  }
+  return message;
+}
 
 const PAGE_SIZE = 25;
 
