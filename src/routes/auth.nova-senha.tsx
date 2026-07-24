@@ -61,7 +61,11 @@ function NovaSenhaPage() {
           ? { label: "Boa", cls: "bg-emerald-500" }
           : { label: "Forte", cls: "bg-emerald-600" };
 
-  // Bloqueia o back/refresh: usuário só sai daqui concluindo ou fazendo logout.
+  // Só requisito para exibir o formulário: haver uma sessão autenticada.
+  // A verificação de "primeiro_acesso_pendente" é feita no servidor pelo
+  // concluirPrimeiroAcesso (que retorna { ja_concluido: true } se já concluído),
+  // então evitamos uma dependência frágil em uma consulta ao profiles aqui
+  // que poderia deixar o usuário preso no spinner por erro transitório de rede.
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -69,21 +73,6 @@ function NovaSenhaPage() {
       if (!mounted) return;
       if (sErr || !data.user) {
         navigate({ to: "/auth", replace: true });
-        return;
-      }
-      const { data: prof } = await supabase
-        .from("profiles")
-        .select("ativo, primeiro_acesso_pendente")
-        .eq("id", data.user.id)
-        .maybeSingle();
-      if (!mounted) return;
-      if (!prof || prof.ativo === false) {
-        await supabase.auth.signOut();
-        navigate({ to: "/auth", search: { inactive: "1" }, replace: true });
-        return;
-      }
-      if (prof.primeiro_acesso_pendente !== true) {
-        navigate({ to: "/dashboard", replace: true });
         return;
       }
       setAutorizado(true);
@@ -107,6 +96,7 @@ function NovaSenhaPage() {
       window.removeEventListener("popstate", onPop);
     };
   }, [navigate]);
+
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
