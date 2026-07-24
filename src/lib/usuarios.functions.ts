@@ -89,8 +89,8 @@ import { validarProjetosPertencemAEmpresas } from "@/lib/usuarios-helpers";
 export { validarProjetosPertencemAEmpresas } from "@/lib/usuarios-helpers";
 
 // ---------------- CREATE ----------------
-const createSchema = refineMatriculaPorRoles(
-  z.object({
+const createSchema = z
+  .object({
     email: z.string().trim().toLowerCase().email(),
     nome: z.string().trim().min(2).max(120),
     telefone: z.string().trim().max(30).optional().nullable(),
@@ -102,13 +102,11 @@ const createSchema = refineMatriculaPorRoles(
     enviar_whatsapp: z.boolean().default(false),
 
     ativo: z.boolean().default(true),
-    roles: z
-      .array(appRoleSchema)
-      .default([]),
+    roles: z.array(appRoleSchema).default([]),
     empresa_ids: z.array(z.string().uuid()).default([]),
     projeto_ids: z.array(z.string().uuid()).default([]),
-  }),
-);
+  })
+  .superRefine(checarMatriculaObrigatoria);
 
 export const createUsuario = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
