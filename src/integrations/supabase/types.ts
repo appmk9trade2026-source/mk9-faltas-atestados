@@ -2577,6 +2577,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          matricula: string | null
           nome: string
           primeiro_acesso_pendente: boolean
           senha_temporaria_redefinida_em: string | null
@@ -2591,6 +2592,7 @@ export type Database = {
           created_at?: string
           email: string
           id: string
+          matricula?: string | null
           nome: string
           primeiro_acesso_pendente?: boolean
           senha_temporaria_redefinida_em?: string | null
@@ -2605,6 +2607,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          matricula?: string | null
           nome?: string
           primeiro_acesso_pendente?: boolean
           senha_temporaria_redefinida_em?: string | null
@@ -3918,6 +3921,7 @@ export type Database = {
           id: string
           invited_at: string
           last_sign_in_at: string
+          matricula: string
           nome: string
           projeto_ids: string[]
           projeto_nomes: string[]
