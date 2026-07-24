@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/auth/nova-senha")({
+export const Route = createFileRoute("/auth_/nova-senha")({
   ssr: false,
   head: () => ({
     meta: [

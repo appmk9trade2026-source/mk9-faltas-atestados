@@ -33,7 +33,10 @@ export const Route = createFileRoute("/auth")({
   // Redirect authenticated users away from /auth deterministically, BEFORE
   // rendering — prevents hydration mismatch (React #422) caused by mounting
   // the login form and immediately navigating away inside a useEffect.
-  beforeLoad: async ({ search }) => {
+  beforeLoad: async ({ search, location }) => {
+    // Nunca redirecionar uma rota para ela mesma (defesa extra caso a árvore
+    // volte a aninhar /auth/nova-senha sob /auth).
+    if (location.pathname.startsWith("/auth/nova-senha")) return;
     if (search.inactive) return;
     const { data } = await supabase.auth.getSession();
     const session = data.session;
