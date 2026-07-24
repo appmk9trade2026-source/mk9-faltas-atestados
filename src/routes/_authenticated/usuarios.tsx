@@ -899,6 +899,7 @@ function CreateDialog({
       telefone: "",
       cargo: "",
       avatar_url: "",
+      matricula: "",
       enviar_whatsapp: false,
       ativo: true,
       roles: [],
