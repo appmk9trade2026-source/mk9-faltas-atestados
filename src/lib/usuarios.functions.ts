@@ -881,14 +881,20 @@ export const excluirUsuarioSeguro = createServerFn({ method: "POST" })
     //    Se falhar, o profile permanece intacto (sem órfão de auth).
     const delAuth = await supabaseAdmin.auth.admin.deleteUser(data.id);
     if (delAuth.error) {
+      const detalhe = delAuth.error.message || "erro desconhecido";
+      const status = (delAuth.error as { status?: number }).status;
       await audit(
         context.supabase,
         "USUARIO_EXCLUSAO_BLOQUEADA",
         data.id,
-        `Falha ao excluir identidade de autenticação: ${delAuth.error.message}`,
+        `Falha ao excluir identidade de autenticação: ${detalhe}${status ? ` (status=${status})` : ""}`,
       );
-      throw new Error("Falha ao excluir a identidade de autenticação. Nenhum dado foi removido.");
+      // Repasse legível ao operador — inclui o motivo real (FK, permissão, indisponibilidade).
+      throw new Error(
+        `Falha ao excluir a identidade de autenticação: ${detalhe}. Nenhum dado foi removido.`,
+      );
     }
+
 
     // 7. Remove o profile — depois de auth removido.
     const delProf = await supabaseAdmin.from("profiles").delete().eq("id", data.id);
