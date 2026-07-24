@@ -454,7 +454,13 @@ function CoordenadoresTable({ scopeKey }: { scopeKey: string }) {
           ))}
         </div>
       ) : q.isError ? (
-        <div className="p-6 text-sm text-destructive">Erro ao carregar Coordenadores.</div>
+        <RpcErrorState
+          title="Não foi possível carregar os Coordenadores."
+          rpc="coordenacao_listar_coordenadores"
+          error={q.error}
+          params={{ _busca: busca.trim() || null }}
+          onRetry={() => q.refetch()}
+        />
       ) : rows.length === 0 ? (
         <EmptyState
           icon={Trophy}
