@@ -45,10 +45,13 @@ const LABELS: Record<keyof Omit<DependenciasUsuario, "total_bloqueante">, string
   bi_visoes_salvas: "Visões salvas de BI",
   notificacao_eventos: "Notificações emitidas",
   login_events: "Logins realizados",
+  supervisores_vinculados: "Supervisores vinculados (Coordenador)",
+  colaboradores_supervisionados: "Colaboradores diretamente supervisionados",
   vinculos_empresas: "Vínculos com empresas",
   vinculos_projetos: "Vínculos com projetos",
   roles: "Papéis atribuídos",
 };
+
 
 // Chaves informativas (não bloqueiam exclusão — são removidas junto).
 const INFO_KEYS: (keyof DependenciasUsuario)[] = [
