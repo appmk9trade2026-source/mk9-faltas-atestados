@@ -1061,8 +1061,8 @@ function VincularDialog({
       if (modo !== "remover" && !target) throw new Error("Selecione um Coordenador");
       const { data, error } = await supabase.rpc("coordenacao_definir_vinculo", {
         _supervisor_id: supervisor.supervisor_id,
-        _novo_coord_id: target,
-        _observacoes: observacoes.trim() || null,
+        _novo_coord_id: target as unknown as string,
+        _observacoes: (observacoes.trim() || undefined) as unknown as string,
       });
       if (error) throw error;
       return data;
