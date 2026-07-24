@@ -794,7 +794,19 @@ function SupervisoresPanel({
           ))}
         </div>
       ) : q.isError ? (
-        <div className="p-6 text-sm text-destructive">Erro ao carregar Supervisores.</div>
+        <RpcErrorState
+          title="Não foi possível carregar os Supervisores."
+          rpc="coordenacao_listar_supervisores"
+          error={q.error}
+          params={{
+            _vinculo: vinculo,
+            _coordenador_id: coordenadorId || null,
+            _busca: busca.trim() || null,
+            _limit: PAGE_SIZE,
+            _offset: page * PAGE_SIZE,
+          }}
+          onRetry={() => q.refetch()}
+        />
       ) : (q.data ?? []).length === 0 ? (
         <EmptyState
           icon={vinculo === "sem" ? UserCheck : Users}
