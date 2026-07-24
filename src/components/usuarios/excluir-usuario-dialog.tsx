@@ -181,13 +181,29 @@ export function ExcluirUsuarioDialog({
                   <Alert variant="destructive">
                     <ShieldAlert className="h-4 w-4" />
                     <AlertTitle>Exclusão bloqueada por dependências</AlertTitle>
-                    <AlertDescription className="text-xs">
-                      Este usuário possui {deps.total_bloqueante} registro(s) histórico(s) e não
-                      pode ser excluído fisicamente. Use <strong>Desativar</strong> no menu para
-                      remover o acesso preservando a integridade dos históricos.
+                    <AlertDescription className="text-xs space-y-1">
+                      {deps.supervisores_vinculados > 0 && (
+                        <div>
+                          Este Coordenador possui <strong>{deps.supervisores_vinculados}</strong>{" "}
+                          Supervisor(es) vinculado(s). Transfira ou remova esses vínculos em{" "}
+                          <strong>Administração › Coordenação</strong> antes de excluir.
+                        </div>
+                      )}
+                      {deps.colaboradores_supervisionados > 0 && (
+                        <div>
+                          Este usuário supervisiona diretamente{" "}
+                          <strong>{deps.colaboradores_supervisionados}</strong> colaborador(es).
+                          Reatribua-os a outro Supervisor antes de excluir.
+                        </div>
+                      )}
+                      <div>
+                        Total de {deps.total_bloqueante} registro(s) bloqueante(s). Para
+                        preservar históricos, prefira <strong>Desativar</strong> no menu.
+                      </div>
                     </AlertDescription>
                   </Alert>
                 ) : (
+
                   <Alert>
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Confirmação reforçada</AlertTitle>
