@@ -99,12 +99,15 @@ function AuthPage() {
       }
       if (profile.primeiro_acesso_pendente) {
         setFirstLoginPassword(password);
-        toast.info("Antes de continuar, defina sua senha pessoal.");
+        toast.info("Antes de continuar, defina sua senha pessoal.", {
+          id: PRIMEIRO_ACESSO_TOAST_ID,
+        });
         navigate({ to: "/auth/nova-senha", replace: true });
         return;
       }
       clearFirstLoginPassword();
-      toast.success("Bem-vindo!");
+      toast.success("Bem-vindo!", { id: "login-success" });
+
       navigate({ to: "/dashboard", replace: true });
     } catch {
       setError("Não foi possível entrar. Tente novamente.");
