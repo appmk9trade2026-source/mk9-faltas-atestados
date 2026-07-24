@@ -5,7 +5,32 @@ import { requirePermission } from "@/lib/rbac/guards.server";
 import { PERMISSION_MAP } from "@/lib/permissions-map";
 import { getAppPublicUrl } from "@/lib/app-url";
 import type { PermissionCode } from "@/lib/permissions";
-import { appRoleSchema, type AppRole } from "@/lib/app-roles";
+import {
+  appRoleSchema,
+  normalizeMatriculaUsuario,
+  rolesExigemMatricula,
+  type AppRole,
+} from "@/lib/app-roles";
+
+/**
+ * Regra compartilhada com o frontend: normaliza a matrícula e aplica
+ * obrigatoriedade condicional ao conjunto de papéis do usuário.
+ * Não altera o tipo (permanece texto) — zeros à esquerda são preservados.
+ */
+function refineMatriculaPorRoles<T extends { matricula?: string | null; roles: AppRole[] }>(
+  schema: z.ZodType<T>,
+): z.ZodEffects<z.ZodType<T>, T, T> {
+  return schema.superRefine((val, ctx) => {
+    const mat = normalizeMatriculaUsuario(val.matricula ?? null);
+    if (rolesExigemMatricula(val.roles) && !mat) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["matricula"],
+        message: "Matrícula é obrigatória para o(s) perfil(s) selecionado(s).",
+      });
+    }
+  });
+}
 
 /**
  * Gate padronizado para operações de usuários (RBAC Fase 3 — Onda 1).
