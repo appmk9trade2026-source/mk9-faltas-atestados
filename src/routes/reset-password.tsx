@@ -197,8 +197,8 @@ function ResetPasswordPage() {
           ) : !hasSession ? (
             <Alert variant="destructive">
               <AlertDescription>
-                Link inválido ou expirado. Solicite um novo link em "Esqueci minha senha" ou
-                "Primeiro acesso" na tela de login.
+                {linkError ??
+                  "Link inválido ou expirado. Solicite um novo link em \"Esqueci minha senha\" ou \"Primeiro acesso\" na tela de login."}
               </AlertDescription>
             </Alert>
           ) : (
