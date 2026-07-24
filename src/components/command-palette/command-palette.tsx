@@ -97,8 +97,8 @@ type NavItem = {
 
 const PAGES: NavItem[] = [
   { id: "p:dashboard", title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, roles: ["super_admin", "rh", "supervisor", "compliance"] },
-  { id: "p:nova-ausencia", title: "Nova Ausência", url: "/nova-ausencia", icon: FilePlus2, roles: ["super_admin", "rh", "supervisor"] },
-  { id: "p:ausencias", title: "Ausências", url: "/ausencias", icon: History, roles: ["super_admin", "rh", "supervisor", "compliance"] },
+  { id: "p:nova-ausencia", title: "Nova Ausência", url: "/nova-ausencia", icon: FilePlus2, roles: ["super_admin", "rh", "coordenador", "supervisor"] },
+  { id: "p:ausencias", title: "Ausências", url: "/ausencias", icon: History, roles: ["super_admin", "rh", "coordenador", "supervisor", "compliance"] },
   { id: "p:painel-rh", title: "Painel do RH", url: "/painel-rh", icon: ClipboardList, roles: ["super_admin", "rh"] },
   { id: "p:historico", title: "Histórico", url: "/historico", icon: History, roles: ["super_admin", "rh", "supervisor"] },
   { id: "p:colaboradores", title: "Colaboradores", url: "/colaboradores", icon: Users, roles: ["super_admin", "rh", "supervisor", "compliance"] },
@@ -126,7 +126,7 @@ const PAGES: NavItem[] = [
 ];
 
 const ACTIONS: NavItem[] = [
-  { id: "a:nova-ausencia", title: "Nova Ausência", description: "Registrar uma nova ausência", url: "/nova-ausencia", icon: FilePlus2, roles: ["super_admin", "rh", "supervisor"], keywords: "criar atestado falta" },
+  { id: "a:nova-ausencia", title: "Nova Ausência", description: "Registrar uma nova ausência", url: "/nova-ausencia", icon: FilePlus2, roles: ["super_admin", "rh", "coordenador", "supervisor"], keywords: "criar atestado falta" },
   { id: "a:novo-colaborador", title: "Novo Colaborador", description: "Cadastrar colaborador", url: "/colaboradores?novo=1", icon: UserPlus, roles: ["super_admin", "rh"], keywords: "criar cadastrar" },
   { id: "a:novo-usuario", title: "Novo Usuário", description: "Criar acesso ao sistema", url: "/usuarios?novo=1", icon: UserPlus, roles: ["super_admin", "compliance", "rh"], keywords: "criar convidar acesso" },
   { id: "a:novo-projeto", title: "Novo Projeto", description: "Criar projeto", url: "/configuracoes/projetos?novo=1", icon: FolderPlus, roles: ["super_admin", "rh"], keywords: "criar" },
