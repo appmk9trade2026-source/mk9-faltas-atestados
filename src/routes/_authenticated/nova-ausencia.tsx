@@ -198,11 +198,12 @@ function useDebouncedValue<T>(value: T, delay = 800): T {
 function NovaAusenciaPage() {
   const { profile, roles, loading: sessionLoading } = useSession();
   const podeCadastrar =
-    roles.includes("super_admin") || roles.includes("rh") || roles.includes("supervisor");
+    roles.includes("super_admin") || roles.includes("rh") || roles.includes("supervisor") || roles.includes("coordenador");
   const isSupervisorOnly =
     roles.includes("supervisor") &&
     !roles.includes("super_admin") &&
-    !roles.includes("rh");
+    !roles.includes("rh") &&
+    !roles.includes("coordenador");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { id: editId } = Route.useSearch();
