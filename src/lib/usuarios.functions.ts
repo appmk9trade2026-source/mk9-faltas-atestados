@@ -380,6 +380,7 @@ export const updateUsuario = createServerFn({ method: "POST" })
         telefone_whatsapp: data.telefone || null,
         cargo: data.cargo || null,
         avatar_url: data.avatar_url || null,
+        matricula: normalizeMatriculaUsuario(data.matricula ?? null),
       })
       .eq("id", data.id);
     if (up.error) throw new Error(up.error.message);
