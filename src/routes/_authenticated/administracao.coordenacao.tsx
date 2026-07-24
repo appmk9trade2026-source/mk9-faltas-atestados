@@ -609,7 +609,15 @@ function ExpandSupervisores({
     );
   }
   if (q.isError) {
-    return <div className="p-4 text-sm text-destructive">Erro ao carregar Supervisores.</div>;
+    return (
+      <RpcErrorState
+        title="Não foi possível carregar os Supervisores."
+        rpc="coordenacao_supervisores_por_coordenador"
+        error={q.error}
+        params={{ _coord_id: coordenadorId }}
+        onRetry={() => q.refetch()}
+      />
+    );
   }
   if ((q.data ?? []).length === 0) {
     return (
