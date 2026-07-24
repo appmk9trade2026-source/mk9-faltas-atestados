@@ -159,8 +159,8 @@ function AusenciasPage() {
   const { roles } = useSession();
   const scope = useSessionScope();
   const podeCadastrar =
-    roles.includes("super_admin") || roles.includes("rh") || roles.includes("supervisor");
-  const podeLancar = roles.includes("super_admin") || roles.includes("rh");
+    roles.includes("super_admin") || roles.includes("rh") || roles.includes("supervisor") || roles.includes("coordenador");
+  const podeLancar = roles.includes("super_admin") || roles.includes("rh") || roles.includes("coordenador");
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
