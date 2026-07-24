@@ -1106,6 +1106,7 @@ function EditDialog({
       telefone: usuario.telefone_whatsapp ?? "",
       cargo: usuario.cargo ?? "",
       avatar_url: usuario.avatar_url ?? "",
+      matricula: usuario.matricula ?? "",
       roles: usuario.roles,
       empresa_ids: usuario.empresa_ids,
       projeto_ids: usuario.projeto_ids,
