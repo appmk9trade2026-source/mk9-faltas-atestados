@@ -1148,6 +1148,27 @@ function EditDialog({
               <FormField control={form.control} name="avatar_url" render={({ field }) => (
                 <FormItem><FormLabel>Avatar (URL)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
               )} />
+              <FormField control={form.control} name="matricula" render={({ field }) => {
+                const required = rolesExigemMatricula(form.watch("roles") ?? []);
+                return (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Matrícula {required && <span className="text-destructive">*</span>}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Ex: 000123"
+                        inputMode="text"
+                        autoComplete="off"
+                        {...field}
+                        value={field.value ?? ""}
+                      />
+                    </FormControl>
+                    <p className="text-[11px] text-muted-foreground">
+                      Preserva zeros à esquerda. {required ? "Obrigatória para Supervisor/Operação." : "Opcional para este perfil."}
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }} />
             </div>
 
             <Separator />
