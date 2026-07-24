@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createFileRoute, useNavigate, useSearch, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Eye, EyeOff, Loader2, ShieldCheck, Mail, Lock, KeyRound, UserPlus } from "lucide-react";
 import { z } from "zod";
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
+const PRIMEIRO_ACESSO_TOAST_ID = "primeiro-acesso-pendente";
 
 const searchSchema = z.object({
   inactive: z.string().optional(),
@@ -29,6 +30,25 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/auth")({
   ssr: false,
   validateSearch: searchSchema,
+  // Redirect authenticated users away from /auth deterministically, BEFORE
+  // rendering — prevents hydration mismatch (React #422) caused by mounting
+  // the login form and immediately navigating away inside a useEffect.
+  beforeLoad: async ({ search }) => {
+    if (search.inactive) return;
+    const { data } = await supabase.auth.getSession();
+    const session = data.session;
+    if (!session?.user) return;
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("ativo, primeiro_acesso_pendente")
+      .eq("id", session.user.id)
+      .maybeSingle();
+    if (!prof || prof.ativo === false) return;
+    if (prof.primeiro_acesso_pendente) {
+      throw redirect({ to: "/auth/nova-senha", replace: true });
+    }
+    throw redirect({ to: "/dashboard", replace: true });
+  },
   head: () => ({
     meta: [
       { title: "Entrar · CRM MK9" },
@@ -53,22 +73,7 @@ function AuthPage() {
   const [forgotOpen, setForgotOpen] = useState(false);
   const [firstAccessOpen, setFirstAccessOpen] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) return;
-      const { data: prof } = await supabase
-        .from("profiles")
-        .select("primeiro_acesso_pendente")
-        .eq("id", data.session.user.id)
-        .maybeSingle();
-      if (prof?.primeiro_acesso_pendente) {
-        navigate({ to: "/auth/nova-senha", replace: true });
-      } else {
-        navigate({ to: "/dashboard", replace: true });
-      }
-    })();
-  }, [navigate]);
+
 
 
   async function onSubmit(e: React.FormEvent) {
