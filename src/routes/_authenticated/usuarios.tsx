@@ -227,6 +227,7 @@ type EditForm = z.infer<typeof editFormSchema>;
 function UsuariosPage() {
   const { user, roles } = useSession();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const canWrite = roles.includes("super_admin");
 
   const [search, setSearch] = useState("");
