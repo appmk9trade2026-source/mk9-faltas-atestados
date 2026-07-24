@@ -56,18 +56,19 @@ type Item = {
 // NOTE: Este array é parseado por regex em tests/unit/sidebar-permissions.test.tsx.
 // Manter o formato `{ title: "...", url: "...", icon: X, roles: [...] }` intacto.
 const items: Item[] = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, roles: ["super_admin", "rh", "supervisor", "compliance"] },
-  { title: "Assistente IA", url: "/assistente", icon: Bot, roles: ["super_admin", "rh", "supervisor", "compliance", "operacao", "visualizador"] },
-  { title: "Nova Ausência", url: "/nova-ausencia", icon: FilePlus2, roles: ["super_admin", "rh", "supervisor"] },
-  { title: "Ausências", url: "/ausencias", icon: History, roles: ["super_admin", "rh", "supervisor", "compliance"] },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, roles: ["super_admin", "rh", "coordenador", "supervisor", "compliance"] },
+  { title: "Assistente IA", url: "/assistente", icon: Bot, roles: ["super_admin", "rh", "coordenador", "supervisor", "compliance", "operacao", "visualizador"] },
+  { title: "Nova Ausência", url: "/nova-ausencia", icon: FilePlus2, roles: ["super_admin", "rh", "coordenador", "supervisor"] },
+  { title: "Ausências", url: "/ausencias", icon: History, roles: ["super_admin", "rh", "coordenador", "supervisor", "compliance"] },
   { title: "Painel do RH", url: "/painel-rh", icon: ClipboardList, roles: ["super_admin", "rh"] },
-  { title: "Histórico", url: "/historico", icon: History, roles: ["super_admin", "rh", "supervisor"] },
-  { title: "Colaboradores", url: "/colaboradores", icon: Users, roles: ["super_admin", "rh", "supervisor", "compliance"] },
+  { title: "Histórico", url: "/historico", icon: History, roles: ["super_admin", "rh", "coordenador", "supervisor"] },
+  { title: "Colaboradores", url: "/colaboradores", icon: Users, roles: ["super_admin", "rh", "coordenador", "supervisor", "compliance"] },
+  { title: "Meus Supervisores", url: "/coordenacao/supervisores", icon: UserCog, roles: ["coordenador"] },
   { title: "Importações", url: "/colaboradores/importacoes", icon: History, roles: ["super_admin", "rh", "compliance"] },
   { title: "Comunicações", url: "/comunicacoes", icon: MessageSquare, roles: ["super_admin", "rh", "compliance"] },
   { title: "WhatsApp Admin", url: "/comunicacoes/whatsapp", icon: MessageSquare, roles: WHATSAPP_ADMIN_ROLES },
-  { title: "Alertas", url: "/alertas", icon: Bell, roles: ["super_admin", "rh", "supervisor", "compliance"] },
-  { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: ["super_admin", "rh", "compliance"] },
+  { title: "Alertas", url: "/alertas", icon: Bell, roles: ["super_admin", "rh", "coordenador", "supervisor", "compliance"] },
+  { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: ["super_admin", "rh", "coordenador", "compliance"] },
   { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["super_admin", "rh"] },
   { title: "Auditoria", url: "/auditoria", icon: ScrollText, roles: ["super_admin", "compliance", "rh"] },
   { title: "Usuários", url: "/usuarios", icon: UserCog, roles: ["super_admin", "compliance", "rh"] },
@@ -77,17 +78,18 @@ const items: Item[] = [
   { title: "Documentação", url: "/documentacao", icon: BookOpen, roles: ["super_admin"] },
   { title: "Deploy & Go-Live", url: "/deploy", icon: Rocket, roles: ["super_admin", "compliance"] },
   { title: "Operação Assistida", url: "/operacao-assistida", icon: ClipboardCheck, roles: ["super_admin", "compliance", "rh"] },
-  { title: "Notificações", url: "/notificacoes", icon: BellRing, roles: ["super_admin", "compliance", "rh", "supervisor"] },
+  { title: "Notificações", url: "/notificacoes", icon: BellRing, roles: ["super_admin", "compliance", "rh", "coordenador", "supervisor"] },
   { title: "Roadmap", url: "/roadmap", icon: MapIcon, roles: ["super_admin", "compliance"] },
   { title: "Acessos", url: "/acessos", icon: KeyRound, roles: ["super_admin", "compliance"] },
   { title: "Permissões", url: "/administracao/permissoes", icon: ShieldCheck, roles: ["super_admin"] },
   { title: "Gestão de Coordenação", url: "/administracao/coordenacao", icon: Trophy, roles: ["super_admin", "rh"] },
   { title: "BI Executivo", url: "/bi-executivo", icon: Sparkles, roles: ["super_admin", "compliance", "rh"] },
   { title: "Observabilidade", url: "/observabilidade", icon: Gauge, roles: ["super_admin", "compliance"] },
-  { title: "Inteligência Analítica", url: "/inteligencia", icon: Sparkles, roles: ["super_admin", "compliance", "rh", "supervisor"] },
+  { title: "Inteligência Analítica", url: "/inteligencia", icon: Sparkles, roles: ["super_admin", "compliance", "rh", "coordenador", "supervisor"] },
 
   { title: "Hardening & Produção", url: "/admin/hardening", icon: Gauge, roles: ["super_admin"] },
 ];
+
 
 
 const itemByUrl = new Map(items.map((i) => [i.url, i]));
