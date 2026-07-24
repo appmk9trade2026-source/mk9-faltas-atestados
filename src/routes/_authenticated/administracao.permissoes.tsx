@@ -47,6 +47,7 @@ export const Route = createFileRoute("/_authenticated/administracao/permissoes")
 const ROLES: { key: AppRole; label: string }[] = [
   { key: "super_admin", label: "Super Admin" },
   { key: "rh", label: "RH" },
+  { key: "coordenador", label: "Coordenador" },
   { key: "compliance", label: "Compliance" },
   { key: "supervisor", label: "Supervisor" },
   { key: "operacao", label: "Operação" },
