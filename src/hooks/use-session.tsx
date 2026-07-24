@@ -31,6 +31,7 @@ export type ProfileRow = {
   email: string;
   ativo: boolean;
   primeiro_acesso_pendente: boolean;
+  matricula: string | null;
 };
 
 
