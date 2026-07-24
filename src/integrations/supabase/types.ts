@@ -4120,6 +4120,26 @@ export type Database = {
           supervisor_id: string
         }[]
       }
+      coordenador_has_empresa_via_equipe: {
+        Args: { _empresa_id: string; _user_id: string }
+        Returns: boolean
+      }
+      coordenador_has_projeto_via_equipe: {
+        Args: { _projeto_id: string; _user_id: string }
+        Returns: boolean
+      }
+      coordenador_pode_ver_ausencia: {
+        Args: { _ausencia_id: string; _coord_id: string }
+        Returns: boolean
+      }
+      coordenador_pode_ver_colaborador: {
+        Args: { _colab_id: string; _coord_id: string }
+        Returns: boolean
+      }
+      coordenador_supervisor_ids: {
+        Args: { _coord_id: string }
+        Returns: string[]
+      }
       count_active_super_admins: { Args: never; Returns: number }
       criar_notificacao: {
         Args: {
@@ -4280,6 +4300,7 @@ export type Database = {
       }
       inteligencia_detectar_alertas: { Args: never; Returns: Json }
       is_active_user: { Args: { _user_id: string }; Returns: boolean }
+      is_coordenador: { Args: never; Returns: boolean }
       listar_notificacoes_usuario: {
         Args: {
           _limit?: number
