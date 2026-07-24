@@ -126,7 +126,7 @@ const PAGES: NavItem[] = [
 ];
 
 const ACTIONS: NavItem[] = [
-  { id: "a:nova-ausencia", title: "Nova Ausência", description: "Registrar uma nova ausência", url: "/nova-ausencia", icon: FilePlus2, roles: ["super_admin", "rh", "supervisor"], keywords: "criar atestado falta" },
+  { id: "a:nova-ausencia", title: "Nova Ausência", description: "Registrar uma nova ausência", url: "/nova-ausencia", icon: FilePlus2, roles: ["super_admin", "rh", "coordenador", "supervisor"], keywords: "criar atestado falta" },
   { id: "a:novo-colaborador", title: "Novo Colaborador", description: "Cadastrar colaborador", url: "/colaboradores?novo=1", icon: UserPlus, roles: ["super_admin", "rh"], keywords: "criar cadastrar" },
   { id: "a:novo-usuario", title: "Novo Usuário", description: "Criar acesso ao sistema", url: "/usuarios?novo=1", icon: UserPlus, roles: ["super_admin", "compliance", "rh"], keywords: "criar convidar acesso" },
   { id: "a:novo-projeto", title: "Novo Projeto", description: "Criar projeto", url: "/configuracoes/projetos?novo=1", icon: FolderPlus, roles: ["super_admin", "rh"], keywords: "criar" },
