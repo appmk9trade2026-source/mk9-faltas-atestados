@@ -692,7 +692,21 @@ function UsuariosPage() {
                 enviar_convite: false,
               },
             });
-            toast.success('Usuário criado com a senha temporária padrão "12345678".');
+            const isCoordenador = values.roles.includes("coordenador");
+            if (isCoordenador) {
+              toast.success(
+                "Coordenador criado com sucesso. Agora vincule os Supervisores em Gestão de Coordenação.",
+                {
+                  action: {
+                    label: "Ir para Gestão de Coordenação",
+                    onClick: () => navigate({ to: "/administracao/coordenacao" }),
+                  },
+                  duration: 8000,
+                },
+              );
+            } else {
+              toast.success('Usuário criado com a senha temporária padrão "12345678".');
+            }
             setCreateOpen(false);
             invalidate();
           }}
