@@ -754,6 +754,7 @@ function UsuariosPage() {
                 telefone: values.telefone || null,
                 cargo: values.cargo || null,
                 avatar_url: values.avatar_url || null,
+                matricula: normalizeMatriculaUsuario(values.matricula ?? null),
               },
             });
             toast.success("Usuário atualizado.");
