@@ -59,6 +59,7 @@ import { Route as AuthenticatedColaboradoresImportarRouteImport } from './routes
 import { Route as AuthenticatedColaboradoresImportacoesRouteImport } from './routes/_authenticated/colaboradores_.importacoes'
 import { Route as AuthenticatedAdministracaoPermissoesRouteImport } from './routes/_authenticated/administracao.permissoes'
 import { Route as AuthenticatedAdministracaoPendenciasSupervisorRouteImport } from './routes/_authenticated/administracao.pendencias-supervisor'
+import { Route as AuthenticatedAdministracaoIntegridadeDadosRouteImport } from './routes/_authenticated/administracao.integridade-dados'
 import { Route as AuthenticatedAdministracaoCoordenacaoRouteImport } from './routes/_authenticated/administracao.coordenacao'
 import { Route as AuthenticatedAdminHardeningRouteImport } from './routes/_authenticated/admin.hardening'
 import { Route as AuthenticatedComunicacoesWhatsappIndexRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.index'
@@ -355,6 +356,12 @@ const AuthenticatedAdministracaoPendenciasSupervisorRoute =
     path: '/administracao/pendencias-supervisor',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdministracaoIntegridadeDadosRoute =
+  AuthenticatedAdministracaoIntegridadeDadosRouteImport.update({
+    id: '/administracao/integridade-dados',
+    path: '/administracao/integridade-dados',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdministracaoCoordenacaoRoute =
   AuthenticatedAdministracaoCoordenacaoRouteImport.update({
     id: '/administracao/coordenacao',
@@ -486,6 +493,7 @@ export interface FileRoutesByFullPath {
   '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/admin/hardening': typeof AuthenticatedAdminHardeningRoute
   '/administracao/coordenacao': typeof AuthenticatedAdministracaoCoordenacaoRoute
+  '/administracao/integridade-dados': typeof AuthenticatedAdministracaoIntegridadeDadosRoute
   '/administracao/pendencias-supervisor': typeof AuthenticatedAdministracaoPendenciasSupervisorRoute
   '/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/colaboradores/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
@@ -552,6 +560,7 @@ export interface FileRoutesByTo {
   '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/admin/hardening': typeof AuthenticatedAdminHardeningRoute
   '/administracao/coordenacao': typeof AuthenticatedAdministracaoCoordenacaoRoute
+  '/administracao/integridade-dados': typeof AuthenticatedAdministracaoIntegridadeDadosRoute
   '/administracao/pendencias-supervisor': typeof AuthenticatedAdministracaoPendenciasSupervisorRoute
   '/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/colaboradores/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
@@ -620,6 +629,7 @@ export interface FileRoutesById {
   '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/_authenticated/admin/hardening': typeof AuthenticatedAdminHardeningRoute
   '/_authenticated/administracao/coordenacao': typeof AuthenticatedAdministracaoCoordenacaoRoute
+  '/_authenticated/administracao/integridade-dados': typeof AuthenticatedAdministracaoIntegridadeDadosRoute
   '/_authenticated/administracao/pendencias-supervisor': typeof AuthenticatedAdministracaoPendenciasSupervisorRoute
   '/_authenticated/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/_authenticated/colaboradores_/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
@@ -689,6 +699,7 @@ export interface FileRouteTypes {
     | '/auth/nova-senha'
     | '/admin/hardening'
     | '/administracao/coordenacao'
+    | '/administracao/integridade-dados'
     | '/administracao/pendencias-supervisor'
     | '/administracao/permissoes'
     | '/colaboradores/importacoes'
@@ -755,6 +766,7 @@ export interface FileRouteTypes {
     | '/auth/nova-senha'
     | '/admin/hardening'
     | '/administracao/coordenacao'
+    | '/administracao/integridade-dados'
     | '/administracao/pendencias-supervisor'
     | '/administracao/permissoes'
     | '/colaboradores/importacoes'
@@ -822,6 +834,7 @@ export interface FileRouteTypes {
     | '/auth/nova-senha'
     | '/_authenticated/admin/hardening'
     | '/_authenticated/administracao/coordenacao'
+    | '/_authenticated/administracao/integridade-dados'
     | '/_authenticated/administracao/pendencias-supervisor'
     | '/_authenticated/administracao/permissoes'
     | '/_authenticated/colaboradores_/importacoes'
@@ -1217,6 +1230,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdministracaoPendenciasSupervisorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/administracao/integridade-dados': {
+      id: '/_authenticated/administracao/integridade-dados'
+      path: '/administracao/integridade-dados'
+      fullPath: '/administracao/integridade-dados'
+      preLoaderRoute: typeof AuthenticatedAdministracaoIntegridadeDadosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/administracao/coordenacao': {
       id: '/_authenticated/administracao/coordenacao'
       path: '/administracao/coordenacao'
@@ -1492,6 +1512,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRouteWithChildren
   AuthenticatedAdminHardeningRoute: typeof AuthenticatedAdminHardeningRoute
   AuthenticatedAdministracaoCoordenacaoRoute: typeof AuthenticatedAdministracaoCoordenacaoRoute
+  AuthenticatedAdministracaoIntegridadeDadosRoute: typeof AuthenticatedAdministracaoIntegridadeDadosRoute
   AuthenticatedAdministracaoPendenciasSupervisorRoute: typeof AuthenticatedAdministracaoPendenciasSupervisorRoute
   AuthenticatedAdministracaoPermissoesRoute: typeof AuthenticatedAdministracaoPermissoesRoute
   AuthenticatedColaboradoresImportacoesRoute: typeof AuthenticatedColaboradoresImportacoesRoute
@@ -1531,6 +1552,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminHardeningRoute: AuthenticatedAdminHardeningRoute,
   AuthenticatedAdministracaoCoordenacaoRoute:
     AuthenticatedAdministracaoCoordenacaoRoute,
+  AuthenticatedAdministracaoIntegridadeDadosRoute:
+    AuthenticatedAdministracaoIntegridadeDadosRoute,
   AuthenticatedAdministracaoPendenciasSupervisorRoute:
     AuthenticatedAdministracaoPendenciasSupervisorRoute,
   AuthenticatedAdministracaoPermissoesRoute:
