@@ -98,6 +98,7 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, type AppRole } from "@/hooks/use-session";
+import { rolesExigemMatricula, normalizeMatriculaUsuario } from "@/lib/app-roles";
 import {
   createUsuario,
   updateUsuario,
