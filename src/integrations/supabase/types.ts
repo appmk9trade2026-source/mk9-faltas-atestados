@@ -3891,6 +3891,36 @@ export type Database = {
           usuario_nome: string
         }[]
       }
+      admin_integridade_listar: {
+        Args: {
+          _busca?: string
+          _criticidade?: string
+          _empresa_id?: string
+          _limit?: number
+          _offset?: number
+          _projeto_id?: string
+          _tipo?: string
+        }
+        Returns: {
+          acao_recomendada: string
+          causa: string
+          criticidade: string
+          descricao: string
+          detectado_em: string
+          email: string
+          empresa_id: string
+          empresa_nome: string
+          entidade: string
+          matricula: string
+          nome: string
+          projeto_id: string
+          projeto_nome: string
+          registro_id: string
+          tipo: string
+          total_geral: number
+        }[]
+      }
+      admin_integridade_resumo: { Args: never; Returns: Json }
       admin_list_user_sessions: {
         Args: { _user_id: string }
         Returns: {
