@@ -5,8 +5,7 @@ import { requirePermission } from "@/lib/rbac/guards.server";
 import { PERMISSION_MAP } from "@/lib/permissions-map";
 import { getAppPublicUrl } from "@/lib/app-url";
 import type { PermissionCode } from "@/lib/permissions";
-
-type AppRole = "super_admin" | "rh" | "supervisor" | "compliance" | "operacao" | "visualizador";
+import { appRoleSchema, type AppRole } from "@/lib/app-roles";
 
 /**
  * Gate padronizado para operações de usuários (RBAC Fase 3 — Onda 1).
@@ -78,7 +77,7 @@ const createSchema = z.object({
 
   ativo: z.boolean().default(true),
   roles: z
-    .array(z.enum(["super_admin", "rh", "supervisor", "compliance", "operacao", "visualizador"]))
+    .array(appRoleSchema)
     .default([]),
   empresa_ids: z.array(z.string().uuid()).default([]),
   projeto_ids: z.array(z.string().uuid()).default([]),
@@ -245,7 +244,7 @@ const updateSchema = z.object({
   cargo: z.string().trim().max(80).optional().nullable(),
   avatar_url: z.string().trim().max(500).optional().nullable(),
   roles: z
-    .array(z.enum(["super_admin", "rh", "supervisor", "compliance", "operacao", "visualizador"]))
+    .array(appRoleSchema)
     .default([]),
   empresa_ids: z.array(z.string().uuid()).default([]),
   projeto_ids: z.array(z.string().uuid()).default([]),

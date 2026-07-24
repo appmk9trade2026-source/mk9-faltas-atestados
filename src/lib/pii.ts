@@ -5,13 +5,8 @@
 // que o Histórico, os Alertas e os Relatórios apliquem sempre a mesma
 // política.
 
-export type AppRole =
-  | "super_admin"
-  | "rh"
-  | "compliance"
-  | "supervisor"
-  | "operacao"
-  | "visualizador";
+import type { AppRole } from "@/lib/app-roles";
+export type { AppRole };
 
 const CID_ALLOWED: readonly AppRole[] = ["super_admin", "compliance"];
 const PROVIDER_ID_ALLOWED: readonly AppRole[] = ["super_admin"];
