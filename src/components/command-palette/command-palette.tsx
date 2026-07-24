@@ -97,8 +97,8 @@ type NavItem = {
 
 const PAGES: NavItem[] = [
   { id: "p:dashboard", title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, roles: ["super_admin", "rh", "supervisor", "compliance"] },
-  { id: "p:nova-ausencia", title: "Nova Ausência", url: "/nova-ausencia", icon: FilePlus2, roles: ["super_admin", "rh", "supervisor"] },
-  { id: "p:ausencias", title: "Ausências", url: "/ausencias", icon: History, roles: ["super_admin", "rh", "supervisor", "compliance"] },
+  { id: "p:nova-ausencia", title: "Nova Ausência", url: "/nova-ausencia", icon: FilePlus2, roles: ["super_admin", "rh", "coordenador", "supervisor"] },
+  { id: "p:ausencias", title: "Ausências", url: "/ausencias", icon: History, roles: ["super_admin", "rh", "coordenador", "supervisor", "compliance"] },
   { id: "p:painel-rh", title: "Painel do RH", url: "/painel-rh", icon: ClipboardList, roles: ["super_admin", "rh"] },
   { id: "p:historico", title: "Histórico", url: "/historico", icon: History, roles: ["super_admin", "rh", "supervisor"] },
   { id: "p:colaboradores", title: "Colaboradores", url: "/colaboradores", icon: Users, roles: ["super_admin", "rh", "supervisor", "compliance"] },
