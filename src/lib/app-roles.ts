@@ -24,7 +24,6 @@ export const appRoleSchema = z.enum(APP_ROLES);
  */
 export const ROLES_QUE_EXIGEM_MATRICULA: readonly AppRole[] = [
   "supervisor",
-  "operacao",
 ] as const;
 
 export function rolesExigemMatricula(roles: readonly AppRole[]): boolean {
