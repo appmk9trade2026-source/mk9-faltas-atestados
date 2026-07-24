@@ -30,20 +30,103 @@ function ResetPasswordPage() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [linkError, setLinkError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Supabase pode entregar a sessão via hash (#access_token=...) OU já como sessão ativa.
+    const dev = import.meta.env.DEV;
+    const log = (...a: unknown[]) => { if (dev) console.info("[reset-password]", ...a); };
+
+    let cancelled = false;
+
+    async function bootstrap() {
+      const url = new URL(window.location.href);
+      const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const code = url.searchParams.get("code");
+      const errParam = url.searchParams.get("error") ?? hash.get("error");
+      const errCode = url.searchParams.get("error_code") ?? hash.get("error_code");
+      const errDesc = url.searchParams.get("error_description") ?? hash.get("error_description");
+      const hashAccess = hash.get("access_token");
+      const hashRefresh = hash.get("refresh_token");
+      const hashType = hash.get("type");
+
+      log("params", {
+        hasCode: !!code,
+        hasHashAccess: !!hashAccess,
+        hasHashRefresh: !!hashRefresh,
+        hashType,
+        errParam,
+        errCode,
+      });
+
+      if (errParam || errCode) {
+        const msg =
+          errCode === "otp_expired"
+            ? "O link expirou. Solicite um novo em 'Esqueci minha senha'."
+            : (errDesc ? decodeURIComponent(errDesc.replace(/\+/g, " ")) : "Link inválido.");
+        setLinkError(msg);
+        setReady(true);
+        return;
+      }
+
+      // 1) Fluxo PKCE moderno: /reset-password?code=...
+      if (code) {
+        const { data, error: exErr } = await supabase.auth.exchangeCodeForSession(code);
+        log("exchangeCodeForSession", { hasSession: !!data?.session, error: exErr?.message });
+        if (cancelled) return;
+        if (exErr) {
+          setLinkError(
+            exErr.message.toLowerCase().includes("expire")
+              ? "O link expirou. Solicite um novo em 'Esqueci minha senha'."
+              : `Não foi possível validar o link: ${exErr.message}`,
+          );
+          setReady(true);
+          return;
+        }
+        window.history.replaceState({}, "", window.location.pathname);
+        setHasSession(!!data.session);
+        setReady(true);
+        return;
+      }
+
+      // 2) Fluxo hash legado (#access_token=...&type=recovery)
+      if (hashAccess && hashRefresh) {
+        const { data, error: sErr } = await supabase.auth.setSession({
+          access_token: hashAccess,
+          refresh_token: hashRefresh,
+        });
+        log("setSession(hash)", { hasSession: !!data?.session, error: sErr?.message });
+        if (cancelled) return;
+        if (sErr) {
+          setLinkError(`Não foi possível validar o link: ${sErr.message}`);
+          setReady(true);
+          return;
+        }
+        window.history.replaceState({}, "", window.location.pathname);
+        setHasSession(!!data.session);
+        setReady(true);
+        return;
+      }
+
+      // 3) Sem parâmetros — verifica sessão existente
+      const { data } = await supabase.auth.getSession();
+      log("getSession(fallback)", { hasSession: !!data.session });
+      if (cancelled) return;
+      setHasSession(!!data.session);
+      setReady(true);
+    }
+
+    bootstrap();
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      log("onAuthStateChange", event, { hasSession: !!session });
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
         setHasSession(!!session);
         setReady(true);
       }
     });
-    supabase.auth.getSession().then(({ data }) => {
-      setHasSession(!!data.session);
-      setReady(true);
-    });
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   async function onSubmit(e: React.FormEvent) {
@@ -60,16 +143,32 @@ function ResetPasswordPage() {
     }
     setLoading(true);
     try {
+      const { data: sess } = await supabase.auth.getSession();
+      if (import.meta.env.DEV) console.info("[reset-password] pre-updateUser", { hasSession: !!sess.session });
+      if (!sess.session) {
+        setError("Sessão de recuperação ausente. Reabra o link do e-mail e tente novamente.");
+        return;
+      }
       const { error: upErr } = await supabase.auth.updateUser({ password });
+      if (import.meta.env.DEV) console.info("[reset-password] updateUser", { error: upErr?.message });
       if (upErr) {
-        setError("Não foi possível definir a senha. O link pode ter expirado.");
+        const msg = upErr.message || "";
+        if (/same[_ ]password|different from the old/i.test(msg)) {
+          setError("A nova senha precisa ser diferente da atual.");
+        } else if (/session|jwt|expire/i.test(msg)) {
+          setError("A sessão de recuperação expirou. Solicite um novo link.");
+        } else {
+          setError(msg || "Não foi possível definir a senha.");
+        }
         return;
       }
       toast.success("Senha definida com sucesso.");
       await supabase.auth.signOut();
       navigate({ to: "/auth", replace: true });
-    } catch {
-      setError("Não foi possível definir a senha. Tente novamente.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro inesperado.";
+      if (import.meta.env.DEV) console.error("[reset-password] exception", err);
+      setError(msg);
     } finally {
       setLoading(false);
     }
