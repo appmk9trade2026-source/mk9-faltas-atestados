@@ -4570,6 +4570,10 @@ export type Database = {
         }[]
       }
       simular_regras_escalonamento: { Args: { p_evento: Json }; Returns: Json }
+      supervisor_has_projeto_via_equipe: {
+        Args: { _projeto_id: string; _user_id: string }
+        Returns: boolean
+      }
       unaccent: { Args: { "": string }; Returns: string }
       unaccent_if_available: { Args: { p: string }; Returns: string }
       user_has_projeto: {
