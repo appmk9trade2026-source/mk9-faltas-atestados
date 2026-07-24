@@ -706,10 +706,10 @@ function SupervisoresPanel({
     queryFn: async (): Promise<SupervisorRow[]> => {
       const { data, error } = await supabase.rpc("coordenacao_listar_supervisores", {
         _vinculo: vinculo,
-        _empresa_id: null,
-        _projeto_id: null,
-        _coordenador_id: coordenadorId || null,
-        _busca: busca.trim() || null,
+        _empresa_id: undefined,
+        _projeto_id: undefined,
+        _coordenador_id: coordenadorId || undefined,
+        _busca: busca.trim() || undefined,
         _limit: PAGE_SIZE,
         _offset: page * PAGE_SIZE,
       });
