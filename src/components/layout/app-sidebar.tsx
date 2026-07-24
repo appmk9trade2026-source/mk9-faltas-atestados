@@ -81,6 +81,7 @@ const items: Item[] = [
   { title: "Roadmap", url: "/roadmap", icon: MapIcon, roles: ["super_admin", "compliance"] },
   { title: "Acessos", url: "/acessos", icon: KeyRound, roles: ["super_admin", "compliance"] },
   { title: "Permissões", url: "/administracao/permissoes", icon: ShieldCheck, roles: ["super_admin"] },
+  { title: "Gestão de Coordenação", url: "/administracao/coordenacao", icon: Trophy, roles: ["super_admin", "rh"] },
   { title: "BI Executivo", url: "/bi-executivo", icon: Sparkles, roles: ["super_admin", "compliance", "rh"] },
   { title: "Observabilidade", url: "/observabilidade", icon: Gauge, roles: ["super_admin", "compliance"] },
   { title: "Inteligência Analítica", url: "/inteligencia", icon: Sparkles, roles: ["super_admin", "compliance", "rh", "supervisor"] },
