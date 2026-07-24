@@ -176,6 +176,7 @@ export const createUsuario = createServerFn({ method: "POST" })
         telefone_whatsapp: data.telefone || null,
         cargo: data.cargo || null,
         avatar_url: data.avatar_url || null,
+        matricula: normalizeMatriculaUsuario(data.matricula ?? null),
         ativo: data.ativo,
         // Força troca obrigatória no primeiro login — senha padrão do CRM.
         primeiro_acesso_pendente: true,
