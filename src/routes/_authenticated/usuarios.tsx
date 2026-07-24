@@ -180,7 +180,7 @@ function computeAcessoBadge(u: UsuarioRow): AcessoBadge {
 }
 
 // -------------------- Schemas --------------------
-const rolesEnum = z.enum(["super_admin", "rh", "supervisor", "compliance", "operacao", "visualizador"]);
+const rolesEnum = z.enum(["super_admin", "rh", "coordenador", "supervisor", "compliance", "operacao", "visualizador"]);
 const createFormSchema = z.object({
   email: z.string().trim().email("E-mail inválido"),
   nome: z.string().trim().min(2, "Nome obrigatório"),

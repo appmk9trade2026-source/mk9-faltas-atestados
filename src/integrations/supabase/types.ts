@@ -2573,6 +2573,7 @@ export type Database = {
           ativo: boolean
           avatar_url: string | null
           cargo: string | null
+          coordenador_usuario_id: string | null
           created_at: string
           email: string
           id: string
@@ -2586,6 +2587,7 @@ export type Database = {
           ativo?: boolean
           avatar_url?: string | null
           cargo?: string | null
+          coordenador_usuario_id?: string | null
           created_at?: string
           email: string
           id: string
@@ -2599,6 +2601,7 @@ export type Database = {
           ativo?: boolean
           avatar_url?: string | null
           cargo?: string | null
+          coordenador_usuario_id?: string | null
           created_at?: string
           email?: string
           id?: string
@@ -4779,6 +4782,7 @@ export type Database = {
         | "compliance"
         | "operacao"
         | "visualizador"
+        | "coordenador"
       audit_action:
         | "CREATE"
         | "UPDATE"
@@ -5222,6 +5226,7 @@ export const Constants = {
         "compliance",
         "operacao",
         "visualizador",
+        "coordenador",
       ],
       audit_action: [
         "CREATE",
