@@ -77,7 +77,7 @@ const createSchema = z.object({
 
   ativo: z.boolean().default(true),
   roles: z
-    .array(z.enum(["super_admin", "rh", "supervisor", "compliance", "operacao", "visualizador"]))
+    .array(appRoleSchema)
     .default([]),
   empresa_ids: z.array(z.string().uuid()).default([]),
   projeto_ids: z.array(z.string().uuid()).default([]),
