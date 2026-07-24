@@ -155,6 +155,7 @@ type UsuarioRow = {
   telefone_whatsapp: string | null;
   cargo: string | null;
   avatar_url: string | null;
+  matricula: string | null;
   ativo: boolean;
   created_at: string;
   last_sign_in_at: string | null;
