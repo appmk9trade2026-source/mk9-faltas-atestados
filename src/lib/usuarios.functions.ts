@@ -90,23 +90,26 @@ import { validarProjetosPertencemAEmpresas } from "@/lib/usuarios-helpers";
 export { validarProjetosPertencemAEmpresas } from "@/lib/usuarios-helpers";
 
 // ---------------- CREATE ----------------
-const createSchema = z.object({
-  email: z.string().trim().toLowerCase().email(),
-  nome: z.string().trim().min(2).max(120),
-  telefone: z.string().trim().max(30).optional().nullable(),
-  cargo: z.string().trim().max(80).optional().nullable(),
-  avatar_url: z.string().trim().max(500).optional().nullable(),
-  senha_temporaria: z.string().min(8).max(72).optional().nullable(),
-  enviar_convite: z.boolean().default(true),
-  enviar_whatsapp: z.boolean().default(false),
+const createSchema = refineMatriculaPorRoles(
+  z.object({
+    email: z.string().trim().toLowerCase().email(),
+    nome: z.string().trim().min(2).max(120),
+    telefone: z.string().trim().max(30).optional().nullable(),
+    cargo: z.string().trim().max(80).optional().nullable(),
+    avatar_url: z.string().trim().max(500).optional().nullable(),
+    matricula: z.string().max(60).optional().nullable(),
+    senha_temporaria: z.string().min(8).max(72).optional().nullable(),
+    enviar_convite: z.boolean().default(true),
+    enviar_whatsapp: z.boolean().default(false),
 
-  ativo: z.boolean().default(true),
-  roles: z
-    .array(appRoleSchema)
-    .default([]),
-  empresa_ids: z.array(z.string().uuid()).default([]),
-  projeto_ids: z.array(z.string().uuid()).default([]),
-});
+    ativo: z.boolean().default(true),
+    roles: z
+      .array(appRoleSchema)
+      .default([]),
+    empresa_ids: z.array(z.string().uuid()).default([]),
+    projeto_ids: z.array(z.string().uuid()).default([]),
+  }),
+);
 
 export const createUsuario = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
