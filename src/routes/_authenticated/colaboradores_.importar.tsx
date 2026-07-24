@@ -1104,7 +1104,21 @@ function ImportarPage() {
               <CheckCircle2 className="h-4 w-4" />
               <AlertTitle>Importação finalizada</AlertTitle>
               <AlertDescription>
-                Total: <b>{resultado.total}</b> · Importadas: <b>{resultado.importadas}</b> · Atualizadas: <b>{resultado.atualizadas}</b> · Ignoradas: <b>{resultado.ignoradas}</b> · Erros: <b>{resultado.erros}</b> · Tempo: <b>{(resultado.ms / 1000).toFixed(2)}s</b>
+                <div>
+                  Total: <b>{resultado.total}</b> · Importadas: <b>{resultado.importadas}</b> · Atualizadas: <b>{resultado.atualizadas}</b> · Ignoradas: <b>{resultado.ignoradas}</b> · Erros: <b>{resultado.erros}</b> · Tempo: <b>{(resultado.ms / 1000).toFixed(2)}s</b>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                  <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">Supervisores vinculados: {resultado.supervisores_vinculados}</Badge>
+                  <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400">Pendentes de supervisor: {resultado.supervisores_pendentes}</Badge>
+                  {Object.entries(resultado.pendencias_por_motivo).map(([m, q]) => (
+                    <Badge key={m} variant="outline">{m}: {q}</Badge>
+                  ))}
+                  {resultado.supervisores_pendentes > 0 && (
+                    <Button asChild size="sm" variant="link" className="h-auto p-0">
+                      <Link to="/administracao/pendencias-supervisor">Resolver pendências →</Link>
+                    </Button>
+                  )}
+                </div>
               </AlertDescription>
             </Alert>
           )}
