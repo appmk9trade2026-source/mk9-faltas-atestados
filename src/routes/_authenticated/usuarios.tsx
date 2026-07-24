@@ -900,7 +900,7 @@ function CreateDialog({
           <form
             onSubmit={form.handleSubmit(async (v) => {
               setSubmitting(true);
-              try { await onSubmit(v); } catch (e) { toast.error((e as Error).message); }
+              try { await onSubmit(v); } catch (e) { toast.error(mapCoordenacaoError((e as Error).message)); }
               finally { setSubmitting(false); }
             })}
             className="space-y-4"
