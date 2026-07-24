@@ -613,6 +613,8 @@ function ImportarPage() {
 
       const chunkSize = 250;
       let inseridas = 0, atualizadas = 0, ignoradas = 0, erros = 0;
+      let supVinculados = 0, supPendentes = 0;
+      const supPorMotivo: Record<string, number> = {};
       const detalhes: Array<{ linha: string | number; erro: string }> = [];
 
       for (let i = 0; i < elegiveis.length; i += chunkSize) {
@@ -622,8 +624,8 @@ function ImportarPage() {
           nome_completo: r.nome_completo,
           empresa: r.empresa,
           projeto: r.projeto,
-          empresa_id: r.empresa_id, // ← IDs pré-resolvidos
-          projeto_id: r.projeto_id, // ←
+          empresa_id: r.empresa_id,
+          projeto_id: r.projeto_id,
           telefone: r.telefone,
           whatsapp: r.whatsapp,
           email: r.email,
@@ -638,6 +640,11 @@ function ImportarPage() {
         atualizadas += r.atualizadas ?? 0;
         ignoradas += r.ignoradas ?? 0;
         erros += r.erros ?? 0;
+        supVinculados += r.supervisores_vinculados ?? 0;
+        supPendentes += r.supervisores_pendentes ?? 0;
+        for (const [motivo, qtd] of Object.entries(r.pendencias_por_motivo ?? {})) {
+          supPorMotivo[motivo] = (supPorMotivo[motivo] ?? 0) + (qtd as number);
+        }
         if (Array.isArray(r.detalhes)) detalhes.push(...(r.detalhes as Array<{ linha: string | number; erro: string }>));
         setProgress(Math.round(((i + slice.length) / elegiveis.length) * 100));
       }
@@ -662,20 +669,23 @@ function ImportarPage() {
         erros: erros + invalidas,
         duracao_ms: ms,
         status: erros + invalidas > 0 ? "PARCIAL" : "SUCESSO",
-        detalhes: { rpc: detalhes, invalidas: detalhesInvalidos },
+        detalhes: { rpc: detalhes, invalidas: detalhesInvalidos, supervisores_vinculados: supVinculados, supervisores_pendentes: supPendentes, pendencias_por_motivo: supPorMotivo },
       });
 
-      return { total: rows.length, importadas: inseridas + atualizadas, atualizadas, ignoradas: ignoradasTotal, erros: erros + invalidas, ms };
+      return {
+        total: rows.length,
+        importadas: inseridas + atualizadas,
+        atualizadas,
+        ignoradas: ignoradasTotal,
+        erros: erros + invalidas,
+        ms,
+        supervisores_vinculados: supVinculados,
+        supervisores_pendentes: supPendentes,
+        pendencias_por_motivo: supPorMotivo,
+      };
     },
     onSuccess: (r) => {
-      setResultado({
-        total: r.total,
-        importadas: r.importadas,
-        atualizadas: r.atualizadas,
-        ignoradas: r.ignoradas,
-        erros: r.erros,
-        ms: r.ms,
-      });
+      setResultado(r);
       toast.success(`Importação concluída em ${(r.ms / 1000).toFixed(1)}s.`);
       setProgress(100);
     },
