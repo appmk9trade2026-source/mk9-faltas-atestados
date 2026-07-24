@@ -17,19 +17,18 @@ import {
  * obrigatoriedade condicional ao conjunto de papéis do usuário.
  * Não altera o tipo (permanece texto) — zeros à esquerda são preservados.
  */
-function refineMatriculaPorRoles<T extends { matricula?: string | null; roles: AppRole[] }>(
-  schema: z.ZodType<T>,
-): z.ZodEffects<z.ZodType<T>, T, T> {
-  return schema.superRefine((val, ctx) => {
-    const mat = normalizeMatriculaUsuario(val.matricula ?? null);
-    if (rolesExigemMatricula(val.roles) && !mat) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["matricula"],
-        message: "Matrícula é obrigatória para o(s) perfil(s) selecionado(s).",
-      });
-    }
-  });
+function checarMatriculaObrigatoria(
+  val: { matricula?: string | null; roles: AppRole[] },
+  ctx: z.RefinementCtx,
+) {
+  const mat = normalizeMatriculaUsuario(val.matricula ?? null);
+  if (rolesExigemMatricula(val.roles) && !mat) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["matricula"],
+      message: "Matrícula é obrigatória para o(s) perfil(s) selecionado(s).",
+    });
+  }
 }
 
 /**
