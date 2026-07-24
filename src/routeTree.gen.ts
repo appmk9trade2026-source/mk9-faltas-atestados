@@ -57,6 +57,7 @@ import { Route as AuthenticatedColaboradoresReprocessarSupervisoresRouteImport }
 import { Route as AuthenticatedColaboradoresImportarRouteImport } from './routes/_authenticated/colaboradores_.importar'
 import { Route as AuthenticatedColaboradoresImportacoesRouteImport } from './routes/_authenticated/colaboradores_.importacoes'
 import { Route as AuthenticatedAdministracaoPermissoesRouteImport } from './routes/_authenticated/administracao.permissoes'
+import { Route as AuthenticatedAdministracaoCoordenacaoRouteImport } from './routes/_authenticated/administracao.coordenacao'
 import { Route as AuthenticatedAdminHardeningRouteImport } from './routes/_authenticated/admin.hardening'
 import { Route as AuthenticatedComunicacoesWhatsappIndexRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.index'
 import { Route as ApiPublicHooksProcessWhatsappOutboxRouteImport } from './routes/api/public/hooks/process-whatsapp-outbox'
@@ -340,6 +341,12 @@ const AuthenticatedAdministracaoPermissoesRoute =
     path: '/administracao/permissoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdministracaoCoordenacaoRoute =
+  AuthenticatedAdministracaoCoordenacaoRouteImport.update({
+    id: '/administracao/coordenacao',
+    path: '/administracao/coordenacao',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminHardeningRoute =
   AuthenticatedAdminHardeningRouteImport.update({
     id: '/admin/hardening',
@@ -464,6 +471,7 @@ export interface FileRoutesByFullPath {
   '/usuarios': typeof AuthenticatedUsuariosRouteWithChildren
   '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/admin/hardening': typeof AuthenticatedAdminHardeningRoute
+  '/administracao/coordenacao': typeof AuthenticatedAdministracaoCoordenacaoRoute
   '/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/colaboradores/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/colaboradores/importar': typeof AuthenticatedColaboradoresImportarRoute
@@ -527,6 +535,7 @@ export interface FileRoutesByTo {
   '/usuarios': typeof AuthenticatedUsuariosRouteWithChildren
   '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/admin/hardening': typeof AuthenticatedAdminHardeningRoute
+  '/administracao/coordenacao': typeof AuthenticatedAdministracaoCoordenacaoRoute
   '/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/colaboradores/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/colaboradores/importar': typeof AuthenticatedColaboradoresImportarRoute
@@ -592,6 +601,7 @@ export interface FileRoutesById {
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRouteWithChildren
   '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/_authenticated/admin/hardening': typeof AuthenticatedAdminHardeningRoute
+  '/_authenticated/administracao/coordenacao': typeof AuthenticatedAdministracaoCoordenacaoRoute
   '/_authenticated/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/_authenticated/colaboradores_/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/_authenticated/colaboradores_/importar': typeof AuthenticatedColaboradoresImportarRoute
@@ -658,6 +668,7 @@ export interface FileRouteTypes {
     | '/usuarios'
     | '/auth/nova-senha'
     | '/admin/hardening'
+    | '/administracao/coordenacao'
     | '/administracao/permissoes'
     | '/colaboradores/importacoes'
     | '/colaboradores/importar'
@@ -721,6 +732,7 @@ export interface FileRouteTypes {
     | '/usuarios'
     | '/auth/nova-senha'
     | '/admin/hardening'
+    | '/administracao/coordenacao'
     | '/administracao/permissoes'
     | '/colaboradores/importacoes'
     | '/colaboradores/importar'
@@ -785,6 +797,7 @@ export interface FileRouteTypes {
     | '/_authenticated/usuarios'
     | '/auth/nova-senha'
     | '/_authenticated/admin/hardening'
+    | '/_authenticated/administracao/coordenacao'
     | '/_authenticated/administracao/permissoes'
     | '/_authenticated/colaboradores_/importacoes'
     | '/_authenticated/colaboradores_/importar'
@@ -1164,6 +1177,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdministracaoPermissoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/administracao/coordenacao': {
+      id: '/_authenticated/administracao/coordenacao'
+      path: '/administracao/coordenacao'
+      fullPath: '/administracao/coordenacao'
+      preLoaderRoute: typeof AuthenticatedAdministracaoCoordenacaoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/hardening': {
       id: '/_authenticated/admin/hardening'
       path: '/admin/hardening'
@@ -1431,6 +1451,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSaudeRoute: typeof AuthenticatedSaudeRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRouteWithChildren
   AuthenticatedAdminHardeningRoute: typeof AuthenticatedAdminHardeningRoute
+  AuthenticatedAdministracaoCoordenacaoRoute: typeof AuthenticatedAdministracaoCoordenacaoRoute
   AuthenticatedAdministracaoPermissoesRoute: typeof AuthenticatedAdministracaoPermissoesRoute
   AuthenticatedColaboradoresImportacoesRoute: typeof AuthenticatedColaboradoresImportacoesRoute
   AuthenticatedColaboradoresImportarRoute: typeof AuthenticatedColaboradoresImportarRoute
@@ -1466,6 +1487,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSaudeRoute: AuthenticatedSaudeRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRouteWithChildren,
   AuthenticatedAdminHardeningRoute: AuthenticatedAdminHardeningRoute,
+  AuthenticatedAdministracaoCoordenacaoRoute:
+    AuthenticatedAdministracaoCoordenacaoRoute,
   AuthenticatedAdministracaoPermissoesRoute:
     AuthenticatedAdministracaoPermissoesRoute,
   AuthenticatedColaboradoresImportacoesRoute:

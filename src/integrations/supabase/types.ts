@@ -4044,6 +4044,82 @@ export type Database = {
         Returns: Json
       }
       contar_notificacoes_nao_lidas: { Args: never; Returns: number }
+      coordenacao_dashboard: { Args: never; Returns: Json }
+      coordenacao_definir_vinculo: {
+        Args: {
+          _novo_coord_id: string
+          _observacoes?: string
+          _supervisor_id: string
+        }
+        Returns: Json
+      }
+      coordenacao_listar_coordenadores: {
+        Args: never
+        Returns: {
+          ativo: boolean
+          colaboradores_count: number
+          coordenador_id: string
+          email: string
+          empresas: Json
+          nome: string
+          projetos: Json
+          supervisores_count: number
+          ultima_alteracao: string
+        }[]
+      }
+      coordenacao_listar_coordenadores_combo: {
+        Args: never
+        Returns: {
+          ativo: boolean
+          email: string
+          id: string
+          nome: string
+        }[]
+      }
+      coordenacao_listar_supervisores: {
+        Args: {
+          _busca?: string
+          _coordenador_id?: string
+          _empresa_id?: string
+          _limit?: number
+          _offset?: number
+          _projeto_id?: string
+          _vinculo?: string
+        }
+        Returns: {
+          ativo: boolean
+          colaboradores_count: number
+          coordenador_email: string
+          coordenador_id: string
+          coordenador_nome: string
+          created_at: string
+          email: string
+          empresa_principal_id: string
+          empresa_principal_nome: string
+          matricula: string
+          nome: string
+          projeto_principal_id: string
+          projeto_principal_nome: string
+          supervisor_id: string
+          total_registros: number
+        }[]
+      }
+      coordenacao_pode_gerenciar: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      coordenacao_supervisores_por_coordenador: {
+        Args: { _coord_id: string }
+        Returns: {
+          ativo: boolean
+          colaboradores_count: number
+          email: string
+          empresas: Json
+          nome: string
+          projetos: Json
+          supervisor_id: string
+        }[]
+      }
       count_active_super_admins: { Args: never; Returns: number }
       criar_notificacao: {
         Args: {
@@ -4878,6 +4954,9 @@ export type Database = {
         | "USUARIO_EXCLUIDO"
         | "USUARIO_EXCLUSAO_BLOQUEADA"
         | "USUARIO_EXCLUSAO_TENTATIVA"
+        | "COORDENADOR_VINCULADO"
+        | "COORDENADOR_ALTERADO"
+        | "COORDENADOR_DESVINCULADO"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       changelog_tipo:
         | "NOVA_FUNCIONALIDADE"
@@ -5323,6 +5402,9 @@ export const Constants = {
         "USUARIO_EXCLUIDO",
         "USUARIO_EXCLUSAO_BLOQUEADA",
         "USUARIO_EXCLUSAO_TENTATIVA",
+        "COORDENADOR_VINCULADO",
+        "COORDENADOR_ALTERADO",
+        "COORDENADOR_DESVINCULADO",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       changelog_tipo: [
