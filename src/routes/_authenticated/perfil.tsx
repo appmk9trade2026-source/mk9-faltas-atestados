@@ -82,6 +82,10 @@ function PerfilPage() {
               <div className="text-sm">{profile?.email ?? "—"}</div>
             </div>
             <div className="grid gap-1.5">
+              <Label className="text-muted-foreground text-xs">Matrícula</Label>
+              <div className="text-sm font-mono">{profile?.matricula ?? "—"}</div>
+            </div>
+            <div className="grid gap-1.5">
               <Label className="text-muted-foreground text-xs">Papéis</Label>
               <div className="flex flex-wrap gap-1.5">
                 {roles.length === 0 ? (

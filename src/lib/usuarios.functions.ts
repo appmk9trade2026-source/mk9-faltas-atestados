@@ -5,7 +5,31 @@ import { requirePermission } from "@/lib/rbac/guards.server";
 import { PERMISSION_MAP } from "@/lib/permissions-map";
 import { getAppPublicUrl } from "@/lib/app-url";
 import type { PermissionCode } from "@/lib/permissions";
-import { appRoleSchema, type AppRole } from "@/lib/app-roles";
+import {
+  appRoleSchema,
+  normalizeMatriculaUsuario,
+  rolesExigemMatricula,
+  type AppRole,
+} from "@/lib/app-roles";
+
+/**
+ * Regra compartilhada com o frontend: normaliza a matrícula e aplica
+ * obrigatoriedade condicional ao conjunto de papéis do usuário.
+ * Não altera o tipo (permanece texto) — zeros à esquerda são preservados.
+ */
+function checarMatriculaObrigatoria(
+  val: { matricula?: string | null; roles: AppRole[] },
+  ctx: z.RefinementCtx,
+) {
+  const mat = normalizeMatriculaUsuario(val.matricula ?? null);
+  if (rolesExigemMatricula(val.roles) && !mat) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["matricula"],
+      message: "Matrícula é obrigatória para o(s) perfil(s) selecionado(s).",
+    });
+  }
+}
 
 /**
  * Gate padronizado para operações de usuários (RBAC Fase 3 — Onda 1).
@@ -65,23 +89,24 @@ import { validarProjetosPertencemAEmpresas } from "@/lib/usuarios-helpers";
 export { validarProjetosPertencemAEmpresas } from "@/lib/usuarios-helpers";
 
 // ---------------- CREATE ----------------
-const createSchema = z.object({
-  email: z.string().trim().toLowerCase().email(),
-  nome: z.string().trim().min(2).max(120),
-  telefone: z.string().trim().max(30).optional().nullable(),
-  cargo: z.string().trim().max(80).optional().nullable(),
-  avatar_url: z.string().trim().max(500).optional().nullable(),
-  senha_temporaria: z.string().min(8).max(72).optional().nullable(),
-  enviar_convite: z.boolean().default(true),
-  enviar_whatsapp: z.boolean().default(false),
+const createSchema = z
+  .object({
+    email: z.string().trim().toLowerCase().email(),
+    nome: z.string().trim().min(2).max(120),
+    telefone: z.string().trim().max(30).optional().nullable(),
+    cargo: z.string().trim().max(80).optional().nullable(),
+    avatar_url: z.string().trim().max(500).optional().nullable(),
+    matricula: z.string().max(60).optional().nullable(),
+    senha_temporaria: z.string().min(8).max(72).optional().nullable(),
+    enviar_convite: z.boolean().default(true),
+    enviar_whatsapp: z.boolean().default(false),
 
-  ativo: z.boolean().default(true),
-  roles: z
-    .array(appRoleSchema)
-    .default([]),
-  empresa_ids: z.array(z.string().uuid()).default([]),
-  projeto_ids: z.array(z.string().uuid()).default([]),
-});
+    ativo: z.boolean().default(true),
+    roles: z.array(appRoleSchema).default([]),
+    empresa_ids: z.array(z.string().uuid()).default([]),
+    projeto_ids: z.array(z.string().uuid()).default([]),
+  })
+  .superRefine(checarMatriculaObrigatoria);
 
 export const createUsuario = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -151,6 +176,7 @@ export const createUsuario = createServerFn({ method: "POST" })
         telefone_whatsapp: data.telefone || null,
         cargo: data.cargo || null,
         avatar_url: data.avatar_url || null,
+        matricula: normalizeMatriculaUsuario(data.matricula ?? null),
         ativo: data.ativo,
         // Força troca obrigatória no primeiro login — senha padrão do CRM.
         primeiro_acesso_pendente: true,
@@ -237,18 +263,19 @@ export const createUsuario = createServerFn({ method: "POST" })
 
 
 // ---------------- UPDATE ----------------
-const updateSchema = z.object({
-  id: z.string().uuid(),
-  nome: z.string().trim().min(2).max(120),
-  telefone: z.string().trim().max(30).optional().nullable(),
-  cargo: z.string().trim().max(80).optional().nullable(),
-  avatar_url: z.string().trim().max(500).optional().nullable(),
-  roles: z
-    .array(appRoleSchema)
-    .default([]),
-  empresa_ids: z.array(z.string().uuid()).default([]),
-  projeto_ids: z.array(z.string().uuid()).default([]),
-});
+const updateSchema = z
+  .object({
+    id: z.string().uuid(),
+    nome: z.string().trim().min(2).max(120),
+    telefone: z.string().trim().max(30).optional().nullable(),
+    cargo: z.string().trim().max(80).optional().nullable(),
+    avatar_url: z.string().trim().max(500).optional().nullable(),
+    matricula: z.string().max(60).optional().nullable(),
+    roles: z.array(appRoleSchema).default([]),
+    empresa_ids: z.array(z.string().uuid()).default([]),
+    projeto_ids: z.array(z.string().uuid()).default([]),
+  })
+  .superRefine(checarMatriculaObrigatoria);
 
 async function syncSet<T extends string>(opts: {
   supabaseAdmin: typeof import("@/integrations/supabase/client.server").supabaseAdmin;
@@ -353,6 +380,7 @@ export const updateUsuario = createServerFn({ method: "POST" })
         telefone_whatsapp: data.telefone || null,
         cargo: data.cargo || null,
         avatar_url: data.avatar_url || null,
+        matricula: normalizeMatriculaUsuario(data.matricula ?? null),
       })
       .eq("id", data.id);
     if (up.error) throw new Error(up.error.message);

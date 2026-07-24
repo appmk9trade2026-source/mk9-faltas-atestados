@@ -31,6 +31,7 @@ export type ProfileRow = {
   email: string;
   ativo: boolean;
   primeiro_acesso_pendente: boolean;
+  matricula: string | null;
 };
 
 
@@ -52,7 +53,7 @@ export function useSession(): SessionState {
 
   async function loadProfile(userId: string) {
     const [profRes, rolesRes] = await Promise.all([
-      supabase.from("profiles").select("id, nome, email, ativo, primeiro_acesso_pendente").eq("id", userId).maybeSingle(),
+      supabase.from("profiles").select("id, nome, email, ativo, primeiro_acesso_pendente, matricula").eq("id", userId).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", userId),
     ]);
     const prof = (profRes.data as ProfileRow | null) ?? null;

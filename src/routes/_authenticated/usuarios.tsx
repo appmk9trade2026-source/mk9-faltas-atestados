@@ -98,6 +98,7 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { useSession, type AppRole } from "@/hooks/use-session";
+import { rolesExigemMatricula, normalizeMatriculaUsuario } from "@/lib/app-roles";
 import {
   createUsuario,
   updateUsuario,
@@ -155,6 +156,7 @@ type UsuarioRow = {
   telefone_whatsapp: string | null;
   cargo: string | null;
   avatar_url: string | null;
+  matricula: string | null;
   ativo: boolean;
   created_at: string;
   last_sign_in_at: string | null;
@@ -196,31 +198,52 @@ function computeAcessoBadge(u: UsuarioRow): AcessoBadge {
 
 // -------------------- Schemas --------------------
 const rolesEnum = z.enum(["super_admin", "rh", "coordenador", "supervisor", "compliance", "operacao", "visualizador"]);
-const createFormSchema = z.object({
-  email: z.string().trim().email("E-mail inválido"),
-  nome: z.string().trim().min(2, "Nome obrigatório"),
-  telefone: z.string().trim().optional(),
-  cargo: z.string().trim().optional(),
-  avatar_url: z.string().trim().url().optional().or(z.literal("")),
-  enviar_whatsapp: z.boolean(),
-  ativo: z.boolean(),
-  roles: z.array(rolesEnum).min(1, "Selecione ao menos um perfil"),
-  empresa_ids: z.array(z.string().uuid()),
-  projeto_ids: z.array(z.string().uuid()),
-});
+
+function refineMatriculaRoles<T extends { matricula?: string | null; roles: AppRole[] }>(
+  val: T,
+  ctx: z.RefinementCtx,
+) {
+  const mat = normalizeMatriculaUsuario(val.matricula ?? null);
+  if (rolesExigemMatricula(val.roles) && !mat) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["matricula"],
+      message: "Matrícula é obrigatória para Supervisor e Operação.",
+    });
+  }
+}
+
+const createFormSchema = z
+  .object({
+    email: z.string().trim().email("E-mail inválido"),
+    nome: z.string().trim().min(2, "Nome obrigatório"),
+    telefone: z.string().trim().optional(),
+    cargo: z.string().trim().optional(),
+    avatar_url: z.string().trim().url().optional().or(z.literal("")),
+    matricula: z.string().max(60).optional(),
+    enviar_whatsapp: z.boolean(),
+    ativo: z.boolean(),
+    roles: z.array(rolesEnum).min(1, "Selecione ao menos um perfil"),
+    empresa_ids: z.array(z.string().uuid()),
+    projeto_ids: z.array(z.string().uuid()),
+  })
+  .superRefine(refineMatriculaRoles);
 type CreateForm = z.infer<typeof createFormSchema>;
 
 
-const editFormSchema = z.object({
-  id: z.string().uuid(),
-  nome: z.string().trim().min(2),
-  telefone: z.string().trim().optional(),
-  cargo: z.string().trim().optional(),
-  avatar_url: z.string().trim().url().optional().or(z.literal("")),
-  roles: z.array(rolesEnum).min(1, "Selecione ao menos um perfil"),
-  empresa_ids: z.array(z.string().uuid()),
-  projeto_ids: z.array(z.string().uuid()),
-});
+const editFormSchema = z
+  .object({
+    id: z.string().uuid(),
+    nome: z.string().trim().min(2),
+    telefone: z.string().trim().optional(),
+    cargo: z.string().trim().optional(),
+    avatar_url: z.string().trim().url().optional().or(z.literal("")),
+    matricula: z.string().max(60).optional(),
+    roles: z.array(rolesEnum).min(1, "Selecione ao menos um perfil"),
+    empresa_ids: z.array(z.string().uuid()),
+    projeto_ids: z.array(z.string().uuid()),
+  })
+  .superRefine(refineMatriculaRoles);
 type EditForm = z.infer<typeof editFormSchema>;
 
 // -------------------- Page --------------------
@@ -483,7 +506,10 @@ function UsuariosPage() {
                       </Avatar>
                       <div className="min-w-0">
                         <div className="font-medium truncate">{u.nome}</div>
-                        <div className="text-xs text-muted-foreground truncate">{u.cargo || "—"}</div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {u.cargo || "—"}
+                          {u.matricula ? <span className="ml-1">· Matrícula <span className="font-mono text-foreground">{u.matricula}</span></span> : null}
+                        </div>
                       </div>
                     </div>
                   </TableCell>
@@ -688,6 +714,7 @@ function UsuariosPage() {
                 telefone: values.telefone || null,
                 cargo: values.cargo || null,
                 avatar_url: values.avatar_url || null,
+                matricula: normalizeMatriculaUsuario(values.matricula ?? null),
                 senha_temporaria: null,
                 enviar_convite: false,
               },
@@ -730,6 +757,7 @@ function UsuariosPage() {
                 telefone: values.telefone || null,
                 cargo: values.cargo || null,
                 avatar_url: values.avatar_url || null,
+                matricula: normalizeMatriculaUsuario(values.matricula ?? null),
               },
             });
             toast.success("Usuário atualizado.");
@@ -874,6 +902,7 @@ function CreateDialog({
       telefone: "",
       cargo: "",
       avatar_url: "",
+      matricula: "",
       enviar_whatsapp: false,
       ativo: true,
       roles: [],
@@ -945,6 +974,27 @@ function FormSectionsCreate({
           <FormField control={form.control} name="cargo" render={({ field }) => (
             <FormItem><FormLabel>Cargo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
           )} />
+          <FormField control={form.control} name="matricula" render={({ field }) => {
+            const required = rolesExigemMatricula(form.watch("roles") ?? []);
+            return (
+              <FormItem>
+                <FormLabel>Matrícula {required && <span className="text-destructive">*</span>}</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Ex: 000123"
+                    inputMode="text"
+                    autoComplete="off"
+                    {...field}
+                    value={field.value ?? ""}
+                  />
+                </FormControl>
+                <p className="text-[11px] text-muted-foreground">
+                  Preserva zeros à esquerda. {required ? "Obrigatória para Supervisor/Operação." : "Opcional para este perfil."}
+                </p>
+                <FormMessage />
+              </FormItem>
+            );
+          }} />
           <FormField control={form.control} name="avatar_url" render={({ field }) => (
             <FormItem className="md:col-span-2"><FormLabel>Avatar (URL)</FormLabel><FormControl><Input placeholder="https://…" {...field} /></FormControl><FormMessage /></FormItem>
           )} />
@@ -1059,6 +1109,7 @@ function EditDialog({
       telefone: usuario.telefone_whatsapp ?? "",
       cargo: usuario.cargo ?? "",
       avatar_url: usuario.avatar_url ?? "",
+      matricula: usuario.matricula ?? "",
       roles: usuario.roles,
       empresa_ids: usuario.empresa_ids,
       projeto_ids: usuario.projeto_ids,
@@ -1100,6 +1151,27 @@ function EditDialog({
               <FormField control={form.control} name="avatar_url" render={({ field }) => (
                 <FormItem><FormLabel>Avatar (URL)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
               )} />
+              <FormField control={form.control} name="matricula" render={({ field }) => {
+                const required = rolesExigemMatricula(form.watch("roles") ?? []);
+                return (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Matrícula {required && <span className="text-destructive">*</span>}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Ex: 000123"
+                        inputMode="text"
+                        autoComplete="off"
+                        {...field}
+                        value={field.value ?? ""}
+                      />
+                    </FormControl>
+                    <p className="text-[11px] text-muted-foreground">
+                      Preserva zeros à esquerda. {required ? "Obrigatória para Supervisor/Operação." : "Opcional para este perfil."}
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }} />
             </div>
 
             <Separator />
