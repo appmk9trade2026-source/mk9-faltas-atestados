@@ -506,7 +506,10 @@ function UsuariosPage() {
                       </Avatar>
                       <div className="min-w-0">
                         <div className="font-medium truncate">{u.nome}</div>
-                        <div className="text-xs text-muted-foreground truncate">{u.cargo || "—"}</div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {u.cargo || "—"}
+                          {u.matricula ? <span className="ml-1">· Matrícula <span className="font-mono text-foreground">{u.matricula}</span></span> : null}
+                        </div>
                       </div>
                     </div>
                   </TableCell>
