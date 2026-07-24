@@ -270,6 +270,7 @@ const importRowSchema = z.object({
   supervisor_nome: z.string().trim().nullable().optional(),
   supervisor_telefone: z.string().trim().nullable().optional(),
   supervisor_email: z.string().trim().nullable().optional(),
+  supervisor_usuario_id: z.string().uuid().nullable().optional(),
 });
 
 export const importColaboradoresBulk = createServerFn({ method: "POST" })
@@ -283,8 +284,6 @@ export const importColaboradoresBulk = createServerFn({ method: "POST" })
     } catch (e) { throw invalidPayload(e); }
   })
   .handler(async ({ data, context }) => {
-    // Import global — requer permissão de criar colaborador.
-    // A RPC underlying valida coerência empresa↔projeto por linha.
     const gate = await requirePermission({
       ctx: context,
       permission: PERMISSION_MAP.createEmployee,
@@ -302,14 +301,27 @@ export const importColaboradoresBulk = createServerFn({ method: "POST" })
       atualizadas?: number;
       ignoradas?: number;
       erros?: number;
+      supervisores_vinculados?: number;
+      supervisores_pendentes?: number;
+      pendencias_por_motivo?: Record<string, number>;
       detalhes?: Array<Record<string, string | number | null>>;
     };
 
     await audit(context.supabase, "COLABORADORES_IMPORTADOS", null, gate.correlationId,
       null,
-      { inseridas: r.inseridas ?? 0, atualizadas: r.atualizadas ?? 0, ignoradas: r.ignoradas ?? 0, erros: r.erros ?? 0, total: data.rows.length },
+      {
+        inseridas: r.inseridas ?? 0,
+        atualizadas: r.atualizadas ?? 0,
+        ignoradas: r.ignoradas ?? 0,
+        erros: r.erros ?? 0,
+        total: data.rows.length,
+        supervisores_vinculados: r.supervisores_vinculados ?? 0,
+        supervisores_pendentes: r.supervisores_pendentes ?? 0,
+        pendencias_por_motivo: r.pendencias_por_motivo ?? {},
+      },
       `importação em lote (${data.atualizar ? "com" : "sem"} atualização)`,
       null, null);
 
     return { ...r, correlation_id: gate.correlationId };
   });
+

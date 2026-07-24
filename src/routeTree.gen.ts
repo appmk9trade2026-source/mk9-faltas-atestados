@@ -58,6 +58,7 @@ import { Route as AuthenticatedColaboradoresReprocessarSupervisoresRouteImport }
 import { Route as AuthenticatedColaboradoresImportarRouteImport } from './routes/_authenticated/colaboradores_.importar'
 import { Route as AuthenticatedColaboradoresImportacoesRouteImport } from './routes/_authenticated/colaboradores_.importacoes'
 import { Route as AuthenticatedAdministracaoPermissoesRouteImport } from './routes/_authenticated/administracao.permissoes'
+import { Route as AuthenticatedAdministracaoPendenciasSupervisorRouteImport } from './routes/_authenticated/administracao.pendencias-supervisor'
 import { Route as AuthenticatedAdministracaoCoordenacaoRouteImport } from './routes/_authenticated/administracao.coordenacao'
 import { Route as AuthenticatedAdminHardeningRouteImport } from './routes/_authenticated/admin.hardening'
 import { Route as AuthenticatedComunicacoesWhatsappIndexRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.index'
@@ -348,6 +349,12 @@ const AuthenticatedAdministracaoPermissoesRoute =
     path: '/administracao/permissoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdministracaoPendenciasSupervisorRoute =
+  AuthenticatedAdministracaoPendenciasSupervisorRouteImport.update({
+    id: '/administracao/pendencias-supervisor',
+    path: '/administracao/pendencias-supervisor',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdministracaoCoordenacaoRoute =
   AuthenticatedAdministracaoCoordenacaoRouteImport.update({
     id: '/administracao/coordenacao',
@@ -479,6 +486,7 @@ export interface FileRoutesByFullPath {
   '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/admin/hardening': typeof AuthenticatedAdminHardeningRoute
   '/administracao/coordenacao': typeof AuthenticatedAdministracaoCoordenacaoRoute
+  '/administracao/pendencias-supervisor': typeof AuthenticatedAdministracaoPendenciasSupervisorRoute
   '/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/colaboradores/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/colaboradores/importar': typeof AuthenticatedColaboradoresImportarRoute
@@ -544,6 +552,7 @@ export interface FileRoutesByTo {
   '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/admin/hardening': typeof AuthenticatedAdminHardeningRoute
   '/administracao/coordenacao': typeof AuthenticatedAdministracaoCoordenacaoRoute
+  '/administracao/pendencias-supervisor': typeof AuthenticatedAdministracaoPendenciasSupervisorRoute
   '/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/colaboradores/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/colaboradores/importar': typeof AuthenticatedColaboradoresImportarRoute
@@ -611,6 +620,7 @@ export interface FileRoutesById {
   '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/_authenticated/admin/hardening': typeof AuthenticatedAdminHardeningRoute
   '/_authenticated/administracao/coordenacao': typeof AuthenticatedAdministracaoCoordenacaoRoute
+  '/_authenticated/administracao/pendencias-supervisor': typeof AuthenticatedAdministracaoPendenciasSupervisorRoute
   '/_authenticated/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/_authenticated/colaboradores_/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/_authenticated/colaboradores_/importar': typeof AuthenticatedColaboradoresImportarRoute
@@ -679,6 +689,7 @@ export interface FileRouteTypes {
     | '/auth/nova-senha'
     | '/admin/hardening'
     | '/administracao/coordenacao'
+    | '/administracao/pendencias-supervisor'
     | '/administracao/permissoes'
     | '/colaboradores/importacoes'
     | '/colaboradores/importar'
@@ -744,6 +755,7 @@ export interface FileRouteTypes {
     | '/auth/nova-senha'
     | '/admin/hardening'
     | '/administracao/coordenacao'
+    | '/administracao/pendencias-supervisor'
     | '/administracao/permissoes'
     | '/colaboradores/importacoes'
     | '/colaboradores/importar'
@@ -810,6 +822,7 @@ export interface FileRouteTypes {
     | '/auth/nova-senha'
     | '/_authenticated/admin/hardening'
     | '/_authenticated/administracao/coordenacao'
+    | '/_authenticated/administracao/pendencias-supervisor'
     | '/_authenticated/administracao/permissoes'
     | '/_authenticated/colaboradores_/importacoes'
     | '/_authenticated/colaboradores_/importar'
@@ -1197,6 +1210,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdministracaoPermissoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/administracao/pendencias-supervisor': {
+      id: '/_authenticated/administracao/pendencias-supervisor'
+      path: '/administracao/pendencias-supervisor'
+      fullPath: '/administracao/pendencias-supervisor'
+      preLoaderRoute: typeof AuthenticatedAdministracaoPendenciasSupervisorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/administracao/coordenacao': {
       id: '/_authenticated/administracao/coordenacao'
       path: '/administracao/coordenacao'
@@ -1472,6 +1492,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRouteWithChildren
   AuthenticatedAdminHardeningRoute: typeof AuthenticatedAdminHardeningRoute
   AuthenticatedAdministracaoCoordenacaoRoute: typeof AuthenticatedAdministracaoCoordenacaoRoute
+  AuthenticatedAdministracaoPendenciasSupervisorRoute: typeof AuthenticatedAdministracaoPendenciasSupervisorRoute
   AuthenticatedAdministracaoPermissoesRoute: typeof AuthenticatedAdministracaoPermissoesRoute
   AuthenticatedColaboradoresImportacoesRoute: typeof AuthenticatedColaboradoresImportacoesRoute
   AuthenticatedColaboradoresImportarRoute: typeof AuthenticatedColaboradoresImportarRoute
@@ -1510,6 +1531,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminHardeningRoute: AuthenticatedAdminHardeningRoute,
   AuthenticatedAdministracaoCoordenacaoRoute:
     AuthenticatedAdministracaoCoordenacaoRoute,
+  AuthenticatedAdministracaoPendenciasSupervisorRoute:
+    AuthenticatedAdministracaoPendenciasSupervisorRoute,
   AuthenticatedAdministracaoPermissoesRoute:
     AuthenticatedAdministracaoPermissoesRoute,
   AuthenticatedColaboradoresImportacoesRoute:
@@ -1548,13 +1571,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

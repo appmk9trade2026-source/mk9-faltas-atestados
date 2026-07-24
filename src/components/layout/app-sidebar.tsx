@@ -83,6 +83,7 @@ const items: Item[] = [
   { title: "Acessos", url: "/acessos", icon: KeyRound, roles: ["super_admin", "compliance"] },
   { title: "Permissões", url: "/administracao/permissoes", icon: ShieldCheck, roles: ["super_admin"] },
   { title: "Gestão de Coordenação", url: "/administracao/coordenacao", icon: Trophy, roles: ["super_admin", "rh"] },
+  { title: "Pendências de Supervisor", url: "/administracao/pendencias-supervisor", icon: ShieldCheck, roles: ["super_admin", "rh"] },
   { title: "BI Executivo", url: "/bi-executivo", icon: Sparkles, roles: ["super_admin", "compliance", "rh"] },
   { title: "Observabilidade", url: "/observabilidade", icon: Gauge, roles: ["super_admin", "compliance"] },
   { title: "Inteligência Analítica", url: "/inteligencia", icon: Sparkles, roles: ["super_admin", "compliance", "rh", "coordenador", "supervisor"] },
@@ -116,7 +117,7 @@ const SECTIONS: Section[] = [
   {
     id: "administracao",
     label: "Administração",
-    urls: ["/usuarios", "/configuracoes", "/operacoes", "/acessos", "/administracao/permissoes", "/administracao/coordenacao"],
+    urls: ["/usuarios", "/configuracoes", "/operacoes", "/acessos", "/administracao/permissoes", "/administracao/coordenacao", "/administracao/pendencias-supervisor"],
   },
   {
     id: "sistema",

@@ -3867,6 +3867,16 @@ export type Database = {
     Functions: {
       _obs_can_read: { Args: never; Returns: boolean }
       acessos_dashboard: { Args: never; Returns: Json }
+      admin_auditoria_supervisor_integridade: { Args: never; Returns: Json }
+      admin_buscar_supervisores: {
+        Args: { _busca: string; _limit?: number }
+        Returns: {
+          email: string
+          id: string
+          matricula: string
+          nome_completo: string
+        }[]
+      }
       admin_get_user_history: {
         Args: { _limit?: number; _user_id: string }
         Returns: {
@@ -3928,6 +3938,32 @@ export type Database = {
           roles: Database["public"]["Enums"]["app_role"][]
           telefone_whatsapp: string
           total_count: number
+        }[]
+      }
+      admin_listar_pendencias_supervisor: {
+        Args: {
+          _busca?: string
+          _empresa_id?: string
+          _limit?: number
+          _motivo?: string
+          _offset?: number
+          _projeto_id?: string
+        }
+        Returns: {
+          atualizado_em: string
+          colaborador_id: string
+          criado_em: string
+          empresa_id: string
+          empresa_nome: string
+          matricula: string
+          motivo: string
+          nome_completo: string
+          projeto_id: string
+          projeto_nome: string
+          supervisor_email: string
+          supervisor_nome: string
+          supervisor_usuario_id: string
+          total_geral: number
         }[]
       }
       ai_assistente_consumir_rate_limit: {
@@ -4594,6 +4630,13 @@ export type Database = {
           _rota?: string
         }
         Returns: Json
+      }
+      resolve_supervisor_detalhado: {
+        Args: { _email: string; _supervisor_usuario_id: string }
+        Returns: {
+          motivo: string
+          supervisor_usuario_id: string
+        }[]
       }
       resolve_supervisor_usuario_id: {
         Args: { _email: string }
