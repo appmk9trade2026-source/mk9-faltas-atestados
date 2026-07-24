@@ -198,31 +198,52 @@ function computeAcessoBadge(u: UsuarioRow): AcessoBadge {
 
 // -------------------- Schemas --------------------
 const rolesEnum = z.enum(["super_admin", "rh", "coordenador", "supervisor", "compliance", "operacao", "visualizador"]);
-const createFormSchema = z.object({
-  email: z.string().trim().email("E-mail inválido"),
-  nome: z.string().trim().min(2, "Nome obrigatório"),
-  telefone: z.string().trim().optional(),
-  cargo: z.string().trim().optional(),
-  avatar_url: z.string().trim().url().optional().or(z.literal("")),
-  enviar_whatsapp: z.boolean(),
-  ativo: z.boolean(),
-  roles: z.array(rolesEnum).min(1, "Selecione ao menos um perfil"),
-  empresa_ids: z.array(z.string().uuid()),
-  projeto_ids: z.array(z.string().uuid()),
-});
+
+function refineMatriculaRoles<T extends { matricula?: string | null; roles: AppRole[] }>(
+  val: T,
+  ctx: z.RefinementCtx,
+) {
+  const mat = normalizeMatriculaUsuario(val.matricula ?? null);
+  if (rolesExigemMatricula(val.roles) && !mat) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["matricula"],
+      message: "Matrícula é obrigatória para Supervisor e Operação.",
+    });
+  }
+}
+
+const createFormSchema = z
+  .object({
+    email: z.string().trim().email("E-mail inválido"),
+    nome: z.string().trim().min(2, "Nome obrigatório"),
+    telefone: z.string().trim().optional(),
+    cargo: z.string().trim().optional(),
+    avatar_url: z.string().trim().url().optional().or(z.literal("")),
+    matricula: z.string().max(60).optional(),
+    enviar_whatsapp: z.boolean(),
+    ativo: z.boolean(),
+    roles: z.array(rolesEnum).min(1, "Selecione ao menos um perfil"),
+    empresa_ids: z.array(z.string().uuid()),
+    projeto_ids: z.array(z.string().uuid()),
+  })
+  .superRefine(refineMatriculaRoles);
 type CreateForm = z.infer<typeof createFormSchema>;
 
 
-const editFormSchema = z.object({
-  id: z.string().uuid(),
-  nome: z.string().trim().min(2),
-  telefone: z.string().trim().optional(),
-  cargo: z.string().trim().optional(),
-  avatar_url: z.string().trim().url().optional().or(z.literal("")),
-  roles: z.array(rolesEnum).min(1, "Selecione ao menos um perfil"),
-  empresa_ids: z.array(z.string().uuid()),
-  projeto_ids: z.array(z.string().uuid()),
-});
+const editFormSchema = z
+  .object({
+    id: z.string().uuid(),
+    nome: z.string().trim().min(2),
+    telefone: z.string().trim().optional(),
+    cargo: z.string().trim().optional(),
+    avatar_url: z.string().trim().url().optional().or(z.literal("")),
+    matricula: z.string().max(60).optional(),
+    roles: z.array(rolesEnum).min(1, "Selecione ao menos um perfil"),
+    empresa_ids: z.array(z.string().uuid()),
+    projeto_ids: z.array(z.string().uuid()),
+  })
+  .superRefine(refineMatriculaRoles);
 type EditForm = z.infer<typeof editFormSchema>;
 
 // -------------------- Page --------------------
