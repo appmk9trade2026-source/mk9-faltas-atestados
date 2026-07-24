@@ -80,7 +80,7 @@ function motivoMeta(m: string) {
 }
 
 function PendenciasPage() {
-  const { role, sessionLoading } = useSession();
+  const { primaryRole: role, loading: sessionLoading } = useSession();
   const qc = useQueryClient();
   const [motivo, setMotivo] = React.useState<string>("__all__");
   const [empresaId, setEmpresaId] = React.useState<string>("__all__");
