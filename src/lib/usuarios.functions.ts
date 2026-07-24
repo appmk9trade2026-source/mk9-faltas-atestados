@@ -740,11 +740,14 @@ export type DependenciasUsuario = {
   bi_visoes_salvas: number;
   notificacao_eventos: number;
   login_events: number;
+  supervisores_vinculados: number;
+  colaboradores_supervisionados: number;
   vinculos_empresas: number;
   vinculos_projetos: number;
   roles: number;
   total_bloqueante: number;
 };
+
 
 export const contarDependenciasUsuario = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
