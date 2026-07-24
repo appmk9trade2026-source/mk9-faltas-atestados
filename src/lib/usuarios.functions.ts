@@ -263,18 +263,19 @@ export const createUsuario = createServerFn({ method: "POST" })
 
 
 // ---------------- UPDATE ----------------
-const updateSchema = z.object({
-  id: z.string().uuid(),
-  nome: z.string().trim().min(2).max(120),
-  telefone: z.string().trim().max(30).optional().nullable(),
-  cargo: z.string().trim().max(80).optional().nullable(),
-  avatar_url: z.string().trim().max(500).optional().nullable(),
-  roles: z
-    .array(appRoleSchema)
-    .default([]),
-  empresa_ids: z.array(z.string().uuid()).default([]),
-  projeto_ids: z.array(z.string().uuid()).default([]),
-});
+const updateSchema = z
+  .object({
+    id: z.string().uuid(),
+    nome: z.string().trim().min(2).max(120),
+    telefone: z.string().trim().max(30).optional().nullable(),
+    cargo: z.string().trim().max(80).optional().nullable(),
+    avatar_url: z.string().trim().max(500).optional().nullable(),
+    matricula: z.string().max(60).optional().nullable(),
+    roles: z.array(appRoleSchema).default([]),
+    empresa_ids: z.array(z.string().uuid()).default([]),
+    projeto_ids: z.array(z.string().uuid()).default([]),
+  })
+  .superRefine(checarMatriculaObrigatoria);
 
 async function syncSet<T extends string>(opts: {
   supabaseAdmin: typeof import("@/integrations/supabase/client.server").supabaseAdmin;
