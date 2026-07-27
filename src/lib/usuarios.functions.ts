@@ -849,22 +849,25 @@ export const excluirUsuarioSeguro = createServerFn({ method: "POST" })
       }
     }
 
-    // 3. Dependências históricas/operacionais bloqueiam a exclusão física.
+    // 3. Apenas dependências operacionais bloqueiam a exclusão física.
+    //    Rastros de uso (auditoria, logins, notificações) são preservados.
     const { data: depData, error: depErr } = await context.supabase.rpc(
       "contar_dependencias_usuario" as never,
       { p_user_id: data.id } as never,
     );
     if (depErr) throw new Error(depErr.message);
     const dep = (depData ?? {}) as DependenciasUsuario;
-    if ((dep.total_bloqueante ?? 0) > 0) {
+    const bloqueios = calcularBloqueiosExclusao(dep as unknown as Record<string, number>);
+    if (bloqueios.total > 0) {
       await audit(
         context.supabase,
         "USUARIO_EXCLUSAO_BLOQUEADA",
         data.id,
-        `Exclusão bloqueada por dependências (total=${dep.total_bloqueante})`,
+        `Exclusão bloqueada por dependências operacionais (total=${bloqueios.total})`,
         null,
-        dep as unknown,
+        bloqueios.detalhes as unknown,
       );
+
       throw new Error(
         "USUARIO_COM_HISTORICO: Este usuário possui registros históricos e não pode ser excluído. Use 'Desativar' para remover o acesso preservando o histórico.",
       );
