@@ -1378,7 +1378,7 @@ function NovaAusenciaPage() {
                       <>
                       {/* ===== Preenchimento manual ===== */}
                       <div className="space-y-1.5">
-                        <FormLabel>Motivo do lançamento manual *</FormLabel>
+                        <Label>Motivo do lançamento manual *</Label>
                         <Select
                           value={manualMotivo}
                           onValueChange={(v) => form.setValue("manual_motivo", v, { shouldValidate: true })}
@@ -1398,7 +1398,7 @@ function NovaAusenciaPage() {
                       </div>
 
                       <div className="space-y-1.5">
-                        <FormLabel>Detalhe do motivo</FormLabel>
+                        <Label>Detalhe do motivo</Label>
                         <Input maxLength={300} placeholder="Opcional" {...form.register("manual_motivo_detalhe")} />
                         {form.formState.errors.manual_motivo_detalhe && (
                           <p className="text-xs text-red-500">{form.formState.errors.manual_motivo_detalhe.message}</p>
@@ -1406,7 +1406,7 @@ function NovaAusenciaPage() {
                       </div>
 
                       <div className="space-y-1.5">
-                        <FormLabel>Nome completo *</FormLabel>
+                        <Label>Nome completo *</Label>
                         <Input maxLength={150} placeholder="Nome do colaborador" {...form.register("manual_nome")} />
                         {form.formState.errors.manual_nome && (
                           <p className="text-xs text-red-500">{form.formState.errors.manual_nome.message}</p>
@@ -1414,7 +1414,7 @@ function NovaAusenciaPage() {
                       </div>
 
                       <div className="space-y-1.5">
-                        <FormLabel>Matrícula *</FormLabel>
+                        <Label>Matrícula *</Label>
                         <Input maxLength={50} placeholder="Matrícula" {...form.register("manual_matricula")} />
                         {form.formState.errors.manual_matricula && (
                           <p className="text-xs text-red-500">{form.formState.errors.manual_matricula.message}</p>
@@ -1422,7 +1422,7 @@ function NovaAusenciaPage() {
                       </div>
 
                       <div className="space-y-1.5">
-                        <FormLabel>CPF</FormLabel>
+                        <Label>CPF</Label>
                         <Input maxLength={14} placeholder="Somente números" {...form.register("manual_cpf")} />
                         {form.formState.errors.manual_cpf && (
                           <p className="text-xs text-red-500">{form.formState.errors.manual_cpf.message}</p>
@@ -1430,37 +1430,37 @@ function NovaAusenciaPage() {
                       </div>
 
                       <div className="space-y-1.5">
-                        <FormLabel>Cargo</FormLabel>
+                        <Label>Cargo</Label>
                         <Input maxLength={120} {...form.register("manual_cargo")} />
                       </div>
 
                       <div className="space-y-1.5">
-                        <FormLabel>Centro de custo</FormLabel>
+                        <Label>Centro de custo</Label>
                         <Input maxLength={120} {...form.register("manual_centro_custo")} />
                       </div>
 
                       <div className="space-y-1.5">
-                        <FormLabel>Telefone</FormLabel>
+                        <Label>Telefone</Label>
                         <Input maxLength={20} placeholder="(XX) XXXXX-XXXX" {...form.register("manual_telefone")} />
                       </div>
 
                       <div className="space-y-1.5">
-                        <FormLabel>E-mail</FormLabel>
+                        <Label>E-mail</Label>
                         <Input maxLength={150} type="email" {...form.register("manual_email")} />
                       </div>
 
                       <div className="space-y-1.5">
-                        <FormLabel>Supervisor(a)</FormLabel>
+                        <Label>Supervisor(a)</Label>
                         <Input maxLength={150} {...form.register("manual_supervisor_nome")} />
                       </div>
 
                       <div className="space-y-1.5">
-                        <FormLabel>E-mail do supervisor</FormLabel>
+                        <Label>E-mail do supervisor</Label>
                         <Input maxLength={150} type="email" {...form.register("manual_supervisor_email")} />
                       </div>
 
                       <div className="space-y-1.5">
-                        <FormLabel>Empresa *</FormLabel>
+                        <Label>Empresa *</Label>
                         <Select
                           value={manualEmpresaId}
                           onValueChange={(v) => {
@@ -1483,7 +1483,7 @@ function NovaAusenciaPage() {
                       </div>
 
                       <div className="space-y-1.5">
-                        <FormLabel>Projeto *</FormLabel>
+                        <Label>Projeto *</Label>
                         <Select
                           value={form.watch("projeto_id") ?? ""}
                           onValueChange={(v) => form.setValue("projeto_id", v, { shouldValidate: true })}
