@@ -552,7 +552,8 @@ function NovaAusenciaPage() {
       }
 
       form.reset({
-        colaborador_id: ausencia.colaborador_id,
+        modo_manual: ausencia.origem_registro === "MANUAL",
+        colaborador_id: ausencia.colaborador_id ?? "",
         empresa_id: ausencia.empresa_id,
         projeto_id: ausencia.projeto_id,
         tipo_ausencia_id: tipoId,
@@ -568,7 +569,19 @@ function NovaAusenciaPage() {
               ? "nao"
               : (undefined as unknown as "sim"),
         motivo: ausencia.motivo ?? "",
+        manual_motivo: ausencia.manual_motivo ?? "",
+        manual_motivo_detalhe: ausencia.manual_motivo_detalhe ?? "",
+        manual_nome: ausencia.manual_nome ?? "",
+        manual_matricula: ausencia.manual_matricula ?? "",
+        manual_cpf: ausencia.manual_cpf ?? "",
+        manual_cargo: ausencia.manual_cargo ?? "",
+        manual_centro_custo: ausencia.manual_centro_custo ?? "",
+        manual_telefone: ausencia.manual_telefone ?? "",
+        manual_email: ausencia.manual_email ?? "",
+        manual_supervisor_nome: ausencia.manual_supervisor_nome ?? "",
+        manual_supervisor_email: ausencia.manual_supervisor_email ?? "",
       });
+
       const a = ausencia as unknown as {
         acidente_data?: string | null; acidente_hora?: string | null;
         acidente_local?: string | null; acidente_descricao?: string | null;
