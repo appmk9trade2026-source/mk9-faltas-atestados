@@ -22,7 +22,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useSession } from "@/hooks/use-session";
 import {
   auditarHistoricoSenhas,
@@ -43,7 +50,8 @@ export const Route = createFileRoute("/_authenticated/administracao/historico-se
       { property: "og:title", content: "Histórico de Redefinições de Senha | MK9 Trade" },
       {
         property: "og:description",
-        content: "Consulta administrativa e auditável das redefinições de senha temporária do CRM MK9.",
+        content:
+          "Consulta administrativa e auditável das redefinições de senha temporária do CRM MK9.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -89,7 +97,8 @@ function HistoricoSenhasPage() {
 
   const q = useQuery({
     queryKey: ["historico-redefinicoes", filtros.inicio, filtros.fim],
-    queryFn: () => listar({ data: { inicio: filtros.inicio || null, fim: filtros.fim || null, limite: 1000 } }),
+    queryFn: () =>
+      listar({ data: { inicio: filtros.inicio || null, fim: filtros.fim || null, limite: 1000 } }),
     enabled: autorizado,
     staleTime: 30_000,
   });
@@ -105,11 +114,28 @@ function HistoricoSenhasPage() {
   const filtradas = useMemo(() => {
     const t = (v: string) => v.trim().toLowerCase();
     return rows.filter((r) => {
-      if (filtros.usuario && !`${r.usuario_nome ?? ""} ${r.usuario_email ?? ""}`.toLowerCase().includes(t(filtros.usuario)))
+      if (
+        filtros.usuario &&
+        !`${r.usuario_nome ?? ""} ${r.usuario_email ?? ""}`
+          .toLowerCase()
+          .includes(t(filtros.usuario))
+      )
         return false;
-      if (filtros.responsavel && !(r.responsavel_nome ?? "").toLowerCase().includes(t(filtros.responsavel))) return false;
-      if (filtros.empresa && !r.usuario_empresas.join(" ").toLowerCase().includes(t(filtros.empresa))) return false;
-      if (filtros.perfil && !r.usuario_perfis.some((p) => p.toLowerCase().includes(t(filtros.perfil)))) return false;
+      if (
+        filtros.responsavel &&
+        !(r.responsavel_nome ?? "").toLowerCase().includes(t(filtros.responsavel))
+      )
+        return false;
+      if (
+        filtros.empresa &&
+        !r.usuario_empresas.join(" ").toLowerCase().includes(t(filtros.empresa))
+      )
+        return false;
+      if (
+        filtros.perfil &&
+        !r.usuario_perfis.some((p) => p.toLowerCase().includes(t(filtros.perfil)))
+      )
+        return false;
       if (filtros.busca) {
         const alvo = [
           r.usuario_nome,
@@ -174,7 +200,10 @@ function HistoricoSenhasPage() {
         evento: "EXPORTACAO",
         formato,
         total: filtradas.length,
-        filtros: Object.fromEntries(Object.entries(filtros).filter(([, v]) => v)) as Record<string, string>,
+        filtros: Object.fromEntries(Object.entries(filtros).filter(([, v]) => v)) as Record<
+          string,
+          string
+        >,
       },
     }).catch(() => {});
   }
@@ -236,7 +265,8 @@ function HistoricoSenhasPage() {
           <div>
             <p className="font-medium">Acesso restrito</p>
             <p className="text-sm text-muted-foreground">
-              Somente Super Admin e Administrador podem consultar o histórico de redefinições de senha.
+              Somente Super Admin e Administrador podem consultar o histórico de redefinições de
+              senha.
             </p>
           </div>
         </CardContent>
@@ -344,7 +374,9 @@ function HistoricoSenhasPage() {
                   }}
                   onBlur={(e) => {
                     if (e.target.value) {
-                      auditar({ data: { evento: "FILTRO", filtros: { campo, valor: e.target.value } } }).catch(() => {});
+                      auditar({
+                        data: { evento: "FILTRO", filtros: { campo, valor: e.target.value } },
+                      }).catch(() => {});
                     }
                   }}
                 />
@@ -387,23 +419,38 @@ function HistoricoSenhasPage() {
                 )}
                 {pagina.map((r) => (
                   <TableRow key={r.id}>
-                    <TableCell className="whitespace-nowrap text-xs tabular-nums">{fmtData(r.created_at)}</TableCell>
+                    <TableCell className="whitespace-nowrap text-xs tabular-nums">
+                      {fmtData(r.created_at)}
+                    </TableCell>
                     <TableCell className="text-sm font-medium">{r.usuario_nome ?? "—"}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{r.usuario_email ?? "—"}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {r.usuario_email ?? "—"}
+                    </TableCell>
                     <TableCell className="text-xs">
                       {r.usuario_perfis.length
                         ? r.usuario_perfis.map((p) => (
-                            <Badge key={p} variant="outline" className="mr-1 text-[10px] font-normal">
+                            <Badge
+                              key={p}
+                              variant="outline"
+                              className="mr-1 text-[10px] font-normal"
+                            >
                               {PERFIL_LABEL[p] ?? p}
                             </Badge>
                           ))
                         : "—"}
                     </TableCell>
-                    <TableCell className="text-xs">{r.usuario_empresas.join(", ") || "—"}</TableCell>
+                    <TableCell className="text-xs">
+                      {r.usuario_empresas.join(", ") || "—"}
+                    </TableCell>
                     <TableCell className="text-sm">{r.responsavel_nome ?? "—"}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{r.justificativa ?? "—"}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {r.justificativa ?? "—"}
+                    </TableCell>
                     <TableCell>
-                      <Badge variant={r.sucesso ? "secondary" : "destructive"} className="text-[10px] font-normal">
+                      <Badge
+                        variant={r.sucesso ? "secondary" : "destructive"}
+                        className="text-[10px] font-normal"
+                      >
                         {r.sucesso ? (r.padrao ? "Senha padrão" : "Redefinida") : "Falhou"}
                       </Badge>
                     </TableCell>
@@ -417,7 +464,12 @@ function HistoricoSenhasPage() {
               {filtradas.length} registro(s) · página {page + 1} de {paginas}
             </span>
             <div className="flex gap-2">
-              <Button size="sm" variant="outline" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={page === 0}
+                onClick={() => setPage((p) => p - 1)}
+              >
                 Anterior
               </Button>
               <Button

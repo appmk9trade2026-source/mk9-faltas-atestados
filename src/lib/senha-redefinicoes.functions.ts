@@ -58,7 +58,9 @@ export const listarRedefinicoesSenha = createServerFn({ method: "POST" })
 
     let q = supabase
       .from("audit_logs")
-      .select("id, created_at, usuario_id, usuario_nome, registro_id, observacoes, depois, sucesso, origem")
+      .select(
+        "id, created_at, usuario_id, usuario_nome, registro_id, observacoes, depois, sucesso, origem",
+      )
       .eq("acao", ACAO as never)
       .order("created_at", { ascending: false })
       .limit(data.limite);
@@ -91,7 +93,10 @@ export const listarRedefinicoesSenha = createServerFn({ method: "POST" })
       rolesPorId.set(r.user_id, [...(rolesPorId.get(r.user_id) ?? []), r.role]);
     }
     const empresasPorId = new Map<string, string[]>();
-    for (const v of (vinculos.data ?? []) as { user_id: string; empresas: { nome: string } | null }[]) {
+    for (const v of (vinculos.data ?? []) as {
+      user_id: string;
+      empresas: { nome: string } | null;
+    }[]) {
       const nome = v.empresas?.nome;
       if (!nome) continue;
       empresasPorId.set(v.user_id, [...(empresasPorId.get(v.user_id) ?? []), nome]);
@@ -110,7 +115,8 @@ export const listarRedefinicoesSenha = createServerFn({ method: "POST" })
         created_at: l.created_at,
         usuario_id: l.registro_id ?? null,
         usuario_nome: alvo?.nome ?? null,
-        usuario_email: alvo?.email ?? (typeof depois.email_alvo === "string" ? depois.email_alvo : null),
+        usuario_email:
+          alvo?.email ?? (typeof depois.email_alvo === "string" ? depois.email_alvo : null),
         usuario_perfis: l.registro_id ? (rolesPorId.get(l.registro_id) ?? []) : [],
         usuario_empresas: l.registro_id ? (empresasPorId.get(l.registro_id) ?? []) : [],
         responsavel_id: l.usuario_id ?? null,
@@ -131,7 +137,10 @@ export const auditarHistoricoSenhas = createServerFn({ method: "POST" })
       .object({
         evento: z.enum(["ABERTURA", "FILTRO", "EXPORTACAO"]),
         formato: z.enum(["csv", "xlsx", "pdf"]).optional().nullable(),
-        filtros: z.record(z.string(), z.union([z.string(), z.number()])).optional().nullable(),
+        filtros: z
+          .record(z.string(), z.union([z.string(), z.number()]))
+          .optional()
+          .nullable(),
         total: z.number().int().min(0).optional().nullable(),
       })
       .parse(data),
@@ -139,7 +148,11 @@ export const auditarHistoricoSenhas = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await requireAdminHistorico(context);
     const acao =
-      data.evento === "EXPORTACAO" ? "EXPORTACAO" : data.evento === "ABERTURA" ? "VISUALIZACAO" : "VISUALIZACAO";
+      data.evento === "EXPORTACAO"
+        ? "EXPORTACAO"
+        : data.evento === "ABERTURA"
+          ? "VISUALIZACAO"
+          : "VISUALIZACAO";
     const descricao =
       data.evento === "ABERTURA"
         ? "Abertura da tela Histórico de Redefinições de Senha."
@@ -153,11 +166,19 @@ export const auditarHistoricoSenhas = createServerFn({ method: "POST" })
         _acao: acao as never,
         _entidade: "Histórico de Redefinições de Senha",
         _registro_id: null,
-        _depois: { evento: data.evento, formato: data.formato ?? null, filtros: data.filtros ?? null, total: data.total ?? null } as never,
+        _depois: {
+          evento: data.evento,
+          formato: data.formato ?? null,
+          filtros: data.filtros ?? null,
+          total: data.total ?? null,
+        } as never,
         _observacoes: descricao,
         _origem: "web",
       } as never)
-      .then(() => {}, () => {});
+      .then(
+        () => {},
+        () => {},
+      );
 
     return { ok: true as const };
   });
