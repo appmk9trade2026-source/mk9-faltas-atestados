@@ -1352,8 +1352,161 @@ function NovaAusenciaPage() {
                         )}
                       </div>
 
+                      {/* Faixa de preenchimento manual */}
+                      {!isEdit && naoEncontrado && !colab && (
+                        <div className="sm:col-span-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
+                          <p className="font-medium text-amber-900 dark:text-amber-200">
+                            Colaborador não localizado nesta matrícula.
+                          </p>
+                          <p className="mt-1 text-amber-900/80 dark:text-amber-200/80">
+                            Você pode preencher os dados manualmente. O lançamento ficará marcado
+                            como <strong>MANUAL</strong> na auditoria.
+                          </p>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={modoManual ? "secondary" : "default"}
+                            className="mt-2"
+                            onClick={() => toggleModoManual(!modoManual)}
+                          >
+                            {modoManual ? "Cancelar preenchimento manual" : "Preencher manualmente"}
+                          </Button>
+                        </div>
+                      )}
 
+                      {modoManual ? (
+                      <>
+                      {/* ===== Preenchimento manual ===== */}
+                      <div className="space-y-1.5">
+                        <FormLabel>Motivo do lançamento manual *</FormLabel>
+                        <Select
+                          value={manualMotivo}
+                          onValueChange={(v) => form.setValue("manual_motivo", v, { shouldValidate: true })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o motivo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {MANUAL_MOTIVO_OPTIONS.map((o) => (
+                              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {form.formState.errors.manual_motivo && (
+                          <p className="text-xs text-red-500">{form.formState.errors.manual_motivo.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>Detalhe do motivo</FormLabel>
+                        <Input maxLength={300} placeholder="Opcional" {...form.register("manual_motivo_detalhe")} />
+                        {form.formState.errors.manual_motivo_detalhe && (
+                          <p className="text-xs text-red-500">{form.formState.errors.manual_motivo_detalhe.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>Nome completo *</FormLabel>
+                        <Input maxLength={150} placeholder="Nome do colaborador" {...form.register("manual_nome")} />
+                        {form.formState.errors.manual_nome && (
+                          <p className="text-xs text-red-500">{form.formState.errors.manual_nome.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>Matrícula *</FormLabel>
+                        <Input maxLength={50} placeholder="Matrícula" {...form.register("manual_matricula")} />
+                        {form.formState.errors.manual_matricula && (
+                          <p className="text-xs text-red-500">{form.formState.errors.manual_matricula.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>CPF</FormLabel>
+                        <Input maxLength={14} placeholder="Somente números" {...form.register("manual_cpf")} />
+                        {form.formState.errors.manual_cpf && (
+                          <p className="text-xs text-red-500">{form.formState.errors.manual_cpf.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>Cargo</FormLabel>
+                        <Input maxLength={120} {...form.register("manual_cargo")} />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>Centro de custo</FormLabel>
+                        <Input maxLength={120} {...form.register("manual_centro_custo")} />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>Telefone</FormLabel>
+                        <Input maxLength={20} placeholder="(XX) XXXXX-XXXX" {...form.register("manual_telefone")} />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>E-mail</FormLabel>
+                        <Input maxLength={150} type="email" {...form.register("manual_email")} />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>Supervisor(a)</FormLabel>
+                        <Input maxLength={150} {...form.register("manual_supervisor_nome")} />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>E-mail do supervisor</FormLabel>
+                        <Input maxLength={150} type="email" {...form.register("manual_supervisor_email")} />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>Empresa *</FormLabel>
+                        <Select
+                          value={manualEmpresaId}
+                          onValueChange={(v) => {
+                            form.setValue("empresa_id", v, { shouldValidate: true });
+                            form.setValue("projeto_id", "", { shouldValidate: true });
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a empresa" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(empresasManualQ.data ?? []).map((e) => (
+                              <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {form.formState.errors.empresa_id && (
+                          <p className="text-xs text-red-500">{form.formState.errors.empresa_id.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>Projeto *</FormLabel>
+                        <Select
+                          value={form.watch("projeto_id") ?? ""}
+                          onValueChange={(v) => form.setValue("projeto_id", v, { shouldValidate: true })}
+                          disabled={!manualEmpresaId}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={manualEmpresaId ? "Selecione o projeto" : "Escolha a empresa primeiro"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(projetosManualQ.data ?? []).map((p) => (
+                              <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {form.formState.errors.projeto_id && (
+                          <p className="text-xs text-red-500">{form.formState.errors.projeto_id.message}</p>
+                        )}
+                      </div>
+                      </>
+                      ) : (
+                      <>
                       {/* Nome Completo */}
+
                       <ReadonlyField
                         label="Nome Completo"
                         required
