@@ -4,7 +4,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { Eye, EyeOff, Loader2, Lock, ShieldCheck, CheckCircle2, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { concluirPrimeiroAcesso } from "@/lib/primeiro-acesso-troca.functions";
-import { isSameAsFirstLoginPassword, clearFirstLoginPassword } from "@/lib/first-login-password";
+import {
+  isSameAsFirstLoginPassword,
+  clearFirstLoginPassword,
+  getFirstLoginPassword,
+} from "@/lib/first-login-password";
+import { validarSenhaDefinitiva } from "@/lib/senha-forte";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
