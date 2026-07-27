@@ -143,7 +143,19 @@ type AusenciaEdit = {
   id: string;
   empresa_id: string;
   projeto_id: string;
-  colaborador_id: string;
+  colaborador_id: string | null;
+  origem_registro: "AUTOMATICO" | "MANUAL" | null;
+  manual_motivo: string | null;
+  manual_motivo_detalhe: string | null;
+  manual_nome: string | null;
+  manual_matricula: string | null;
+  manual_cpf: string | null;
+  manual_cargo: string | null;
+  manual_centro_custo: string | null;
+  manual_telefone: string | null;
+  manual_email: string | null;
+  manual_supervisor_nome: string | null;
+  manual_supervisor_email: string | null;
   tipo: TipoAusencia;
   tipo_detalhe: string | null;
   dias_label: string | null;
@@ -163,25 +175,75 @@ type AusenciaEdit = {
   arquivo_tamanho: number | null;
 };
 
-const schema = z.object({
-  colaborador_id: z.string().uuid("Busque um colaborador pela matrícula."),
-  empresa_id: z.string().uuid(),
-  projeto_id: z.string().uuid(),
-  tipo_ausencia_id: z.string().uuid("Selecione o tipo de ausência."),
-  opcao_periodo_id: z.string().uuid("Selecione a quantidade / período."),
-  data_inicio: z.string().min(1, "Informe a data da ausência."),
-  localidade: z.string().trim().min(1, "Localidade é obrigatória.").max(150),
-  loja_codigo_nome: z.string().trim().min(1, "Código ou nome da loja é obrigatório.").max(150),
-  cid: z.string().max(20).optional().or(z.literal("")),
-  acidente_trabalho_trajeto: z.enum(["sim", "nao"], {
-    errorMap: () => ({ message: "Selecione Sim ou Não." }),
-  }),
-  motivo: z
-    .string()
-    .trim()
-    .min(5, "Mínimo de 5 caracteres.")
-    .max(500, "Máximo de 500 caracteres."),
-});
+/** Motivos aceitos para o lançamento manual (espelham o backend). */
+const MANUAL_MOTIVO_OPTIONS = [
+  { value: "COLABORADOR_NAO_ENCONTRADO", label: "Colaborador não encontrado na base" },
+  { value: "CADASTRO_DESATUALIZADO", label: "Cadastro desatualizado / inativo" },
+  { value: "ADMISSAO_RECENTE", label: "Admissão recente (ainda não importada)" },
+  { value: "OUTRO", label: "Outro motivo" },
+] as const;
+
+const schema = z
+  .object({
+    modo_manual: z.boolean(),
+    colaborador_id: z.string().optional().or(z.literal("")),
+    empresa_id: z.string().optional().or(z.literal("")),
+    projeto_id: z.string().optional().or(z.literal("")),
+    tipo_ausencia_id: z.string().uuid("Selecione o tipo de ausência."),
+    opcao_periodo_id: z.string().uuid("Selecione a quantidade / período."),
+    data_inicio: z.string().min(1, "Informe a data da ausência."),
+    localidade: z.string().trim().min(1, "Localidade é obrigatória.").max(150),
+    loja_codigo_nome: z.string().trim().min(1, "Código ou nome da loja é obrigatório.").max(150),
+    cid: z.string().max(20).optional().or(z.literal("")),
+    acidente_trabalho_trajeto: z.enum(["sim", "nao"], {
+      errorMap: () => ({ message: "Selecione Sim ou Não." }),
+    }),
+    motivo: z
+      .string()
+      .trim()
+      .min(5, "Mínimo de 5 caracteres.")
+      .max(500, "Máximo de 500 caracteres."),
+    // Preenchimento manual (colaborador não encontrado)
+    manual_motivo: z.string().optional().or(z.literal("")),
+    manual_motivo_detalhe: z.string().max(300).optional().or(z.literal("")),
+    manual_nome: z.string().max(150).optional().or(z.literal("")),
+    manual_matricula: z.string().max(50).optional().or(z.literal("")),
+    manual_cpf: z.string().max(20).optional().or(z.literal("")),
+    manual_cargo: z.string().max(120).optional().or(z.literal("")),
+    manual_centro_custo: z.string().max(120).optional().or(z.literal("")),
+    manual_telefone: z.string().max(20).optional().or(z.literal("")),
+    manual_email: z.string().max(150).optional().or(z.literal("")),
+    manual_supervisor_nome: z.string().max(150).optional().or(z.literal("")),
+    manual_supervisor_email: z.string().max(150).optional().or(z.literal("")),
+  })
+  .superRefine((v, ctx) => {
+    const req = (path: keyof typeof v, message: string) =>
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message });
+
+    if (!v.modo_manual) {
+      if (!v.colaborador_id) req("colaborador_id", "Busque um colaborador pela matrícula.");
+      return;
+    }
+    if (!v.empresa_id) req("empresa_id", "Selecione a empresa.");
+    if (!v.projeto_id) req("projeto_id", "Selecione o projeto.");
+    if (!v.manual_motivo) req("manual_motivo", "Informe o motivo do preenchimento manual.");
+    if (v.manual_motivo === "OUTRO" && !(v.manual_motivo_detalhe ?? "").trim()) {
+      req("manual_motivo_detalhe", "Descreva o motivo.");
+    }
+    if ((v.manual_nome ?? "").trim().length < 3) {
+      req("manual_nome", "Informe o nome completo (mínimo 3 caracteres).");
+    }
+    if (!(v.manual_matricula ?? "").trim()) req("manual_matricula", "Informe a matrícula.");
+    const cpf = (v.manual_cpf ?? "").replace(/\D+/g, "");
+    if (cpf && cpf.length !== 11) req("manual_cpf", "CPF deve ter 11 dígitos.");
+    const email = (v.manual_email ?? "").trim();
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) req("manual_email", "E-mail inválido.");
+    const supEmail = (v.manual_supervisor_email ?? "").trim();
+    if (supEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(supEmail)) {
+      req("manual_supervisor_email", "E-mail inválido.");
+    }
+  });
+
 
 type FormData = z.infer<typeof schema>;
 
