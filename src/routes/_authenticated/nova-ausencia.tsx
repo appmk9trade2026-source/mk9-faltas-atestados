@@ -1002,7 +1002,7 @@ function NovaAusenciaPage() {
         const ext = file.name.split(".").pop() ?? "bin";
         const stamp = Date.now();
         const rand = crypto.randomUUID();
-        const path = `ausencias/${values.colaborador_id}/${stamp}-${rand}.${ext}`;
+        const path = `ausencias/${values.colaborador_id || "manual"}/${stamp}-${rand}.${ext}`;
         const { error: upErr } = await supabase.storage
           .from(BUCKET_ATESTADOS)
           .upload(path, file, { contentType: file.type, upsert: false });
