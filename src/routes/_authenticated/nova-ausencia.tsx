@@ -697,9 +697,7 @@ function NovaAusenciaPage() {
       if (!form.getValues("manual_matricula")) {
         form.setValue("manual_matricula", matriculaInput.trim());
       }
-      if (!form.getValues("manual_motivo")) {
-        form.setValue("manual_motivo", "COLABORADOR_NAO_ENCONTRADO");
-      }
+      form.setValue("manual_matricula", matriculaInput.trim(), { shouldValidate: true });
       logEvent({ categoria: "tela", acao: "ausencia_modo_manual_ativado", resultado: "ok", duracao_ms: 0 });
     } else {
       form.setValue("empresa_id", "");
