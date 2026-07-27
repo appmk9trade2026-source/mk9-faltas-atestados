@@ -207,8 +207,11 @@ export function ExcluirUsuarioDialog({
                         </div>
                       )}
                       <div>
-                        Total de {deps.total_bloqueante} registro(s) bloqueante(s). Para
-                        preservar históricos, prefira <strong>Desativar</strong> no menu.
+                        Total de {bloqueios.total} registro(s) operacional(is) bloqueante(s):{" "}
+                        {bloqueios.detalhes
+                          .map((d) => `${LABELS[d.chave as keyof typeof LABELS] ?? d.chave} (${d.total})`)
+                          .join(", ")}
+                        . Para preservar históricos, prefira <strong>Desativar</strong> no menu.
                       </div>
                     </AlertDescription>
                   </Alert>
@@ -218,10 +221,13 @@ export function ExcluirUsuarioDialog({
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Confirmação reforçada</AlertTitle>
                     <AlertDescription className="text-xs">
-                      Nenhum histórico operacional encontrado. A exclusão removerá a identidade de
-                      autenticação, o perfil e os vínculos ativos. Esta ação é irreversível.
+                      Nenhum registro operacional encontrado. Rastros de auditoria, logins e
+                      notificações são preservados de forma anônima. A exclusão removerá a
+                      identidade de autenticação, o perfil e os vínculos ativos. Esta ação é
+                      irreversível.
                     </AlertDescription>
                   </Alert>
+
                 )}
               </div>
             )}
