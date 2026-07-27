@@ -87,6 +87,16 @@ function NovaSenhaPage() {
       }
       setAutorizado(true);
       setChecking(false);
+      setEmailUsuario(data.user.email ?? null);
+      supabase
+        .from("profiles")
+        .select("matricula")
+        .eq("id", data.user.id)
+        .maybeSingle()
+        .then(({ data: p }) => {
+          if (mounted) setMatriculaUsuario(p?.matricula ?? null);
+        });
+
     })();
 
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
