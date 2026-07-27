@@ -47,6 +47,8 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { ContasSuspeitasCard } from "@/components/usuarios/contas-suspeitas-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
@@ -327,6 +329,7 @@ function UsuariosPage() {
   const [confirmEncerrarSessoes, setConfirmEncerrarSessoes] = useState<UsuarioRow | null>(null);
   const [senhaTempAlvo, setSenhaTempAlvo] = useState<UsuarioRow | null>(null);
   const [senhaPadraoAlvo, setSenhaPadraoAlvo] = useState<UsuarioRow | null>(null);
+  const [motivoRedefinicao, setMotivoRedefinicao] = useState("");
   const [excluirAlvo, setExcluirAlvo] = useState<UsuarioRow | null>(null);
   const [waDetalhesFor, setWaDetalhesFor] = useState<{ usuario: UsuarioRow; status: BoasVindasStatus | null } | null>(null);
 
@@ -394,7 +397,8 @@ function UsuariosPage() {
     onError: (e: Error) => toast.error(e.message),
   });
   const redefinirSenhaPadraoMut = useMutation({
-    mutationFn: async (v: { id: string }) => redefinirSenhaPadraoFn({ data: { id: v.id, motivo: null } }),
+    mutationFn: async (v: { id: string; motivo: string }) =>
+      redefinirSenhaPadraoFn({ data: { id: v.id, motivo: v.motivo } }),
     onSuccess: (r: { whatsapp_outbox_id?: string | null; whatsapp_motivo?: string | null }) => {
       if (r?.whatsapp_outbox_id) {
         toast.success("Senha temporária redefinida e mensagem de boas-vindas enfileirada.");
@@ -430,6 +434,15 @@ function UsuariosPage() {
             </Button>
           )}
         </div>
+
+        {isSuperAdmin && (
+          <ContasSuspeitasCard
+            onRedefinir={(u) => {
+              setMotivoRedefinicao("");
+              setSenhaPadraoAlvo(u as UsuarioRow);
+            }}
+          />
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
           <div className="relative md:col-span-2">
