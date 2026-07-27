@@ -85,6 +85,7 @@ const items: Item[] = [
   { title: "Gestão de Coordenação", url: "/administracao/coordenacao", icon: Trophy, roles: ["super_admin", "rh"] },
   { title: "Pendências de Supervisor", url: "/administracao/pendencias-supervisor", icon: ShieldCheck, roles: ["super_admin", "rh"] },
   { title: "Integridade de Dados", url: "/administracao/integridade-dados", icon: ShieldCheck, roles: ["super_admin", "rh"] },
+  { title: "Histórico de Redefinições", url: "/administracao/historico-senhas", icon: KeyRound, roles: ["super_admin", "compliance"] },
   { title: "BI Executivo", url: "/bi-executivo", icon: Sparkles, roles: ["super_admin", "compliance", "rh"] },
   { title: "Observabilidade", url: "/observabilidade", icon: Gauge, roles: ["super_admin", "compliance"] },
   { title: "Inteligência Analítica", url: "/inteligencia", icon: Sparkles, roles: ["super_admin", "compliance", "rh", "coordenador", "supervisor"] },
