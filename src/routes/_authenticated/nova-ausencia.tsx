@@ -253,6 +253,12 @@ function NovaAusenciaPage() {
   const [matchCandidates, setMatchCandidates] = useState<ColabMatch[] | null>(null);
   const [searching, setSearching] = useState(false);
 
+  // UX de busca assistida (auto-pesquisa com debounce + feedback visual)
+  const [buscaEstado, setBuscaEstado] = useState<BuscaEstado>("idle");
+  const matriculaRef = useRef<HTMLInputElement>(null);
+  const ultimaBuscaRef = useRef<string>("");
+  const coach = useCoachMark("mk9.coach.nova-ausencia.busca.v1");
+
   // Campos específicos de Acidente de Trabalho (categoria ACIDENTES).
   // Só entram no payload quando o tipo selecionado for ACIDENTE_TRABALHO.
   const [acidenteData, setAcidenteData] = useState<string>("");
