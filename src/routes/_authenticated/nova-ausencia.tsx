@@ -96,6 +96,18 @@ import {
 import { createAusencia, updateAusencia } from "@/lib/ausencias.functions";
 import { friendlyRbacError } from "@/lib/rbac/errors";
 import { useFormDraft } from "@/hooks/use-form-draft";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  BuscaSkeleton,
+  BuscaStatus,
+  CoachMark,
+  EstadoVazioBusca,
+  FiltroChips,
+  useCoachMark,
+  type BuscaEstado,
+  type FiltroChip,
+} from "@/components/busca/busca-assistida";
+import { logEvent } from "@/lib/observability";
 
 const formatPhoneBR = formatTelefone;
 
@@ -240,6 +252,12 @@ function NovaAusenciaPage() {
   const [colab, setColab] = useState<ColabMatch | null>(null);
   const [matchCandidates, setMatchCandidates] = useState<ColabMatch[] | null>(null);
   const [searching, setSearching] = useState(false);
+
+  // UX de busca assistida (auto-pesquisa com debounce + feedback visual)
+  const [buscaEstado, setBuscaEstado] = useState<BuscaEstado>("idle");
+  const matriculaRef = useRef<HTMLInputElement>(null);
+  const ultimaBuscaRef = useRef<string>("");
+  const coach = useCoachMark("mk9.coach.nova-ausencia.busca.v1");
 
   // Campos específicos de Acidente de Trabalho (categoria ACIDENTES).
   // Só entram no payload quando o tipo selecionado for ACIDENTE_TRABALHO.
@@ -471,13 +489,17 @@ function NovaAusenciaPage() {
   }, [isEdit, ausencia, prefilled, form, applyColab]);
 
 
-  async function searchMatricula(rawValue?: string) {
+  async function searchMatricula(rawValue?: string, origem: "auto" | "manual" = "manual") {
     const val = (rawValue ?? matriculaInput).trim();
     if (!val) {
-      toast.error("Digite a matrícula.");
+      if (origem === "manual") toast.error("Digite a matrícula.");
       return;
     }
+    ultimaBuscaRef.current = val;
+    const inicio = performance.now();
     setSearching(true);
+    setBuscaEstado("carregando");
+    let resultado: "ok" | "erro" = "ok";
     try {
       const { data, error } = await supabase
         .from("colaboradores")
@@ -493,31 +515,88 @@ function NovaAusenciaPage() {
         form.setValue("colaborador_id", "");
         form.setValue("empresa_id", "");
         form.setValue("projeto_id", "");
-        toast.error("Matrícula não encontrada.", {
-          description: "Verifique o número ou cadastre o colaborador em Colaboradores.",
-        });
+        if (origem === "manual") {
+          toast.error("Matrícula não encontrada.", {
+            description: "Verifique o número ou cadastre o colaborador em Colaboradores.",
+          });
+        }
       } else if (rows.length === 1) {
         applyColab(rows[0]);
-        toast.success("Colaborador encontrado.");
+        if (origem === "manual") toast.success("Colaborador encontrado.");
       } else {
         setMatchCandidates(rows);
       }
+      setBuscaEstado("atualizado");
     } catch (e) {
+      resultado = "erro";
+      setBuscaEstado("idle");
       toast.error("Erro ao buscar colaborador.", {
         description: e instanceof Error ? e.message : String(e),
       });
     } finally {
       setSearching(false);
+      // Telemetria anônima: apenas origem, resultado e duração.
+      logEvent({
+        categoria: "rpc",
+        acao: origem === "auto" ? "busca_colaborador_automatica" : "busca_colaborador_manual",
+        resultado,
+        duracao_ms: Math.round(performance.now() - inicio),
+      });
     }
   }
+
+  // Auto-pesquisa com debounce (~500 ms) — a lupa deixa de ser obrigatória.
+  useEffect(() => {
+    const val = matriculaInput.trim();
+    if (isEdit || bloqueado || colab) return;
+    if (val.length < 2 || val === ultimaBuscaRef.current) return;
+    const t = setTimeout(() => {
+      void searchMatricula(val, "auto");
+    }, 500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matriculaInput, isEdit, bloqueado, colab]);
+
+  // O check verde "Dados atualizados" some após alguns segundos.
+  useEffect(() => {
+    if (buscaEstado !== "atualizado") return;
+    const t = setTimeout(() => setBuscaEstado("idle"), 2500);
+    return () => clearTimeout(t);
+  }, [buscaEstado]);
 
   function clearColab() {
     setColab(null);
     setMatriculaInput("");
+    ultimaBuscaRef.current = "";
+    setBuscaEstado("idle");
     form.setValue("colaborador_id", "");
     form.setValue("empresa_id", "");
     form.setValue("projeto_id", "");
   }
+
+  // Chips de filtros/critérios ativos da busca
+  const chipsBusca: FiltroChip[] = useMemo(() => {
+    const list: FiltroChip[] = [];
+    if (matriculaInput.trim()) {
+      list.push({
+        id: "matricula",
+        titulo: "Matrícula",
+        valor: matriculaInput.trim(),
+        onRemove: isEdit ? undefined : clearColab,
+      });
+    }
+    if (colab?.empresa?.nome) {
+      list.push({ id: "empresa", titulo: "Empresa", valor: colab.empresa.nome });
+    }
+    if (colab?.projeto?.nome) {
+      list.push({ id: "projeto", titulo: "Projeto", valor: colab.projeto.nome });
+    }
+    if (colab?.supervisor_nome) {
+      list.push({ id: "supervisor", titulo: "Supervisor", valor: colab.supervisor_nome });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return list;
+  }, [matriculaInput, colab, isEdit]);
 
   // Preview de arquivo
   useEffect(() => {
@@ -1006,61 +1085,107 @@ function NovaAusenciaPage() {
 
                       {/* Matrícula (input principal) */}
                       <div className="space-y-1.5">
-                        <Label className="flex items-center gap-1.5 text-sm">
+                        {coach.visible && !isEdit && !bloqueado && (
+                          <CoachMark
+                            text="A pesquisa agora é automática: digite a matrícula e os dados são carregados sozinhos."
+                            onDismiss={coach.dismiss}
+                            onNeverShowAgain={coach.neverShowAgain}
+                          />
+                        )}
+                        <Label htmlFor="matricula-busca" className="flex items-center gap-1.5 text-sm">
                           <Hash className="h-4 w-4 text-muted-foreground" />
                           Matrícula <span className="text-red-500">*</span>
                         </Label>
                         <p className="text-[11px] leading-tight text-muted-foreground">
-                          Digite a matrícula do colaborador. Se existir em mais de uma empresa,
-                          o sistema solicitará a seleção.
+                          Digite a matrícula — a pesquisa é automática. Se existir em mais de uma
+                          empresa, o sistema solicitará a seleção.
                         </p>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col gap-2 sm:flex-row">
                           <Input
+                            id="matricula-busca"
+                            ref={matriculaRef}
                             value={matriculaInput}
                             onChange={(e) => setMatriculaInput(e.target.value)}
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 e.preventDefault();
-                                searchMatricula();
+                                searchMatricula(undefined, "manual");
+                              }
+                              if (e.key === "Escape" && !isEdit && !bloqueado) {
+                                e.preventDefault();
+                                clearColab();
                               }
                             }}
                             placeholder="Ex: 12 ou 123456"
                             disabled={bloqueado || isEdit}
+                            aria-describedby="matricula-busca-status"
                           />
                           {colab ? (
                             <Button
                               type="button"
                               variant="outline"
-                              size="icon"
+                              className="min-h-11 sm:min-h-10"
                               onClick={clearColab}
                               disabled={bloqueado || isEdit}
-                              aria-label="Limpar"
                             >
                               <X className="h-4 w-4" />
+                              <span>Limpar</span>
                             </Button>
                           ) : (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              onClick={() => searchMatricula()}
-                              disabled={searching || bloqueado || isEdit}
-                              aria-label="Buscar"
-                            >
-                              {searching ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Search className="h-4 w-4" />
-                              )}
-                            </Button>
+                            <TooltipProvider delayDuration={200}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="min-h-11 whitespace-nowrap sm:min-h-10"
+                                    onClick={() => searchMatricula(undefined, "manual")}
+                                    disabled={searching || bloqueado || isEdit}
+                                  >
+                                    {searching ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Search className="h-4 w-4" />
+                                    )}
+                                    <span>Atualizar resultados</span>
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  A busca já ocorre automaticamente ao digitar
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
                         </div>
+
+                        <BuscaStatus estado={buscaEstado} className="pt-0.5" />
+                        <span id="matricula-busca-status" className="sr-only">
+                          A pesquisa é executada automaticamente após você parar de digitar.
+                        </span>
+
+                        <FiltroChips chips={chipsBusca} className="pt-1" />
+
+                        {searching && !colab && <BuscaSkeleton linhas={2} />}
+
+                        {!searching &&
+                          !colab &&
+                          !isEdit &&
+                          matriculaInput.trim().length === 0 &&
+                          buscaEstado === "idle" && (
+                            <EstadoVazioBusca
+                              mensagem="Nenhum colaborador selecionado. Informe a matrícula para carregar os dados."
+                              acaoLabel="Informar matrícula"
+                              onAcao={() => matriculaRef.current?.focus()}
+                            />
+                          )}
+
                         {form.formState.errors.colaborador_id && !colab && (
                           <p className="text-xs text-red-500">
                             {form.formState.errors.colaborador_id.message}
                           </p>
                         )}
                       </div>
+
 
                       {/* Nome Completo */}
                       <ReadonlyField
