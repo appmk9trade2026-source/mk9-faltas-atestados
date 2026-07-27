@@ -1429,7 +1429,10 @@ function NovaAusenciaPage() {
                         value={colab?.projeto?.nome ?? ""}
                         placeholder="Selecione..."
                       />
+                      </>
+                      )}
                     </div>
+
 
                     {colab && colab.projeto && !colab.projeto.codigo_protocolo && (
                       <div
