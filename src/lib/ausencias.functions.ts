@@ -261,8 +261,24 @@ export const createAusencia = createServerFn({ method: "POST" })
 
     await audit(context.supabase, "AUSENCIA_CRIADA", row.id as string, gate.correlationId,
       null,
-      { colaborador_id: data.colaborador_id, tipo: tipoBase, tipo_detalhe: tipo.nome, dias, data_inicio: insertPayload.data_inicio, data_fim: insertPayload.data_fim, cid: insertPayload.cid, protocolo: row.protocolo },
-      "criação",
+      {
+        origem_registro: isManual ? "MANUAL" : "AUTOMATICO",
+        colaborador_id: isManual ? null : data.colaborador_id,
+        ...(isManual
+          ? {
+              manual_motivo: data.manual_motivo,
+              manual_motivo_detalhe: data.manual_motivo_detalhe ?? null,
+              manual_nome: data.manual_nome,
+              manual_matricula: data.manual_matricula,
+            }
+          : {}),
+        tipo: tipoBase, tipo_detalhe: tipo.nome, dias,
+        data_inicio: insertPayload.data_inicio, data_fim: insertPayload.data_fim,
+        cid: insertPayload.cid, protocolo: row.protocolo,
+      },
+      isManual
+        ? `criação (preenchimento manual — motivo: ${data.manual_motivo})`
+        : "criação",
       gate.empresaId, gate.projetoId,
     );
 
@@ -270,7 +286,10 @@ export const createAusencia = createServerFn({ method: "POST" })
   });
 
 // ==================== UPDATE ====================
-const updatePayloadSchema = basePayloadSchema.extend({ id: uuid });
+const updatePayloadSchema = z.discriminatedUnion("origem_registro", [
+  autoPayloadSchema.extend({ id: uuid }),
+  manualPayloadSchema.extend({ id: uuid }),
+]);
 
 export const updateAusencia = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -278,26 +297,37 @@ export const updateAusencia = createServerFn({ method: "POST" })
     try { return updatePayloadSchema.parse(data); } catch (e) { throw toInvalidPayload(e); }
   })
   .handler(async ({ data, context }) => {
+    const isManual = data.origem_registro === "MANUAL";
     // Carrega registro atual — para gate por colaborador ATUAL, não pelo enviado.
     const { data: current, error: loadErr } = await context.supabase
       .from("ausencias")
-      .select("id, empresa_id, projeto_id, colaborador_id, status, tipo, tipo_detalhe, dias, motivo, cid, data_inicio, data_fim, localidade, loja_codigo_nome, acidente_trabalho_trajeto, arquivo_url, arquivo_nome, arquivo_mime, arquivo_tamanho")
+      .select("id, empresa_id, projeto_id, colaborador_id, origem_registro, status, tipo, tipo_detalhe, dias, motivo, cid, data_inicio, data_fim, localidade, loja_codigo_nome, acidente_trabalho_trajeto, arquivo_url, arquivo_nome, arquivo_mime, arquivo_tamanho")
       .eq("id", data.id)
       .maybeSingle();
     if (loadErr) throw new Error(`RESOURCE_NOT_FOUND: ${loadErr.message}`);
     if (!current) throw new Error("RESOURCE_NOT_FOUND: ausência não encontrada");
     if (current.status === "LANCADO") throw new Error("CONFLICT: registro já foi lançado e não pode ser alterado");
+    // Origem é imutável — evita converter manual↔automático e burlar escopo.
+    if ((current.origem_registro ?? "AUTOMATICO") !== data.origem_registro) {
+      throw new Error("INVALID_PAYLOAD: a origem do registro não pode ser alterada");
+    }
     // Muda de colaborador? bloqueia — evita bypass de escopo.
-    if (data.colaborador_id !== current.colaborador_id) {
+    if (!isManual && data.colaborador_id !== current.colaborador_id) {
       throw new Error("INVALID_PAYLOAD: colaborador não pode ser alterado após criação");
+    }
+    // Manual: empresa/projeto também são imutáveis após a criação.
+    if (isManual && (data.projeto_id !== current.projeto_id || data.empresa_id !== current.empresa_id)) {
+      throw new Error("INVALID_PAYLOAD: empresa/projeto não podem ser alterados após criação");
     }
 
     const gate = await requirePermission({
       ctx: context,
       permission: PERMISSION_MAP.updateAbsence,
-      colaboradorId: current.colaborador_id as string,
+      colaboradorId: isManual ? null : (current.colaborador_id as string),
+      projetoId: isManual ? (current.projeto_id as string) : null,
       route: "/nova-ausencia",
     });
+
 
     const [tipoRes, opcaoRes] = await Promise.all([
       context.supabase.from("tipos_ausencia" as never).select("codigo, nome, ativo").eq("id", data.tipo_ausencia_id).maybeSingle(),
