@@ -56,6 +56,10 @@ function NovaSenhaPage() {
   const [showPw2, setShowPw2] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Contexto usado apenas para bloquear senha igual ao e-mail/matrícula.
+  const [emailUsuario, setEmailUsuario] = useState<string | null>(null);
+  const [matriculaUsuario, setMatriculaUsuario] = useState<string | null>(null);
+
 
   const { checks, score } = useMemo(() => evaluate(novaSenha), [novaSenha]);
   const forca =
