@@ -68,17 +68,30 @@ export function validarSenhaDefinitiva(pw: string, ctx: ContextoSenha = {}): Res
   if (ctx.email) {
     const email = normalizaComparacao(ctx.email);
     const local = email.split("@")[0] ?? "";
+    const dominio = (email.split("@")[1] ?? "").split(".")[0] ?? "";
     const p = normalizaComparacao(pw);
-    if (p === email || (local.length >= 4 && p === local)) {
-      return { ok: false, motivo: "A senha não pode ser igual ao seu e-mail." };
+    if (
+      p === email ||
+      (local.length >= 4 && p.includes(local)) ||
+      (dominio.length >= 4 && local.length >= 3 && p.includes(dominio) && p.includes(local.slice(0, 3)))
+    ) {
+      return { ok: false, motivo: "A senha não pode ser baseada no seu e-mail." };
     }
   }
   if (ctx.matricula) {
     const mat = normalizaComparacao(ctx.matricula);
-    if (mat.length >= 3 && normalizaComparacao(pw).includes(mat) && pw.length <= mat.length + 3) {
+    if (mat.length >= 3 && normalizaComparacao(pw).includes(mat)) {
       return { ok: false, motivo: "A senha não pode ser baseada na sua matrícula." };
     }
   }
+  if (ctx.nome) {
+    const partes = normalizaComparacao(ctx.nome).split(/\s+/).filter((x) => x.length >= 5);
+    const p = normalizaComparacao(pw);
+    if (partes.some((parte) => p.includes(parte))) {
+      return { ok: false, motivo: "A senha não pode conter seu nome." };
+    }
+  }
+
   return { ok: true };
 }
 
