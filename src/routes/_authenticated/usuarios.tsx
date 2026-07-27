@@ -235,6 +235,8 @@ const editFormSchema = z
   .object({
     id: z.string().uuid(),
     nome: z.string().trim().min(2),
+    email: z.string().trim().email("E-mail inválido"),
+
     telefone: z.string().trim().optional(),
     cargo: z.string().trim().optional(),
     avatar_url: z.string().trim().url().optional().or(z.literal("")),
