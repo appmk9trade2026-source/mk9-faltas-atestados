@@ -33,3 +33,33 @@ export function computeAcessoStatus(u: {
   if (!u.last_sign_in_at) return "nunca_acessou";
   return "ativo";
 }
+
+/**
+ * Dependências que realmente impedem a exclusão física de um usuário.
+ * Rastros de uso (auditoria, logins, notificações, visões de BI, eventos de
+ * alerta) NÃO bloqueiam: não possuem FK para auth.users e são preservados
+ * como histórico anônimo após a exclusão.
+ */
+export const DEPENDENCIAS_BLOQUEANTES = [
+  "ausencias_registradas",
+  "comunicacoes",
+  "homologacoes",
+  "importacoes",
+  "operacao_alertas",
+  "operacao_incidentes",
+  "access_reviews",
+  "supervisores_vinculados",
+  "colaboradores_supervisionados",
+] as const;
+
+export type DependenciaBloqueante = (typeof DEPENDENCIAS_BLOQUEANTES)[number];
+
+export function calcularBloqueiosExclusao(
+  deps: Partial<Record<string, number | null>> | null | undefined,
+): { total: number; detalhes: { chave: DependenciaBloqueante; total: number }[] } {
+  const detalhes = DEPENDENCIAS_BLOQUEANTES.map((chave) => ({
+    chave,
+    total: Number(deps?.[chave] ?? 0),
+  })).filter((d) => d.total > 0);
+  return { total: detalhes.reduce((acc, d) => acc + d.total, 0), detalhes };
+}

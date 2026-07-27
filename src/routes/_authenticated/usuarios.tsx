@@ -235,6 +235,8 @@ const editFormSchema = z
   .object({
     id: z.string().uuid(),
     nome: z.string().trim().min(2),
+    email: z.string().trim().email("E-mail inválido"),
+
     telefone: z.string().trim().optional(),
     cargo: z.string().trim().optional(),
     avatar_url: z.string().trim().url().optional().or(z.literal("")),
@@ -1106,6 +1108,8 @@ function EditDialog({
     defaultValues: {
       id: usuario.id,
       nome: usuario.nome,
+      email: usuario.email ?? "",
+
       telefone: usuario.telefone_whatsapp ?? "",
       cargo: usuario.cargo ?? "",
       avatar_url: usuario.avatar_url ?? "",
@@ -1142,6 +1146,21 @@ function EditDialog({
               <FormField control={form.control} name="nome" render={({ field }) => (
                 <FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
               )} />
+              <FormField control={form.control} name="email" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>E-mail de acesso</FormLabel>
+                  <FormControl>
+                    <Input type="email" autoComplete="off" {...field} value={field.value ?? ""} disabled={!canManageSecurity} />
+                  </FormControl>
+                  <p className="text-[11px] text-muted-foreground">
+                    {canManageSecurity
+                      ? "Alterar o e-mail muda o login do usuário imediatamente."
+                      : "Somente Super Admin pode alterar o e-mail de acesso."}
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )} />
+
               <FormField control={form.control} name="cargo" render={({ field }) => (
                 <FormItem><FormLabel>Cargo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
               )} />

@@ -22,6 +22,8 @@ import {
   excluirUsuarioSeguro,
   type DependenciasUsuario,
 } from "@/lib/usuarios.functions";
+import { calcularBloqueiosExclusao } from "@/lib/usuarios-helpers";
+
 
 type Alvo = {
   id: string;
@@ -53,12 +55,18 @@ const LABELS: Record<keyof Omit<DependenciasUsuario, "total_bloqueante">, string
 };
 
 
-// Chaves informativas (não bloqueiam exclusão — são removidas junto).
+// Chaves informativas (não bloqueiam exclusão — histórico é preservado).
 const INFO_KEYS: (keyof DependenciasUsuario)[] = [
   "vinculos_empresas",
   "vinculos_projetos",
   "roles",
+  "auditorias",
+  "login_events",
+  "notificacao_eventos",
+  "alertas_eventos",
+  "bi_visoes_salvas",
 ];
+
 
 export function ExcluirUsuarioDialog({
   alvo,
@@ -101,9 +109,11 @@ export function ExcluirUsuarioDialog({
   }
 
   const deps = depsQ.data;
-  const bloqueado = (deps?.total_bloqueante ?? 0) > 0;
+  const bloqueios = calcularBloqueiosExclusao(deps as unknown as Record<string, number> | undefined);
+  const bloqueado = bloqueios.total > 0;
   const podeExcluir =
     !!alvo && !depsQ.isLoading && !bloqueado && confirmacao.trim().toUpperCase() === "EXCLUIR";
+
 
   return (
     <Dialog open={!!alvo} onOpenChange={(v) => !v && close()}>
@@ -197,8 +207,11 @@ export function ExcluirUsuarioDialog({
                         </div>
                       )}
                       <div>
-                        Total de {deps.total_bloqueante} registro(s) bloqueante(s). Para
-                        preservar históricos, prefira <strong>Desativar</strong> no menu.
+                        Total de {bloqueios.total} registro(s) operacional(is) bloqueante(s):{" "}
+                        {bloqueios.detalhes
+                          .map((d) => `${LABELS[d.chave as keyof typeof LABELS] ?? d.chave} (${d.total})`)
+                          .join(", ")}
+                        . Para preservar históricos, prefira <strong>Desativar</strong> no menu.
                       </div>
                     </AlertDescription>
                   </Alert>
@@ -208,10 +221,13 @@ export function ExcluirUsuarioDialog({
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Confirmação reforçada</AlertTitle>
                     <AlertDescription className="text-xs">
-                      Nenhum histórico operacional encontrado. A exclusão removerá a identidade de
-                      autenticação, o perfil e os vínculos ativos. Esta ação é irreversível.
+                      Nenhum registro operacional encontrado. Rastros de auditoria, logins e
+                      notificações são preservados de forma anônima. A exclusão removerá a
+                      identidade de autenticação, o perfil e os vínculos ativos. Esta ação é
+                      irreversível.
                     </AlertDescription>
                   </Alert>
+
                 )}
               </div>
             )}

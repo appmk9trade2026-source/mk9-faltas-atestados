@@ -85,7 +85,7 @@ async function audit(
     .then(() => {}, () => {});
 }
 
-import { validarProjetosPertencemAEmpresas } from "@/lib/usuarios-helpers";
+import { validarProjetosPertencemAEmpresas, calcularBloqueiosExclusao } from "@/lib/usuarios-helpers";
 export { validarProjetosPertencemAEmpresas } from "@/lib/usuarios-helpers";
 
 // ---------------- CREATE ----------------
@@ -267,6 +267,7 @@ const updateSchema = z
   .object({
     id: z.string().uuid(),
     nome: z.string().trim().min(2).max(120),
+    email: z.string().trim().toLowerCase().email().max(255).optional(),
     telefone: z.string().trim().max(30).optional().nullable(),
     cargo: z.string().trim().max(80).optional().nullable(),
     avatar_url: z.string().trim().max(500).optional().nullable(),
@@ -276,6 +277,7 @@ const updateSchema = z
     projeto_ids: z.array(z.string().uuid()).default([]),
   })
   .superRefine(checarMatriculaObrigatoria);
+
 
 async function syncSet<T extends string>(opts: {
   supabaseAdmin: typeof import("@/integrations/supabase/client.server").supabaseAdmin;
@@ -373,10 +375,42 @@ export const updateUsuario = createServerFn({ method: "POST" })
       }
     }
 
+    // ---------- Alteração de e-mail (identidade de autenticação) ----------
+    const emailAtual = (profBefore.data.email ?? "").trim().toLowerCase();
+    const emailNovo = (data.email ?? "").trim().toLowerCase();
+    const alterouEmail = !!emailNovo && emailNovo !== emailAtual;
+
+    if (alterouEmail) {
+      const dup = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .ilike("email", emailNovo)
+        .neq("id", data.id)
+        .maybeSingle();
+      if (dup.data) throw new Error("Já existe um usuário com este e-mail.");
+
+      const upAuth = await supabaseAdmin.auth.admin.updateUserById(data.id, {
+        email: emailNovo,
+        email_confirm: true,
+      });
+      if (upAuth.error) {
+        throw new Error(`Não foi possível alterar o e-mail de acesso: ${upAuth.error.message}`);
+      }
+      await audit(
+        context.supabase,
+        "USUARIO_EDITADO",
+        data.id,
+        "E-mail de acesso alterado",
+        { email: emailAtual },
+        { email: emailNovo },
+      );
+    }
+
     const up = await supabaseAdmin
       .from("profiles")
       .update({
         nome: data.nome,
+        ...(alterouEmail ? { email: emailNovo } : {}),
         telefone_whatsapp: data.telefone || null,
         cargo: data.cargo || null,
         avatar_url: data.avatar_url || null,
@@ -384,6 +418,7 @@ export const updateUsuario = createServerFn({ method: "POST" })
       })
       .eq("id", data.id);
     if (up.error) throw new Error(up.error.message);
+
 
     try {
       await syncSet({
@@ -814,22 +849,25 @@ export const excluirUsuarioSeguro = createServerFn({ method: "POST" })
       }
     }
 
-    // 3. Dependências históricas/operacionais bloqueiam a exclusão física.
+    // 3. Apenas dependências operacionais bloqueiam a exclusão física.
+    //    Rastros de uso (auditoria, logins, notificações) são preservados.
     const { data: depData, error: depErr } = await context.supabase.rpc(
       "contar_dependencias_usuario" as never,
       { p_user_id: data.id } as never,
     );
     if (depErr) throw new Error(depErr.message);
     const dep = (depData ?? {}) as DependenciasUsuario;
-    if ((dep.total_bloqueante ?? 0) > 0) {
+    const bloqueios = calcularBloqueiosExclusao(dep as unknown as Record<string, number>);
+    if (bloqueios.total > 0) {
       await audit(
         context.supabase,
         "USUARIO_EXCLUSAO_BLOQUEADA",
         data.id,
-        `Exclusão bloqueada por dependências (total=${dep.total_bloqueante})`,
+        `Exclusão bloqueada por dependências operacionais (total=${bloqueios.total})`,
         null,
-        dep as unknown,
+        bloqueios.detalhes as unknown,
       );
+
       throw new Error(
         "USUARIO_COM_HISTORICO: Este usuário possui registros históricos e não pode ser excluído. Use 'Desativar' para remover o acesso preservando o histórico.",
       );
