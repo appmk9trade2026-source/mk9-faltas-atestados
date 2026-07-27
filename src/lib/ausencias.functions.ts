@@ -22,10 +22,8 @@ import { PERMISSION_MAP } from "@/lib/permissions-map";
 const uuid = z.string().uuid();
 const iso = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "data inválida");
 
-/** Payload comum de criação/edição. IDs de empresa/projeto vindos do cliente
- *  são IGNORADOS — o backend deriva a partir do colaborador. */
-const basePayloadSchema = z.object({
-  colaborador_id: uuid,
+/** Campos comuns às duas origens (AUTOMATICO e MANUAL). */
+const commonPayloadSchema = z.object({
   tipo_ausencia_id: uuid,
   opcao_periodo_id: uuid,
   data_inicio: iso,
@@ -50,6 +48,76 @@ const basePayloadSchema = z.object({
   acidente_cat_emitida: z.boolean().nullable().optional(),
   acidente_observacoes: z.string().trim().max(2000).nullable().optional(),
 });
+
+/** Motivos aceitos para o preenchimento manual (sem vínculo com colaborador). */
+export const MANUAL_MOTIVOS = [
+  "COLABORADOR_NAO_ENCONTRADO",
+  "CADASTRO_DESATUALIZADO",
+  "ADMISSAO_RECENTE",
+  "OUTRO",
+] as const;
+
+/** Origem AUTOMATICA — empresa/projeto derivados do colaborador. */
+const autoPayloadSchema = commonPayloadSchema.extend({
+  origem_registro: z.literal("AUTOMATICO"),
+  colaborador_id: uuid,
+});
+
+/** Origem MANUAL — empresa/projeto informados e validados por escopo RBAC. */
+const manualPayloadSchema = commonPayloadSchema.extend({
+  origem_registro: z.literal("MANUAL"),
+  empresa_id: uuid,
+  projeto_id: uuid,
+  manual_motivo: z.enum(MANUAL_MOTIVOS),
+  manual_motivo_detalhe: z.string().trim().max(300).nullable().optional(),
+  manual_nome: z.string().trim().min(3).max(150),
+  manual_matricula: z.string().trim().min(1).max(50),
+  manual_cpf: z
+    .string()
+    .trim()
+    .transform((v) => v.replace(/\D+/g, ""))
+    .refine((v) => v === "" || v.length === 11, "CPF deve ter 11 dígitos")
+    .nullable()
+    .optional(),
+  manual_cargo: z.string().trim().max(120).nullable().optional(),
+  manual_centro_custo: z.string().trim().max(120).nullable().optional(),
+  manual_telefone: z.string().trim().max(20).nullable().optional(),
+  manual_email: z.string().trim().max(150).nullable().optional(),
+  manual_supervisor_nome: z.string().trim().max(150).nullable().optional(),
+  manual_supervisor_email: z.string().trim().max(150).nullable().optional(),
+});
+
+const basePayloadSchema = z.discriminatedUnion("origem_registro", [
+  autoPayloadSchema,
+  manualPayloadSchema,
+]);
+
+type ManualPayload = z.infer<typeof manualPayloadSchema>;
+
+/** Normaliza os campos manuais antes da persistência (o banco revalida). */
+function manualColumns(data: ManualPayload, userId: string) {
+  const digits = (v: string | null | undefined) => (v ? v.replace(/\D+/g, "") || null : null);
+  const trim = (v: string | null | undefined) => (v && v.trim() ? v.trim() : null);
+  const lower = (v: string | null | undefined) => trim(v)?.toLowerCase() ?? null;
+  return {
+    origem_registro: "MANUAL" as const,
+    colaborador_id: null,
+    manual_motivo: data.manual_motivo,
+    manual_motivo_detalhe: trim(data.manual_motivo_detalhe),
+    manual_nome: data.manual_nome.trim(),
+    manual_matricula: data.manual_matricula.trim(),
+    manual_cpf: digits(data.manual_cpf),
+    manual_cargo: trim(data.manual_cargo),
+    manual_centro_custo: trim(data.manual_centro_custo),
+    manual_telefone: digits(data.manual_telefone),
+    manual_email: lower(data.manual_email),
+    manual_supervisor_nome: trim(data.manual_supervisor_nome),
+    manual_supervisor_email: lower(data.manual_supervisor_email),
+    manual_registrado_por: userId,
+    manual_registrado_em: new Date().toISOString(),
+  };
+}
+
 
 
 function toInvalidPayload(err: unknown): Error {
