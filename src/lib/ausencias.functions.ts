@@ -355,8 +355,19 @@ export const updateAusencia = createServerFn({ method: "POST" })
       }
     }
 
+    // Em registros manuais os dados digitados continuam editáveis enquanto PENDENTE.
+    const manualUpdate = isManual
+      ? (() => {
+          const { manual_registrado_por: _p, manual_registrado_em: _e, ...rest } =
+            manualColumns(data, gate.userId);
+          return rest;
+        })()
+      : {};
+
     const updatePayload = {
+      ...manualUpdate,
       tipo: tipoBase,
+
       tipo_detalhe: tipo.nome,
       dias_label: opcao.nome,
       tipo_ausencia_id: data.tipo_ausencia_id,
