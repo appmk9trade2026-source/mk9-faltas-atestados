@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { validarSenhaDefinitiva, senhaVazada } from "@/lib/senha-forte";
+
 
 /**
  * Conclui o fluxo obrigatório de "Primeiro acesso":
