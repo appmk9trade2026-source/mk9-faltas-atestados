@@ -1019,18 +1019,16 @@ function NovaAusenciaPage() {
             origem_registro: "MANUAL" as const,
             empresa_id: values.empresa_id!,
             projeto_id: values.projeto_id!,
-            manual_motivo: (values.manual_motivo || "COLABORADOR_NAO_ENCONTRADO") as
-              (typeof MANUAL_MOTIVO_OPTIONS)[number]["value"],
-            manual_motivo_detalhe: values.manual_motivo_detalhe?.trim() || null,
+            // Motivo fixo — o operador não digita nem escolhe; a auditoria recebe a origem.
+            manual_motivo: MANUAL_MOTIVO_PADRAO,
+            manual_motivo_detalhe: "Colaborador não localizado pela matrícula informada.",
             manual_nome: values.manual_nome!.trim(),
-            manual_matricula: values.manual_matricula!.trim(),
-            manual_cpf: values.manual_cpf?.trim() || null,
-            manual_cargo: values.manual_cargo?.trim() || null,
-            manual_centro_custo: values.manual_centro_custo?.trim() || null,
+            manual_matricula: (values.manual_matricula || matriculaInput).trim(),
             manual_telefone: values.manual_telefone?.trim() || null,
+            manual_whatsapp: values.manual_whatsapp?.trim() || null,
             manual_email: values.manual_email?.trim() || null,
             manual_supervisor_nome: values.manual_supervisor_nome?.trim() || null,
-            manual_supervisor_email: values.manual_supervisor_email?.trim() || null,
+            manual_supervisor_telefone: values.manual_supervisor_telefone?.trim() || null,
           }
         : { origem_registro: "AUTOMATICO" as const, colaborador_id: values.colaborador_id! };
 
