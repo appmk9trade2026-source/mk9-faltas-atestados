@@ -629,19 +629,25 @@ function NovaAusenciaPage() {
       if (rows.length === 0) {
         setColab(null);
         form.setValue("colaborador_id", "");
-        form.setValue("empresa_id", "");
-        form.setValue("projeto_id", "");
+        if (!form.getValues("modo_manual")) {
+          form.setValue("empresa_id", "");
+          form.setValue("projeto_id", "");
+        }
+        setNaoEncontrado(true);
         if (origem === "manual") {
           toast.error("Matrícula não encontrada.", {
-            description: "Verifique o número ou cadastre o colaborador em Colaboradores.",
+            description: "Cadastre o colaborador ou use o preenchimento manual.",
           });
         }
       } else if (rows.length === 1) {
+        setNaoEncontrado(false);
         applyColab(rows[0]);
         if (origem === "manual") toast.success("Colaborador encontrado.");
       } else {
+        setNaoEncontrado(false);
         setMatchCandidates(rows);
       }
+
       setBuscaEstado("atualizado");
     } catch (e) {
       resultado = "erro";
