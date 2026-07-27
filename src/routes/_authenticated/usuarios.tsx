@@ -1108,6 +1108,8 @@ function EditDialog({
     defaultValues: {
       id: usuario.id,
       nome: usuario.nome,
+      email: usuario.email ?? "",
+
       telefone: usuario.telefone_whatsapp ?? "",
       cargo: usuario.cargo ?? "",
       avatar_url: usuario.avatar_url ?? "",
