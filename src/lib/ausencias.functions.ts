@@ -471,19 +471,22 @@ export const alterarStatusAusencia = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: current } = await context.supabase
       .from("ausencias")
-      .select("id, colaborador_id, status")
+      .select("id, colaborador_id, projeto_id, status")
       .eq("id", data.id)
       .maybeSingle();
     if (!current) throw new Error("RESOURCE_NOT_FOUND: ausência não encontrada");
     if (current.status === data.status) throw new Error("CONFLICT: status já é o solicitado");
 
-    // Alterar status é uma edição — exige ausencia.editar + escopo de colaborador
+    // Alterar status é uma edição — exige ausencia.editar + escopo
+    // (colaborador quando automático; projeto quando manual).
     const gate = await requirePermission({
       ctx: context,
       permission: PERMISSION_MAP.updateAbsence,
-      colaboradorId: current.colaborador_id as string,
+      colaboradorId: (current.colaborador_id as string | null) ?? null,
+      projetoId: current.colaborador_id ? null : (current.projeto_id as string),
       route: "/ausencias",
     });
+
 
     const { error } = await context.supabase
       .from("ausencias")
