@@ -314,6 +314,9 @@ function NovaAusenciaPage() {
   const [colab, setColab] = useState<ColabMatch | null>(null);
   const [matchCandidates, setMatchCandidates] = useState<ColabMatch[] | null>(null);
   const [searching, setSearching] = useState(false);
+  // Busca já executada e sem resultados → habilita o preenchimento manual
+  const [naoEncontrado, setNaoEncontrado] = useState(false);
+
 
   // UX de busca assistida (auto-pesquisa com debounce + feedback visual)
   const [buscaEstado, setBuscaEstado] = useState<BuscaEstado>("idle");
