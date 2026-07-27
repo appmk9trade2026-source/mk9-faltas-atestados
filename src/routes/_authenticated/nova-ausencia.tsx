@@ -340,6 +340,7 @@ function NovaAusenciaPage() {
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
+      modo_manual: false,
       colaborador_id: "",
       empresa_id: "",
       projeto_id: "",
@@ -351,6 +352,17 @@ function NovaAusenciaPage() {
       cid: "",
       acidente_trabalho_trajeto: undefined as unknown as "sim",
       motivo: "",
+      manual_motivo: "",
+      manual_motivo_detalhe: "",
+      manual_nome: "",
+      manual_matricula: "",
+      manual_cpf: "",
+      manual_cargo: "",
+      manual_centro_custo: "",
+      manual_telefone: "",
+      manual_email: "",
+      manual_supervisor_nome: "",
+      manual_supervisor_email: "",
     },
   });
 
@@ -360,6 +372,26 @@ function NovaAusenciaPage() {
   const opcaoPeriodoId = form.watch("opcao_periodo_id");
   const motivo = form.watch("motivo") ?? "";
   const cid = form.watch("cid") ?? "";
+  const modoManual = form.watch("modo_manual");
+  const manualEmpresaId = form.watch("empresa_id") ?? "";
+  const manualMotivo = form.watch("manual_motivo") ?? "";
+
+  // Empresas e projetos disponíveis para o lançamento manual (RLS já filtra o escopo).
+  const empresasManualQ = useQuery({
+    queryKey: ["empresas-manual-ausencia", profile?.id ?? "anon"],
+    enabled: modoManual,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("empresas")
+        .select("id, nome")
+        .eq("ativo", true)
+        .order("nome");
+      if (error) throw error;
+      return (data ?? []) as Array<{ id: string; nome: string }>;
+    },
+  });
+  const projetosManualQ = useProjetosAtivosPorEmpresa(modoManual ? manualEmpresaId : null);
+
 
   // ============= Tipos e opções (DB-driven) =============
   const tiposQ = useQuery({
