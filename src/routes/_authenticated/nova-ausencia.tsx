@@ -691,10 +691,33 @@ function NovaAusenciaPage() {
     setMatriculaInput("");
     ultimaBuscaRef.current = "";
     setBuscaEstado("idle");
+    setNaoEncontrado(false);
+    form.setValue("modo_manual", false);
     form.setValue("colaborador_id", "");
     form.setValue("empresa_id", "");
     form.setValue("projeto_id", "");
   }
+
+  /** Ativa/desativa o preenchimento manual (colaborador não localizado). */
+  function toggleModoManual(ativar: boolean) {
+    form.setValue("modo_manual", ativar, { shouldValidate: true });
+    if (ativar) {
+      setColab(null);
+      setMatchCandidates(null);
+      form.setValue("colaborador_id", "");
+      if (!form.getValues("manual_matricula")) {
+        form.setValue("manual_matricula", matriculaInput.trim());
+      }
+      if (!form.getValues("manual_motivo")) {
+        form.setValue("manual_motivo", "COLABORADOR_NAO_ENCONTRADO");
+      }
+      logEvent({ categoria: "ui", acao: "ausencia_modo_manual_ativado", resultado: "ok" });
+    } else {
+      form.setValue("empresa_id", "");
+      form.setValue("projeto_id", "");
+    }
+  }
+
 
   // Chips de filtros/critérios ativos da busca
   const chipsBusca: FiltroChip[] = useMemo(() => {
