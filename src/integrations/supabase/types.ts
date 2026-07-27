@@ -632,7 +632,7 @@ export type Database = {
           arquivo_tamanho: number | null
           arquivo_url: string | null
           cid: string | null
-          colaborador_id: string
+          colaborador_id: string | null
           created_at: string
           data_fim: string
           data_inicio: string
@@ -645,11 +645,25 @@ export type Database = {
           lancado_por: string | null
           localidade: string | null
           loja_codigo_nome: string | null
+          manual_cargo: string | null
+          manual_centro_custo: string | null
+          manual_cpf: string | null
+          manual_email: string | null
+          manual_matricula: string | null
+          manual_motivo: string | null
+          manual_motivo_detalhe: string | null
+          manual_nome: string | null
+          manual_registrado_em: string | null
+          manual_registrado_por: string | null
+          manual_supervisor_email: string | null
+          manual_supervisor_nome: string | null
+          manual_telefone: string | null
           motivo: string | null
           observacoes: string | null
           opcao_periodo_codigo: string | null
           opcao_periodo_id: string | null
           opcao_periodo_nome: string | null
+          origem_registro: string
           possui_anexo: boolean
           projeto_id: string
           protocolo: string | null
@@ -682,7 +696,7 @@ export type Database = {
           arquivo_tamanho?: number | null
           arquivo_url?: string | null
           cid?: string | null
-          colaborador_id: string
+          colaborador_id?: string | null
           created_at?: string
           data_fim: string
           data_inicio: string
@@ -695,11 +709,25 @@ export type Database = {
           lancado_por?: string | null
           localidade?: string | null
           loja_codigo_nome?: string | null
+          manual_cargo?: string | null
+          manual_centro_custo?: string | null
+          manual_cpf?: string | null
+          manual_email?: string | null
+          manual_matricula?: string | null
+          manual_motivo?: string | null
+          manual_motivo_detalhe?: string | null
+          manual_nome?: string | null
+          manual_registrado_em?: string | null
+          manual_registrado_por?: string | null
+          manual_supervisor_email?: string | null
+          manual_supervisor_nome?: string | null
+          manual_telefone?: string | null
           motivo?: string | null
           observacoes?: string | null
           opcao_periodo_codigo?: string | null
           opcao_periodo_id?: string | null
           opcao_periodo_nome?: string | null
+          origem_registro?: string
           possui_anexo?: boolean
           projeto_id: string
           protocolo?: string | null
@@ -732,7 +760,7 @@ export type Database = {
           arquivo_tamanho?: number | null
           arquivo_url?: string | null
           cid?: string | null
-          colaborador_id?: string
+          colaborador_id?: string | null
           created_at?: string
           data_fim?: string
           data_inicio?: string
@@ -745,11 +773,25 @@ export type Database = {
           lancado_por?: string | null
           localidade?: string | null
           loja_codigo_nome?: string | null
+          manual_cargo?: string | null
+          manual_centro_custo?: string | null
+          manual_cpf?: string | null
+          manual_email?: string | null
+          manual_matricula?: string | null
+          manual_motivo?: string | null
+          manual_motivo_detalhe?: string | null
+          manual_nome?: string | null
+          manual_registrado_em?: string | null
+          manual_registrado_por?: string | null
+          manual_supervisor_email?: string | null
+          manual_supervisor_nome?: string | null
+          manual_telefone?: string | null
           motivo?: string | null
           observacoes?: string | null
           opcao_periodo_codigo?: string | null
           opcao_periodo_id?: string | null
           opcao_periodo_nome?: string | null
+          origem_registro?: string
           possui_anexo?: boolean
           projeto_id?: string
           protocolo?: string | null
