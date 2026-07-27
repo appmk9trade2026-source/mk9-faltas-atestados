@@ -689,15 +689,24 @@ export const redefinirSenhaPadraoUsuario = createServerFn({ method: "POST" })
       .eq("user_id", data.id)
       .eq("status", "ATIVA" as never);
 
-    // 3. Auditoria — nunca registra a senha.
+    // 3. Auditoria — nunca registra senha, hash, token ou conteúdo de sessão.
     await audit(
       context.supabase,
       "SENHA_TEMPORARIA_REDEFINIDA",
       data.id,
-      data.motivo?.trim() ? `Motivo: ${data.motivo.trim()}` : "Senha redefinida para a padrão do CRM",
+      `Justificativa administrativa: ${data.motivo.trim()}`,
       null,
-      { email_alvo: prof.data.email, padrao: true, primeiro_acesso_pendente: true, sessoes_encerradas: true },
+      {
+        email_alvo: prof.data.email,
+        padrao: true,
+        primeiro_acesso_pendente: true,
+        sessoes_encerradas: true,
+        justificativa: data.motivo.trim(),
+        executado_por: context.userId,
+        executado_em: now,
+      },
     );
+
 
     // 4. Materializa nova mensagem de boas-vindas COM a senha provisória.
     //    A senha só transita pelo payload do outbox no momento do envio;
