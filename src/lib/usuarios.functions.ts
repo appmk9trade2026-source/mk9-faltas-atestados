@@ -636,7 +636,11 @@ export const redefinirSenhaPadraoUsuario = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z.object({
       id: z.string().uuid(),
-      motivo: z.string().trim().max(500).optional().nullable(),
+      motivo: z
+        .string()
+        .trim()
+        .min(10, "Descreva a justificativa administrativa (mínimo 10 caracteres).")
+        .max(500),
     }).parse(data),
   )
   .handler(async ({ data, context }) => {
@@ -645,6 +649,7 @@ export const redefinirSenhaPadraoUsuario = createServerFn({ method: "POST" })
     if (data.id === context.userId) {
       throw new Error("Você não pode redefinir a própria senha por este fluxo.");
     }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const prof = await supabaseAdmin
       .from("profiles")
