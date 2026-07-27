@@ -160,13 +160,20 @@ export const createAusencia = createServerFn({ method: "POST" })
     try { return basePayloadSchema.parse(data); } catch (e) { throw toInvalidPayload(e); }
   })
   .handler(async ({ data, context }) => {
-    // 1-4. auth + permissão + escopo do colaborador (deriva empresa/projeto)
+    const isManual = data.origem_registro === "MANUAL";
+    // 1-4. auth + permissão + escopo:
+    //  • AUTOMATICO → escopo do colaborador (deriva empresa/projeto)
+    //  • MANUAL     → escopo do PROJETO informado (require_permission valida vínculo)
     const gate = await requirePermission({
       ctx: context,
       permission: PERMISSION_MAP.createAbsence,
-      colaboradorId: data.colaborador_id,
+      colaboradorId: isManual ? null : data.colaborador_id,
+      projetoId: isManual ? data.projeto_id : null,
+      empresaId: isManual ? data.empresa_id : null,
       route: "/nova-ausencia",
+      observacoes: isManual ? `lançamento manual (${data.manual_motivo})` : undefined,
     });
+
 
     // 5. hidratar snapshot de tipo/período pelo backend
     const [tipoRes, opcaoRes] = await Promise.all([
