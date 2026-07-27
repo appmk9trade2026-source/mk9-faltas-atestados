@@ -72,19 +72,11 @@ const manualPayloadSchema = commonPayloadSchema.extend({
   manual_motivo_detalhe: z.string().trim().max(300).nullable().optional(),
   manual_nome: z.string().trim().min(3).max(150),
   manual_matricula: z.string().trim().min(1).max(50),
-  manual_cpf: z
-    .string()
-    .trim()
-    .transform((v) => v.replace(/\D+/g, ""))
-    .refine((v) => v === "" || v.length === 11, "CPF deve ter 11 dígitos")
-    .nullable()
-    .optional(),
-  manual_cargo: z.string().trim().max(120).nullable().optional(),
-  manual_centro_custo: z.string().trim().max(120).nullable().optional(),
   manual_telefone: z.string().trim().max(20).nullable().optional(),
+  manual_whatsapp: z.string().trim().max(20).nullable().optional(),
   manual_email: z.string().trim().max(150).nullable().optional(),
   manual_supervisor_nome: z.string().trim().max(150).nullable().optional(),
-  manual_supervisor_email: z.string().trim().max(150).nullable().optional(),
+  manual_supervisor_telefone: z.string().trim().max(20).nullable().optional(),
 });
 
 const basePayloadSchema = z.discriminatedUnion("origem_registro", [
@@ -106,13 +98,11 @@ function manualColumns(data: ManualPayload, userId: string) {
     manual_motivo_detalhe: trim(data.manual_motivo_detalhe),
     manual_nome: data.manual_nome.trim(),
     manual_matricula: data.manual_matricula.trim(),
-    manual_cpf: digits(data.manual_cpf),
-    manual_cargo: trim(data.manual_cargo),
-    manual_centro_custo: trim(data.manual_centro_custo),
     manual_telefone: digits(data.manual_telefone),
+    manual_whatsapp: digits(data.manual_whatsapp),
     manual_email: lower(data.manual_email),
     manual_supervisor_nome: trim(data.manual_supervisor_nome),
-    manual_supervisor_email: lower(data.manual_supervisor_email),
+    manual_supervisor_telefone: digits(data.manual_supervisor_telefone),
     manual_registrado_por: userId,
     manual_registrado_em: new Date().toISOString(),
   };

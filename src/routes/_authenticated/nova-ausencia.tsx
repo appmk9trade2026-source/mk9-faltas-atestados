@@ -97,6 +97,7 @@ import { createAusencia, updateAusencia } from "@/lib/ausencias.functions";
 import { friendlyRbacError } from "@/lib/rbac/errors";
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { useProjetosAtivosPorEmpresa } from "@/hooks/use-projetos";
+import { DadosColaboradorFields } from "@/components/ausencias/dados-colaborador-fields";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   BuscaSkeleton,
@@ -147,16 +148,14 @@ type AusenciaEdit = {
   colaborador_id: string | null;
   origem_registro: "AUTOMATICO" | "MANUAL" | null;
   manual_motivo: string | null;
-  manual_motivo_detalhe: string | null;
   manual_nome: string | null;
   manual_matricula: string | null;
-  manual_cpf: string | null;
-  manual_cargo: string | null;
-  manual_centro_custo: string | null;
   manual_telefone: string | null;
+  manual_whatsapp: string | null;
   manual_email: string | null;
   manual_supervisor_nome: string | null;
-  manual_supervisor_email: string | null;
+  manual_supervisor_telefone: string | null;
+
   tipo: TipoAusencia;
   tipo_detalhe: string | null;
   dias_label: string | null;
@@ -176,13 +175,11 @@ type AusenciaEdit = {
   arquivo_tamanho: number | null;
 };
 
-/** Motivos aceitos para o lançamento manual (espelham o backend). */
-const MANUAL_MOTIVO_OPTIONS = [
-  { value: "COLABORADOR_NAO_ENCONTRADO", label: "Colaborador não encontrado na base" },
-  { value: "CADASTRO_DESATUALIZADO", label: "Cadastro desatualizado / inativo" },
-  { value: "ADMISSAO_RECENTE", label: "Admissão recente (ainda não importada)" },
-  { value: "OUTRO", label: "Outro motivo" },
-] as const;
+/**
+ * Motivo fixo do lançamento manual: o operador não escolhe nem detalha — a origem
+ * "colaborador não localizado pela matrícula informada" é registrada na auditoria.
+ */
+const MANUAL_MOTIVO_PADRAO = "COLABORADOR_NAO_ENCONTRADO" as const;
 
 const schema = z
   .object({
@@ -204,18 +201,14 @@ const schema = z
       .trim()
       .min(5, "Mínimo de 5 caracteres.")
       .max(500, "Máximo de 500 caracteres."),
-    // Preenchimento manual (colaborador não encontrado)
-    manual_motivo: z.string().optional().or(z.literal("")),
-    manual_motivo_detalhe: z.string().max(300).optional().or(z.literal("")),
+    // Preenchimento manual — mesmos campos do formulário padrão
     manual_nome: z.string().max(150).optional().or(z.literal("")),
     manual_matricula: z.string().max(50).optional().or(z.literal("")),
-    manual_cpf: z.string().max(20).optional().or(z.literal("")),
-    manual_cargo: z.string().max(120).optional().or(z.literal("")),
-    manual_centro_custo: z.string().max(120).optional().or(z.literal("")),
     manual_telefone: z.string().max(20).optional().or(z.literal("")),
+    manual_whatsapp: z.string().max(20).optional().or(z.literal("")),
     manual_email: z.string().max(150).optional().or(z.literal("")),
     manual_supervisor_nome: z.string().max(150).optional().or(z.literal("")),
-    manual_supervisor_email: z.string().max(150).optional().or(z.literal("")),
+    manual_supervisor_telefone: z.string().max(20).optional().or(z.literal("")),
   })
   .superRefine((v, ctx) => {
     const req = (path: keyof typeof v, message: string) =>
@@ -227,23 +220,23 @@ const schema = z
     }
     if (!v.empresa_id) req("empresa_id", "Selecione a empresa.");
     if (!v.projeto_id) req("projeto_id", "Selecione o projeto.");
-    if (!v.manual_motivo) req("manual_motivo", "Informe o motivo do preenchimento manual.");
-    if (v.manual_motivo === "OUTRO" && !(v.manual_motivo_detalhe ?? "").trim()) {
-      req("manual_motivo_detalhe", "Descreva o motivo.");
-    }
     if ((v.manual_nome ?? "").trim().length < 3) {
       req("manual_nome", "Informe o nome completo (mínimo 3 caracteres).");
     }
     if (!(v.manual_matricula ?? "").trim()) req("manual_matricula", "Informe a matrícula.");
-    const cpf = (v.manual_cpf ?? "").replace(/\D+/g, "");
-    if (cpf && cpf.length !== 11) req("manual_cpf", "CPF deve ter 11 dígitos.");
+    if (!(v.manual_telefone ?? "").trim()) {
+      req("manual_telefone", "Informe o telefone do colaborador.");
+    }
+    if (!(v.manual_supervisor_nome ?? "").trim()) {
+      req("manual_supervisor_nome", "Informe o supervisor(a).");
+    }
+    if (!(v.manual_supervisor_telefone ?? "").trim()) {
+      req("manual_supervisor_telefone", "Informe o telefone do supervisor.");
+    }
     const email = (v.manual_email ?? "").trim();
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) req("manual_email", "E-mail inválido.");
-    const supEmail = (v.manual_supervisor_email ?? "").trim();
-    if (supEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(supEmail)) {
-      req("manual_supervisor_email", "E-mail inválido.");
-    }
   });
+
 
 
 type FormData = z.infer<typeof schema>;
@@ -353,17 +346,13 @@ function NovaAusenciaPage() {
       cid: "",
       acidente_trabalho_trajeto: undefined as unknown as "sim",
       motivo: "",
-      manual_motivo: "",
-      manual_motivo_detalhe: "",
       manual_nome: "",
       manual_matricula: "",
-      manual_cpf: "",
-      manual_cargo: "",
-      manual_centro_custo: "",
       manual_telefone: "",
+      manual_whatsapp: "",
       manual_email: "",
       manual_supervisor_nome: "",
-      manual_supervisor_email: "",
+      manual_supervisor_telefone: "",
     },
   });
 
@@ -375,7 +364,7 @@ function NovaAusenciaPage() {
   const cid = form.watch("cid") ?? "";
   const modoManual = form.watch("modo_manual");
   const manualEmpresaId = form.watch("empresa_id") ?? "";
-  const manualMotivo = form.watch("manual_motivo") ?? "";
+  
 
   // Empresas e projetos disponíveis para o lançamento manual (RLS já filtra o escopo).
   const empresasManualQ = useQuery({
@@ -474,7 +463,7 @@ function NovaAusenciaPage() {
       const { data, error } = await supabase
         .from("ausencias")
         .select(
-          "id, empresa_id, projeto_id, colaborador_id, origem_registro, manual_motivo, manual_motivo_detalhe, manual_nome, manual_matricula, manual_cpf, manual_cargo, manual_centro_custo, manual_telefone, manual_email, manual_supervisor_nome, manual_supervisor_email, tipo, tipo_detalhe, dias_label, motivo, data_inicio, data_fim, dias, localidade, cid, loja_codigo_nome, acidente_trabalho_trajeto, status, possui_anexo, arquivo_url, arquivo_nome, arquivo_mime, arquivo_tamanho, acidente_data, acidente_hora, acidente_local, acidente_descricao, acidente_atendimento_medico, acidente_houve_afastamento, acidente_dias_afastamento_inicial, acidente_cat_emitida, acidente_observacoes",
+          "id, empresa_id, projeto_id, colaborador_id, origem_registro, manual_motivo, manual_nome, manual_matricula, manual_telefone, manual_whatsapp, manual_email, manual_supervisor_nome, manual_supervisor_telefone, tipo, tipo_detalhe, dias_label, motivo, data_inicio, data_fim, dias, localidade, cid, loja_codigo_nome, acidente_trabalho_trajeto, status, possui_anexo, arquivo_url, arquivo_nome, arquivo_mime, arquivo_tamanho, acidente_data, acidente_hora, acidente_local, acidente_descricao, acidente_atendimento_medico, acidente_houve_afastamento, acidente_dias_afastamento_inicial, acidente_cat_emitida, acidente_observacoes",
         )
         .eq("id", editId!)
         .maybeSingle();
@@ -570,17 +559,13 @@ function NovaAusenciaPage() {
               ? "nao"
               : (undefined as unknown as "sim"),
         motivo: ausencia.motivo ?? "",
-        manual_motivo: ausencia.manual_motivo ?? "",
-        manual_motivo_detalhe: ausencia.manual_motivo_detalhe ?? "",
         manual_nome: ausencia.manual_nome ?? "",
         manual_matricula: ausencia.manual_matricula ?? "",
-        manual_cpf: ausencia.manual_cpf ?? "",
-        manual_cargo: ausencia.manual_cargo ?? "",
-        manual_centro_custo: ausencia.manual_centro_custo ?? "",
         manual_telefone: ausencia.manual_telefone ?? "",
+        manual_whatsapp: ausencia.manual_whatsapp ?? "",
         manual_email: ausencia.manual_email ?? "",
         manual_supervisor_nome: ausencia.manual_supervisor_nome ?? "",
-        manual_supervisor_email: ausencia.manual_supervisor_email ?? "",
+        manual_supervisor_telefone: ausencia.manual_supervisor_telefone ?? "",
       });
 
       const a = ausencia as unknown as {
@@ -708,9 +693,7 @@ function NovaAusenciaPage() {
       if (!form.getValues("manual_matricula")) {
         form.setValue("manual_matricula", matriculaInput.trim());
       }
-      if (!form.getValues("manual_motivo")) {
-        form.setValue("manual_motivo", "COLABORADOR_NAO_ENCONTRADO");
-      }
+      form.setValue("manual_matricula", matriculaInput.trim(), { shouldValidate: true });
       logEvent({ categoria: "tela", acao: "ausencia_modo_manual_ativado", resultado: "ok", duracao_ms: 0 });
     } else {
       form.setValue("empresa_id", "");
@@ -1030,18 +1013,16 @@ function NovaAusenciaPage() {
             origem_registro: "MANUAL" as const,
             empresa_id: values.empresa_id!,
             projeto_id: values.projeto_id!,
-            manual_motivo: (values.manual_motivo || "COLABORADOR_NAO_ENCONTRADO") as
-              (typeof MANUAL_MOTIVO_OPTIONS)[number]["value"],
-            manual_motivo_detalhe: values.manual_motivo_detalhe?.trim() || null,
+            // Motivo fixo — o operador não digita nem escolhe; a auditoria recebe a origem.
+            manual_motivo: MANUAL_MOTIVO_PADRAO,
+            manual_motivo_detalhe: "Colaborador não localizado pela matrícula informada.",
             manual_nome: values.manual_nome!.trim(),
-            manual_matricula: values.manual_matricula!.trim(),
-            manual_cpf: values.manual_cpf?.trim() || null,
-            manual_cargo: values.manual_cargo?.trim() || null,
-            manual_centro_custo: values.manual_centro_custo?.trim() || null,
+            manual_matricula: (values.manual_matricula || matriculaInput).trim(),
             manual_telefone: values.manual_telefone?.trim() || null,
+            manual_whatsapp: values.manual_whatsapp?.trim() || null,
             manual_email: values.manual_email?.trim() || null,
             manual_supervisor_nome: values.manual_supervisor_nome?.trim() || null,
-            manual_supervisor_email: values.manual_supervisor_email?.trim() || null,
+            manual_supervisor_telefone: values.manual_supervisor_telefone?.trim() || null,
           }
         : { origem_registro: "AUTOMATICO" as const, colaborador_id: values.colaborador_id! };
 
@@ -1239,352 +1220,166 @@ function NovaAusenciaPage() {
                       <h2 className="text-base font-semibold">Dados do Colaborador</h2>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                      {/* E-mail */}
-                      <ReadonlyField
-                        label="E-mail"
-                        icon={Mail}
-                        value={colab?.email ?? ""}
-                        placeholder="colaborador@empresa.com"
-                        href={colab?.email ? `mailto:${colab.email}` : undefined}
-                      />
-
-                      {/* Matrícula (input principal) */}
-                      <div className="space-y-1.5">
-                        {coach.visible && !isEdit && !bloqueado && (
-                          <CoachMark
-                            text="A pesquisa agora é automática: digite a matrícula e os dados são carregados sozinhos."
-                            onDismiss={coach.dismiss}
-                            onNeverShowAgain={coach.neverShowAgain}
-                          />
-                        )}
-                        <Label htmlFor="matricula-busca" className="flex items-center gap-1.5 text-sm">
-                          <Hash className="h-4 w-4 text-muted-foreground" />
-                          Matrícula <span className="text-red-500">*</span>
-                        </Label>
-                        <p className="text-[11px] leading-tight text-muted-foreground">
-                          Digite a matrícula — a pesquisa é automática. Se existir em mais de uma
-                          empresa, o sistema solicitará a seleção.
-                        </p>
-                        <div className="flex flex-col gap-2 sm:flex-row">
-                          <Input
-                            id="matricula-busca"
-                            ref={matriculaRef}
-                            value={matriculaInput}
-                            onChange={(e) => setMatriculaInput(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                searchMatricula(undefined, "manual");
-                              }
-                              if (e.key === "Escape" && !isEdit && !bloqueado) {
-                                e.preventDefault();
-                                clearColab();
-                              }
-                            }}
-                            placeholder="Ex: 12 ou 123456"
-                            disabled={bloqueado || isEdit}
-                            aria-describedby="matricula-busca-status"
-                          />
-                          {colab ? (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              className="min-h-11 sm:min-h-10"
-                              onClick={clearColab}
-                              disabled={bloqueado || isEdit}
-                            >
-                              <X className="h-4 w-4" />
-                              <span>Limpar</span>
-                            </Button>
-                          ) : (
-                            <TooltipProvider delayDuration={200}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="min-h-11 whitespace-nowrap sm:min-h-10"
-                                    onClick={() => searchMatricula(undefined, "manual")}
-                                    disabled={searching || bloqueado || isEdit}
-                                  >
-                                    {searching ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <Search className="h-4 w-4" />
-                                    )}
-                                    <span>Atualizar resultados</span>
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  A busca já ocorre automaticamente ao digitar
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
-
-                        <BuscaStatus estado={buscaEstado} className="pt-0.5" />
-                        <span id="matricula-busca-status" className="sr-only">
-                          A pesquisa é executada automaticamente após você parar de digitar.
-                        </span>
-
-                        <FiltroChips chips={chipsBusca} className="pt-1" />
-
-                        {searching && !colab && <BuscaSkeleton linhas={2} />}
-
-                        {!searching &&
-                          !colab &&
-                          !isEdit &&
-                          matriculaInput.trim().length === 0 &&
-                          buscaEstado === "idle" && (
-                            <EstadoVazioBusca
-                              mensagem="Nenhum colaborador selecionado. Informe a matrícula para carregar os dados."
-                              acaoLabel="Informar matrícula"
-                              onAcao={() => matriculaRef.current?.focus()}
+                    <DadosColaboradorFields
+                      modo={modoManual ? "MANUAL" : "AUTOMATICO"}
+                      colaboradorEncontrado={colab}
+                      form={form}
+                      empresasDisponiveis={empresasManualQ.data ?? []}
+                      projetosDisponiveis={projetosManualQ.data ?? []}
+                      matriculaSlot={
+                        <div className="space-y-1.5">
+                          {coach.visible && !isEdit && !bloqueado && (
+                            <CoachMark
+                              text="A pesquisa agora é automática: digite a matrícula e os dados são carregados sozinhos."
+                              onDismiss={coach.dismiss}
+                              onNeverShowAgain={coach.neverShowAgain}
                             />
                           )}
+                          <Label htmlFor="matricula-busca" className="flex items-center gap-1.5 text-sm">
+                            <Hash className="h-4 w-4 text-muted-foreground" />
+                            Matrícula <span className="text-red-500">*</span>
+                          </Label>
+                          <p className="text-[11px] leading-tight text-muted-foreground">
+                            Digite a matrícula — a pesquisa é automática. Se existir em mais de uma
+                            empresa, o sistema solicitará a seleção.
+                          </p>
+                          <div className="flex flex-col gap-2 sm:flex-row">
+                            <Input
+                              id="matricula-busca"
+                              ref={matriculaRef}
+                              value={matriculaInput}
+                              onChange={(e) => {
+                                setMatriculaInput(e.target.value);
+                                if (form.getValues("modo_manual")) {
+                                  form.setValue("manual_matricula", e.target.value.trim(), {
+                                    shouldValidate: true,
+                                  });
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  searchMatricula(undefined, "manual");
+                                }
+                                if (e.key === "Escape" && !isEdit && !bloqueado) {
+                                  e.preventDefault();
+                                  clearColab();
+                                }
+                              }}
+                              placeholder="Ex: 12 ou 123456"
+                              disabled={bloqueado || isEdit}
+                              aria-describedby="matricula-busca-status"
+                            />
+                            {colab ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="min-h-11 sm:min-h-10"
+                                onClick={clearColab}
+                                disabled={bloqueado || isEdit}
+                              >
+                                <X className="h-4 w-4" />
+                                <span>Limpar</span>
+                              </Button>
+                            ) : (
+                              <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      className="min-h-11 whitespace-nowrap sm:min-h-10"
+                                      onClick={() => searchMatricula(undefined, "manual")}
+                                      disabled={searching || bloqueado || isEdit}
+                                    >
+                                      {searching ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <Search className="h-4 w-4" />
+                                      )}
+                                      <span>Atualizar resultados</span>
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    A busca já ocorre automaticamente ao digitar
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                          </div>
 
-                        {form.formState.errors.colaborador_id && !colab && (
-                          <p className="text-xs text-red-500">
-                            {form.formState.errors.colaborador_id.message}
-                          </p>
-                        )}
-                      </div>
+                          <BuscaStatus estado={buscaEstado} className="pt-0.5" />
+                          <span id="matricula-busca-status" className="sr-only">
+                            A pesquisa é executada automaticamente após você parar de digitar.
+                          </span>
 
-                      {/* Faixa de preenchimento manual */}
-                      {!isEdit && naoEncontrado && !colab && (
-                        <div className="sm:col-span-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
-                          <p className="font-medium text-amber-900 dark:text-amber-200">
-                            Colaborador não localizado nesta matrícula.
-                          </p>
-                          <p className="mt-1 text-amber-900/80 dark:text-amber-200/80">
-                            Você pode preencher os dados manualmente. O lançamento ficará marcado
-                            como <strong>MANUAL</strong> na auditoria.
-                          </p>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant={modoManual ? "secondary" : "default"}
-                            className="mt-2"
-                            onClick={() => toggleModoManual(!modoManual)}
-                          >
-                            {modoManual ? "Cancelar preenchimento manual" : "Preencher manualmente"}
-                          </Button>
+                          <FiltroChips chips={chipsBusca} className="pt-1" />
+
+                          {searching && !colab && <BuscaSkeleton linhas={2} />}
+
+                          {!searching &&
+                            !colab &&
+                            !isEdit &&
+                            matriculaInput.trim().length === 0 &&
+                            buscaEstado === "idle" && (
+                              <EstadoVazioBusca
+                                mensagem="Nenhum colaborador selecionado. Informe a matrícula para carregar os dados."
+                                acaoLabel="Informar matrícula"
+                                onAcao={() => matriculaRef.current?.focus()}
+                              />
+                            )}
+
+                          {form.formState.errors.colaborador_id && !colab && (
+                            <p className="text-xs text-red-500">
+                              {form.formState.errors.colaborador_id.message}
+                            </p>
+                          )}
+                          {form.formState.errors.manual_matricula && modoManual && (
+                            <p className="text-xs text-red-500">
+                              {form.formState.errors.manual_matricula.message}
+                            </p>
+                          )}
                         </div>
-                      )}
-
-                      {modoManual ? (
-                      <>
-                      {/* ===== Preenchimento manual ===== */}
-                      <div className="space-y-1.5">
-                        <Label>Motivo do lançamento manual *</Label>
-                        <Select
-                          value={manualMotivo || undefined}
-                          onValueChange={(v) => form.setValue("manual_motivo", v, { shouldValidate: true })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o motivo" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {MANUAL_MOTIVO_OPTIONS.map((o) => (
-                              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {form.formState.errors.manual_motivo && (
-                          <p className="text-xs text-red-500">{form.formState.errors.manual_motivo.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label>Detalhe do motivo</Label>
-                        <Input maxLength={300} placeholder="Opcional" {...form.register("manual_motivo_detalhe")} />
-                        {form.formState.errors.manual_motivo_detalhe && (
-                          <p className="text-xs text-red-500">{form.formState.errors.manual_motivo_detalhe.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label>Nome completo *</Label>
-                        <Input maxLength={150} placeholder="Nome do colaborador" {...form.register("manual_nome")} />
-                        {form.formState.errors.manual_nome && (
-                          <p className="text-xs text-red-500">{form.formState.errors.manual_nome.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label>Matrícula *</Label>
-                        <Input maxLength={50} placeholder="Matrícula" {...form.register("manual_matricula")} />
-                        {form.formState.errors.manual_matricula && (
-                          <p className="text-xs text-red-500">{form.formState.errors.manual_matricula.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label>CPF</Label>
-                        <Input maxLength={14} placeholder="Somente números" {...form.register("manual_cpf")} />
-                        {form.formState.errors.manual_cpf && (
-                          <p className="text-xs text-red-500">{form.formState.errors.manual_cpf.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label>Cargo</Label>
-                        <Input maxLength={120} {...form.register("manual_cargo")} />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label>Centro de custo</Label>
-                        <Input maxLength={120} {...form.register("manual_centro_custo")} />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label>Telefone</Label>
-                        <Input maxLength={20} placeholder="(XX) XXXXX-XXXX" {...form.register("manual_telefone")} />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label>E-mail</Label>
-                        <Input maxLength={150} type="email" {...form.register("manual_email")} />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label>Supervisor(a)</Label>
-                        <Input maxLength={150} {...form.register("manual_supervisor_nome")} />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label>E-mail do supervisor</Label>
-                        <Input maxLength={150} type="email" {...form.register("manual_supervisor_email")} />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label>Empresa *</Label>
-                        <Select
-                          value={manualEmpresaId || undefined}
-                          onValueChange={(v) => {
-                            form.setValue("empresa_id", v, { shouldValidate: true });
-                            form.setValue("projeto_id", "", { shouldValidate: true });
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione a empresa" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {(empresasManualQ.data ?? []).map((e) => (
-                              <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {form.formState.errors.empresa_id && (
-                          <p className="text-xs text-red-500">{form.formState.errors.empresa_id.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label>Projeto *</Label>
-                        <Select
-                          value={form.watch("projeto_id") || undefined}
-                          onValueChange={(v) => form.setValue("projeto_id", v, { shouldValidate: true })}
-                          disabled={!manualEmpresaId}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder={manualEmpresaId ? "Selecione o projeto" : "Escolha a empresa primeiro"} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {(projetosManualQ.data ?? []).map((p) => (
-                              <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {form.formState.errors.projeto_id && (
-                          <p className="text-xs text-red-500">{form.formState.errors.projeto_id.message}</p>
-                        )}
-                      </div>
-                      </>
-                      ) : (
-                      <>
-                      {/* Nome Completo */}
-
-                      <ReadonlyField
-                        label="Nome Completo"
-                        required
-                        icon={UserIcon}
-                        value={colab?.nome_completo ?? ""}
-                        placeholder="Nome completo do colaborador"
-                      />
-
-                      {/* Telefone */}
-                      <ReadonlyField
-                        label="Telefone do Colaborador"
-                        required
-                        icon={Phone}
-                        value={colab?.telefone ? formatPhoneBR(colab.telefone) : ""}
-                        placeholder="(XX) XXXXX-XXXX"
-                        href={colab?.telefone ? `tel:+55${colab.telefone}` : undefined}
-                      />
-
-                      {/* WhatsApp */}
-                      <div className="space-y-1.5">
-                        <ReadonlyField
-                          label="WhatsApp Alternativo"
-                          icon={MessageSquare}
-                          hint="Opcional — para contato adicional"
-                          value={colab?.whatsapp ? formatPhoneBR(colab.whatsapp) : ""}
-                          placeholder="(XX) XXXXX-XXXX"
-                          href={colab?.whatsapp ? `https://wa.me/55${colab.whatsapp}` : undefined}
-                          external
-                        />
-                      </div>
-
-                      {/* Empresa */}
-                      <ReadonlyField
-                        label="Empresa"
-                        required
-                        icon={Building2}
-                        value={colab?.empresa?.nome ?? ""}
-                        placeholder="Selecione..."
-                      />
-
-                      {/* Supervisor */}
-                      <ReadonlyField
-                        label="Supervisor(a)"
-                        required
-                        icon={UserIcon}
-                        value={colab?.supervisor_nome ?? ""}
-                        placeholder="Selecione..."
-                      />
-
-                      {/* Telefone do Supervisor */}
-                      <ReadonlyField
-                        label="Telefone do Supervisor"
-                        required
-                        icon={Phone}
-                        value={
-                          colab?.supervisor_telefone
-                            ? formatPhoneBR(colab.supervisor_telefone)
-                            : ""
-                        }
-                        placeholder="(XX) XXXXX-XXXX"
-                        href={
-                          colab?.supervisor_telefone
-                            ? `tel:+55${colab.supervisor_telefone}`
-                            : undefined
-                        }
-                      />
-
-                      {/* Projeto */}
-                      <ReadonlyField
-                        label="Projeto"
-                        required
-                        icon={ClipboardList}
-                        value={colab?.projeto?.nome ?? ""}
-                        placeholder="Selecione..."
-                      />
-                      </>
-                      )}
-                    </div>
+                      }
+                      avisoSlot={
+                        !isEdit && naoEncontrado && !colab ? (
+                          <div className="md:col-span-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
+                            <p className="font-medium text-amber-900 dark:text-amber-200">
+                              Colaborador não localizado nesta matrícula.
+                            </p>
+                            {modoManual ? (
+                              <div className="mt-2 flex flex-wrap items-center gap-2">
+                                <span className="inline-flex items-center rounded-full border border-amber-500/50 bg-background/70 px-2.5 py-0.5 text-[11px] font-medium text-amber-900 dark:text-amber-200">
+                                  Preenchimento manual
+                                </span>
+                                <button
+                                  type="button"
+                                  className="text-[11px] underline underline-offset-2 text-amber-900/80 hover:text-amber-900 dark:text-amber-200/80"
+                                  onClick={() => toggleModoManual(false)}
+                                >
+                                  Cancelar
+                                </button>
+                              </div>
+                            ) : (
+                              <>
+                                <p className="mt-1 text-amber-900/80 dark:text-amber-200/80">
+                                  Você pode preencher os dados manualmente. O lançamento ficará
+                                  marcado como <strong>MANUAL</strong> na auditoria.
+                                </p>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  className="mt-2"
+                                  onClick={() => toggleModoManual(true)}
+                                >
+                                  Preencher manualmente
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        ) : null
+                      }
+                    />
 
 
                     {colab && colab.projeto && !colab.projeto.codigo_protocolo && (
