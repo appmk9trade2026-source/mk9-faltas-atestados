@@ -436,9 +436,11 @@ export const deleteAusencia = createServerFn({ method: "POST" })
     const gate = await requirePermission({
       ctx: context,
       permission: PERMISSION_MAP.deleteAbsence,
-      colaboradorId: current.colaborador_id as string,
+      colaboradorId: (current.colaborador_id as string | null) ?? null,
+      projetoId: current.colaborador_id ? null : (current.projeto_id as string),
       route: "/ausencias",
     });
+
 
     const { error } = await context.supabase.from("ausencias").delete().eq("id", data.id);
     if (error) {
