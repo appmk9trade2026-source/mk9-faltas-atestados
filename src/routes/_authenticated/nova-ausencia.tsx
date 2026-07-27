@@ -1218,8 +1218,8 @@ function NovaAusenciaPage() {
                       toast.error("Sem projetos vinculados. Procure um administrador.");
                       return;
                     }
-                    if (!colab && !isEdit) {
-                      toast.error("Busque um colaborador pela matrícula.");
+                    if (!colab && !isEdit && !v.modo_manual) {
+                      toast.error("Busque um colaborador pela matrícula ou use o preenchimento manual.");
                       return;
                     }
                     if (colab && !colab.projeto?.codigo_protocolo) {
