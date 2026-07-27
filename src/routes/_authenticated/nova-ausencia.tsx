@@ -96,6 +96,7 @@ import {
 import { createAusencia, updateAusencia } from "@/lib/ausencias.functions";
 import { friendlyRbacError } from "@/lib/rbac/errors";
 import { useFormDraft } from "@/hooks/use-form-draft";
+import { useProjetosAtivosPorEmpresa } from "@/hooks/use-projetos";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   BuscaSkeleton,
@@ -143,7 +144,19 @@ type AusenciaEdit = {
   id: string;
   empresa_id: string;
   projeto_id: string;
-  colaborador_id: string;
+  colaborador_id: string | null;
+  origem_registro: "AUTOMATICO" | "MANUAL" | null;
+  manual_motivo: string | null;
+  manual_motivo_detalhe: string | null;
+  manual_nome: string | null;
+  manual_matricula: string | null;
+  manual_cpf: string | null;
+  manual_cargo: string | null;
+  manual_centro_custo: string | null;
+  manual_telefone: string | null;
+  manual_email: string | null;
+  manual_supervisor_nome: string | null;
+  manual_supervisor_email: string | null;
   tipo: TipoAusencia;
   tipo_detalhe: string | null;
   dias_label: string | null;
@@ -163,25 +176,75 @@ type AusenciaEdit = {
   arquivo_tamanho: number | null;
 };
 
-const schema = z.object({
-  colaborador_id: z.string().uuid("Busque um colaborador pela matrícula."),
-  empresa_id: z.string().uuid(),
-  projeto_id: z.string().uuid(),
-  tipo_ausencia_id: z.string().uuid("Selecione o tipo de ausência."),
-  opcao_periodo_id: z.string().uuid("Selecione a quantidade / período."),
-  data_inicio: z.string().min(1, "Informe a data da ausência."),
-  localidade: z.string().trim().min(1, "Localidade é obrigatória.").max(150),
-  loja_codigo_nome: z.string().trim().min(1, "Código ou nome da loja é obrigatório.").max(150),
-  cid: z.string().max(20).optional().or(z.literal("")),
-  acidente_trabalho_trajeto: z.enum(["sim", "nao"], {
-    errorMap: () => ({ message: "Selecione Sim ou Não." }),
-  }),
-  motivo: z
-    .string()
-    .trim()
-    .min(5, "Mínimo de 5 caracteres.")
-    .max(500, "Máximo de 500 caracteres."),
-});
+/** Motivos aceitos para o lançamento manual (espelham o backend). */
+const MANUAL_MOTIVO_OPTIONS = [
+  { value: "COLABORADOR_NAO_ENCONTRADO", label: "Colaborador não encontrado na base" },
+  { value: "CADASTRO_DESATUALIZADO", label: "Cadastro desatualizado / inativo" },
+  { value: "ADMISSAO_RECENTE", label: "Admissão recente (ainda não importada)" },
+  { value: "OUTRO", label: "Outro motivo" },
+] as const;
+
+const schema = z
+  .object({
+    modo_manual: z.boolean(),
+    colaborador_id: z.string().optional().or(z.literal("")),
+    empresa_id: z.string().optional().or(z.literal("")),
+    projeto_id: z.string().optional().or(z.literal("")),
+    tipo_ausencia_id: z.string().uuid("Selecione o tipo de ausência."),
+    opcao_periodo_id: z.string().uuid("Selecione a quantidade / período."),
+    data_inicio: z.string().min(1, "Informe a data da ausência."),
+    localidade: z.string().trim().min(1, "Localidade é obrigatória.").max(150),
+    loja_codigo_nome: z.string().trim().min(1, "Código ou nome da loja é obrigatório.").max(150),
+    cid: z.string().max(20).optional().or(z.literal("")),
+    acidente_trabalho_trajeto: z.enum(["sim", "nao"], {
+      errorMap: () => ({ message: "Selecione Sim ou Não." }),
+    }),
+    motivo: z
+      .string()
+      .trim()
+      .min(5, "Mínimo de 5 caracteres.")
+      .max(500, "Máximo de 500 caracteres."),
+    // Preenchimento manual (colaborador não encontrado)
+    manual_motivo: z.string().optional().or(z.literal("")),
+    manual_motivo_detalhe: z.string().max(300).optional().or(z.literal("")),
+    manual_nome: z.string().max(150).optional().or(z.literal("")),
+    manual_matricula: z.string().max(50).optional().or(z.literal("")),
+    manual_cpf: z.string().max(20).optional().or(z.literal("")),
+    manual_cargo: z.string().max(120).optional().or(z.literal("")),
+    manual_centro_custo: z.string().max(120).optional().or(z.literal("")),
+    manual_telefone: z.string().max(20).optional().or(z.literal("")),
+    manual_email: z.string().max(150).optional().or(z.literal("")),
+    manual_supervisor_nome: z.string().max(150).optional().or(z.literal("")),
+    manual_supervisor_email: z.string().max(150).optional().or(z.literal("")),
+  })
+  .superRefine((v, ctx) => {
+    const req = (path: keyof typeof v, message: string) =>
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message });
+
+    if (!v.modo_manual) {
+      if (!v.colaborador_id) req("colaborador_id", "Busque um colaborador pela matrícula.");
+      return;
+    }
+    if (!v.empresa_id) req("empresa_id", "Selecione a empresa.");
+    if (!v.projeto_id) req("projeto_id", "Selecione o projeto.");
+    if (!v.manual_motivo) req("manual_motivo", "Informe o motivo do preenchimento manual.");
+    if (v.manual_motivo === "OUTRO" && !(v.manual_motivo_detalhe ?? "").trim()) {
+      req("manual_motivo_detalhe", "Descreva o motivo.");
+    }
+    if ((v.manual_nome ?? "").trim().length < 3) {
+      req("manual_nome", "Informe o nome completo (mínimo 3 caracteres).");
+    }
+    if (!(v.manual_matricula ?? "").trim()) req("manual_matricula", "Informe a matrícula.");
+    const cpf = (v.manual_cpf ?? "").replace(/\D+/g, "");
+    if (cpf && cpf.length !== 11) req("manual_cpf", "CPF deve ter 11 dígitos.");
+    const email = (v.manual_email ?? "").trim();
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) req("manual_email", "E-mail inválido.");
+    const supEmail = (v.manual_supervisor_email ?? "").trim();
+    if (supEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(supEmail)) {
+      req("manual_supervisor_email", "E-mail inválido.");
+    }
+  });
+
 
 type FormData = z.infer<typeof schema>;
 
@@ -252,6 +315,9 @@ function NovaAusenciaPage() {
   const [colab, setColab] = useState<ColabMatch | null>(null);
   const [matchCandidates, setMatchCandidates] = useState<ColabMatch[] | null>(null);
   const [searching, setSearching] = useState(false);
+  // Busca já executada e sem resultados → habilita o preenchimento manual
+  const [naoEncontrado, setNaoEncontrado] = useState(false);
+
 
   // UX de busca assistida (auto-pesquisa com debounce + feedback visual)
   const [buscaEstado, setBuscaEstado] = useState<BuscaEstado>("idle");
@@ -275,6 +341,7 @@ function NovaAusenciaPage() {
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
+      modo_manual: false,
       colaborador_id: "",
       empresa_id: "",
       projeto_id: "",
@@ -286,6 +353,17 @@ function NovaAusenciaPage() {
       cid: "",
       acidente_trabalho_trajeto: undefined as unknown as "sim",
       motivo: "",
+      manual_motivo: "",
+      manual_motivo_detalhe: "",
+      manual_nome: "",
+      manual_matricula: "",
+      manual_cpf: "",
+      manual_cargo: "",
+      manual_centro_custo: "",
+      manual_telefone: "",
+      manual_email: "",
+      manual_supervisor_nome: "",
+      manual_supervisor_email: "",
     },
   });
 
@@ -295,6 +373,26 @@ function NovaAusenciaPage() {
   const opcaoPeriodoId = form.watch("opcao_periodo_id");
   const motivo = form.watch("motivo") ?? "";
   const cid = form.watch("cid") ?? "";
+  const modoManual = form.watch("modo_manual");
+  const manualEmpresaId = form.watch("empresa_id") ?? "";
+  const manualMotivo = form.watch("manual_motivo") ?? "";
+
+  // Empresas e projetos disponíveis para o lançamento manual (RLS já filtra o escopo).
+  const empresasManualQ = useQuery({
+    queryKey: ["empresas-manual-ausencia", profile?.id ?? "anon"],
+    enabled: modoManual,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("empresas")
+        .select("id, nome")
+        .eq("ativo", true)
+        .order("nome");
+      if (error) throw error;
+      return (data ?? []) as Array<{ id: string; nome: string }>;
+    },
+  });
+  const projetosManualQ = useProjetosAtivosPorEmpresa(modoManual ? manualEmpresaId : null);
+
 
   // ============= Tipos e opções (DB-driven) =============
   const tiposQ = useQuery({
@@ -376,7 +474,7 @@ function NovaAusenciaPage() {
       const { data, error } = await supabase
         .from("ausencias")
         .select(
-          "id, empresa_id, projeto_id, colaborador_id, tipo, tipo_detalhe, dias_label, motivo, data_inicio, data_fim, dias, localidade, cid, loja_codigo_nome, acidente_trabalho_trajeto, status, possui_anexo, arquivo_url, arquivo_nome, arquivo_mime, arquivo_tamanho, acidente_data, acidente_hora, acidente_local, acidente_descricao, acidente_atendimento_medico, acidente_houve_afastamento, acidente_dias_afastamento_inicial, acidente_cat_emitida, acidente_observacoes",
+          "id, empresa_id, projeto_id, colaborador_id, origem_registro, manual_motivo, manual_motivo_detalhe, manual_nome, manual_matricula, manual_cpf, manual_cargo, manual_centro_custo, manual_telefone, manual_email, manual_supervisor_nome, manual_supervisor_email, tipo, tipo_detalhe, dias_label, motivo, data_inicio, data_fim, dias, localidade, cid, loja_codigo_nome, acidente_trabalho_trajeto, status, possui_anexo, arquivo_url, arquivo_nome, arquivo_mime, arquivo_tamanho, acidente_data, acidente_hora, acidente_local, acidente_descricao, acidente_atendimento_medico, acidente_houve_afastamento, acidente_dias_afastamento_inicial, acidente_cat_emitida, acidente_observacoes",
         )
         .eq("id", editId!)
         .maybeSingle();
@@ -399,20 +497,25 @@ function NovaAusenciaPage() {
     [form],
   );
 
-  // Prefill em edição: carrega colaborador
+  // Prefill em edição: carrega colaborador (quando houver vínculo)
   useEffect(() => {
     if (!(isEdit && ausencia && !prefilled)) return;
     (async () => {
-      const { data } = await supabase
-        .from("colaboradores")
-        .select(
-          "id, nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email, ativo, empresa_id, projeto_id, empresa:empresas(id, nome, ativo), projeto:projetos(id, nome, ativo, codigo_protocolo)",
-        )
-        .eq("id", ausencia.colaborador_id)
-        .maybeSingle();
-      if (data) {
-        applyColab(data as unknown as ColabMatch);
+      if (ausencia.colaborador_id) {
+        const { data } = await supabase
+          .from("colaboradores")
+          .select(
+            "id, nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email, ativo, empresa_id, projeto_id, empresa:empresas(id, nome, ativo), projeto:projetos(id, nome, ativo, codigo_protocolo)",
+          )
+          .eq("id", ausencia.colaborador_id)
+          .maybeSingle();
+        if (data) {
+          applyColab(data as unknown as ColabMatch);
+        }
+      } else {
+        setMatriculaInput(ausencia.manual_matricula ?? "");
       }
+
       // Resolve tipo_ausencia_id / opcao_periodo_id a partir do snapshot ou do enum legado.
       const tipoCodPorEnum: Record<TipoAusencia, string> = {
         FALTA: "FALTA_JUSTIFICADA",
@@ -450,7 +553,8 @@ function NovaAusenciaPage() {
       }
 
       form.reset({
-        colaborador_id: ausencia.colaborador_id,
+        modo_manual: ausencia.origem_registro === "MANUAL",
+        colaborador_id: ausencia.colaborador_id ?? "",
         empresa_id: ausencia.empresa_id,
         projeto_id: ausencia.projeto_id,
         tipo_ausencia_id: tipoId,
@@ -466,7 +570,19 @@ function NovaAusenciaPage() {
               ? "nao"
               : (undefined as unknown as "sim"),
         motivo: ausencia.motivo ?? "",
+        manual_motivo: ausencia.manual_motivo ?? "",
+        manual_motivo_detalhe: ausencia.manual_motivo_detalhe ?? "",
+        manual_nome: ausencia.manual_nome ?? "",
+        manual_matricula: ausencia.manual_matricula ?? "",
+        manual_cpf: ausencia.manual_cpf ?? "",
+        manual_cargo: ausencia.manual_cargo ?? "",
+        manual_centro_custo: ausencia.manual_centro_custo ?? "",
+        manual_telefone: ausencia.manual_telefone ?? "",
+        manual_email: ausencia.manual_email ?? "",
+        manual_supervisor_nome: ausencia.manual_supervisor_nome ?? "",
+        manual_supervisor_email: ausencia.manual_supervisor_email ?? "",
       });
+
       const a = ausencia as unknown as {
         acidente_data?: string | null; acidente_hora?: string | null;
         acidente_local?: string | null; acidente_descricao?: string | null;
@@ -513,19 +629,25 @@ function NovaAusenciaPage() {
       if (rows.length === 0) {
         setColab(null);
         form.setValue("colaborador_id", "");
-        form.setValue("empresa_id", "");
-        form.setValue("projeto_id", "");
+        if (!form.getValues("modo_manual")) {
+          form.setValue("empresa_id", "");
+          form.setValue("projeto_id", "");
+        }
+        setNaoEncontrado(true);
         if (origem === "manual") {
           toast.error("Matrícula não encontrada.", {
-            description: "Verifique o número ou cadastre o colaborador em Colaboradores.",
+            description: "Cadastre o colaborador ou use o preenchimento manual.",
           });
         }
       } else if (rows.length === 1) {
+        setNaoEncontrado(false);
         applyColab(rows[0]);
         if (origem === "manual") toast.success("Colaborador encontrado.");
       } else {
+        setNaoEncontrado(false);
         setMatchCandidates(rows);
       }
+
       setBuscaEstado("atualizado");
     } catch (e) {
       resultado = "erro";
@@ -569,10 +691,33 @@ function NovaAusenciaPage() {
     setMatriculaInput("");
     ultimaBuscaRef.current = "";
     setBuscaEstado("idle");
+    setNaoEncontrado(false);
+    form.setValue("modo_manual", false);
     form.setValue("colaborador_id", "");
     form.setValue("empresa_id", "");
     form.setValue("projeto_id", "");
   }
+
+  /** Ativa/desativa o preenchimento manual (colaborador não localizado). */
+  function toggleModoManual(ativar: boolean) {
+    form.setValue("modo_manual", ativar, { shouldValidate: true });
+    if (ativar) {
+      setColab(null);
+      setMatchCandidates(null);
+      form.setValue("colaborador_id", "");
+      if (!form.getValues("manual_matricula")) {
+        form.setValue("manual_matricula", matriculaInput.trim());
+      }
+      if (!form.getValues("manual_motivo")) {
+        form.setValue("manual_motivo", "COLABORADOR_NAO_ENCONTRADO");
+      }
+      logEvent({ categoria: "tela", acao: "ausencia_modo_manual_ativado", resultado: "ok", duracao_ms: 0 });
+    } else {
+      form.setValue("empresa_id", "");
+      form.setValue("projeto_id", "");
+    }
+  }
+
 
   // Chips de filtros/critérios ativos da busca
   const chipsBusca: FiltroChip[] = useMemo(() => {
@@ -857,7 +1002,7 @@ function NovaAusenciaPage() {
         const ext = file.name.split(".").pop() ?? "bin";
         const stamp = Date.now();
         const rand = crypto.randomUUID();
-        const path = `ausencias/${values.colaborador_id}/${stamp}-${rand}.${ext}`;
+        const path = `ausencias/${values.colaborador_id || "manual"}/${stamp}-${rand}.${ext}`;
         const { error: upErr } = await supabase.storage
           .from(BUCKET_ATESTADOS)
           .upload(path, file, { contentType: file.type, upsert: false });
@@ -880,8 +1025,29 @@ function NovaAusenciaPage() {
         }
       }
 
+      const origemFields = values.modo_manual
+        ? {
+            origem_registro: "MANUAL" as const,
+            empresa_id: values.empresa_id!,
+            projeto_id: values.projeto_id!,
+            manual_motivo: (values.manual_motivo || "COLABORADOR_NAO_ENCONTRADO") as
+              (typeof MANUAL_MOTIVO_OPTIONS)[number]["value"],
+            manual_motivo_detalhe: values.manual_motivo_detalhe?.trim() || null,
+            manual_nome: values.manual_nome!.trim(),
+            manual_matricula: values.manual_matricula!.trim(),
+            manual_cpf: values.manual_cpf?.trim() || null,
+            manual_cargo: values.manual_cargo?.trim() || null,
+            manual_centro_custo: values.manual_centro_custo?.trim() || null,
+            manual_telefone: values.manual_telefone?.trim() || null,
+            manual_email: values.manual_email?.trim() || null,
+            manual_supervisor_nome: values.manual_supervisor_nome?.trim() || null,
+            manual_supervisor_email: values.manual_supervisor_email?.trim() || null,
+          }
+        : { origem_registro: "AUTOMATICO" as const, colaborador_id: values.colaborador_id! };
+
       const payload = {
-        colaborador_id: values.colaborador_id,
+        ...origemFields,
+
         tipo_ausencia_id: values.tipo_ausencia_id,
         opcao_periodo_id: values.opcao_periodo_id,
         data_inicio: dataInicioIso,
@@ -1052,8 +1218,8 @@ function NovaAusenciaPage() {
                       toast.error("Sem projetos vinculados. Procure um administrador.");
                       return;
                     }
-                    if (!colab && !isEdit) {
-                      toast.error("Busque um colaborador pela matrícula.");
+                    if (!colab && !isEdit && !v.modo_manual) {
+                      toast.error("Busque um colaborador pela matrícula ou use o preenchimento manual.");
                       return;
                     }
                     if (colab && !colab.projeto?.codigo_protocolo) {
@@ -1186,8 +1352,161 @@ function NovaAusenciaPage() {
                         )}
                       </div>
 
+                      {/* Faixa de preenchimento manual */}
+                      {!isEdit && naoEncontrado && !colab && (
+                        <div className="sm:col-span-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
+                          <p className="font-medium text-amber-900 dark:text-amber-200">
+                            Colaborador não localizado nesta matrícula.
+                          </p>
+                          <p className="mt-1 text-amber-900/80 dark:text-amber-200/80">
+                            Você pode preencher os dados manualmente. O lançamento ficará marcado
+                            como <strong>MANUAL</strong> na auditoria.
+                          </p>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={modoManual ? "secondary" : "default"}
+                            className="mt-2"
+                            onClick={() => toggleModoManual(!modoManual)}
+                          >
+                            {modoManual ? "Cancelar preenchimento manual" : "Preencher manualmente"}
+                          </Button>
+                        </div>
+                      )}
 
+                      {modoManual ? (
+                      <>
+                      {/* ===== Preenchimento manual ===== */}
+                      <div className="space-y-1.5">
+                        <FormLabel>Motivo do lançamento manual *</FormLabel>
+                        <Select
+                          value={manualMotivo}
+                          onValueChange={(v) => form.setValue("manual_motivo", v, { shouldValidate: true })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o motivo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {MANUAL_MOTIVO_OPTIONS.map((o) => (
+                              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {form.formState.errors.manual_motivo && (
+                          <p className="text-xs text-red-500">{form.formState.errors.manual_motivo.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>Detalhe do motivo</FormLabel>
+                        <Input maxLength={300} placeholder="Opcional" {...form.register("manual_motivo_detalhe")} />
+                        {form.formState.errors.manual_motivo_detalhe && (
+                          <p className="text-xs text-red-500">{form.formState.errors.manual_motivo_detalhe.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>Nome completo *</FormLabel>
+                        <Input maxLength={150} placeholder="Nome do colaborador" {...form.register("manual_nome")} />
+                        {form.formState.errors.manual_nome && (
+                          <p className="text-xs text-red-500">{form.formState.errors.manual_nome.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>Matrícula *</FormLabel>
+                        <Input maxLength={50} placeholder="Matrícula" {...form.register("manual_matricula")} />
+                        {form.formState.errors.manual_matricula && (
+                          <p className="text-xs text-red-500">{form.formState.errors.manual_matricula.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>CPF</FormLabel>
+                        <Input maxLength={14} placeholder="Somente números" {...form.register("manual_cpf")} />
+                        {form.formState.errors.manual_cpf && (
+                          <p className="text-xs text-red-500">{form.formState.errors.manual_cpf.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>Cargo</FormLabel>
+                        <Input maxLength={120} {...form.register("manual_cargo")} />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>Centro de custo</FormLabel>
+                        <Input maxLength={120} {...form.register("manual_centro_custo")} />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>Telefone</FormLabel>
+                        <Input maxLength={20} placeholder="(XX) XXXXX-XXXX" {...form.register("manual_telefone")} />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>E-mail</FormLabel>
+                        <Input maxLength={150} type="email" {...form.register("manual_email")} />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>Supervisor(a)</FormLabel>
+                        <Input maxLength={150} {...form.register("manual_supervisor_nome")} />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>E-mail do supervisor</FormLabel>
+                        <Input maxLength={150} type="email" {...form.register("manual_supervisor_email")} />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>Empresa *</FormLabel>
+                        <Select
+                          value={manualEmpresaId}
+                          onValueChange={(v) => {
+                            form.setValue("empresa_id", v, { shouldValidate: true });
+                            form.setValue("projeto_id", "", { shouldValidate: true });
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a empresa" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(empresasManualQ.data ?? []).map((e) => (
+                              <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {form.formState.errors.empresa_id && (
+                          <p className="text-xs text-red-500">{form.formState.errors.empresa_id.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <FormLabel>Projeto *</FormLabel>
+                        <Select
+                          value={form.watch("projeto_id") ?? ""}
+                          onValueChange={(v) => form.setValue("projeto_id", v, { shouldValidate: true })}
+                          disabled={!manualEmpresaId}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={manualEmpresaId ? "Selecione o projeto" : "Escolha a empresa primeiro"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(projetosManualQ.data ?? []).map((p) => (
+                              <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {form.formState.errors.projeto_id && (
+                          <p className="text-xs text-red-500">{form.formState.errors.projeto_id.message}</p>
+                        )}
+                      </div>
+                      </>
+                      ) : (
+                      <>
                       {/* Nome Completo */}
+
                       <ReadonlyField
                         label="Nome Completo"
                         required
@@ -1263,7 +1582,10 @@ function NovaAusenciaPage() {
                         value={colab?.projeto?.nome ?? ""}
                         placeholder="Selecione..."
                       />
+                      </>
+                      )}
                     </div>
+
 
                     {colab && colab.projeto && !colab.projeto.codigo_protocolo && (
                       <div
