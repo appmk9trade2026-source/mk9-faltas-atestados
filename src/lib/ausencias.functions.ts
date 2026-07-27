@@ -204,10 +204,15 @@ export const createAusencia = createServerFn({ method: "POST" })
     }
 
     const insertPayload = {
-      empresa_id: gate.empresaId,     // derivado do colaborador, NUNCA do cliente
-      projeto_id: gate.projetoId,     // idem
-      colaborador_id: data.colaborador_id,
+      // AUTOMATICO: empresa/projeto derivados do colaborador, NUNCA do cliente.
+      // MANUAL: projeto/empresa informados, já validados pelo guard de escopo.
+      empresa_id: gate.empresaId,
+      projeto_id: gate.projetoId,
+      ...(isManual
+        ? manualColumns(data, gate.userId)
+        : { origem_registro: "AUTOMATICO" as const, colaborador_id: data.colaborador_id }),
       tipo: tipoBase,
+
       tipo_detalhe: tipo.nome,
       dias_label: opcao.nome,
       tipo_ausencia_id: data.tipo_ausencia_id,
