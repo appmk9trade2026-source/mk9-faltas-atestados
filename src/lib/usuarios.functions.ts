@@ -375,10 +375,42 @@ export const updateUsuario = createServerFn({ method: "POST" })
       }
     }
 
+    // ---------- Alteração de e-mail (identidade de autenticação) ----------
+    const emailAtual = (profBefore.data.email ?? "").trim().toLowerCase();
+    const emailNovo = (data.email ?? "").trim().toLowerCase();
+    const alterouEmail = !!emailNovo && emailNovo !== emailAtual;
+
+    if (alterouEmail) {
+      const dup = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .ilike("email", emailNovo)
+        .neq("id", data.id)
+        .maybeSingle();
+      if (dup.data) throw new Error("Já existe um usuário com este e-mail.");
+
+      const upAuth = await supabaseAdmin.auth.admin.updateUserById(data.id, {
+        email: emailNovo,
+        email_confirm: true,
+      });
+      if (upAuth.error) {
+        throw new Error(`Não foi possível alterar o e-mail de acesso: ${upAuth.error.message}`);
+      }
+      await audit(
+        context.supabase,
+        "USUARIO_EDITADO",
+        data.id,
+        "E-mail de acesso alterado",
+        { email: emailAtual },
+        { email: emailNovo },
+      );
+    }
+
     const up = await supabaseAdmin
       .from("profiles")
       .update({
         nome: data.nome,
+        ...(alterouEmail ? { email: emailNovo } : {}),
         telefone_whatsapp: data.telefone || null,
         cargo: data.cargo || null,
         avatar_url: data.avatar_url || null,
@@ -386,6 +418,7 @@ export const updateUsuario = createServerFn({ method: "POST" })
       })
       .eq("id", data.id);
     if (up.error) throw new Error(up.error.message);
+
 
     try {
       await syncSet({
