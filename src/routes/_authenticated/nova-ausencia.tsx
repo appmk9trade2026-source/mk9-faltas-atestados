@@ -364,7 +364,7 @@ function NovaAusenciaPage() {
   const cid = form.watch("cid") ?? "";
   const modoManual = form.watch("modo_manual");
   const manualEmpresaId = form.watch("empresa_id") ?? "";
-  const manualMotivo = form.watch("manual_motivo") ?? "";
+  
 
   // Empresas e projetos disponíveis para o lançamento manual (RLS já filtra o escopo).
   const empresasManualQ = useQuery({
