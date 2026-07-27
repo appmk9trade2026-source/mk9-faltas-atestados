@@ -176,13 +176,11 @@ type AusenciaEdit = {
   arquivo_tamanho: number | null;
 };
 
-/** Motivos aceitos para o lançamento manual (espelham o backend). */
-const MANUAL_MOTIVO_OPTIONS = [
-  { value: "COLABORADOR_NAO_ENCONTRADO", label: "Colaborador não encontrado na base" },
-  { value: "CADASTRO_DESATUALIZADO", label: "Cadastro desatualizado / inativo" },
-  { value: "ADMISSAO_RECENTE", label: "Admissão recente (ainda não importada)" },
-  { value: "OUTRO", label: "Outro motivo" },
-] as const;
+/**
+ * Motivo fixo do lançamento manual: o operador não escolhe nem detalha — a origem
+ * "colaborador não localizado pela matrícula informada" é registrada na auditoria.
+ */
+const MANUAL_MOTIVO_PADRAO = "COLABORADOR_NAO_ENCONTRADO" as const;
 
 const schema = z
   .object({
@@ -204,18 +202,14 @@ const schema = z
       .trim()
       .min(5, "Mínimo de 5 caracteres.")
       .max(500, "Máximo de 500 caracteres."),
-    // Preenchimento manual (colaborador não encontrado)
-    manual_motivo: z.string().optional().or(z.literal("")),
-    manual_motivo_detalhe: z.string().max(300).optional().or(z.literal("")),
+    // Preenchimento manual — mesmos campos do formulário padrão
     manual_nome: z.string().max(150).optional().or(z.literal("")),
     manual_matricula: z.string().max(50).optional().or(z.literal("")),
-    manual_cpf: z.string().max(20).optional().or(z.literal("")),
-    manual_cargo: z.string().max(120).optional().or(z.literal("")),
-    manual_centro_custo: z.string().max(120).optional().or(z.literal("")),
     manual_telefone: z.string().max(20).optional().or(z.literal("")),
+    manual_whatsapp: z.string().max(20).optional().or(z.literal("")),
     manual_email: z.string().max(150).optional().or(z.literal("")),
     manual_supervisor_nome: z.string().max(150).optional().or(z.literal("")),
-    manual_supervisor_email: z.string().max(150).optional().or(z.literal("")),
+    manual_supervisor_telefone: z.string().max(20).optional().or(z.literal("")),
   })
   .superRefine((v, ctx) => {
     const req = (path: keyof typeof v, message: string) =>
@@ -227,23 +221,23 @@ const schema = z
     }
     if (!v.empresa_id) req("empresa_id", "Selecione a empresa.");
     if (!v.projeto_id) req("projeto_id", "Selecione o projeto.");
-    if (!v.manual_motivo) req("manual_motivo", "Informe o motivo do preenchimento manual.");
-    if (v.manual_motivo === "OUTRO" && !(v.manual_motivo_detalhe ?? "").trim()) {
-      req("manual_motivo_detalhe", "Descreva o motivo.");
-    }
     if ((v.manual_nome ?? "").trim().length < 3) {
       req("manual_nome", "Informe o nome completo (mínimo 3 caracteres).");
     }
     if (!(v.manual_matricula ?? "").trim()) req("manual_matricula", "Informe a matrícula.");
-    const cpf = (v.manual_cpf ?? "").replace(/\D+/g, "");
-    if (cpf && cpf.length !== 11) req("manual_cpf", "CPF deve ter 11 dígitos.");
+    if (!(v.manual_telefone ?? "").trim()) {
+      req("manual_telefone", "Informe o telefone do colaborador.");
+    }
+    if (!(v.manual_supervisor_nome ?? "").trim()) {
+      req("manual_supervisor_nome", "Informe o supervisor(a).");
+    }
+    if (!(v.manual_supervisor_telefone ?? "").trim()) {
+      req("manual_supervisor_telefone", "Informe o telefone do supervisor.");
+    }
     const email = (v.manual_email ?? "").trim();
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) req("manual_email", "E-mail inválido.");
-    const supEmail = (v.manual_supervisor_email ?? "").trim();
-    if (supEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(supEmail)) {
-      req("manual_supervisor_email", "E-mail inválido.");
-    }
   });
+
 
 
 type FormData = z.infer<typeof schema>;
