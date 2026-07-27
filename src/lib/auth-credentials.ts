@@ -49,7 +49,11 @@ export function mapAuthError(err: AuthErrorLike, contexto: "login" | "primeiro_a
   if (msg.includes("failed to fetch") || msg.includes("network")) {
     return "Falha de conexão. Verifique sua internet e tente novamente.";
   }
+  if (msg.includes("weak password") || code.includes("weak_password")) {
+    return "Esta senha foi recusada pela política de segurança. Escolha outra senha.";
+  }
   return contexto === "primeiro_acesso"
     ? "E-mail ou senha temporária inválidos. Confira se não há espaços extras ao colar e, se necessário, peça ao Super Admin para redefinir sua senha temporária."
-    : "E-mail ou senha inválidos. Confira se não há espaços extras ao colar a senha.";
+    : "E-mail ou senha inválidos. Confira se não há espaços extras ao colar a senha. Se você recebeu uma senha temporária, use o botão “Primeiro acesso com senha temporária”.";
 }
+
