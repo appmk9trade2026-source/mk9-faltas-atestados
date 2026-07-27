@@ -6,6 +6,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { solicitarRecuperacaoSenha } from "@/lib/recuperacao-senha.functions";
 import { setFirstLoginPassword, clearFirstLoginPassword } from "@/lib/first-login-password";
+import { normalizeLoginEmail, sanitizeSenhaColada, mapAuthError } from "@/lib/auth-credentials";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -85,9 +86,14 @@ function AuthPage() {
     setError(null);
     setLoading(true);
     try {
-      const { data, error: signErr } = await supabase.auth.signInWithPassword({ email, password });
+      const emailNorm = normalizeLoginEmail(email);
+      const senhaNorm = sanitizeSenhaColada(password);
+      const { data, error: signErr } = await supabase.auth.signInWithPassword({
+        email: emailNorm,
+        password: senhaNorm,
+      });
       if (signErr || !data.user) {
-        setError("E-mail ou senha inválidos.");
+        setError(mapAuthError(signErr, "login"));
         return;
       }
       const { data: profile } = await supabase
@@ -101,7 +107,7 @@ function AuthPage() {
         return;
       }
       if (profile.primeiro_acesso_pendente) {
-        setFirstLoginPassword(password);
+        setFirstLoginPassword(senhaNorm);
         toast.info("Antes de continuar, defina sua senha pessoal.", {
           id: PRIMEIRO_ACESSO_TOAST_ID,
         });
@@ -411,12 +417,13 @@ function FirstAccessDialog({
     setError(null);
     setLoading(true);
     try {
+      const senhaNorm = sanitizeSenhaColada(tempPw);
       const { data, error: signErr } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password: tempPw,
+        email: normalizeLoginEmail(email),
+        password: senhaNorm,
       });
       if (signErr || !data.user) {
-        setError("E-mail ou senha temporária inválidos.");
+        setError(mapAuthError(signErr, "primeiro_acesso"));
         return;
       }
       const { data: prof } = await supabase
@@ -436,7 +443,7 @@ function FirstAccessDialog({
         navigate({ to: "/dashboard", replace: true });
         return;
       }
-      setFirstLoginPassword(tempPw);
+      setFirstLoginPassword(senhaNorm);
       onOpenChange(false);
       navigate({ to: "/auth/nova-senha", replace: true });
     } catch {
