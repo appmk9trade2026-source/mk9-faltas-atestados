@@ -489,13 +489,17 @@ function NovaAusenciaPage() {
   }, [isEdit, ausencia, prefilled, form, applyColab]);
 
 
-  async function searchMatricula(rawValue?: string) {
+  async function searchMatricula(rawValue?: string, origem: "auto" | "manual" = "manual") {
     const val = (rawValue ?? matriculaInput).trim();
     if (!val) {
-      toast.error("Digite a matrícula.");
+      if (origem === "manual") toast.error("Digite a matrícula.");
       return;
     }
+    ultimaBuscaRef.current = val;
+    const inicio = performance.now();
     setSearching(true);
+    setBuscaEstado("carregando");
+    let resultado: "ok" | "erro" = "ok";
     try {
       const { data, error } = await supabase
         .from("colaboradores")
@@ -511,31 +515,88 @@ function NovaAusenciaPage() {
         form.setValue("colaborador_id", "");
         form.setValue("empresa_id", "");
         form.setValue("projeto_id", "");
-        toast.error("Matrícula não encontrada.", {
-          description: "Verifique o número ou cadastre o colaborador em Colaboradores.",
-        });
+        if (origem === "manual") {
+          toast.error("Matrícula não encontrada.", {
+            description: "Verifique o número ou cadastre o colaborador em Colaboradores.",
+          });
+        }
       } else if (rows.length === 1) {
         applyColab(rows[0]);
-        toast.success("Colaborador encontrado.");
+        if (origem === "manual") toast.success("Colaborador encontrado.");
       } else {
         setMatchCandidates(rows);
       }
+      setBuscaEstado("atualizado");
     } catch (e) {
+      resultado = "erro";
+      setBuscaEstado("idle");
       toast.error("Erro ao buscar colaborador.", {
         description: e instanceof Error ? e.message : String(e),
       });
     } finally {
       setSearching(false);
+      // Telemetria anônima: apenas origem, resultado e duração.
+      logEvent({
+        categoria: "rpc",
+        acao: origem === "auto" ? "busca_colaborador_automatica" : "busca_colaborador_manual",
+        resultado,
+        duracao_ms: Math.round(performance.now() - inicio),
+      });
     }
   }
+
+  // Auto-pesquisa com debounce (~500 ms) — a lupa deixa de ser obrigatória.
+  useEffect(() => {
+    const val = matriculaInput.trim();
+    if (isEdit || bloqueado || colab) return;
+    if (val.length < 2 || val === ultimaBuscaRef.current) return;
+    const t = setTimeout(() => {
+      void searchMatricula(val, "auto");
+    }, 500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matriculaInput, isEdit, bloqueado, colab]);
+
+  // O check verde "Dados atualizados" some após alguns segundos.
+  useEffect(() => {
+    if (buscaEstado !== "atualizado") return;
+    const t = setTimeout(() => setBuscaEstado("idle"), 2500);
+    return () => clearTimeout(t);
+  }, [buscaEstado]);
 
   function clearColab() {
     setColab(null);
     setMatriculaInput("");
+    ultimaBuscaRef.current = "";
+    setBuscaEstado("idle");
     form.setValue("colaborador_id", "");
     form.setValue("empresa_id", "");
     form.setValue("projeto_id", "");
   }
+
+  // Chips de filtros/critérios ativos da busca
+  const chipsBusca: FiltroChip[] = useMemo(() => {
+    const list: FiltroChip[] = [];
+    if (matriculaInput.trim()) {
+      list.push({
+        id: "matricula",
+        titulo: "Matrícula",
+        valor: matriculaInput.trim(),
+        onRemove: isEdit ? undefined : clearColab,
+      });
+    }
+    if (colab?.empresa?.nome) {
+      list.push({ id: "empresa", titulo: "Empresa", valor: colab.empresa.nome });
+    }
+    if (colab?.projeto?.nome) {
+      list.push({ id: "projeto", titulo: "Projeto", valor: colab.projeto.nome });
+    }
+    if (colab?.supervisor_nome) {
+      list.push({ id: "supervisor", titulo: "Supervisor", valor: colab.supervisor_nome });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return list;
+  }, [matriculaInput, colab, isEdit]);
 
   // Preview de arquivo
   useEffect(() => {
