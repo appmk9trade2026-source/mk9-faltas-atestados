@@ -657,7 +657,9 @@ export type Database = {
           manual_registrado_por: string | null
           manual_supervisor_email: string | null
           manual_supervisor_nome: string | null
+          manual_supervisor_telefone: string | null
           manual_telefone: string | null
+          manual_whatsapp: string | null
           motivo: string | null
           observacoes: string | null
           opcao_periodo_codigo: string | null
@@ -721,7 +723,9 @@ export type Database = {
           manual_registrado_por?: string | null
           manual_supervisor_email?: string | null
           manual_supervisor_nome?: string | null
+          manual_supervisor_telefone?: string | null
           manual_telefone?: string | null
+          manual_whatsapp?: string | null
           motivo?: string | null
           observacoes?: string | null
           opcao_periodo_codigo?: string | null
@@ -785,7 +789,9 @@ export type Database = {
           manual_registrado_por?: string | null
           manual_supervisor_email?: string | null
           manual_supervisor_nome?: string | null
+          manual_supervisor_telefone?: string | null
           manual_telefone?: string | null
+          manual_whatsapp?: string | null
           motivo?: string | null
           observacoes?: string | null
           opcao_periodo_codigo?: string | null
