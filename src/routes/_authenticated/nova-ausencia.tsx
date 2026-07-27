@@ -711,7 +711,7 @@ function NovaAusenciaPage() {
       if (!form.getValues("manual_motivo")) {
         form.setValue("manual_motivo", "COLABORADOR_NAO_ENCONTRADO");
       }
-      logEvent({ categoria: "tela", acao: "ausencia_modo_manual_ativado", resultado: "ok" });
+      logEvent({ categoria: "tela", acao: "ausencia_modo_manual_ativado", resultado: "ok", duracao_ms: 0 });
     } else {
       form.setValue("empresa_id", "");
       form.setValue("projeto_id", "");
