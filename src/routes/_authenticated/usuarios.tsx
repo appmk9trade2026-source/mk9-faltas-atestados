@@ -1146,6 +1146,21 @@ function EditDialog({
               <FormField control={form.control} name="nome" render={({ field }) => (
                 <FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
               )} />
+              <FormField control={form.control} name="email" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>E-mail de acesso</FormLabel>
+                  <FormControl>
+                    <Input type="email" autoComplete="off" {...field} value={field.value ?? ""} disabled={!canManageSecurity} />
+                  </FormControl>
+                  <p className="text-[11px] text-muted-foreground">
+                    {canManageSecurity
+                      ? "Alterar o e-mail muda o login do usuário imediatamente."
+                      : "Somente Super Admin pode alterar o e-mail de acesso."}
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )} />
+
               <FormField control={form.control} name="cargo" render={({ field }) => (
                 <FormItem><FormLabel>Cargo</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
               )} />
