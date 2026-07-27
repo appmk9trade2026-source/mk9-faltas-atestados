@@ -85,7 +85,7 @@ async function audit(
     .then(() => {}, () => {});
 }
 
-import { validarProjetosPertencemAEmpresas } from "@/lib/usuarios-helpers";
+import { validarProjetosPertencemAEmpresas, calcularBloqueiosExclusao } from "@/lib/usuarios-helpers";
 export { validarProjetosPertencemAEmpresas } from "@/lib/usuarios-helpers";
 
 // ---------------- CREATE ----------------
