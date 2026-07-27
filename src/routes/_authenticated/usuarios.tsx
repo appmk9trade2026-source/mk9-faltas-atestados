@@ -818,7 +818,15 @@ function UsuariosPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={!!senhaPadraoAlvo} onOpenChange={(o) => !o && setSenhaPadraoAlvo(null)}>
+      <AlertDialog
+        open={!!senhaPadraoAlvo}
+        onOpenChange={(o) => {
+          if (!o) {
+            setSenhaPadraoAlvo(null);
+            setMotivoRedefinicao("");
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Redefinir senha temporária e reenviar WhatsApp?</AlertDialogTitle>
@@ -829,17 +837,42 @@ function UsuariosPage() {
               será enfileirada com a senha provisória.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="motivo-redefinicao">
+              Justificativa administrativa <span className="text-destructive">*</span>
+            </Label>
+            <Textarea
+              id="motivo-redefinicao"
+              rows={3}
+              maxLength={500}
+              placeholder="Ex.: usuário relatou não conseguir realizar o primeiro acesso (chamado #123)."
+              value={motivoRedefinicao}
+              onChange={(e) => setMotivoRedefinicao(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Mínimo de 10 caracteres. A justificativa fica registrada na auditoria junto com o
+              responsável e a data/hora. A senha nunca é registrada.
+            </p>
+          </div>
+
           <AlertDialogFooter>
             <AlertDialogCancel disabled={redefinirSenhaPadraoMut.isPending}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              disabled={redefinirSenhaPadraoMut.isPending}
+              disabled={redefinirSenhaPadraoMut.isPending || motivoRedefinicao.trim().length < 10}
               onClick={(e) => {
                 e.preventDefault();
                 if (!senhaPadraoAlvo || redefinirSenhaPadraoMut.isPending) return;
+                if (motivoRedefinicao.trim().length < 10) return;
                 const alvo = senhaPadraoAlvo;
                 redefinirSenhaPadraoMut.mutate(
-                  { id: alvo.id },
-                  { onSettled: () => setSenhaPadraoAlvo(null) },
+                  { id: alvo.id, motivo: motivoRedefinicao.trim() },
+                  {
+                    onSettled: () => {
+                      setSenhaPadraoAlvo(null);
+                      setMotivoRedefinicao("");
+                    },
+                  },
                 );
               }}
             >
@@ -848,6 +881,7 @@ function UsuariosPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
 
 
 
