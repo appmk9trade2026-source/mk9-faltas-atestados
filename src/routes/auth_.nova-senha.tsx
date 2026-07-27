@@ -103,22 +103,20 @@ function NovaSenhaPage() {
     if (saving) return;
     setError(null);
 
-    if (novaSenha.length < 8) {
-      setError("A senha deve ter pelo menos 8 caracteres.");
+    const veredito = validarSenhaDefinitiva(novaSenha, {
+      senhaTemporaria: getFirstLoginPassword() ?? "12345678",
+      email: emailUsuario,
+      matricula: matriculaUsuario,
+    });
+    if (!veredito.ok) {
+      setError(veredito.motivo);
       return;
     }
-    if (!/[A-Za-z]/.test(novaSenha) || !/\d/.test(novaSenha)) {
-      setError("A senha deve conter letras e números.");
-      return;
-    }
-    if (novaSenha === "12345678") {
-      setError("Você não pode manter a senha temporária padrão. Escolha uma senha pessoal.");
-      return;
-    }
-    if (isSameAsFirstLoginPassword(novaSenha) || isSameAsFirstLoginPassword(confirmar)) {
+    if (isSameAsFirstLoginPassword(confirmar)) {
       setError("A nova senha deve ser diferente da senha temporária utilizada no primeiro acesso.");
       return;
     }
+
 
     if (novaSenha !== confirmar) {
       setError("As senhas não coincidem.");
