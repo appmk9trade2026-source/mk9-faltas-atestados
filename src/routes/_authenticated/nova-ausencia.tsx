@@ -496,20 +496,25 @@ function NovaAusenciaPage() {
     [form],
   );
 
-  // Prefill em edição: carrega colaborador
+  // Prefill em edição: carrega colaborador (quando houver vínculo)
   useEffect(() => {
     if (!(isEdit && ausencia && !prefilled)) return;
     (async () => {
-      const { data } = await supabase
-        .from("colaboradores")
-        .select(
-          "id, nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email, ativo, empresa_id, projeto_id, empresa:empresas(id, nome, ativo), projeto:projetos(id, nome, ativo, codigo_protocolo)",
-        )
-        .eq("id", ausencia.colaborador_id)
-        .maybeSingle();
-      if (data) {
-        applyColab(data as unknown as ColabMatch);
+      if (ausencia.colaborador_id) {
+        const { data } = await supabase
+          .from("colaboradores")
+          .select(
+            "id, nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email, ativo, empresa_id, projeto_id, empresa:empresas(id, nome, ativo), projeto:projetos(id, nome, ativo, codigo_protocolo)",
+          )
+          .eq("id", ausencia.colaborador_id)
+          .maybeSingle();
+        if (data) {
+          applyColab(data as unknown as ColabMatch);
+        }
+      } else {
+        setMatriculaInput(ausencia.manual_matricula ?? "");
       }
+
       // Resolve tipo_ausencia_id / opcao_periodo_id a partir do snapshot ou do enum legado.
       const tipoCodPorEnum: Record<TipoAusencia, string> = {
         FALTA: "FALTA_JUSTIFICADA",
