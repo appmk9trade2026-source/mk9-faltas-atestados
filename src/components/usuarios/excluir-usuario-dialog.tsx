@@ -53,12 +53,18 @@ const LABELS: Record<keyof Omit<DependenciasUsuario, "total_bloqueante">, string
 };
 
 
-// Chaves informativas (não bloqueiam exclusão — são removidas junto).
+// Chaves informativas (não bloqueiam exclusão — histórico é preservado).
 const INFO_KEYS: (keyof DependenciasUsuario)[] = [
   "vinculos_empresas",
   "vinculos_projetos",
   "roles",
+  "auditorias",
+  "login_events",
+  "notificacao_eventos",
+  "alertas_eventos",
+  "bi_visoes_salvas",
 ];
+
 
 export function ExcluirUsuarioDialog({
   alvo,
