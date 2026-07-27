@@ -3877,6 +3877,18 @@ export type Database = {
           nome_completo: string
         }[]
       }
+      admin_contas_primeiro_acesso_suspeitas: {
+        Args: { _corte?: string }
+        Returns: {
+          criado_em: string
+          email: string
+          id: string
+          matricula: string
+          motivos: string[]
+          nome: string
+          ultimo_login: string
+        }[]
+      }
       admin_get_user_history: {
         Args: { _limit?: number; _user_id: string }
         Returns: {

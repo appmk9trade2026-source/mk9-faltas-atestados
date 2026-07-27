@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { validarSenhaDefinitiva, senhaVazada } from "@/lib/senha-forte";
+
 
 /**
  * Conclui o fluxo obrigatório de "Primeiro acesso":
@@ -13,16 +15,7 @@ import { z } from "zod";
  */
 
 const schema = z.object({
-  nova_senha: z
-    .string()
-    .min(8, "A senha deve ter pelo menos 8 caracteres.")
-    .max(72)
-    .refine((v) => /[A-Za-z]/.test(v) && /\d/.test(v), {
-      message: "A senha deve conter letras e números.",
-    })
-    .refine((v) => v !== "12345678", {
-      message: "Você não pode manter a senha temporária padrão. Escolha uma senha pessoal.",
-    }),
+  nova_senha: z.string().min(8, "A senha deve ter pelo menos 8 caracteres.").max(72),
 });
 
 
@@ -35,7 +28,7 @@ export const concluirPrimeiroAcesso = createServerFn({ method: "POST" })
     // 1) Só executa quando de fato há um primeiro acesso pendente.
     const prof = await supabase
       .from("profiles")
-      .select("id, primeiro_acesso_pendente, ativo, created_at")
+      .select("id, email, matricula, nome, primeiro_acesso_pendente, ativo, created_at")
       .eq("id", userId)
       .maybeSingle();
 
@@ -46,6 +39,25 @@ export const concluirPrimeiroAcesso = createServerFn({ method: "POST" })
       // Estado inconsistente: usuário na rota de troca sem pendência real.
       return { ok: true as const, ja_concluido: true as const };
     }
+
+    // 1.1) Política da senha DEFINITIVA (ETAPA 5): bloqueia senhas comuns,
+    //      sequências, senha igual ao e-mail/matrícula e a temporária padrão.
+    const veredito = validarSenhaDefinitiva(data.nova_senha, {
+      senhaTemporaria: "12345678",
+      email: prof.data.email,
+      matricula: prof.data.matricula,
+      nome: prof.data.nome,
+    });
+    if (!veredito.ok) throw new Error(veredito.motivo);
+
+    // 1.2) Verificação de vazamento (HIBP por k-anonimato) aplicada SOMENTE
+    //      na senha definitiva — o fluxo de senha temporária segue liberado.
+    if (await senhaVazada(data.nova_senha)) {
+      throw new Error(
+        "Esta senha aparece em vazamentos públicos de dados. Escolha outra senha.",
+      );
+    }
+
 
     // 2) Validação servidor: nova senha NÃO pode ser igual à senha temporária.
     //    Estratégia: tentar signInWithPassword num cliente isolado (sem sessão
