@@ -147,16 +147,14 @@ type AusenciaEdit = {
   colaborador_id: string | null;
   origem_registro: "AUTOMATICO" | "MANUAL" | null;
   manual_motivo: string | null;
-  manual_motivo_detalhe: string | null;
   manual_nome: string | null;
   manual_matricula: string | null;
-  manual_cpf: string | null;
-  manual_cargo: string | null;
-  manual_centro_custo: string | null;
   manual_telefone: string | null;
+  manual_whatsapp: string | null;
   manual_email: string | null;
   manual_supervisor_nome: string | null;
-  manual_supervisor_email: string | null;
+  manual_supervisor_telefone: string | null;
+
   tipo: TipoAusencia;
   tipo_detalhe: string | null;
   dias_label: string | null;
