@@ -1302,3 +1302,37 @@ export const reprocessarConviteWhatsapp = createServerFn({ method: "POST" })
     return { ok: true, acao: "antecipado" as const, outbox_id: last.id };
   });
 
+
+// ---------------- ETAPA 1 — CONTAS ANTIGAS POTENCIALMENTE AFETADAS ----------------
+// Consulta administrativa SOMENTE LEITURA. Nunca altera contas.
+// Critérios (todos combinados, resolvidos no banco por
+// public.admin_contas_primeiro_acesso_suspeitas):
+//   • conta ativa e com perfil vinculado corretamente;
+//   • nunca realizou login (auth.users.last_sign_in_at IS NULL);
+//   • primeiro_acesso_pendente = false (estado inconsistente);
+//   • sem evidência de troca/redefinição de senha;
+//   • criada antes do corte informado (padrão: há mais de 24h).
+export type ContaPrimeiroAcessoSuspeita = {
+  id: string;
+  nome: string | null;
+  email: string | null;
+  matricula: string | null;
+  criado_em: string | null;
+  ultimo_login: string | null;
+  motivos: string[] | null;
+};
+
+export const listarContasPrimeiroAcessoSuspeitas = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ corte: z.string().datetime().optional().nullable() }).parse(data ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    await requireSuperAdmin(context);
+    const { data: rows, error } = await context.supabase.rpc(
+      "admin_contas_primeiro_acesso_suspeitas" as never,
+      { _corte: data.corte ?? null } as never,
+    );
+    if (error) throw new Error(error.message);
+    return (rows ?? []) as ContaPrimeiroAcessoSuspeita[];
+  });
