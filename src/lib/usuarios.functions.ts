@@ -267,6 +267,7 @@ const updateSchema = z
   .object({
     id: z.string().uuid(),
     nome: z.string().trim().min(2).max(120),
+    email: z.string().trim().toLowerCase().email().max(255).optional(),
     telefone: z.string().trim().max(30).optional().nullable(),
     cargo: z.string().trim().max(80).optional().nullable(),
     avatar_url: z.string().trim().max(500).optional().nullable(),
@@ -276,6 +277,7 @@ const updateSchema = z
     projeto_ids: z.array(z.string().uuid()).default([]),
   })
   .superRefine(checarMatriculaObrigatoria);
+
 
 async function syncSet<T extends string>(opts: {
   supabaseAdmin: typeof import("@/integrations/supabase/client.server").supabaseAdmin;
