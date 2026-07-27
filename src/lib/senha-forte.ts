@@ -28,6 +28,16 @@ function ehSequencia(pw: string): boolean {
     if (d !== -1) decr = false;
   }
   if (cres || decr) return true;
+  // Trecho sequencial longo (>= 6 caracteres) em qualquer posição.
+  let run = 1;
+  let runDec = 1;
+  for (let i = 1; i < s.length; i++) {
+    const d = s.charCodeAt(i) - s.charCodeAt(i - 1);
+    run = d === 1 ? run + 1 : 1;
+    runDec = d === -1 ? runDec + 1 : 1;
+    if (run >= 6 || runDec >= 6) return true;
+  }
+
   // Padrões de teclado.
   const teclado = ["qwertyuiop", "asdfghjkl", "zxcvbnm", "1234567890"];
   return teclado.some((linha) => linha.includes(s) || [...linha].reverse().join("").includes(s));
