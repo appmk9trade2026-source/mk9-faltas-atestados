@@ -96,6 +96,18 @@ import {
 import { createAusencia, updateAusencia } from "@/lib/ausencias.functions";
 import { friendlyRbacError } from "@/lib/rbac/errors";
 import { useFormDraft } from "@/hooks/use-form-draft";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  BuscaSkeleton,
+  BuscaStatus,
+  CoachMark,
+  EstadoVazioBusca,
+  FiltroChips,
+  useCoachMark,
+  type BuscaEstado,
+  type FiltroChip,
+} from "@/components/busca/busca-assistida";
+import { logEvent } from "@/lib/observability";
 
 const formatPhoneBR = formatTelefone;
 
