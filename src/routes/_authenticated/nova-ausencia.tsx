@@ -1025,8 +1025,29 @@ function NovaAusenciaPage() {
         }
       }
 
+      const origemFields = values.modo_manual
+        ? {
+            origem_registro: "MANUAL" as const,
+            empresa_id: values.empresa_id!,
+            projeto_id: values.projeto_id!,
+            manual_motivo: (values.manual_motivo || "COLABORADOR_NAO_ENCONTRADO") as
+              (typeof MANUAL_MOTIVO_OPTIONS)[number]["value"],
+            manual_motivo_detalhe: values.manual_motivo_detalhe?.trim() || null,
+            manual_nome: values.manual_nome!.trim(),
+            manual_matricula: values.manual_matricula!.trim(),
+            manual_cpf: values.manual_cpf?.trim() || null,
+            manual_cargo: values.manual_cargo?.trim() || null,
+            manual_centro_custo: values.manual_centro_custo?.trim() || null,
+            manual_telefone: values.manual_telefone?.trim() || null,
+            manual_email: values.manual_email?.trim() || null,
+            manual_supervisor_nome: values.manual_supervisor_nome?.trim() || null,
+            manual_supervisor_email: values.manual_supervisor_email?.trim() || null,
+          }
+        : { origem_registro: "AUTOMATICO" as const, colaborador_id: values.colaborador_id! };
+
       const payload = {
-        colaborador_id: values.colaborador_id,
+        ...origemFields,
+
         tipo_ausencia_id: values.tipo_ausencia_id,
         opcao_periodo_id: values.opcao_periodo_id,
         data_inicio: dataInicioIso,
