@@ -1380,7 +1380,7 @@ function NovaAusenciaPage() {
                       <div className="space-y-1.5">
                         <Label>Motivo do lançamento manual *</Label>
                         <Select
-                          value={manualMotivo}
+                          value={manualMotivo || undefined}
                           onValueChange={(v) => form.setValue("manual_motivo", v, { shouldValidate: true })}
                         >
                           <SelectTrigger>
@@ -1462,7 +1462,7 @@ function NovaAusenciaPage() {
                       <div className="space-y-1.5">
                         <Label>Empresa *</Label>
                         <Select
-                          value={manualEmpresaId}
+                          value={manualEmpresaId || undefined}
                           onValueChange={(v) => {
                             form.setValue("empresa_id", v, { shouldValidate: true });
                             form.setValue("projeto_id", "", { shouldValidate: true });
@@ -1485,7 +1485,7 @@ function NovaAusenciaPage() {
                       <div className="space-y-1.5">
                         <Label>Projeto *</Label>
                         <Select
-                          value={form.watch("projeto_id") ?? ""}
+                          value={form.watch("projeto_id") || undefined}
                           onValueChange={(v) => form.setValue("projeto_id", v, { shouldValidate: true })}
                           disabled={!manualEmpresaId}
                         >
