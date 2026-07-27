@@ -1085,61 +1085,107 @@ function NovaAusenciaPage() {
 
                       {/* Matrícula (input principal) */}
                       <div className="space-y-1.5">
-                        <Label className="flex items-center gap-1.5 text-sm">
+                        {coach.visible && !isEdit && !bloqueado && (
+                          <CoachMark
+                            text="A pesquisa agora é automática: digite a matrícula e os dados são carregados sozinhos."
+                            onDismiss={coach.dismiss}
+                            onNeverShowAgain={coach.neverShowAgain}
+                          />
+                        )}
+                        <Label htmlFor="matricula-busca" className="flex items-center gap-1.5 text-sm">
                           <Hash className="h-4 w-4 text-muted-foreground" />
                           Matrícula <span className="text-red-500">*</span>
                         </Label>
                         <p className="text-[11px] leading-tight text-muted-foreground">
-                          Digite a matrícula do colaborador. Se existir em mais de uma empresa,
-                          o sistema solicitará a seleção.
+                          Digite a matrícula — a pesquisa é automática. Se existir em mais de uma
+                          empresa, o sistema solicitará a seleção.
                         </p>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col gap-2 sm:flex-row">
                           <Input
+                            id="matricula-busca"
+                            ref={matriculaRef}
                             value={matriculaInput}
                             onChange={(e) => setMatriculaInput(e.target.value)}
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 e.preventDefault();
-                                searchMatricula();
+                                searchMatricula(undefined, "manual");
+                              }
+                              if (e.key === "Escape" && !isEdit && !bloqueado) {
+                                e.preventDefault();
+                                clearColab();
                               }
                             }}
                             placeholder="Ex: 12 ou 123456"
                             disabled={bloqueado || isEdit}
+                            aria-describedby="matricula-busca-status"
                           />
                           {colab ? (
                             <Button
                               type="button"
                               variant="outline"
-                              size="icon"
+                              className="min-h-11 sm:min-h-10"
                               onClick={clearColab}
                               disabled={bloqueado || isEdit}
-                              aria-label="Limpar"
                             >
                               <X className="h-4 w-4" />
+                              <span>Limpar</span>
                             </Button>
                           ) : (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              onClick={() => searchMatricula()}
-                              disabled={searching || bloqueado || isEdit}
-                              aria-label="Buscar"
-                            >
-                              {searching ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Search className="h-4 w-4" />
-                              )}
-                            </Button>
+                            <TooltipProvider delayDuration={200}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="min-h-11 whitespace-nowrap sm:min-h-10"
+                                    onClick={() => searchMatricula(undefined, "manual")}
+                                    disabled={searching || bloqueado || isEdit}
+                                  >
+                                    {searching ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Search className="h-4 w-4" />
+                                    )}
+                                    <span>Atualizar resultados</span>
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  A busca já ocorre automaticamente ao digitar
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
                         </div>
+
+                        <BuscaStatus estado={buscaEstado} className="pt-0.5" />
+                        <span id="matricula-busca-status" className="sr-only">
+                          A pesquisa é executada automaticamente após você parar de digitar.
+                        </span>
+
+                        <FiltroChips chips={chipsBusca} className="pt-1" />
+
+                        {searching && !colab && <BuscaSkeleton linhas={2} />}
+
+                        {!searching &&
+                          !colab &&
+                          !isEdit &&
+                          matriculaInput.trim().length === 0 &&
+                          buscaEstado === "idle" && (
+                            <EstadoVazioBusca
+                              mensagem="Nenhum colaborador selecionado. Informe a matrícula para carregar os dados."
+                              acaoLabel="Informar matrícula"
+                              onAcao={() => matriculaRef.current?.focus()}
+                            />
+                          )}
+
                         {form.formState.errors.colaborador_id && !colab && (
                           <p className="text-xs text-red-500">
                             {form.formState.errors.colaborador_id.message}
                           </p>
                         )}
                       </div>
+
 
                       {/* Nome Completo */}
                       <ReadonlyField
