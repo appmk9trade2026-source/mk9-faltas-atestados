@@ -22,6 +22,8 @@ import {
   excluirUsuarioSeguro,
   type DependenciasUsuario,
 } from "@/lib/usuarios.functions";
+import { calcularBloqueiosExclusao } from "@/lib/usuarios-helpers";
+
 
 type Alvo = {
   id: string;
