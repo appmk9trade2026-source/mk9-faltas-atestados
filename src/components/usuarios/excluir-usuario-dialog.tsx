@@ -107,9 +107,11 @@ export function ExcluirUsuarioDialog({
   }
 
   const deps = depsQ.data;
-  const bloqueado = (deps?.total_bloqueante ?? 0) > 0;
+  const bloqueios = calcularBloqueiosExclusao(deps as unknown as Record<string, number> | undefined);
+  const bloqueado = bloqueios.total > 0;
   const podeExcluir =
     !!alvo && !depsQ.isLoading && !bloqueado && confirmacao.trim().toUpperCase() === "EXCLUIR";
+
 
   return (
     <Dialog open={!!alvo} onOpenChange={(v) => !v && close()}>
