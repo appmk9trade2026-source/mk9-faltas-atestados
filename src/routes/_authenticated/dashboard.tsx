@@ -39,6 +39,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchCategorias, CATEGORIA_CORES, type Categoria } from "@/lib/categorias";
 import { useSessionScope } from "@/hooks/use-session-scope";
 import { SupervisorEmptyState } from "@/components/supervisor-empty-state";
+import { DesempenhoPositivoSection } from "@/components/dashboard/desempenho-positivo";
+
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard · CRM MK9" }] }),
@@ -619,6 +621,16 @@ function DashboardPage() {
           />
 
         </div>
+
+        {/* ---- Fase 2: Desempenho positivo (novo, não substitui os rankings críticos) */}
+        <DesempenhoPositivoSection
+          inicio={filters.inicio}
+          fim={filters.fim}
+          empresaId={filters.empresa_id}
+          projetoId={filters.projeto_id}
+        />
+
+
 
         {/* ---- Últimos registros */}
         <Card>
