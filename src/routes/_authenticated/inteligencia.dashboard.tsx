@@ -1222,9 +1222,11 @@ export function DashboardPage() {
           {/* Ranking resumido de supervisores → tela dedicada */}
           <div id="ranking-supervisores" className="scroll-mt-24">
             <RankingWidget
-              title="Ranking resumido de supervisores"
-              subtitle="Top 5 por % crítico · abra a tela dedicada para o ranking completo"
+              title="Supervisores que exigem atenção"
+              subtitle="5 supervisores com maior % de casos críticos no período selecionado — indica criticidade da equipe, não desempenho do gestor."
+              tone="atencao"
               icon={UserCog}
+
               items={topSupervisores.slice(0, 5).map((s) => ({
                 id: s.id,
                 title: s.nome,
