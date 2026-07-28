@@ -256,7 +256,7 @@ const SEV: Record<
 /** Consulta o período anterior usando a MESMA RPC homologada (somente leitura). */
 export function useComparativoPeriodoAnterior(args: {
   enabled: boolean;
-  keyParts: unknown[];
+  keyParts: readonly unknown[];
   periodo?: { prev_inicio: string; prev_fim: string };
   filtros: Record<string, unknown>;
 }) {
