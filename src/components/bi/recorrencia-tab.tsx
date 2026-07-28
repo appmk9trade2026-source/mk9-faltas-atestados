@@ -45,9 +45,27 @@ export function RecorrenciaTab({ dataInicio, dataFim }: { dataInicio: string; da
 
   const r = q.data;
 
-  if (q.isLoading || !r) {
+  if (q.isLoading) {
     return <Skeleton className="h-64" />;
   }
+
+  if (q.isError || !r) {
+    const msg = (q.error as Error | null)?.message ?? "";
+    const negado = /acesso negado/i.test(msg);
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+        <AlertTriangle className="h-8 w-8 mb-2 opacity-50" />
+        <div className="text-sm">
+          {negado
+            ? "Análise de recorrência disponível apenas para Super Admin, Compliance e RH."
+            : q.isError
+              ? "Não foi possível calcular a recorrência no momento."
+              : "Sem dados no período selecionado"}
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <div className="space-y-4">
