@@ -4294,6 +4294,16 @@ export type Database = {
       cron_refresh_bi_absenteismo_tick: { Args: never; Returns: Json }
       cron_run_escalonamentos_tick: { Args: never; Returns: undefined }
       cron_tick_whatsapp_outbox: { Args: never; Returns: number }
+      dashboard_desempenho_positivo: {
+        Args: {
+          _empresa_id?: string
+          _fim: string
+          _inicio: string
+          _min_colaboradores?: number
+          _projeto_id?: string
+        }
+        Returns: Json
+      }
       dashboard_metrics: {
         Args: {
           _categoria_id?: string
