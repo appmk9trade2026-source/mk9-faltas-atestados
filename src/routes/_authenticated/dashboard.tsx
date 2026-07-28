@@ -46,6 +46,10 @@ import { VisaoGeralKpisGrid } from "@/components/dashboard/visao-geral-kpis";
 import { TendenciasChart } from "@/components/dashboard/tendencias-chart";
 import { UltimasOcorrencias } from "@/components/dashboard/ultimas-ocorrencias";
 import { InsightsAutomaticos } from "@/components/dashboard/insights-automaticos";
+import { InsightsResumo } from "@/components/dashboard/insights-resumo";
+import { BarrasDistribuicao } from "@/components/dashboard/barras-distribuicao";
+import { RankList, RankListCard } from "@/components/dashboard/rank-list";
+import { ResumoTabs } from "@/components/dashboard/resumo-tabs";
 
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
