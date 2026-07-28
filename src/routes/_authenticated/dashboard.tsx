@@ -39,6 +39,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchCategorias, CATEGORIA_CORES, type Categoria } from "@/lib/categorias";
 import { useSessionScope } from "@/hooks/use-session-scope";
 import { SupervisorEmptyState } from "@/components/supervisor-empty-state";
+import { DesempenhoPositivoSection } from "@/components/dashboard/desempenho-positivo";
+
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard · CRM MK9" }] }),
