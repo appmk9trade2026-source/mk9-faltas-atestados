@@ -109,11 +109,13 @@ function InfoHint({ text }: { text: string }) {
 function PositiveCard({
   title,
   description,
+  tooltip,
   icon: Icon,
   children,
 }: {
   title: string;
   description: string;
+  tooltip?: string;
   icon: React.ComponentType<{ className?: string }>;
   children: React.ReactNode;
 }) {
@@ -127,8 +129,9 @@ function PositiveCard({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
               <CardTitle className="text-sm text-emerald-700 dark:text-emerald-400">{title}</CardTitle>
-              <InfoHint text={`${description} ${TOOLTIP_POSITIVO}`} />
+              <InfoHint text={tooltip ?? `${description} ${TOOLTIP_POSITIVO}`} />
             </div>
+
             <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{description}</p>
           </div>
         </div>
