@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { Sparkline } from "./sparkline";
 
 export type VisaoGeralKpis = {
   total: number;
@@ -11,6 +12,12 @@ export type VisaoGeralKpis = {
   lancadas: number;
   tempo_medio_lanc_h: number;
   colaboradores_ativos: number;
+};
+
+export type VisaoGeralSeries = {
+  /** série diária já carregada por `dashboard_metrics` */
+  porDia?: Array<{ dia: string; total: number; pendentes: number; lancadas: number }>;
+  tempoDiario?: Array<{ dia: string; horas: number }>;
 };
 
 type Item = {
@@ -24,6 +31,7 @@ type Item = {
   inverse?: boolean;
   hint: string;
   descricao: string;
+  spark?: number[];
 };
 
 function pctDelta(curr: number, prev: number) {
@@ -33,6 +41,7 @@ function pctDelta(curr: number, prev: number) {
 
 const int = (v: number) => new Intl.NumberFormat("pt-BR").format(Math.round(v));
 const dec1 = (v: number) => new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v);
+
 
 /**
  * BLOCO 1 — Visão geral da operação.
