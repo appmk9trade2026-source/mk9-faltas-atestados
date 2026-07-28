@@ -226,6 +226,13 @@ function BIExecutivoPage() {
   }, [dados.por_dia_semana]);
 
   const isLoading = dadosQ.isLoading;
+  const erroConsulta = (dadosQ.error as Error | null)?.message ?? null;
+  const acessoNegado = !!erroConsulta && /acesso negado/i.test(erroConsulta);
+
+  const nomeEmpresa = (id: string) => empresasQ.data?.find((e) => e.id === id)?.nome ?? id;
+  const nomeCategoria = (id: string) => categoriasQ.data?.find((c) => c.id === id)?.nome ?? id;
+
+
 
   return (
     <AppShell title="BI Executivo">
@@ -343,8 +350,26 @@ function BIExecutivoPage() {
           </div>
         </div>
 
+        {/* Falha de consulta — nunca exibir zeros como se fossem dados reais */}
+        {erroConsulta && (
+          <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm">
+            <AlertTriangle className="h-4 w-4 mt-0.5 text-destructive shrink-0" />
+            <div>
+              <div className="font-medium">
+                {acessoNegado ? "Acesso restrito ao BI Executivo" : "Não foi possível carregar os indicadores"}
+              </div>
+              <p className="text-muted-foreground mt-0.5">
+                {acessoNegado
+                  ? "Este painel está disponível apenas para Super Admin, Compliance e RH. Os números abaixo não são exibidos por falta de permissão."
+                  : `Os indicadores não puderam ser calculados (${erroConsulta}). Os valores exibidos não representam ausência de registros.`}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* KPIs */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className={cn("grid grid-cols-2 md:grid-cols-4 gap-3", erroConsulta && "opacity-50")}>
+
           <KpiCard title="Volume de Ausências" value={kpi?.total_ausencias ?? 0} loading={isLoading} icon={<BarChart3 className="h-4 w-4" />}
             variacao={comp?.variacao_total_pct ?? null} baseZero={comp?.base_anterior_zero}
             tooltip="Contagem de registros no período. Não é 'taxa de absenteísmo' — não há denominador de jornada." />
@@ -617,8 +642,11 @@ function BIExecutivoPage() {
           onOpenChange={setShowExport}
           dados={dados}
           filtros={filtros}
+          nomeEmpresa={nomeEmpresa}
+          nomeCategoria={nomeCategoria}
           ultimaAtualizacao={health?.ultima_atualizacao ?? null}
         />
+
 
         {/* Metodologia */}
         <Dialog open={showMetodologia} onOpenChange={setShowMetodologia}>
@@ -720,7 +748,7 @@ function EmptyState() {
 }
 
 function ExportDialog({
-  open, onOpenChange, dados, filtros, ultimaAtualizacao,
+  open, onOpenChange, dados, filtros, ultimaAtualizacao, nomeEmpresa, nomeCategoria,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -735,15 +763,18 @@ function ExportDialog({
   };
   filtros: Filtros;
   ultimaAtualizacao: string | null;
+  nomeEmpresa?: (id: string) => string;
+  nomeCategoria?: (id: string) => string;
 }) {
   const filtrosLabel = {
     Período: `${filtros.data_inicio} → ${filtros.data_fim}`,
-    Empresas: filtros.empresa_ids.length ? filtros.empresa_ids.join(", ") : "Todas",
+    Empresas: filtros.empresa_ids.length ? filtros.empresa_ids.map((id) => nomeEmpresa?.(id) ?? id).join(", ") : "Todas",
     Projetos: filtros.projeto_ids.length ? filtros.projeto_ids.join(", ") : "Todos",
-    Categorias: filtros.categoria_ids.length ? filtros.categoria_ids.join(", ") : "Todas",
+    Categorias: filtros.categoria_ids.length ? filtros.categoria_ids.map((id) => nomeCategoria?.(id) ?? id).join(", ") : "Todas",
     Granularidade: filtros.granularidade,
     "Comparação período anterior": filtros.comparar_periodo_anterior ? "Sim" : "Não",
   };
+
 
   const sections = [
     { title: "Resumo Executivo", rows: dados.kpis ? [dados.kpis as unknown as Record<string, string | number>] : [] },
@@ -754,7 +785,7 @@ function ExportDialog({
     { title: "Tipos", rows: (dados.por_tipo ?? []) as unknown as Record<string, string | number>[] },
     { title: "Qualidade dos Dados", rows: dados.qualidade_dados ? [dados.qualidade_dados as unknown as Record<string, string | number>] : [] },
     { title: "Metodologia", rows: [
-      { Item: "Fonte", Detalhe: "bi_absenteismo_diario (agregada, sem PII)" },
+      { Item: "Fonte", Detalhe: "bi_absenteismo_diario — agregação viva de ausencias, sem PII" },
       { Item: "Data ref.", Detalhe: "data_inicio da ausência (fallback: created_at)" },
       { Item: "Horas estimadas", Detalhe: "dias × 8h (aproximação)" },
       { Item: "z-score", Detalhe: "(observado − média)/desvio-padrão histórico" },

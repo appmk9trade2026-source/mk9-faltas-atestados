@@ -149,8 +149,15 @@ export function VariacoesAtipicasTab({ dataInicio, dataFim }: { dataInicio: stri
         <CardContent>
           {q.isLoading ? (
             <Skeleton className="h-40" />
+          ) : q.isError ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">
+              {/acesso negado/i.test((q.error as Error).message)
+                ? "Análise de variações disponível apenas para Super Admin, Compliance e RH."
+                : "Não foi possível calcular as variações no momento."}
+            </p>
           ) : itens.length === 0 ? (
             <p className="text-sm text-muted-foreground py-6 text-center">Sem variações no filtro atual.</p>
+
           ) : (
             <div className="overflow-x-auto">
               <Table>

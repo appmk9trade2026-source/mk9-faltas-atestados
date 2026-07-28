@@ -994,7 +994,7 @@ export type Database = {
         }
         Relationships: []
       }
-      bi_absenteismo_diario: {
+      bi_absenteismo_diario_snapshot: {
         Row: {
           afastamentos: number
           atestados: number
@@ -3880,6 +3880,64 @@ export type Database = {
       }
     }
     Views: {
+      bi_absenteismo_diario: {
+        Row: {
+          afastamentos: number | null
+          atestados: number | null
+          categoria_id: string | null
+          data_referencia: string | null
+          empresa_id: string | null
+          faltas: number | null
+          licencas: number | null
+          medidas_administrativas: number | null
+          outros: number | null
+          projeto_id: string | null
+          sem_duracao: number | null
+          status: string | null
+          tipo_ausencia_id: string | null
+          total_colaboradores_afetados: number | null
+          total_dias_ausencia: number | null
+          total_horas_estimadas: number | null
+          total_registros: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ausencias_tipo_ausencia_id_fkey"
+            columns: ["tipo_ausencia_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_ausencia"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colaboradores_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colaboradores_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_tst_saude"
+            referencedColumns: ["empresa_id"]
+          },
+          {
+            foreignKeyName: "colaboradores_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tipos_ausencia_categoria_ausencia_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_ausencia"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_tst_monitor: {
         Row: {
           alertas_sem_tst_abertos: number | null
@@ -4104,6 +4162,42 @@ export type Database = {
       }
       backfill_supervisor_usuario_id: { Args: never; Returns: Json }
       bi_analisar_tendencias: { Args: { p_filtros?: Json }; Returns: Json }
+      bi_base_filtrada: {
+        Args: {
+          p_cats?: string[]
+          p_empresas?: string[]
+          p_fim: string
+          p_ini: string
+          p_projetos?: string[]
+          p_status?: string[]
+          p_tipos?: string[]
+        }
+        Returns: {
+          categoria_id: string
+          data_referencia: string
+          empresa_id: string
+          projeto_id: string
+          sem_duracao: number
+          status: string
+          tipo_ausencia_id: string
+          total_colaboradores_afetados: number
+          total_dias_ausencia: number
+          total_horas_estimadas: number
+          total_registros: number
+        }[]
+      }
+      bi_colaboradores_distintos: {
+        Args: {
+          p_cats?: string[]
+          p_empresas?: string[]
+          p_fim: string
+          p_ini: string
+          p_projetos?: string[]
+          p_status?: string[]
+          p_tipos?: string[]
+        }
+        Returns: number
+      }
       bi_detectar_variacoes_atipicas: {
         Args: { p_filtros?: Json }
         Returns: Json
