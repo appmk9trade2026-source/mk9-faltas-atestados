@@ -6,8 +6,8 @@ import { ptBR } from "date-fns/locale";
 import {
   Activity, AlertTriangle, ArrowDown, ArrowUp, Ban, BriefcaseMedical,
   Calendar as CalendarIcon, CheckCircle2, ClipboardList, Clock, Download,
-  FileText, MessageSquare, RefreshCw, ShieldAlert, TrendingDown, TrendingUp,
-  Truck, UserRound, Users, X,
+  FileText, LayoutDashboard, Lightbulb, MessageSquare, RefreshCw, ShieldAlert,
+  TrendingDown, TrendingUp, Trophy, Truck, UserRound, Users, X,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -40,6 +40,12 @@ import { fetchCategorias, CATEGORIA_CORES, type Categoria } from "@/lib/categori
 import { useSessionScope } from "@/hooks/use-session-scope";
 import { SupervisorEmptyState } from "@/components/supervisor-empty-state";
 import { DesempenhoPositivoSection } from "@/components/dashboard/desempenho-positivo";
+import { dashboardLayoutV2 } from "@/lib/dashboard-flags";
+import { SectionHeader } from "@/components/dashboard/section-header";
+import { VisaoGeralKpisGrid } from "@/components/dashboard/visao-geral-kpis";
+import { TendenciasChart } from "@/components/dashboard/tendencias-chart";
+import { UltimasOcorrencias } from "@/components/dashboard/ultimas-ocorrencias";
+import { InsightsAutomaticos } from "@/components/dashboard/insights-automaticos";
 
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -418,63 +424,64 @@ function DashboardPage() {
         )}
       </Card>
 
-      <div ref={exportRef} className="space-y-4">
-        {/* ---- KPIs */}
-        <KpisGrid data={data} loading={query.isLoading} />
+      {/* ------------------------------------------------------------------
+          Blocos homologados (Fases 1 e 2) — apenas reposicionados na Fase 3.
+          Nenhuma query, RPC, filtro, cálculo ou payload foi alterado.
+      ------------------------------------------------------------------- */}
+      {(() => {
+        const blocoCategorias = (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <ChartCard title="Distribuição por Categoria">
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie
+                    data={(data?.por_categoria ?? []).filter((c) => c.nome)}
+                    dataKey="total"
+                    nameKey="nome"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={2}
+                    onClick={(d: { categoria_id?: string | null }) =>
+                      d.categoria_id && setFilters((f) => ({ ...f, categoria_id: d.categoria_id ?? undefined, tipo_oficial_id: undefined }))
+                    }
+                    cursor="pointer"
+                  >
+                    {(data?.por_categoria ?? []).filter((c) => c.nome).map((c, i) => (
+                      <Cell key={i} fill={c.cor ?? (c.codigo ? CATEGORIA_CORES[c.codigo] : undefined) ?? COLORS[i % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartCard>
 
-        {/* ---- Categorias analíticas */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <ChartCard title="Distribuição por Categoria">
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie
-                  data={(data?.por_categoria ?? []).filter((c) => c.nome)}
-                  dataKey="total"
-                  nameKey="nome"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={2}
-                  onClick={(d: { categoria_id?: string | null }) =>
-                    d.categoria_id && setFilters((f) => ({ ...f, categoria_id: d.categoria_id ?? undefined, tipo_oficial_id: undefined }))
-                  }
-                  cursor="pointer"
-                >
-                  {(data?.por_categoria ?? []).filter((c) => c.nome).map((c, i) => (
-                    <Cell key={i} fill={c.cor ?? (c.codigo ? CATEGORIA_CORES[c.codigo] : undefined) ?? COLORS[i % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </ChartCard>
+            <ChartCard title={filters.categoria_id
+              ? `Tipos oficiais — ${categorias.find((c) => c.id === filters.categoria_id)?.nome ?? "Categoria"}`
+              : "Tipos oficiais por categoria"}>
+              <ResponsiveContainer
+                width="100%"
+                height={Math.max(280, ((data?.por_tipo_oficial ?? []).length || 1) * 26)}
+              >
+                <BarChart data={data?.por_tipo_oficial ?? []} layout="vertical" margin={{ left: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <YAxis type="category" dataKey="nome" width={200} tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Bar dataKey="total" radius={[0, 4, 4, 0]} cursor="pointer">
+                    {(data?.por_tipo_oficial ?? []).map((t, i) => {
+                      const cat = categorias.find((c) => c.id === t.categoria_id);
+                      const fill = t.cor ?? cat?.cor ?? (cat ? CATEGORIA_CORES[cat.codigo] : undefined) ?? COLORS[i % COLORS.length];
+                      return <Cell key={i} fill={fill} />;
+                    })}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          </div>
+        );
 
-          <ChartCard title={filters.categoria_id
-            ? `Tipos oficiais — ${categorias.find((c) => c.id === filters.categoria_id)?.nome ?? "Categoria"}`
-            : "Tipos oficiais por categoria"}>
-            <ResponsiveContainer
-              width="100%"
-              height={Math.max(280, ((data?.por_tipo_oficial ?? []).length || 1) * 26)}
-            >
-              <BarChart data={data?.por_tipo_oficial ?? []} layout="vertical" margin={{ left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
-                <YAxis type="category" dataKey="nome" width={200} tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="total" radius={[0, 4, 4, 0]} cursor="pointer">
-                  {(data?.por_tipo_oficial ?? []).map((t, i) => {
-                    const cat = categorias.find((c) => c.id === t.categoria_id);
-                    const fill = t.cor ?? cat?.cor ?? (cat ? CATEGORIA_CORES[cat.codigo] : undefined) ?? COLORS[i % COLORS.length];
-                    return <Cell key={i} fill={fill} />;
-                  })}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        </div>
-
-        {/* ---- Charts */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        const chartAusenciasDia = (
           <ChartCard title="Ausências por dia">
             <ResponsiveContainer width="100%" height={260}>
               <LineChart data={data?.por_dia ?? []}>
@@ -486,7 +493,9 @@ function DashboardPage() {
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
+        );
 
+        const chartEmpresa = (
           <ChartCard title="Ausências por empresa">
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={data?.por_empresa ?? []}>
@@ -500,7 +509,9 @@ function DashboardPage() {
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
+        );
 
+        const chartProjeto = (
           <ChartCard title="Ausências por projeto">
             <ResponsiveContainer width="100%" height={Math.max(260, (data?.por_projeto?.length ?? 0) * 24)}>
               <BarChart data={data?.por_projeto ?? []} layout="vertical" margin={{ left: 20 }}>
@@ -514,7 +525,9 @@ function DashboardPage() {
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
+        );
 
+        const chartTipos = (
           <ChartCard title="Tipos de ausência">
             <ResponsiveContainer width="100%" height={260}>
               <PieChart>
@@ -531,7 +544,9 @@ function DashboardPage() {
               </PieChart>
             </ResponsiveContainer>
           </ChartCard>
+        );
 
+        const chartPendLanc = (
           <ChartCard title="Pendentes × Lançadas (por dia)">
             <ResponsiveContainer width="100%" height={260}>
               <AreaChart data={data?.por_dia ?? []}>
@@ -545,7 +560,9 @@ function DashboardPage() {
               </AreaChart>
             </ResponsiveContainer>
           </ChartCard>
+        );
 
+        const chartTempo = (
           <ChartCard title="Tempo médio até lançamento (horas)">
             <ResponsiveContainer width="100%" height={260}>
               <LineChart data={data?.tempo_diario ?? []}>
@@ -557,7 +574,9 @@ function DashboardPage() {
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
+        );
 
+        const chartSupervisores = (
           <ChartCard
             title="Supervisores que exigem atenção"
             description="Ranking calculado pela quantidade de ausências registradas no período selecionado. Indica criticidade, não desempenho."
@@ -575,7 +594,9 @@ function DashboardPage() {
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
+        );
 
+        const chartColaboradores = (
           <ChartCard
             title="Colaboradores com maior recorrência"
             description="Ranking calculado pela quantidade de ausências registradas no período selecionado. Indica recorrência, não desempenho."
@@ -591,87 +612,215 @@ function DashboardPage() {
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
+        );
 
-        </div>
+        const heatmapCard = (
+          <ChartCard title="Mapa de calor — dia da semana">
+            <Heatmap data={data?.heatmap ?? []} />
+          </ChartCard>
+        );
 
-        {/* ---- Heatmap dia da semana */}
-        <ChartCard title="Mapa de calor — dia da semana">
-          <Heatmap data={data?.heatmap ?? []} />
-        </ChartCard>
+        const rankCards = (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <RankCard
+              title="Empresas com mais ocorrências"
+              description="Quantidade de ausências registradas no período selecionado."
+              tone="atencao"
+              rows={data?.top_empresas ?? []}
+            />
+            <RankCard
+              title="Projetos com mais ocorrências"
+              description="Quantidade de ausências registradas no período selecionado."
+              tone="atencao"
+              rows={data?.top_projetos ?? []}
+            />
+            <RankCard
+              title="Supervisores com mais ocorrências"
+              description="Quantidade de ausências registradas no período selecionado. Não representa desempenho."
+              tone="atencao"
+              rows={data?.top_supervisores.map((s) => ({ nome: s.nome, total: s.total })) ?? []}
+            />
+          </div>
+        );
 
-        {/* ---- Tabelas de ranking */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <RankCard
-            title="Empresas com mais ocorrências"
-            description="Quantidade de ausências registradas no período selecionado."
-            tone="atencao"
-            rows={data?.top_empresas ?? []}
+        const desempenhoPositivo = (
+          <DesempenhoPositivoSection
+            inicio={filters.inicio}
+            fim={filters.fim}
+            empresaId={filters.empresa_id}
+            projetoId={filters.projeto_id}
           />
-          <RankCard
-            title="Projetos com mais ocorrências"
-            description="Quantidade de ausências registradas no período selecionado."
-            tone="atencao"
-            rows={data?.top_projetos ?? []}
-          />
-          <RankCard
-            title="Supervisores com mais ocorrências"
-            description="Quantidade de ausências registradas no período selecionado. Não representa desempenho."
-            tone="atencao"
-            rows={data?.top_supervisores.map((s) => ({ nome: s.nome, total: s.total })) ?? []}
-          />
+        );
 
-        </div>
-
-        {/* ---- Fase 2: Desempenho positivo (novo, não substitui os rankings críticos) */}
-        <DesempenhoPositivoSection
-          inicio={filters.inicio}
-          fim={filters.fim}
-          empresaId={filters.empresa_id}
-          projetoId={filters.projeto_id}
-        />
-
-
-
-        {/* ---- Últimos registros */}
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Últimos registros</CardTitle></CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Colaborador</TableHead>
-                    <TableHead>Empresa</TableHead>
-                    <TableHead>Projeto</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(data?.ultimos ?? []).map((r) => (
-                    <TableRow key={r.id}>
-                      <TableCell className="whitespace-nowrap text-xs">{format(new Date(r.registrado_em), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
-                      <TableCell className="text-sm">{r.colab_nome}</TableCell>
-                      <TableCell className="text-sm">{r.empresa_nome}</TableCell>
-                      <TableCell className="text-sm">{r.projeto_nome}</TableCell>
-                      <TableCell><Badge variant="outline">{r.tipo}</Badge></TableCell>
-                      <TableCell>
-                        <Badge className={r.status === "LANCADO" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/15 text-amber-600 dark:text-amber-400"}>
-                          {r.status}
-                        </Badge>
-                      </TableCell>
+        const ultimosLegacy = (
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Últimos registros</CardTitle></CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Colaborador</TableHead>
+                      <TableHead>Empresa</TableHead>
+                      <TableHead>Projeto</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
-                  ))}
-                  {!query.isLoading && (data?.ultimos ?? []).length === 0 && (
-                    <TableRow><TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">Sem registros no período.</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {(data?.ultimos ?? []).map((r) => (
+                      <TableRow key={r.id}>
+                        <TableCell className="whitespace-nowrap text-xs">{format(new Date(r.registrado_em), "dd/MM/yy HH:mm", { locale: ptBR })}</TableCell>
+                        <TableCell className="text-sm">{r.colab_nome}</TableCell>
+                        <TableCell className="text-sm">{r.empresa_nome}</TableCell>
+                        <TableCell className="text-sm">{r.projeto_nome}</TableCell>
+                        <TableCell><Badge variant="outline">{r.tipo}</Badge></TableCell>
+                        <TableCell>
+                          <Badge className={r.status === "LANCADO" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/15 text-amber-600 dark:text-amber-400"}>
+                            {r.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {!query.isLoading && (data?.ultimos ?? []).length === 0 && (
+                      <TableRow><TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">Sem registros no período.</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+        // ---------- Layout legado (rollback imediato via feature flag)
+        if (!dashboardLayoutV2) {
+          return (
+            <div ref={exportRef} className="space-y-4">
+              <KpisGrid data={data} loading={query.isLoading} />
+              {blocoCategorias}
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                {chartAusenciasDia}
+                {chartEmpresa}
+                {chartProjeto}
+                {chartTipos}
+                {chartPendLanc}
+                {chartTempo}
+                {chartSupervisores}
+                {chartColaboradores}
+              </div>
+              {heatmapCard}
+              {rankCards}
+              {desempenhoPositivo}
+              {ultimosLegacy}
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          );
+        }
+
+        // ---------- Layout executivo V2 (Fase 3)
+        return (
+          <div ref={exportRef} className="space-y-10">
+            {/* BLOCO 1 — Visão geral */}
+            <section aria-labelledby="bloco-visao-geral" className="space-y-4">
+              <SectionHeader
+                id="bloco-visao-geral"
+                title="Visão geral da operação"
+                question="Como está a operação?"
+                description="Indicadores principais do período selecionado, comparados ao período imediatamente anterior."
+                icon={LayoutDashboard}
+              />
+              <VisaoGeralKpisGrid kpis={data?.kpis} prev={data?.prev} loading={query.isLoading} />
+            </section>
+
+            {/* BLOCO 2 — Tendências */}
+            <section aria-labelledby="bloco-tendencias" className="space-y-4">
+              <SectionHeader
+                id="bloco-tendencias"
+                title="Tendências da operação"
+                question="O que mudou?"
+                description="Evolução diária das ausências, pendências e lançamentos. Ligue ou desligue séries para comparar."
+                icon={TrendingUp}
+              />
+              <TendenciasChart porDia={data?.por_dia ?? []} loading={query.isLoading} />
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                {chartAusenciasDia}
+                {chartTempo}
+                {chartPendLanc}
+                {chartTipos}
+              </div>
+            </section>
+
+            {/* BLOCO 3 — Pontos de atenção */}
+            <section aria-labelledby="bloco-atencao" className="space-y-4">
+              <SectionHeader
+                id="bloco-atencao"
+                title="Onde devemos agir?"
+                question="Quem merece atenção?"
+                description="Esses indicadores representam concentração de ocorrências e ajudam a priorizar ações."
+                icon={AlertTriangle}
+                tone="atencao"
+              />
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                {chartSupervisores}
+                {chartColaboradores}
+                {chartEmpresa}
+                {chartProjeto}
+              </div>
+              {rankCards}
+              {heatmapCard}
+              {blocoCategorias}
+            </section>
+
+            {/* BLOCO 4 — Desempenho positivo (Fase 2, intacto) */}
+            <section aria-labelledby="bloco-positivo" className="space-y-4">
+              <SectionHeader
+                id="bloco-positivo"
+                title="Desempenho positivo"
+                question="Quem está performando melhor?"
+                description="Indicadores proporcionais de desempenho."
+                icon={Trophy}
+                tone="positivo"
+              />
+              {desempenhoPositivo}
+            </section>
+
+            {/* BLOCO 5 — Últimas ocorrências */}
+            <section aria-labelledby="bloco-ultimas" className="space-y-4">
+              <SectionHeader
+                id="bloco-ultimas"
+                title="Últimas ocorrências"
+                question="O que acabou de acontecer?"
+                description="Registros mais recentes do período, com busca rápida e filtro de status."
+                icon={ClipboardList}
+              />
+              <UltimasOcorrencias rows={data?.ultimos ?? []} loading={query.isLoading} />
+            </section>
+
+            {/* BLOCO 6 — Insights automáticos */}
+            <section aria-labelledby="bloco-insights" className="space-y-4">
+              <SectionHeader
+                id="bloco-insights"
+                title="Insights automáticos"
+                question="Quais ações devo tomar?"
+                description="Leituras geradas por regras determinísticas a partir dos mesmos números exibidos acima."
+                icon={Lightbulb}
+              />
+              <InsightsAutomaticos
+                loading={query.isLoading}
+                input={{
+                  kpis: data?.kpis,
+                  prev: data?.prev,
+                  top_projetos: data?.top_projetos,
+                  top_empresas: data?.top_empresas,
+                  top_supervisores: data?.top_supervisores,
+                  heatmap: data?.heatmap,
+                }}
+              />
+            </section>
+          </div>
+        );
+      })()}
+
     </AppShell>
   );
 }
