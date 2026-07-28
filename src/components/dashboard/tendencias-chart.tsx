@@ -44,6 +44,7 @@ export function TendenciasChart({
     pendentes: true,
     lancadas: true,
   });
+  const [hover, setHover] = useState<SerieKey | null>(null);
 
   const dados = useMemo(
     () => porDia.map((p) => ({ ...p, label: labelDia(p.dia) })),
@@ -57,6 +58,7 @@ export function TendenciasChart({
       return next;
     });
   }
+
 
   return (
     <Card>
