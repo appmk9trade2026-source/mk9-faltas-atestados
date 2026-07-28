@@ -642,8 +642,11 @@ function BIExecutivoPage() {
           onOpenChange={setShowExport}
           dados={dados}
           filtros={filtros}
+          nomeEmpresa={nomeEmpresa}
+          nomeCategoria={nomeCategoria}
           ultimaAtualizacao={health?.ultima_atualizacao ?? null}
         />
+
 
         {/* Metodologia */}
         <Dialog open={showMetodologia} onOpenChange={setShowMetodologia}>
