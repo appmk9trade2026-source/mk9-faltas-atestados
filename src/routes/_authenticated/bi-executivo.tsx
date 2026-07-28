@@ -350,8 +350,26 @@ function BIExecutivoPage() {
           </div>
         </div>
 
+        {/* Falha de consulta — nunca exibir zeros como se fossem dados reais */}
+        {erroConsulta && (
+          <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm">
+            <AlertTriangle className="h-4 w-4 mt-0.5 text-destructive shrink-0" />
+            <div>
+              <div className="font-medium">
+                {acessoNegado ? "Acesso restrito ao BI Executivo" : "Não foi possível carregar os indicadores"}
+              </div>
+              <p className="text-muted-foreground mt-0.5">
+                {acessoNegado
+                  ? "Este painel está disponível apenas para Super Admin, Compliance e RH. Os números abaixo não são exibidos por falta de permissão."
+                  : `Os indicadores não puderam ser calculados (${erroConsulta}). Os valores exibidos não representam ausência de registros.`}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* KPIs */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className={cn("grid grid-cols-2 md:grid-cols-4 gap-3", erroConsulta && "opacity-50")}>
+
           <KpiCard title="Volume de Ausências" value={kpi?.total_ausencias ?? 0} loading={isLoading} icon={<BarChart3 className="h-4 w-4" />}
             variacao={comp?.variacao_total_pct ?? null} baseZero={comp?.base_anterior_zero}
             tooltip="Contagem de registros no período. Não é 'taxa de absenteísmo' — não há denominador de jornada." />
