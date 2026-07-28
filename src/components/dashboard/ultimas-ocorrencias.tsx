@@ -117,7 +117,6 @@ export function UltimasOcorrencias({
                   <TableCell className="text-right">
                     <Link
                       to="/ausencias"
-                      search={{ q: r.colab_nome } as never}
                       className="inline-flex items-center gap-1 rounded text-xs text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       aria-label={`Abrir ocorrências de ${r.colab_nome}`}
                     >
