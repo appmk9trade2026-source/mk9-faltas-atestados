@@ -717,10 +717,19 @@ function DashboardPage() {
           );
         }
 
-        // ---------- Layout executivo V2 (Fase 3)
+        // ---------- Layout executivo V2 (Fase 3 + refinamento Fase 4)
+        const insightsInput = {
+          kpis: data?.kpis,
+          prev: data?.prev,
+          top_projetos: data?.top_projetos,
+          top_empresas: data?.top_empresas,
+          top_supervisores: data?.top_supervisores,
+          heatmap: data?.heatmap,
+        };
+
         return (
-          <div ref={exportRef} className="space-y-10">
-            {/* BLOCO 1 — Visão geral */}
+          <div ref={exportRef} className="space-y-8">
+            {/* BLOCO 1 — Visão geral + destaques rápidos */}
             <section aria-labelledby="bloco-visao-geral" className="space-y-4">
               <SectionHeader
                 id="bloco-visao-geral"
@@ -729,28 +738,85 @@ function DashboardPage() {
                 description="Indicadores principais do período selecionado, comparados ao período imediatamente anterior."
                 icon={LayoutDashboard}
               />
-              <VisaoGeralKpisGrid kpis={data?.kpis} prev={data?.prev} loading={query.isLoading} />
+              <VisaoGeralKpisGrid
+                kpis={data?.kpis}
+                prev={data?.prev}
+                loading={query.isLoading}
+                series={{ porDia: data?.por_dia, tempoDiario: data?.tempo_diario }}
+              />
+              <InsightsResumo input={insightsInput} loading={query.isLoading} />
             </section>
 
-            {/* BLOCO 2 — Tendências */}
+            {/* BLOCO 2 — Tendências (gráfico principal único) */}
             <section aria-labelledby="bloco-tendencias" className="space-y-4">
               <SectionHeader
                 id="bloco-tendencias"
                 title="Tendências da operação"
                 question="O que mudou?"
-                description="Evolução diária das ausências, pendências e lançamentos. Ligue ou desligue séries para comparar."
+                description="Evolução diária das ausências, pendências e lançamentos. Clique na legenda para ligar ou desligar séries."
                 icon={TrendingUp}
               />
               <TendenciasChart porDia={data?.por_dia ?? []} loading={query.isLoading} />
+
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                {chartAusenciasDia}
-                {chartTempo}
-                {chartPendLanc}
-                {chartTipos}
+                <ChartCard
+                  title="Distribuição por categoria"
+                  description="Participação de cada categoria nas ocorrências do período."
+                >
+                  <BarrasDistribuicao
+                    loading={query.isLoading}
+                    itens={(data?.por_categoria ?? [])
+                      .filter((c) => c.nome)
+                      .map((c, i) => ({
+                        id: c.categoria_id,
+                        nome: c.nome as string,
+                        total: c.total,
+                        cor: c.cor ?? (c.codigo ? CATEGORIA_CORES[c.codigo] : undefined) ?? COLORS[i % COLORS.length],
+                      }))}
+                    onSelect={(it) =>
+                      it.id && setFilters((f) => ({ ...f, categoria_id: it.id ?? undefined, tipo_oficial_id: undefined }))
+                    }
+                  />
+                </ChartCard>
+
+                <ChartCard
+                  title="Tipos de ausência"
+                  description="Volume por tipo base no período selecionado."
+                >
+                  <BarrasDistribuicao
+                    loading={query.isLoading}
+                    itens={(data?.por_tipo ?? []).map((t, i) => ({
+                      nome: t.nome,
+                      total: t.total,
+                      cor: COLORS[i % COLORS.length],
+                    }))}
+                    onSelect={(it) => setFilters((f) => ({ ...f, tipo: it.nome }))}
+                  />
+                </ChartCard>
               </div>
+
+              <ChartCard
+                title={filters.categoria_id
+                  ? `Tipos oficiais — ${categorias.find((c) => c.id === filters.categoria_id)?.nome ?? "Categoria"}`
+                  : "Tipos oficiais por categoria"}
+                description="Distribuição detalhada por tipo oficial."
+              >
+                <BarrasDistribuicao
+                  loading={query.isLoading}
+                  limit={12}
+                  itens={(data?.por_tipo_oficial ?? []).map((t, i) => {
+                    const cat = categorias.find((c) => c.id === t.categoria_id);
+                    return {
+                      nome: t.nome,
+                      total: t.total,
+                      cor: t.cor ?? cat?.cor ?? (cat ? CATEGORIA_CORES[cat.codigo] : undefined) ?? COLORS[i % COLORS.length],
+                    };
+                  })}
+                />
+              </ChartCard>
             </section>
 
-            {/* BLOCO 3 — Pontos de atenção */}
+            {/* BLOCO 3 — Pontos de atenção (compactado na Fase 4) */}
             <section aria-labelledby="bloco-atencao" className="space-y-4">
               <SectionHeader
                 id="bloco-atencao"
@@ -760,16 +826,91 @@ function DashboardPage() {
                 icon={AlertTriangle}
                 tone="atencao"
               />
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                {chartSupervisores}
-                {chartColaboradores}
-                {chartEmpresa}
-                {chartProjeto}
+
+              {/* Linha 1 — Supervisores + Colaboradores */}
+              <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
+                <RankListCard
+                  title="Supervisores que exigem atenção"
+                  description="Quantidade de ausências no período. Indica criticidade, não desempenho."
+                  tone="atencao"
+                  icon={AlertTriangle}
+                >
+                  <RankList
+                    rows={data?.top_supervisores ?? []}
+                    tone="atencao"
+                    loading={query.isLoading}
+                    onSelect={(r) =>
+                      r.nome !== "(Sem supervisor)" && setFilters((f) => ({ ...f, supervisor: r.nome }))
+                    }
+                  />
+                </RankListCard>
+
+                <RankListCard
+                  title="Colaboradores com maior recorrência"
+                  description="Quantidade de ausências no período. Indica recorrência, não desempenho."
+                  tone="critico"
+                  icon={AlertTriangle}
+                >
+                  <RankList rows={data?.top_colaboradores ?? []} tone="critico" loading={query.isLoading} />
+                </RankListCard>
               </div>
-              {rankCards}
+
+              {/* Linha 2 — Empresas + Projetos */}
+              <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
+                <RankListCard
+                  title="Empresas com mais ocorrências"
+                  description="Quantidade de ausências registradas no período selecionado."
+                  tone="atencao"
+                >
+                  <RankList
+                    rows={data?.por_empresa.map((e) => ({ id: e.empresa_id, nome: e.nome, total: e.total })) ?? []}
+                    tone="atencao"
+                    loading={query.isLoading}
+                    onSelect={(r) => r.id && setFilters((f) => ({ ...f, empresa_id: r.id, projeto_id: undefined }))}
+                  />
+                </RankListCard>
+
+                <RankListCard
+                  title="Projetos com mais ocorrências"
+                  description="Quantidade de ausências registradas no período selecionado."
+                  tone="atencao"
+                >
+                  <RankList
+                    rows={data?.por_projeto.map((p) => ({ id: p.projeto_id, nome: p.nome, total: p.total })) ?? []}
+                    tone="atencao"
+                    loading={query.isLoading}
+                    onSelect={(r) => r.id && setFilters((f) => ({ ...f, projeto_id: r.id }))}
+                  />
+                </RankListCard>
+              </div>
+
+              {/* Linha 3 — Mapa de calor em largura total */}
               {heatmapCard}
-              {blocoCategorias}
+
+              {/* Tabelas resumidas agrupadas em abas */}
+              <ResumoTabs
+                loading={query.isLoading}
+                empresas={data?.top_empresas ?? []}
+                projetos={data?.top_projetos ?? []}
+                supervisores={data?.top_supervisores ?? []}
+              />
             </section>
+
+            {/* Componentes homologados mantidos no código, apenas ocultos visualmente na Fase 4.
+                Nenhuma lógica, query ou payload foi removida. */}
+            <div className="hidden" aria-hidden="true">
+              {chartAusenciasDia}
+              {chartPendLanc}
+              {chartTempo}
+              {chartTipos}
+              {chartEmpresa}
+              {chartProjeto}
+              {chartSupervisores}
+              {chartColaboradores}
+              {blocoCategorias}
+              {rankCards}
+            </div>
+
 
             {/* BLOCO 4 — Desempenho positivo (Fase 2, intacto) */}
             <section aria-labelledby="bloco-positivo" className="space-y-4">
