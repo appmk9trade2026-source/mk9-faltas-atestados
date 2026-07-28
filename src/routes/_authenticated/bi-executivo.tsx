@@ -748,7 +748,7 @@ function EmptyState() {
 }
 
 function ExportDialog({
-  open, onOpenChange, dados, filtros, ultimaAtualizacao,
+  open, onOpenChange, dados, filtros, ultimaAtualizacao, nomeEmpresa, nomeCategoria,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -763,15 +763,18 @@ function ExportDialog({
   };
   filtros: Filtros;
   ultimaAtualizacao: string | null;
+  nomeEmpresa?: (id: string) => string;
+  nomeCategoria?: (id: string) => string;
 }) {
   const filtrosLabel = {
     Período: `${filtros.data_inicio} → ${filtros.data_fim}`,
-    Empresas: filtros.empresa_ids.length ? filtros.empresa_ids.join(", ") : "Todas",
+    Empresas: filtros.empresa_ids.length ? filtros.empresa_ids.map((id) => nomeEmpresa?.(id) ?? id).join(", ") : "Todas",
     Projetos: filtros.projeto_ids.length ? filtros.projeto_ids.join(", ") : "Todos",
-    Categorias: filtros.categoria_ids.length ? filtros.categoria_ids.join(", ") : "Todas",
+    Categorias: filtros.categoria_ids.length ? filtros.categoria_ids.map((id) => nomeCategoria?.(id) ?? id).join(", ") : "Todas",
     Granularidade: filtros.granularidade,
     "Comparação período anterior": filtros.comparar_periodo_anterior ? "Sim" : "Não",
   };
+
 
   const sections = [
     { title: "Resumo Executivo", rows: dados.kpis ? [dados.kpis as unknown as Record<string, string | number>] : [] },
