@@ -4,7 +4,7 @@
 // public.dashboard_desempenho_positivo (SECURITY INVOKER → RLS/RBAC do usuário).
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Award, Building2, Info, ShieldCheck, Trophy, FolderKanban } from "lucide-react";
+import { Award, BookOpen, Building2, Info, ShieldCheck, Trophy, FolderKanban } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useSessionScope } from "@/hooks/use-session-scope";
@@ -316,16 +316,16 @@ export function DesempenhoPositivoSection(props: {
           )}
         </PositiveCard>
 
-        {/* 4) Colaboradores destaque — conformidade agregada */}
+        {/* 4) Conformidade da operação — indicador agregado */}
         <PositiveCard
-          title="Colaboradores destaque"
+          title="Conformidade da operação"
           description="Conformidade no período: colaboradores ativos sem nenhuma ausência e sem pendências."
           icon={ShieldCheck}
         >
           {q.isLoading ? (
             <ListSkeleton />
-          ) : !conformidade ? (
-            <Empty text="Sem dados no escopo." />
+          ) : !conformidade || conformidade.total_ativos === 0 ? (
+            <Empty text="Não há dados suficientes para calcular o índice de conformidade para o período selecionado." />
           ) : (
             <div className="space-y-3">
               <div className="grid grid-cols-3 gap-2">
@@ -341,27 +341,32 @@ export function DesempenhoPositivoSection(props: {
                 </div>
                 <div className="rounded-md border border-sky-500/25 bg-sky-500/5 p-2 text-center">
                   <div className="text-lg font-semibold tabular-nums text-sky-700 dark:text-sky-400">
-                    {conformidade.total_ativos > 0
-                      ? `${((conformidade.conformes / conformidade.total_ativos) * 100).toFixed(1).replace(".", ",")}%`
-                      : "—"}
+                    {((conformidade.conformes / conformidade.total_ativos) * 100).toFixed(1).replace(".", ",")}%
                   </div>
                   <div className="text-[10px] text-muted-foreground">Índice de conformidade</div>
                 </div>
               </div>
-              {!conformidade.ranking_disponivel ? (
-                <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-center">
-                  <Badge variant="outline" className="mb-1 text-[10px]">
-                    Em construção
-                  </Badge>
-                  <p className="text-[11px] leading-snug text-muted-foreground">
-                    O ranking individual exige critérios adicionais (reincidência histórica e
-                    conformidade contínua) ainda não consolidados. Nenhum cálculo foi presumido.
-                  </p>
+              <div
+                className="rounded-md border border-border bg-muted/30 p-3"
+                role="note"
+                aria-label="Como interpretar este indicador"
+              >
+                <div className="flex items-start gap-2">
+                  <BookOpen className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                  <div className="min-w-0">
+                    <p className="text-[11.5px] font-medium leading-tight">Como interpretar este indicador</p>
+                    <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                      Este painel apresenta o nível geral de conformidade da operação no período
+                      selecionado. O reconhecimento individual de colaboradores será disponibilizado
+                      apenas quando houver histórico suficiente para avaliações consistentes e justas.
+                    </p>
+                  </div>
                 </div>
-              ) : null}
+              </div>
             </div>
           )}
         </PositiveCard>
+
       </div>
     </section>
   );
