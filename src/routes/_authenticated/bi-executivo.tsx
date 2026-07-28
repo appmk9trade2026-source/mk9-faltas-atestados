@@ -785,7 +785,7 @@ function ExportDialog({
     { title: "Tipos", rows: (dados.por_tipo ?? []) as unknown as Record<string, string | number>[] },
     { title: "Qualidade dos Dados", rows: dados.qualidade_dados ? [dados.qualidade_dados as unknown as Record<string, string | number>] : [] },
     { title: "Metodologia", rows: [
-      { Item: "Fonte", Detalhe: "bi_absenteismo_diario (agregada, sem PII)" },
+      { Item: "Fonte", Detalhe: "bi_absenteismo_diario — agregação viva de ausencias, sem PII" },
       { Item: "Data ref.", Detalhe: "data_inicio da ausência (fallback: created_at)" },
       { Item: "Horas estimadas", Detalhe: "dias × 8h (aproximação)" },
       { Item: "z-score", Detalhe: "(observado − média)/desvio-padrão histórico" },
