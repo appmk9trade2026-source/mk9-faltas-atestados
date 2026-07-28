@@ -226,6 +226,13 @@ function BIExecutivoPage() {
   }, [dados.por_dia_semana]);
 
   const isLoading = dadosQ.isLoading;
+  const erroConsulta = (dadosQ.error as Error | null)?.message ?? null;
+  const acessoNegado = !!erroConsulta && /acesso negado/i.test(erroConsulta);
+
+  const nomeEmpresa = (id: string) => empresasQ.data?.find((e) => e.id === id)?.nome ?? id;
+  const nomeCategoria = (id: string) => categoriasQ.data?.find((c) => c.id === id)?.nome ?? id;
+
+
 
   return (
     <AppShell title="BI Executivo">
