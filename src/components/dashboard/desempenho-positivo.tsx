@@ -323,6 +323,7 @@ export function DesempenhoPositivoSection(props: {
         <PositiveCard
           title="Conformidade da operação"
           description="Conformidade no período: colaboradores ativos sem nenhuma ausência e sem pendências."
+          tooltip="A conformidade representa colaboradores ativos sem ausências e sem pendências durante o período selecionado."
           icon={ShieldCheck}
         >
           {q.isLoading ? (
