@@ -27,6 +27,7 @@ export function RankingWidget({
   items,
   emptyText,
   action,
+  tone = "neutro",
 }: {
   title: string;
   subtitle: string;
@@ -34,21 +35,30 @@ export function RankingWidget({
   items: RankItem[];
   emptyText: string;
   action?: React.ReactNode;
+  /** "atencao"/"critico" sinalizam criticidade — nunca desempenho positivo. */
+  tone?: "neutro" | "atencao" | "critico";
 }) {
+  const toneCls =
+    tone === "critico"
+      ? { card: "border-destructive/40", icon: "bg-destructive/10 text-destructive", title: "text-destructive" }
+      : tone === "atencao"
+        ? { card: "border-amber-500/40", icon: "bg-amber-500/10 text-amber-600 dark:text-amber-400", title: "text-amber-700 dark:text-amber-400" }
+        : { card: "border-border/60", icon: "bg-primary/10 text-primary", title: "" };
   return (
-    <Card className="border-border/60">
+    <Card className={toneCls.card}>
       <CardHeader className="pb-2">
         <div className="flex items-center gap-2">
-          <div className="rounded-md bg-primary/10 p-1.5">
-            <Icon className="h-3.5 w-3.5 text-primary" />
+          <div className={cn("rounded-md p-1.5", toneCls.icon)}>
+            <Icon className="h-3.5 w-3.5" />
           </div>
           <div className="flex-1">
-            <CardTitle className="text-sm">{title}</CardTitle>
+            <CardTitle className={cn("text-sm", toneCls.title)}>{title}</CardTitle>
             <CardDescription className="text-[11px]">{subtitle}</CardDescription>
           </div>
           {action}
         </div>
       </CardHeader>
+
       <CardContent className="pt-0">
         {items.length === 0 ? (
           <div className="py-6 text-center text-xs text-muted-foreground">{emptyText}</div>
