@@ -23,8 +23,10 @@ const TONE: Record<RankTone, { bar: string; badge: string; card: string; title: 
 };
 
 export function iniciais(nome: string) {
-  const parts = nome.trim().split(/\s+/).filter((p) => p.length > 1);
-  if (parts.length === 0) return nome.slice(0, 2).toUpperCase() || "--";
+  const limpo = nome.trim();
+  const parts = limpo.split(/\s+/).filter((p) => p.length > 1);
+  if (parts.length === 0) return limpo.slice(0, 2).toUpperCase() || "--";
+
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
