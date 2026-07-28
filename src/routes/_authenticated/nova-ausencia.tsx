@@ -1057,19 +1057,32 @@ function NovaAusenciaPage() {
 
       if (isEdit && editId) {
         await updateFn({ data: { ...payload, id: editId } });
-      } else {
-        await createFn({ data: payload });
+        return { manual: false, colaboradorCriado: false };
       }
+      const res = await createFn({ data: payload });
+      return {
+        manual: !!values.modo_manual,
+        colaboradorCriado: !!(res as { colaborador_criado?: boolean } | undefined)?.colaborador_criado,
+      };
     },
-    onSuccess: () => {
+    onSuccess: (res) => {
       clearDraft();
+      const descricao = isEdit
+        ? undefined
+        : res?.manual
+          ? res.colaboradorCriado
+            ? "Ausência registrada e colaborador salvo para futuros lançamentos."
+            : "Ausência registrada e vinculada ao colaborador existente."
+          : "Status inicial: PENDENTE.";
       toast.success(isEdit ? "Ausência atualizada." : "Ausência registrada.", {
-        description: isEdit ? undefined : "Status inicial: PENDENTE.",
+        description: descricao,
       });
       queryClient.invalidateQueries({ queryKey: ["ausencias"] });
       queryClient.invalidateQueries({ queryKey: ["ausencia", editId] });
+      queryClient.invalidateQueries({ queryKey: ["colaboradores"] });
       navigate({ to: "/ausencias" });
     },
+
     onError: (err: unknown) => {
       const friendly = friendlyRbacError(err);
       toast.error(friendly.title, {
