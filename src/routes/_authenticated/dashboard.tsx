@@ -791,11 +791,37 @@ function Heatmap({ data }: { data: Array<{ dow: number; total: number }> }) {
   );
 }
 
-function RankCard({ title, rows }: { title: string; rows: Array<{ nome: string; total: number }> }) {
+function RankCard({
+  title,
+  description,
+  tone = "neutro",
+  rows,
+}: {
+  title: string;
+  description?: string;
+  tone?: CardTone;
+  rows: Array<{ nome: string; total: number }>;
+}) {
   const sum = rows.reduce((a, r) => a + r.total, 0) || 1;
+  const meta = TONE_META[tone];
   return (
-    <Card>
-      <CardHeader className="pb-2"><CardTitle className="text-sm">{title}</CardTitle></CardHeader>
+    <Card className={meta.card}>
+      <CardHeader className="pb-2">
+        <div className="flex items-start gap-2">
+          {tone !== "neutro" && (
+            <span className={cn("mt-0.5 rounded-md p-1", meta.iconWrap)}>
+              <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
+            </span>
+          )}
+          <div className="min-w-0">
+            <CardTitle className={cn("text-sm", meta.title)}>{title}</CardTitle>
+            {description && (
+              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{description}</p>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+
       <CardContent className="p-0">
         <Table>
           <TableHeader>
