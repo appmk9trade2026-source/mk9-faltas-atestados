@@ -219,21 +219,6 @@ export function buildOperationalAlerts(input: OperationalAlertsInput): AlertaOpe
     .slice(0, 5);
 }
 
-export function countOperationalAlerts(input: OperationalAlertsInput): number {
-  // Conta o total bruto (antes do limite de 5) reaplicando a mesma ordenação.
-  const ordem: Record<AlertaSeveridadeOperacional, number> = {
-    critico: 0, atencao: 1, monitoramento: 2, positivo: 3,
-  };
-  void ordem;
-  return buildOperationalAlertsRaw(input).length;
-}
-
-function buildOperationalAlertsRaw(input: OperationalAlertsInput): AlertaOperacional[] {
-  // Reaproveita a mesma função e desfaz apenas o limite, mantendo uma única fonte de regras.
-  const limitado = buildOperationalAlerts(input);
-  return limitado;
-}
-
 const SEV: Record<
   AlertaSeveridadeOperacional,
   { label: string; icon: LucideIcon; card: string; chip: string; aria: string }
