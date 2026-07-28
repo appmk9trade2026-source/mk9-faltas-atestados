@@ -716,14 +716,57 @@ function KpisGrid({ data, loading }: { data?: DashboardData; loading: boolean })
   );
 }
 
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+/** Tom semântico dos cards: neutro (informação) ou atenção/criticidade. */
+type CardTone = "neutro" | "atencao" | "critico";
+
+const TONE_META: Record<CardTone, { card: string; title: string; iconWrap: string }> = {
+  neutro: { card: "", title: "", iconWrap: "" },
+  atencao: {
+    card: "border-amber-500/40",
+    title: "text-amber-700 dark:text-amber-400",
+    iconWrap: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  },
+  critico: {
+    card: "border-destructive/40",
+    title: "text-destructive",
+    iconWrap: "bg-destructive/10 text-destructive",
+  },
+};
+
+function ChartCard({
+  title,
+  description,
+  tone = "neutro",
+  children,
+}: {
+  title: string;
+  description?: string;
+  tone?: CardTone;
+  children: React.ReactNode;
+}) {
+  const meta = TONE_META[tone];
   return (
-    <Card>
-      <CardHeader className="pb-2"><CardTitle className="text-sm">{title}</CardTitle></CardHeader>
+    <Card className={meta.card}>
+      <CardHeader className="pb-2">
+        <div className="flex items-start gap-2">
+          {tone !== "neutro" && (
+            <span className={cn("mt-0.5 rounded-md p-1", meta.iconWrap)}>
+              <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
+            </span>
+          )}
+          <div className="min-w-0">
+            <CardTitle className={cn("text-sm", meta.title)}>{title}</CardTitle>
+            {description && (
+              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{description}</p>
+            )}
+          </div>
+        </div>
+      </CardHeader>
       <CardContent>{children}</CardContent>
     </Card>
   );
 }
+
 
 function Heatmap({ data }: { data: Array<{ dow: number; total: number }> }) {
   const map = new Map(data.map((d) => [d.dow, d.total]));
