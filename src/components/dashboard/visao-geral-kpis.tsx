@@ -2,7 +2,7 @@ import { ArrowDown, ArrowRight, ArrowUp, CheckCircle2, Clock, Info, Percent, Use
 import type { LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 export type VisaoGeralKpis = {
@@ -130,6 +130,7 @@ export function VisaoGeralKpisGrid({
   ];
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       {items.map((it) => {
         const disponivel = it.key !== "taxa" || taxa !== null;
@@ -186,5 +187,6 @@ export function VisaoGeralKpisGrid({
         );
       })}
     </div>
+    </TooltipProvider>
   );
 }
