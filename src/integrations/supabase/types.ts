@@ -1241,6 +1241,7 @@ export type Database = {
           matricula: string
           nome_completo: string
           observacoes: string | null
+          origem: string
           projeto_id: string
           supervisor_email: string | null
           supervisor_nome: string | null
@@ -1262,6 +1263,7 @@ export type Database = {
           matricula: string
           nome_completo: string
           observacoes?: string | null
+          origem?: string
           projeto_id: string
           supervisor_email?: string | null
           supervisor_nome?: string | null
@@ -1283,6 +1285,7 @@ export type Database = {
           matricula?: string
           nome_completo?: string
           observacoes?: string | null
+          origem?: string
           projeto_id?: string
           supervisor_email?: string | null
           supervisor_nome?: string | null
@@ -4729,6 +4732,10 @@ export type Database = {
         Returns: Json
       }
       refresh_bi_absenteismo: { Args: { p_origem?: string }; Returns: Json }
+      registrar_ausencia_com_colaborador_manual: {
+        Args: { _ausencia: Json; _colaborador: Json }
+        Returns: Json
+      }
       registrar_login_event: {
         Args: {
           _evento: Database["public"]["Enums"]["login_event_tipo"]
