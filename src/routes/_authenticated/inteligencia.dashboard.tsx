@@ -1198,9 +1198,11 @@ export function DashboardPage() {
 
             <div className="lg:col-span-2">
               <RankingWidget
-                title="Top colaboradores"
-                subtitle="Ranking analítico por score de risco"
-                icon={Users2}
+                title="Colaboradores com maior recorrência"
+                subtitle="Ranking calculado pelo score de risco das ausências registradas no período selecionado — indica criticidade, não desempenho."
+                tone="critico"
+                icon={AlertTriangle}
+
                 items={topColaboradores.map((r) => ({
                   id: r.colaborador_id,
                   title: r.nome_completo,
