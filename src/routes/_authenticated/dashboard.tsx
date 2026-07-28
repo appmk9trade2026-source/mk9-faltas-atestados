@@ -556,31 +556,40 @@ function DashboardPage() {
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard title="Top 10 supervisores">
+          <ChartCard
+            title="Supervisores que exigem atenção"
+            description="Ranking calculado pela quantidade de ausências registradas no período selecionado. Indica criticidade, não desempenho."
+            tone="atencao"
+          >
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={data?.top_supervisores ?? []} layout="vertical" margin={{ left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
                 <YAxis type="category" dataKey="nome" width={140} tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="total" fill={MK9_BRAND.primary} radius={[0, 4, 4, 0]}
+                <Tooltip formatter={(v: number) => [`${v} ocorrência(s)`, "Ausências no período"]} />
+                <Bar dataKey="total" name="Ausências no período" fill="#f59e0b" radius={[0, 4, 4, 0]}
                   onClick={(d: { nome?: string }) => d.nome && d.nome !== "(Sem supervisor)" && setFilters((f) => ({ ...f, supervisor: d.nome }))}
                   cursor="pointer" />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard title="Top 10 colaboradores">
+          <ChartCard
+            title="Colaboradores com maior recorrência"
+            description="Ranking calculado pela quantidade de ausências registradas no período selecionado. Indica recorrência, não desempenho."
+            tone="critico"
+          >
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={data?.top_colaboradores ?? []} layout="vertical" margin={{ left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
                 <YAxis type="category" dataKey="nome" width={160} tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="total" fill={MK9_BRAND.primaryDark} radius={[0, 4, 4, 0]} />
+                <Tooltip formatter={(v: number) => [`${v} ocorrência(s)`, "Ausências no período"]} />
+                <Bar dataKey="total" name="Ausências no período" fill="#ef4444" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
+
         </div>
 
         {/* ---- Heatmap dia da semana */}
@@ -590,9 +599,25 @@ function DashboardPage() {
 
         {/* ---- Tabelas de ranking */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <RankCard title="Top Empresas" rows={data?.top_empresas ?? []} />
-          <RankCard title="Top Projetos" rows={data?.top_projetos ?? []} />
-          <RankCard title="Top Supervisores" rows={data?.top_supervisores.map((s) => ({ nome: s.nome, total: s.total })) ?? []} />
+          <RankCard
+            title="Empresas com mais ocorrências"
+            description="Quantidade de ausências registradas no período selecionado."
+            tone="atencao"
+            rows={data?.top_empresas ?? []}
+          />
+          <RankCard
+            title="Projetos com mais ocorrências"
+            description="Quantidade de ausências registradas no período selecionado."
+            tone="atencao"
+            rows={data?.top_projetos ?? []}
+          />
+          <RankCard
+            title="Supervisores com mais ocorrências"
+            description="Quantidade de ausências registradas no período selecionado. Não representa desempenho."
+            tone="atencao"
+            rows={data?.top_supervisores.map((s) => ({ nome: s.nome, total: s.total })) ?? []}
+          />
+
         </div>
 
         {/* ---- Últimos registros */}
@@ -716,14 +741,57 @@ function KpisGrid({ data, loading }: { data?: DashboardData; loading: boolean })
   );
 }
 
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+/** Tom semântico dos cards: neutro (informação) ou atenção/criticidade. */
+type CardTone = "neutro" | "atencao" | "critico";
+
+const TONE_META: Record<CardTone, { card: string; title: string; iconWrap: string }> = {
+  neutro: { card: "", title: "", iconWrap: "" },
+  atencao: {
+    card: "border-amber-500/40",
+    title: "text-amber-700 dark:text-amber-400",
+    iconWrap: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  },
+  critico: {
+    card: "border-destructive/40",
+    title: "text-destructive",
+    iconWrap: "bg-destructive/10 text-destructive",
+  },
+};
+
+function ChartCard({
+  title,
+  description,
+  tone = "neutro",
+  children,
+}: {
+  title: string;
+  description?: string;
+  tone?: CardTone;
+  children: React.ReactNode;
+}) {
+  const meta = TONE_META[tone];
   return (
-    <Card>
-      <CardHeader className="pb-2"><CardTitle className="text-sm">{title}</CardTitle></CardHeader>
+    <Card className={meta.card}>
+      <CardHeader className="pb-2">
+        <div className="flex items-start gap-2">
+          {tone !== "neutro" && (
+            <span className={cn("mt-0.5 rounded-md p-1", meta.iconWrap)}>
+              <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
+            </span>
+          )}
+          <div className="min-w-0">
+            <CardTitle className={cn("text-sm", meta.title)}>{title}</CardTitle>
+            {description && (
+              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{description}</p>
+            )}
+          </div>
+        </div>
+      </CardHeader>
       <CardContent>{children}</CardContent>
     </Card>
   );
 }
+
 
 function Heatmap({ data }: { data: Array<{ dow: number; total: number }> }) {
   const map = new Map(data.map((d) => [d.dow, d.total]));
@@ -748,11 +816,37 @@ function Heatmap({ data }: { data: Array<{ dow: number; total: number }> }) {
   );
 }
 
-function RankCard({ title, rows }: { title: string; rows: Array<{ nome: string; total: number }> }) {
+function RankCard({
+  title,
+  description,
+  tone = "neutro",
+  rows,
+}: {
+  title: string;
+  description?: string;
+  tone?: CardTone;
+  rows: Array<{ nome: string; total: number }>;
+}) {
   const sum = rows.reduce((a, r) => a + r.total, 0) || 1;
+  const meta = TONE_META[tone];
   return (
-    <Card>
-      <CardHeader className="pb-2"><CardTitle className="text-sm">{title}</CardTitle></CardHeader>
+    <Card className={meta.card}>
+      <CardHeader className="pb-2">
+        <div className="flex items-start gap-2">
+          {tone !== "neutro" && (
+            <span className={cn("mt-0.5 rounded-md p-1", meta.iconWrap)}>
+              <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
+            </span>
+          )}
+          <div className="min-w-0">
+            <CardTitle className={cn("text-sm", meta.title)}>{title}</CardTitle>
+            {description && (
+              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{description}</p>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+
       <CardContent className="p-0">
         <Table>
           <TableHeader>
