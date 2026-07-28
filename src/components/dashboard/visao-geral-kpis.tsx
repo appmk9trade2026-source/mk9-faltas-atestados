@@ -92,6 +92,7 @@ export function VisaoGeralKpisGrid({
       format: int,
       hint: "Colaboradores com cadastro ativo dentro do escopo e filtros selecionados.",
       descricao: "Base ativa do período",
+      spark: [],
     },
     {
       key: "ausencias",
@@ -103,6 +104,7 @@ export function VisaoGeralKpisGrid({
       inverse: true,
       hint: "Total de ocorrências registradas no período selecionado (todos os tipos).",
       descricao: "Ocorrências registradas",
+      spark: sparkTotal,
     },
     {
       key: "pendencias",
@@ -114,6 +116,7 @@ export function VisaoGeralKpisGrid({
       inverse: true,
       hint: "Ocorrências com status PENDENTE, ainda não lançadas no sistema.",
       descricao: "Aguardando lançamento",
+      spark: sparkPend,
     },
     {
       key: "tempo",
@@ -125,6 +128,7 @@ export function VisaoGeralKpisGrid({
       inverse: true,
       hint: "Média de horas entre o início da ausência e o seu lançamento no sistema.",
       descricao: "Da ocorrência ao lançamento",
+      spark: sparkTempo,
     },
     {
       key: "lancados",
@@ -135,6 +139,7 @@ export function VisaoGeralKpisGrid({
       format: int,
       hint: "Ocorrências com status LANÇADO no período selecionado.",
       descricao: "Registros finalizados",
+      spark: sparkLanc,
     },
     {
       key: "taxa",
@@ -146,6 +151,7 @@ export function VisaoGeralKpisGrid({
       inverse: true,
       hint: "Ausências do período ÷ colaboradores ativos × 100. Usa os mesmos números exibidos nos cards ao lado.",
       descricao: "Ausências por colaborador ativo",
+      spark: sparkTaxa,
     },
   ];
 
