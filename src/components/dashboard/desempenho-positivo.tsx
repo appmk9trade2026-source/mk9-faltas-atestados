@@ -80,8 +80,9 @@ export function useDesempenhoPositivo(params: {
       const { data, error } = await supabase.rpc("dashboard_desempenho_positivo", {
         _inicio: inicio,
         _fim: fim,
-        _empresa_id: empresaId || null,
-        _projeto_id: projetoId || null,
+        _empresa_id: empresaId || undefined,
+        _projeto_id: projetoId || undefined,
+
         _min_colaboradores: minColaboradores,
       });
       if (error) throw error;
