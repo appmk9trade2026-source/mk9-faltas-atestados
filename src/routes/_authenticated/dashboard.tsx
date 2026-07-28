@@ -556,31 +556,40 @@ function DashboardPage() {
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard title="Top 10 supervisores">
+          <ChartCard
+            title="Supervisores que exigem atenção"
+            description="Ranking calculado pela quantidade de ausências registradas no período selecionado. Indica criticidade, não desempenho."
+            tone="atencao"
+          >
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={data?.top_supervisores ?? []} layout="vertical" margin={{ left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
                 <YAxis type="category" dataKey="nome" width={140} tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="total" fill={MK9_BRAND.primary} radius={[0, 4, 4, 0]}
+                <Tooltip formatter={(v: number) => [`${v} ocorrência(s)`, "Ausências no período"]} />
+                <Bar dataKey="total" name="Ausências no período" fill="#f59e0b" radius={[0, 4, 4, 0]}
                   onClick={(d: { nome?: string }) => d.nome && d.nome !== "(Sem supervisor)" && setFilters((f) => ({ ...f, supervisor: d.nome }))}
                   cursor="pointer" />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard title="Top 10 colaboradores">
+          <ChartCard
+            title="Colaboradores com maior recorrência"
+            description="Ranking calculado pela quantidade de ausências registradas no período selecionado. Indica recorrência, não desempenho."
+            tone="critico"
+          >
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={data?.top_colaboradores ?? []} layout="vertical" margin={{ left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
                 <YAxis type="category" dataKey="nome" width={160} tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="total" fill={MK9_BRAND.primaryDark} radius={[0, 4, 4, 0]} />
+                <Tooltip formatter={(v: number) => [`${v} ocorrência(s)`, "Ausências no período"]} />
+                <Bar dataKey="total" name="Ausências no período" fill="#ef4444" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
+
         </div>
 
         {/* ---- Heatmap dia da semana */}
