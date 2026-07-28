@@ -620,6 +620,16 @@ function DashboardPage() {
 
         </div>
 
+        {/* ---- Fase 2: Desempenho positivo (novo, não substitui os rankings críticos) */}
+        <DesempenhoPositivoSection
+          inicio={filters.inicio}
+          fim={filters.fim}
+          empresaId={filters.empresa_id}
+          projetoId={filters.projeto_id}
+        />
+
+
+
         {/* ---- Últimos registros */}
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">Últimos registros</CardTitle></CardHeader>
