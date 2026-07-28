@@ -169,3 +169,37 @@ export function TendenciasChart({
     </Card>
   );
 }
+
+/** Tooltip mais rico: totais por série + total do dia. Apenas apresentação. */
+function TooltipRico({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: Array<{ name?: string; value?: number; color?: string; dataKey?: string }>;
+  label?: string;
+}) {
+  if (!active || !payload?.length) return null;
+  const linhas = payload.filter((p) => typeof p.value === "number");
+  const ponto = linhas.find((p) => p.dataKey === "total")?.value;
+  return (
+    <div className="rounded-xl border bg-popover px-3 py-2 text-popover-foreground shadow-md">
+      <p className="mb-1.5 text-xs font-semibold">Dia {label}</p>
+      <ul className="space-y-1">
+        {linhas.map((p) => (
+          <li key={p.dataKey} className="flex items-center gap-2 text-xs">
+            <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: p.color }} aria-hidden />
+            <span className="text-muted-foreground">{p.name}</span>
+            <span className="ml-auto font-semibold tabular-nums">{p.value}</span>
+          </li>
+        ))}
+      </ul>
+      {typeof ponto === "number" && ponto > 0 && (
+        <p className="mt-1.5 border-t pt-1.5 text-[11px] text-muted-foreground">
+          {ponto} ocorrência(s) registradas neste dia.
+        </p>
+      )}
+    </div>
+  );
+}
