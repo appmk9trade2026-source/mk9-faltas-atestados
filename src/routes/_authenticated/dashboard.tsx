@@ -50,6 +50,11 @@ import { InsightsResumo } from "@/components/dashboard/insights-resumo";
 import { BarrasDistribuicao } from "@/components/dashboard/barras-distribuicao";
 import { RankList, RankListCard } from "@/components/dashboard/rank-list";
 import { ResumoTabs } from "@/components/dashboard/resumo-tabs";
+import {
+  AlertasInteligentes,
+  useComparativoPeriodoAnterior,
+  type FiltroSugerido,
+} from "@/components/dashboard/alertas-inteligentes";
 
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -199,6 +204,31 @@ function DashboardPage() {
     if (p === "custom") { setFilters((f) => ({ ...f, preset: p })); return; }
     const r = presetRange(p);
     setFilters((f) => ({ ...f, preset: p, inicio: r.i, fim: r.f }));
+  }
+
+  // Fase 5 — comparativo do período anterior (mesma RPC homologada, somente leitura)
+  const prevQuery = useComparativoPeriodoAnterior({
+    enabled: scope.ready && !!data?.periodo,
+    keyParts: scope.keyParts,
+    periodo: data?.periodo,
+    filtros: {
+      _empresa_id: filters.empresa_id,
+      _projeto_id: filters.projeto_id,
+      _supervisor: filters.supervisor,
+      _tipo: filters.tipo,
+      _status: filters.status,
+      _categoria_id: filters.categoria_id,
+    },
+  });
+
+  function aplicarFiltroAlerta(f: FiltroSugerido) {
+    setFilters((prev) => ({
+      ...prev,
+      ...(f.empresa_id ? { empresa_id: f.empresa_id, projeto_id: undefined } : {}),
+      ...(f.projeto_id ? { projeto_id: f.projeto_id } : {}),
+      ...(f.supervisor ? { supervisor: f.supervisor } : {}),
+      ...(f.status ? { status: f.status } : {}),
+    }));
   }
 
   function clearFilters() {
@@ -749,6 +779,34 @@ function DashboardPage() {
                 series={{ porDia: data?.por_dia, tempoDiario: data?.tempo_diario }}
               />
               <InsightsResumo input={insightsInput} loading={query.isLoading} />
+            </section>
+
+            {/* BLOCO 1.5 — Alertas inteligentes (Fase 5) */}
+            <section aria-labelledby="bloco-alertas-inteligentes" className="space-y-4">
+              <SectionHeader
+                id="bloco-alertas-inteligentes"
+                title="Alertas Inteligentes"
+                question="O que precisa da minha atenção hoje?"
+                description="Situações que merecem acompanhamento imediato."
+                icon={ShieldAlert}
+                tone="atencao"
+              />
+              <AlertasInteligentes
+                loading={query.isLoading}
+                onVerDetalhes={aplicarFiltroAlerta}
+                input={{
+                  periodoLabel: `${format(new Date(`${filters.inicio}T00:00:00`), "dd/MM/yyyy")} a ${format(new Date(`${filters.fim}T00:00:00`), "dd/MM/yyyy")}`,
+                  kpis: data?.kpis,
+                  prev: data?.prev,
+                  porDia: data?.por_dia,
+                  supervisores: data?.top_supervisores,
+                  supervisoresPrev: prevQuery.data?.top_supervisores,
+                  projetos: data?.top_projetos?.map((p) => ({ id: p.projeto_id, nome: p.nome, total: p.total })),
+                  projetosPrev: prevQuery.data?.top_projetos,
+                  empresas: data?.top_empresas?.map((e) => ({ id: e.empresa_id, nome: e.nome, total: e.total })),
+                  empresasPrev: prevQuery.data?.top_empresas,
+                }}
+              />
             </section>
 
             {/* BLOCO 2 — Tendências (gráfico principal único) */}
