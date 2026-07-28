@@ -78,10 +78,14 @@ export function TendenciasChart({
                   key={s.key}
                   type="button"
                   onClick={() => toggle(s.key)}
+                  onMouseEnter={() => setHover(s.key)}
+                  onMouseLeave={() => setHover(null)}
+                  onFocus={() => setHover(s.key)}
+                  onBlur={() => setHover(null)}
                   aria-pressed={on}
                   title={s.hint}
                   className={cn(
-                    "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     on ? "border-foreground/20 bg-muted text-foreground" : "border-border text-muted-foreground opacity-60 hover:opacity-100",
                   )}
                 >
@@ -114,37 +118,53 @@ export function TendenciasChart({
             </p>
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={320}>
-            <LineChart data={dados} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border" />
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} minTickGap={16} />
-              <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} allowDecimals={false} width={40} />
-              <Tooltip
-                contentStyle={{
-                  borderRadius: 10,
-                  border: "1px solid hsl(var(--border))",
-                  background: "hsl(var(--popover))",
-                  color: "hsl(var(--popover-foreground))",
-                  fontSize: 12,
-                }}
-                labelFormatter={(l) => `Dia ${l}`}
-                formatter={(v: number, name: string) => [`${v} ocorrência(s)`, name]}
-              />
-              {SERIES.filter((s) => ativas[s.key]).map((s) => (
-                <Line
-                  key={s.key}
-                  type="monotone"
-                  dataKey={s.key}
-                  name={s.label}
-                  stroke={s.color}
-                  strokeWidth={2.5}
-                  dot={false}
-                  activeDot={{ r: 4 }}
+          <>
+            <ResponsiveContainer width="100%" height={320}>
+              <LineChart data={dados} margin={{ top: 8, right: 12, left: -8, bottom: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border" />
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} minTickGap={16} />
+                <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} allowDecimals={false} width={40} />
+                <Tooltip
+                  cursor={{ stroke: "hsl(var(--muted-foreground))", strokeDasharray: "3 3" }}
+                  content={<TooltipRico />}
                 />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
+                {SERIES.filter((s) => ativas[s.key]).map((s) => {
+                  const dim = hover !== null && hover !== s.key;
+                  return (
+                    <Line
+                      key={s.key}
+                      type="monotone"
+                      dataKey={s.key}
+                      name={s.label}
+                      stroke={s.color}
+                      strokeWidth={hover === s.key ? 3.5 : 2.5}
+                      strokeOpacity={dim ? 0.2 : 1}
+                      dot={false}
+                      activeDot={{ r: 4 }}
+                      isAnimationActive={false}
+                    />
+                  );
+                })}
+                {dados.length > 12 && (
+                  <Brush
+                    dataKey="label"
+                    height={22}
+                    travellerWidth={8}
+                    stroke={MK9_BRAND.primary}
+                    fill="hsl(var(--muted))"
+                    className="text-[10px]"
+                  />
+                )}
+              </LineChart>
+            </ResponsiveContainer>
+            {dados.length > 12 && (
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                Arraste as alças abaixo do gráfico para ampliar um intervalo específico.
+              </p>
+            )}
+          </>
         )}
+
       </CardContent>
     </Card>
   );
