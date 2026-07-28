@@ -235,36 +235,114 @@ export const createAusencia = createServerFn({ method: "POST" })
 
 
     // 7. mutação — RLS + trigger de supervisor continuam ativos como 2ª camada
-    const { data: row, error } = await context.supabase
-      .from("ausencias")
-      .insert(insertPayload as never)
-      .select("id, empresa_id, projeto_id, protocolo, status")
-      .single();
-    if (error) {
-      // RLS negou → converte em erro RBAC amigável
-      const msg = error.message || "";
-      if (/row-level security|permission denied|not authorized/i.test(msg)) {
-        throw new Error("PROJECT_SCOPE_DENIED: bloqueado por política de acesso");
+    //
+    // MANUAL: o colaborador informado à mão é persistido (find-or-create por
+    // matrícula normalizada dentro da empresa) e a ausência nasce vinculada a
+    // ele — tudo na MESMA transação da RPC (rollback total em qualquer falha).
+    let rowId: string;
+    let protocolo: string | null = null;
+    let colaboradorId: string | null = null;
+    let colaboradorCriado = false;
+
+    if (isManual) {
+      // Supervisor que lança assume a chave canônica do vínculo.
+      let supervisorUsuarioId: string | null = null;
+      try {
+        const { data: isSup } = await context.supabase.rpc("has_role", {
+          _user_id: gate.userId, _role: "supervisor",
+        } as never);
+        if (isSup) supervisorUsuarioId = gate.userId;
+      } catch { /* best-effort */ }
+
+      const manualCols = manualColumns(data, gate.userId);
+      const { data: res, error } = await context.supabase.rpc(
+        "registrar_ausencia_com_colaborador_manual",
+        {
+          _colaborador: {
+            empresa_id: gate.empresaId,
+            projeto_id: gate.projetoId,
+            matricula: manualCols.manual_matricula,
+            nome_completo: manualCols.manual_nome,
+            telefone: manualCols.manual_telefone,
+            whatsapp: manualCols.manual_whatsapp,
+            email: manualCols.manual_email,
+            supervisor_nome: manualCols.manual_supervisor_nome,
+            supervisor_telefone: manualCols.manual_supervisor_telefone,
+            supervisor_usuario_id: supervisorUsuarioId,
+          },
+          _ausencia: insertPayload,
+        } as never,
+      );
+      if (error) {
+        const msg = error.message || "";
+        if (/row-level security|permission denied|not authorized/i.test(msg)) {
+          throw new Error("PROJECT_SCOPE_DENIED: bloqueado por política de acesso");
+        }
+        if (/colaborador/i.test(msg)) {
+          throw new Error("COLLABORATOR_SAVE_FAILED: Não foi possível salvar o colaborador. Revise os dados informados e tente novamente.");
+        }
+        throw new Error(`CONFLICT: ${msg}`);
       }
-      throw new Error(`CONFLICT: ${msg}`);
+      const out = (res ?? {}) as {
+        colaborador_id?: string; colaborador_criado?: boolean;
+        ausencia_id?: string; protocolo?: string | null;
+      };
+      if (!out.ausencia_id) throw new Error("CONFLICT: falha ao registrar a ausência");
+      rowId = out.ausencia_id;
+      protocolo = out.protocolo ?? null;
+      colaboradorId = out.colaborador_id ?? null;
+      colaboradorCriado = !!out.colaborador_criado;
+
+      if (colaboradorCriado && colaboradorId) {
+        await audit(context.supabase, "COLABORADOR_CRIADO" as never, colaboradorId, gate.correlationId,
+          null,
+          {
+            origem: "formulario_ausencia_manual",
+            matricula: manualCols.manual_matricula,
+            empresa_id: gate.empresaId,
+            projeto_id: gate.projetoId,
+            supervisor_usuario_id: supervisorUsuarioId,
+          },
+          "colaborador criado automaticamente a partir do lançamento manual de ausência",
+          gate.empresaId, gate.projetoId,
+        );
+      }
+    } else {
+      const { data: row, error } = await context.supabase
+        .from("ausencias")
+        .insert(insertPayload as never)
+        .select("id, empresa_id, projeto_id, protocolo, status")
+        .single();
+      if (error) {
+        // RLS negou → converte em erro RBAC amigável
+        const msg = error.message || "";
+        if (/row-level security|permission denied|not authorized/i.test(msg)) {
+          throw new Error("PROJECT_SCOPE_DENIED: bloqueado por política de acesso");
+        }
+        throw new Error(`CONFLICT: ${msg}`);
+      }
+      rowId = row.id as string;
+      protocolo = (row.protocolo as string | null) ?? null;
+      colaboradorId = data.colaborador_id;
     }
 
-    await audit(context.supabase, "AUSENCIA_CRIADA", row.id as string, gate.correlationId,
+    await audit(context.supabase, "AUSENCIA_CRIADA", rowId, gate.correlationId,
       null,
       {
         origem_registro: isManual ? "MANUAL" : "AUTOMATICO",
-        colaborador_id: isManual ? null : data.colaborador_id,
+        colaborador_id: colaboradorId,
         ...(isManual
           ? {
               manual_motivo: data.manual_motivo,
               manual_motivo_detalhe: data.manual_motivo_detalhe ?? null,
               manual_nome: data.manual_nome,
               manual_matricula: data.manual_matricula,
+              colaborador_criado_automaticamente: colaboradorCriado,
             }
           : {}),
         tipo: tipoBase, tipo_detalhe: tipo.nome, dias,
         data_inicio: insertPayload.data_inicio, data_fim: insertPayload.data_fim,
-        cid: insertPayload.cid, protocolo: row.protocolo,
+        cid: insertPayload.cid, protocolo,
       },
       isManual
         ? `criação (preenchimento manual — motivo: ${data.manual_motivo})`
@@ -272,8 +350,15 @@ export const createAusencia = createServerFn({ method: "POST" })
       gate.empresaId, gate.projetoId,
     );
 
-    return { id: row.id as string, protocolo: row.protocolo ?? null, correlation_id: gate.correlationId };
+    return {
+      id: rowId,
+      protocolo,
+      colaborador_id: colaboradorId,
+      colaborador_criado: colaboradorCriado,
+      correlation_id: gate.correlationId,
+    };
   });
+
 
 // ==================== UPDATE ====================
 const updatePayloadSchema = z.discriminatedUnion("origem_registro", [
