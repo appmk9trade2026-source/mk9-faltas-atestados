@@ -6,8 +6,8 @@ import { ptBR } from "date-fns/locale";
 import {
   Activity, AlertTriangle, ArrowDown, ArrowUp, Ban, BriefcaseMedical,
   Calendar as CalendarIcon, CheckCircle2, ClipboardList, Clock, Download,
-  FileText, MessageSquare, RefreshCw, ShieldAlert, TrendingDown, TrendingUp,
-  Truck, UserRound, Users, X,
+  FileText, LayoutDashboard, Lightbulb, MessageSquare, RefreshCw, ShieldAlert,
+  TrendingDown, TrendingUp, Trophy, Truck, UserRound, Users, X,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -40,6 +40,12 @@ import { fetchCategorias, CATEGORIA_CORES, type Categoria } from "@/lib/categori
 import { useSessionScope } from "@/hooks/use-session-scope";
 import { SupervisorEmptyState } from "@/components/supervisor-empty-state";
 import { DesempenhoPositivoSection } from "@/components/dashboard/desempenho-positivo";
+import { dashboardLayoutV2 } from "@/lib/dashboard-flags";
+import { SectionHeader } from "@/components/dashboard/section-header";
+import { VisaoGeralKpisGrid } from "@/components/dashboard/visao-geral-kpis";
+import { TendenciasChart } from "@/components/dashboard/tendencias-chart";
+import { UltimasOcorrencias } from "@/components/dashboard/ultimas-ocorrencias";
+import { InsightsAutomaticos } from "@/components/dashboard/insights-automaticos";
 
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
