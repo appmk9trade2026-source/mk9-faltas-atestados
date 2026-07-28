@@ -52,16 +52,18 @@ export function VisaoGeralKpisGrid({
   kpis,
   prev,
   loading,
+  series,
 }: {
   kpis?: VisaoGeralKpis;
   prev?: VisaoGeralKpis;
   loading: boolean;
+  series?: VisaoGeralSeries;
 }) {
   if (loading || !kpis) {
     return (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-32" />
+          <Skeleton key={i} className="h-40" />
         ))}
       </div>
     );
@@ -70,6 +72,15 @@ export function VisaoGeralKpisGrid({
   const taxa = kpis.colaboradores_ativos > 0 ? (kpis.total / kpis.colaboradores_ativos) * 100 : null;
   const taxaPrev =
     prev && prev.colaboradores_ativos > 0 ? (prev.total / prev.colaboradores_ativos) * 100 : null;
+
+  const porDia = series?.porDia ?? [];
+  const sparkTotal = porDia.map((p) => p.total);
+  const sparkPend = porDia.map((p) => p.pendentes);
+  const sparkLanc = porDia.map((p) => p.lancadas);
+  const sparkTempo = (series?.tempoDiario ?? []).map((p) => p.horas);
+  const sparkTaxa =
+    kpis.colaboradores_ativos > 0 ? sparkTotal.map((v) => (v / kpis.colaboradores_ativos) * 100) : [];
+
 
   const items: Item[] = [
     {
