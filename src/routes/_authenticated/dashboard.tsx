@@ -599,9 +599,25 @@ function DashboardPage() {
 
         {/* ---- Tabelas de ranking */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <RankCard title="Top Empresas" rows={data?.top_empresas ?? []} />
-          <RankCard title="Top Projetos" rows={data?.top_projetos ?? []} />
-          <RankCard title="Top Supervisores" rows={data?.top_supervisores.map((s) => ({ nome: s.nome, total: s.total })) ?? []} />
+          <RankCard
+            title="Empresas com mais ocorrências"
+            description="Quantidade de ausências registradas no período selecionado."
+            tone="atencao"
+            rows={data?.top_empresas ?? []}
+          />
+          <RankCard
+            title="Projetos com mais ocorrências"
+            description="Quantidade de ausências registradas no período selecionado."
+            tone="atencao"
+            rows={data?.top_projetos ?? []}
+          />
+          <RankCard
+            title="Supervisores com mais ocorrências"
+            description="Quantidade de ausências registradas no período selecionado. Não representa desempenho."
+            tone="atencao"
+            rows={data?.top_supervisores.map((s) => ({ nome: s.nome, total: s.total })) ?? []}
+          />
+
         </div>
 
         {/* ---- Últimos registros */}
