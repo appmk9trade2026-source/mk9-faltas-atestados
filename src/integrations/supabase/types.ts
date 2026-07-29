@@ -4147,6 +4147,24 @@ export type Database = {
         Returns: Json
       }
       audit_kpis: { Args: { _inicio?: string }; Returns: Json }
+      ausencias_manuais_orfas_sugestoes: {
+        Args: never
+        Returns: {
+          ausencia_ids: string[]
+          colaborador_existente_id: string
+          colaborador_existente_nome: string
+          consistente: boolean
+          empresa_id: string
+          empresa_nome: string
+          matricula_normalizada: string
+          nomes: string[]
+          projeto_ids: string[]
+          projeto_nome: string
+          protocolos: string[]
+          supervisores: string[]
+          total: number
+        }[]
+      }
       automacao_config_atualizar: {
         Args: {
           p_ativo: boolean
@@ -4931,6 +4949,15 @@ export type Database = {
       validar_template_colaborador_whatsapp: {
         Args: { p_conteudo: string; p_variaveis: string[] }
         Returns: undefined
+      }
+      vincular_ausencias_manuais_historico: {
+        Args: {
+          _ausencia_ids: string[]
+          _confirmar?: boolean
+          _empresa_id: string
+          _matricula: string
+        }
+        Returns: Json
       }
       wa_tst_confirmar: {
         Args: { p_id: string; p_ip?: unknown }
