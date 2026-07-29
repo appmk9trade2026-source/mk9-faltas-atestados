@@ -123,7 +123,8 @@ function VinculosManuaisPage() {
     },
     onError: (e) => {
       setAlvo(null);
-      toast.error(friendlyRbacError(e));
+      const f = friendlyRbacError(e);
+      toast.error(f.title, { description: f.description });
     },
   });
 
@@ -140,7 +141,7 @@ function VinculosManuaisPage() {
 
   if (!permitido) {
     return (
-      <AppShell>
+      <AppShell title="Vínculos de Lançamentos Manuais">
         <Card className="p-8 text-center text-sm text-muted-foreground">
           Esta rotina administrativa está disponível apenas para Super Admin e RH.
         </Card>
@@ -149,7 +150,10 @@ function VinculosManuaisPage() {
   }
 
   return (
-    <AppShell>
+    <AppShell
+      title="Vínculos de Lançamentos Manuais"
+      breadcrumb={["Administração", "Vínculos de Lançamentos Manuais"]}
+    >
       <div className="space-y-6">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
