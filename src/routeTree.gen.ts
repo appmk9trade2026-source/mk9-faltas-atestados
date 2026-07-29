@@ -57,6 +57,7 @@ import { Route as AuthenticatedComunicacoesWhatsappRouteImport } from './routes/
 import { Route as AuthenticatedColaboradoresReprocessarSupervisoresRouteImport } from './routes/_authenticated/colaboradores_.reprocessar-supervisores'
 import { Route as AuthenticatedColaboradoresImportarRouteImport } from './routes/_authenticated/colaboradores_.importar'
 import { Route as AuthenticatedColaboradoresImportacoesRouteImport } from './routes/_authenticated/colaboradores_.importacoes'
+import { Route as AuthenticatedAdministracaoVinculosManuaisRouteImport } from './routes/_authenticated/administracao.vinculos-manuais'
 import { Route as AuthenticatedAdministracaoPermissoesRouteImport } from './routes/_authenticated/administracao.permissoes'
 import { Route as AuthenticatedAdministracaoPendenciasSupervisorRouteImport } from './routes/_authenticated/administracao.pendencias-supervisor'
 import { Route as AuthenticatedAdministracaoIntegridadeDadosRouteImport } from './routes/_authenticated/administracao.integridade-dados'
@@ -345,6 +346,12 @@ const AuthenticatedColaboradoresImportacoesRoute =
     path: '/colaboradores/importacoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdministracaoVinculosManuaisRoute =
+  AuthenticatedAdministracaoVinculosManuaisRouteImport.update({
+    id: '/administracao/vinculos-manuais',
+    path: '/administracao/vinculos-manuais',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdministracaoPermissoesRoute =
   AuthenticatedAdministracaoPermissoesRouteImport.update({
     id: '/administracao/permissoes',
@@ -504,6 +511,7 @@ export interface FileRoutesByFullPath {
   '/administracao/integridade-dados': typeof AuthenticatedAdministracaoIntegridadeDadosRoute
   '/administracao/pendencias-supervisor': typeof AuthenticatedAdministracaoPendenciasSupervisorRoute
   '/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
+  '/administracao/vinculos-manuais': typeof AuthenticatedAdministracaoVinculosManuaisRoute
   '/colaboradores/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/colaboradores/importar': typeof AuthenticatedColaboradoresImportarRoute
   '/colaboradores/reprocessar-supervisores': typeof AuthenticatedColaboradoresReprocessarSupervisoresRoute
@@ -572,6 +580,7 @@ export interface FileRoutesByTo {
   '/administracao/integridade-dados': typeof AuthenticatedAdministracaoIntegridadeDadosRoute
   '/administracao/pendencias-supervisor': typeof AuthenticatedAdministracaoPendenciasSupervisorRoute
   '/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
+  '/administracao/vinculos-manuais': typeof AuthenticatedAdministracaoVinculosManuaisRoute
   '/colaboradores/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/colaboradores/importar': typeof AuthenticatedColaboradoresImportarRoute
   '/colaboradores/reprocessar-supervisores': typeof AuthenticatedColaboradoresReprocessarSupervisoresRoute
@@ -642,6 +651,7 @@ export interface FileRoutesById {
   '/_authenticated/administracao/integridade-dados': typeof AuthenticatedAdministracaoIntegridadeDadosRoute
   '/_authenticated/administracao/pendencias-supervisor': typeof AuthenticatedAdministracaoPendenciasSupervisorRoute
   '/_authenticated/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
+  '/_authenticated/administracao/vinculos-manuais': typeof AuthenticatedAdministracaoVinculosManuaisRoute
   '/_authenticated/colaboradores_/importacoes': typeof AuthenticatedColaboradoresImportacoesRoute
   '/_authenticated/colaboradores_/importar': typeof AuthenticatedColaboradoresImportarRoute
   '/_authenticated/colaboradores_/reprocessar-supervisores': typeof AuthenticatedColaboradoresReprocessarSupervisoresRoute
@@ -713,6 +723,7 @@ export interface FileRouteTypes {
     | '/administracao/integridade-dados'
     | '/administracao/pendencias-supervisor'
     | '/administracao/permissoes'
+    | '/administracao/vinculos-manuais'
     | '/colaboradores/importacoes'
     | '/colaboradores/importar'
     | '/colaboradores/reprocessar-supervisores'
@@ -781,6 +792,7 @@ export interface FileRouteTypes {
     | '/administracao/integridade-dados'
     | '/administracao/pendencias-supervisor'
     | '/administracao/permissoes'
+    | '/administracao/vinculos-manuais'
     | '/colaboradores/importacoes'
     | '/colaboradores/importar'
     | '/colaboradores/reprocessar-supervisores'
@@ -850,6 +862,7 @@ export interface FileRouteTypes {
     | '/_authenticated/administracao/integridade-dados'
     | '/_authenticated/administracao/pendencias-supervisor'
     | '/_authenticated/administracao/permissoes'
+    | '/_authenticated/administracao/vinculos-manuais'
     | '/_authenticated/colaboradores_/importacoes'
     | '/_authenticated/colaboradores_/importar'
     | '/_authenticated/colaboradores_/reprocessar-supervisores'
@@ -1230,6 +1243,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedColaboradoresImportacoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/administracao/vinculos-manuais': {
+      id: '/_authenticated/administracao/vinculos-manuais'
+      path: '/administracao/vinculos-manuais'
+      fullPath: '/administracao/vinculos-manuais'
+      preLoaderRoute: typeof AuthenticatedAdministracaoVinculosManuaisRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/administracao/permissoes': {
       id: '/_authenticated/administracao/permissoes'
       path: '/administracao/permissoes'
@@ -1537,6 +1557,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdministracaoIntegridadeDadosRoute: typeof AuthenticatedAdministracaoIntegridadeDadosRoute
   AuthenticatedAdministracaoPendenciasSupervisorRoute: typeof AuthenticatedAdministracaoPendenciasSupervisorRoute
   AuthenticatedAdministracaoPermissoesRoute: typeof AuthenticatedAdministracaoPermissoesRoute
+  AuthenticatedAdministracaoVinculosManuaisRoute: typeof AuthenticatedAdministracaoVinculosManuaisRoute
   AuthenticatedColaboradoresImportacoesRoute: typeof AuthenticatedColaboradoresImportacoesRoute
   AuthenticatedColaboradoresImportarRoute: typeof AuthenticatedColaboradoresImportarRoute
   AuthenticatedColaboradoresReprocessarSupervisoresRoute: typeof AuthenticatedColaboradoresReprocessarSupervisoresRoute
@@ -1582,6 +1603,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedAdministracaoPendenciasSupervisorRoute,
   AuthenticatedAdministracaoPermissoesRoute:
     AuthenticatedAdministracaoPermissoesRoute,
+  AuthenticatedAdministracaoVinculosManuaisRoute:
+    AuthenticatedAdministracaoVinculosManuaisRoute,
   AuthenticatedColaboradoresImportacoesRoute:
     AuthenticatedColaboradoresImportacoesRoute,
   AuthenticatedColaboradoresImportarRoute:
