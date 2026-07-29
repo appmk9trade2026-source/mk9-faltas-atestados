@@ -22,6 +22,12 @@ import {
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
+import {
+  identidadeBuscaTexto,
+  labelMatriculaColaborador,
+  labelNomeColaborador,
+  resolveAusenciaIdentidade,
+} from "@/lib/ausencia-identidade";
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -126,6 +132,16 @@ type AusenciaRow = {
     supervisor_telefone: string | null;
     supervisor_email: string | null;
   } | null;
+  origem_registro?: string | null;
+  manual_nome?: string | null;
+  manual_matricula?: string | null;
+  manual_cargo?: string | null;
+  manual_telefone?: string | null;
+  manual_email?: string | null;
+  manual_whatsapp?: string | null;
+  manual_supervisor_nome?: string | null;
+  manual_supervisor_telefone?: string | null;
+  manual_supervisor_email?: string | null;
 };
 
 type ProfileMini = { id: string; nome: string | null; email: string | null };
@@ -301,7 +317,7 @@ function PainelRHPage() {
 
       const supervisorAtivo = supervisorF.trim();
       const joinKind = supervisorAtivo ? "!inner" : "";
-      const selectStr = `id, status, tipo, tipo_ausencia_id, tipo_ausencia_codigo, tipo_ausencia_nome, data_inicio, data_fim, dias, cid, loja_codigo_nome, localidade, motivo, acidente_trabalho_trajeto, possui_anexo, arquivo_url, arquivo_nome, registrado_por, registrado_em, lancado_por, lancado_em, empresa_id, projeto_id, colaborador_id, empresa:empresas(nome), projeto:projetos(nome), colaborador:colaboradores${joinKind}(nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email)`;
+      const selectStr = `id, status, tipo, tipo_ausencia_id, tipo_ausencia_codigo, tipo_ausencia_nome, data_inicio, data_fim, dias, cid, loja_codigo_nome, localidade, motivo, acidente_trabalho_trajeto, possui_anexo, arquivo_url, arquivo_nome, registrado_por, registrado_em, lancado_por, lancado_em, empresa_id, projeto_id, colaborador_id, origem_registro, manual_nome, manual_matricula, manual_cargo, manual_telefone, manual_email, manual_whatsapp, manual_supervisor_nome, manual_supervisor_telefone, manual_supervisor_email, empresa:empresas(nome), projeto:projetos(nome), colaborador:colaboradores${joinKind}(nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email)`;
 
       let q = supabase.from("ausencias").select(selectStr, { count: "exact" });
 
@@ -340,9 +356,7 @@ function PainelRHPage() {
         const lower = buscaTrim.toLowerCase();
         rows = rows.filter((r) => {
           const hay =
-            (r.colaborador?.nome_completo ?? "").toLowerCase() +
-            " " +
-            (r.colaborador?.matricula ?? "").toLowerCase() +
+            identidadeBuscaTexto(r) +
             " " +
             (r.loja_codigo_nome ?? "").toLowerCase() +
             " " +
@@ -448,8 +462,8 @@ function PainelRHPage() {
       const tipoOf = tiposAll.find((t) => t.id === r.tipo_ausencia_id);
       const cat = tipoOf ? categorias.find((c) => c.id === tipoOf.categoria_ausencia_id) : undefined;
       return {
-        Colaborador: r.colaborador?.nome_completo ?? "",
-        Matricula: r.colaborador?.matricula ?? "",
+        Colaborador: resolveAusenciaIdentidade(r).nome ?? "",
+        Matricula: resolveAusenciaIdentidade(r).matricula ?? "",
         Empresa: r.empresa?.nome ?? "",
         Projeto: r.projeto?.nome ?? "",
         Categoria: cat?.nome ?? "",
@@ -459,7 +473,7 @@ function PainelRHPage() {
         DataFim: r.data_fim,
         Dias: r.dias,
         Status: r.status,
-        Supervisor: r.colaborador?.supervisor_nome ?? "",
+        Supervisor: resolveAusenciaIdentidade(r).supervisor_nome ?? "",
         Loja: r.loja_codigo_nome ?? "",
         CID: r.cid ?? "",
       };
@@ -689,13 +703,13 @@ function PainelRHPage() {
                         onClick={() => setDetail(r)}
                         className="text-left font-medium hover:underline"
                       >
-                        {r.colaborador?.nome_completo ?? "—"}
+                        {labelNomeColaborador(r)}
                       </button>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell text-xs">{r.colaborador?.matricula ?? "—"}</TableCell>
+                    <TableCell className="hidden md:table-cell text-xs">{labelMatriculaColaborador(r)}</TableCell>
                     <TableCell className="hidden lg:table-cell text-xs">{r.empresa?.nome ?? "—"}</TableCell>
                     <TableCell className="hidden lg:table-cell text-xs">{r.projeto?.nome ?? "—"}</TableCell>
-                    <TableCell className="hidden xl:table-cell text-xs">{r.colaborador?.supervisor_nome ?? "—"}</TableCell>
+                    <TableCell className="hidden xl:table-cell text-xs">{resolveAusenciaIdentidade(r).supervisor_nome ?? "—"}</TableCell>
                     <TableCell className="text-xs">{TIPO_LABEL[r.tipo]}</TableCell>
                     <TableCell className="text-center">{r.dias}</TableCell>
                     <TableCell className="hidden xl:table-cell text-xs">{r.loja_codigo_nome ?? "—"}</TableCell>
@@ -772,7 +786,7 @@ function PainelRHPage() {
           {detail && (
             <>
               <SheetHeader>
-                <SheetTitle>{detail.colaborador?.nome_completo ?? "Ausência"}</SheetTitle>
+                <SheetTitle>{labelNomeColaborador(detail) !== "—" ? labelNomeColaborador(detail) : "Ausência"}</SheetTitle>
                 <SheetDescription>
                   {TIPO_LABEL[detail.tipo]} · {fmtDate(detail.data_inicio)} a {fmtDate(detail.data_fim)}
                 </SheetDescription>
@@ -780,13 +794,13 @@ function PainelRHPage() {
 
               <div className="mt-4 space-y-4 text-sm">
                 <Section title="Colaborador">
-                  <Row k="Matrícula" v={detail.colaborador?.matricula ?? "—"} />
+                  <Row k="Matrícula" v={labelMatriculaColaborador(detail)} />
                   <Row k="Empresa" v={detail.empresa?.nome ?? "—"} />
                   <Row k="Projeto" v={detail.projeto?.nome ?? "—"} />
-                  <Row k="Supervisor" v={detail.colaborador?.supervisor_nome ?? "—"} />
-                  <Row k="Telefone" v={detail.colaborador?.telefone ?? "—"} />
-                  <Row k="WhatsApp" v={detail.colaborador?.whatsapp ?? "—"} />
-                  <Row k="E-mail" v={detail.colaborador?.email ?? "—"} />
+                  <Row k="Supervisor" v={resolveAusenciaIdentidade(detail).supervisor_nome ?? "—"} />
+                  <Row k="Telefone" v={resolveAusenciaIdentidade(detail).telefone ?? "—"} />
+                  <Row k="WhatsApp" v={resolveAusenciaIdentidade(detail).whatsapp ?? "—"} />
+                  <Row k="E-mail" v={resolveAusenciaIdentidade(detail).email ?? "—"} />
                 </Section>
 
                 <Section title="Ausência">
