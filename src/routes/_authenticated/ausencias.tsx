@@ -5,6 +5,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { alterarStatusAusencia } from "@/lib/ausencias.functions";
 import { friendlyRbacError } from "@/lib/rbac/errors";
 import {
+  identidadeBuscaTexto,
+  labelMatriculaColaborador,
+  labelNomeColaborador,
+  resolveAusenciaIdentidade,
+} from "@/lib/ausencia-identidade";
+import {
   ArrowUpDown,
   CheckCircle2,
   ChevronLeft,
@@ -114,6 +120,16 @@ type Ausencia = {
   empresa?: { nome: string } | null;
   projeto?: { nome: string } | null;
   colaborador?: { nome_completo: string; matricula: string; cargo: string | null } | null;
+  origem_registro?: string | null;
+  manual_nome?: string | null;
+  manual_matricula?: string | null;
+  manual_cargo?: string | null;
+  manual_telefone?: string | null;
+  manual_email?: string | null;
+  manual_whatsapp?: string | null;
+  manual_supervisor_nome?: string | null;
+  manual_supervisor_telefone?: string | null;
+  manual_supervisor_email?: string | null;
   registrador?: { nome: string | null; email: string | null } | null;
   lancador?: { nome: string | null; email: string | null } | null;
 };
@@ -250,9 +266,7 @@ function AusenciasPage() {
     if (q)
       list = list.filter((a) => {
         const hay =
-          (a.colaborador?.nome_completo ?? "").toLowerCase() +
-          " " +
-          (a.colaborador?.matricula ?? "").toLowerCase() +
+          identidadeBuscaTexto(a) +
           " " +
           (a.empresa?.nome ?? "").toLowerCase() +
           " " +
@@ -272,8 +286,8 @@ function AusenciasPage() {
       const dir = sortDir === "asc" ? 1 : -1;
       if (sortBy === "colaborador")
         return (
-          (a.colaborador?.nome_completo ?? "").localeCompare(
-            b.colaborador?.nome_completo ?? "",
+          (resolveAusenciaIdentidade(a).nome ?? "").localeCompare(
+            resolveAusenciaIdentidade(b).nome ?? "",
             "pt-BR",
           ) * dir
         );
@@ -551,11 +565,17 @@ function AusenciasPage() {
                 <TableRow key={row.id}>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-medium">
-                        {row.colaborador?.nome_completo ?? "—"}
+                      <span
+                        className={
+                          resolveAusenciaIdentidade(row).indisponivel
+                            ? "font-medium text-destructive"
+                            : "font-medium"
+                        }
+                      >
+                        {labelNomeColaborador(row)}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        Mat. {row.colaborador?.matricula ?? "—"}
+                        Mat. {labelMatriculaColaborador(row)}
                       </span>
                     </div>
                   </TableCell>
@@ -674,7 +694,7 @@ function AusenciasPage() {
       <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{viewing?.colaborador?.nome_completo ?? "Ausência"}</DialogTitle>
+            <DialogTitle>{labelNomeColaborador(viewing) !== "—" ? labelNomeColaborador(viewing) : "Ausência"}</DialogTitle>
             <DialogDescription>Detalhes do registro</DialogDescription>
           </DialogHeader>
           {viewing && (
@@ -685,11 +705,11 @@ function AusenciasPage() {
                 </h4>
                 <dl className="grid grid-cols-3 gap-2">
                   <dt className="text-muted-foreground">Nome</dt>
-                  <dd className="col-span-2">{viewing.colaborador?.nome_completo ?? "—"}</dd>
+                  <dd className="col-span-2">{labelNomeColaborador(viewing)}</dd>
                   <dt className="text-muted-foreground">Matrícula</dt>
-                  <dd className="col-span-2 font-mono">{viewing.colaborador?.matricula ?? "—"}</dd>
+                  <dd className="col-span-2 font-mono">{labelMatriculaColaborador(viewing)}</dd>
                   <dt className="text-muted-foreground">Cargo</dt>
-                  <dd className="col-span-2">{viewing.colaborador?.cargo ?? "—"}</dd>
+                  <dd className="col-span-2">{resolveAusenciaIdentidade(viewing).cargo ?? "—"}</dd>
                   <dt className="text-muted-foreground">Empresa</dt>
                   <dd className="col-span-2">{viewing.empresa?.nome ?? "—"}</dd>
                   <dt className="text-muted-foreground">Projeto</dt>
