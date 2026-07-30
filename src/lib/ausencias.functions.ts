@@ -388,13 +388,9 @@ export const createAusencia = createServerFn({ method: "POST" })
         .select("id, empresa_id, projeto_id, protocolo, status")
         .single();
       if (error) {
-        // RLS negou → converte em erro RBAC amigável
-        const msg = error.message || "";
-        if (/row-level security|permission denied|not authorized/i.test(msg)) {
-          throw new Error("PROJECT_SCOPE_DENIED: bloqueado por política de acesso");
-        }
-        throw new Error(`CONFLICT: ${msg}`);
+        throw ausenciaDbError(error, "insert_ausencia", gate.correlationId);
       }
+
       rowId = row.id as string;
       protocolo = (row.protocolo as string | null) ?? null;
       colaboradorId = data.colaborador_id;
