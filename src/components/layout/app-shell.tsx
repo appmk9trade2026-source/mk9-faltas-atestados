@@ -98,7 +98,7 @@ function AppShellFull({ title, breadcrumb, children }: AppShellProps) {
   const email = profile?.email ?? "";
   const displayBreadcrumb = breadcrumb ?? [title];
 
-  const [sendingReset, setSendingReset] = useState(false);
+
   async function handleChangePassword() {
     if (!email || sendingReset) return;
     setSendingReset(true);
