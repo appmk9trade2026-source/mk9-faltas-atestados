@@ -595,8 +595,19 @@ function AusenciasPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{TIPO_LABEL[row.tipo]}</Badge>
+                    <div className="flex flex-wrap items-center gap-1">
+                      <Badge variant="outline">{TIPO_LABEL[row.tipo]}</Badge>
+                      {row.retificada && (
+                        <Badge
+                          variant="secondary"
+                          className="border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300"
+                        >
+                          Retificada
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
+
                   <TableCell className="whitespace-nowrap text-sm">
                     {formatBRDate(row.data_inicio)} — {formatBRDate(row.data_fim)}
                   </TableCell>
