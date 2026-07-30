@@ -24,8 +24,10 @@ import {
   Pencil,
   Plus,
   Search,
+  RefreshCcw,
 } from "lucide-react";
 import { toast } from "sonner";
+import { RetificarAusenciaDialog } from "@/components/ausencias/retificar-ausencia-dialog";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
@@ -848,6 +850,15 @@ function AusenciasPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <RetificarAusenciaDialog
+        ausencia={retificando as never}
+        open={!!retificando}
+        onOpenChange={(o) => !o && setRetificando(null)}
+        podeIgnorarPrazo={podeIgnorarPrazo}
+        podeVerCid={podeVerCid}
+        nomeColaborador={retificando ? labelNomeColaborador(retificando) : "—"}
+      />
+
     </AppShell>
   );
 }
