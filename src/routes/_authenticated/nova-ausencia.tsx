@@ -1067,6 +1067,10 @@ function NovaAusenciaPage() {
             manual_email: values.manual_email?.trim() || null,
             manual_supervisor_nome: values.manual_supervisor_nome?.trim() || null,
             manual_supervisor_telefone: values.manual_supervisor_telefone?.trim() || null,
+            // Coordenador: supervisor canônico do vínculo. O servidor revalida
+            // se ele pertence à coordenação antes de criar o colaborador.
+            manual_supervisor_usuario_id: values.manual_supervisor_usuario_id || null,
+
           }
         : { origem_registro: "AUTOMATICO" as const, colaborador_id: values.colaborador_id! };
 
