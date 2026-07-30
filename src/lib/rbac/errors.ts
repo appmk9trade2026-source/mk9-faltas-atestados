@@ -53,11 +53,23 @@ const FRIENDLY: Record<RbacErrorCode, string> = {
   RATE_LIMITED: "Muitas tentativas em pouco tempo. Aguarde alguns instantes.",
 };
 
+/**
+ * Códigos cuja mensagem específica deve chegar ao usuário como descrição.
+ * Sem isso, causas reais (ex.: duplicidade de ausência) ficavam invisíveis
+ * atrás do título genérico.
+ */
+const CODES_COM_DETALHE = new Set<RbacErrorCode>(["CONFLICT", "INVALID_PAYLOAD", "RESOURCE_NOT_FOUND"]);
+
 /** Mensagem amigável ao usuário — nunca vaza detalhes técnicos. */
 export function friendlyRbacError(err: unknown): { title: string; description?: string; correlationId?: string } {
   const shape = parseRbacError(err);
   if (shape.code === "UNKNOWN") {
     return { title: "Não foi possível concluir a operação.", description: shape.message.slice(0, 240), correlationId: shape.correlationId };
   }
-  return { title: FRIENDLY[shape.code], correlationId: shape.correlationId };
+  const detalhe =
+    CODES_COM_DETALHE.has(shape.code) && shape.message && shape.message !== shape.code
+      ? shape.message.slice(0, 240)
+      : undefined;
+  return { title: FRIENDLY[shape.code], description: detalhe, correlationId: shape.correlationId };
 }
+
