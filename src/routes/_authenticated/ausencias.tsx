@@ -24,8 +24,10 @@ import {
   Pencil,
   Plus,
   Search,
+  RefreshCcw,
 } from "lucide-react";
 import { toast } from "sonner";
+import { RetificarAusenciaDialog } from "@/components/ausencias/retificar-ausencia-dialog";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
@@ -117,6 +119,15 @@ type Ausencia = {
   lancado_em: string | null;
   created_at: string;
   updated_at: string;
+  retificada?: boolean | null;
+  retificada_em?: string | null;
+  retificacoes_count?: number | null;
+  tipo_ausencia_id?: string | null;
+  tipo_ausencia_nome?: string | null;
+  opcao_periodo_id?: string | null;
+  opcao_periodo_nome?: string | null;
+  cid?: string | null;
+
   empresa?: { nome: string } | null;
   projeto?: { nome: string } | null;
   colaborador?: { nome_completo: string; matricula: string; cargo: string | null } | null;
@@ -193,6 +204,12 @@ function AusenciasPage() {
   const [viewing, setViewing] = useState<Ausencia | null>(null);
   const [confirmLancar, setConfirmLancar] = useState<Ausencia | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [retificando, setRetificando] = useState<Ausencia | null>(null);
+  const podeIgnorarPrazo = roles.includes("super_admin") || roles.includes("rh");
+  const podeRetificar =
+    podeIgnorarPrazo || roles.includes("supervisor") || roles.includes("coordenador");
+  const podeVerCid =
+    roles.includes("super_admin") || roles.includes("rh") || roles.includes("compliance");
 
   const empresasQ = useQuery({
     queryKey: ["empresas", "todas", ...scope.keyParts],
@@ -595,8 +612,19 @@ function AusenciasPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{TIPO_LABEL[row.tipo]}</Badge>
+                    <div className="flex flex-wrap items-center gap-1">
+                      <Badge variant="outline">{TIPO_LABEL[row.tipo]}</Badge>
+                      {row.retificada && (
+                        <Badge
+                          variant="secondary"
+                          className="border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300"
+                        >
+                          Retificada
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
+
                   <TableCell className="whitespace-nowrap text-sm">
                     {formatBRDate(row.data_inicio)} — {formatBRDate(row.data_fim)}
                   </TableCell>
@@ -648,6 +676,11 @@ function AusenciasPage() {
                         {row.possui_anexo && (
                           <DropdownMenuItem onClick={() => baixarAnexo(row)}>
                             <Download className="mr-2 h-4 w-4" /> Baixar anexo
+                          </DropdownMenuItem>
+                        )}
+                        {podeRetificar && row.status === "PENDENTE" && (
+                          <DropdownMenuItem onClick={() => setRetificando(row)}>
+                            <RefreshCcw className="mr-2 h-4 w-4" /> Retificar ausência
                           </DropdownMenuItem>
                         )}
                         {podeLancar && row.status === "PENDENTE" && (
@@ -817,6 +850,15 @@ function AusenciasPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <RetificarAusenciaDialog
+        ausencia={retificando as never}
+        open={!!retificando}
+        onOpenChange={(o) => !o && setRetificando(null)}
+        podeIgnorarPrazo={podeIgnorarPrazo}
+        podeVerCid={podeVerCid}
+        nomeColaborador={retificando ? labelNomeColaborador(retificando) : "—"}
+      />
+
     </AppShell>
   );
 }
