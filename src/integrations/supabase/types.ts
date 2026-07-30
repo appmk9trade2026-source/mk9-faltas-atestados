@@ -4946,6 +4946,10 @@ export type Database = {
         Args: { _projeto_id: string; _user_id: string }
         Returns: boolean
       }
+      user_pode_projeto_escopo_manual: {
+        Args: { _projeto_id: string; _user_id: string }
+        Returns: boolean
+      }
       validar_template_colaborador_whatsapp: {
         Args: { p_conteudo: string; p_variaveis: string[] }
         Returns: undefined
