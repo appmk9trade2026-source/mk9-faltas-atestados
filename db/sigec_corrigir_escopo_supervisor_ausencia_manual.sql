@@ -204,6 +204,13 @@ $function$;
 
 REVOKE ALL ON FUNCTION public.tg_ausencia_supervisor_escopo() FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.tg_ausencia_supervisor_escopo() FROM anon;
+GRANT EXECUTE ON FUNCTION public.tg_ausencia_supervisor_escopo() TO authenticated;
+
+-- Reanexa o trigger de forma idempotente (não altera a tabela).
+DROP TRIGGER IF EXISTS tg_ausencia_supervisor_escopo ON public.ausencias;
+CREATE TRIGGER tg_ausencia_supervisor_escopo
+  BEFORE INSERT OR UPDATE ON public.ausencias
+  FOR EACH ROW EXECUTE FUNCTION public.tg_ausencia_supervisor_escopo();
 
 -- ---------------------------------------------------------------------
 -- 6) require_permission — apenas o passo 4 (escopo de projeto) passa a
