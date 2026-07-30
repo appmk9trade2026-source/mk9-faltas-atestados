@@ -1306,6 +1306,9 @@ function NovaAusenciaPage() {
                       form={form}
                       empresasDisponiveis={empresasManualQ.data ?? []}
                       projetosDisponiveis={projetosManualQ.data ?? []}
+                      usarSelectSupervisor={isCoordenadorEscopo}
+                      supervisoresDisponiveis={supervisoresDisponiveis}
+
                       matriculaSlot={
                         <div className="space-y-1.5">
                           {coach.visible && !isEdit && !bloqueado && (
