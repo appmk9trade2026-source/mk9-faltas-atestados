@@ -171,17 +171,15 @@ export const verificarDuplicidadeAusencia = createServerFn({ method: "POST" })
         _manual_matricula: data.manual_matricula ?? null,
       } as never,
     );
-    if (error) return { duplicadas: [] as Array<Record<string, unknown>> };
-    return {
-      duplicadas: (rows ?? []) as unknown as Array<{
-        id: string;
-        protocolo: string | null;
-        tipo_ausencia_nome: string | null;
-        data_inicio: string;
-        data_fim: string;
-        created_at: string;
-      }>,
-    };
+    const duplicadas = (error ? [] : (rows ?? [])) as unknown as Array<{
+      id: string;
+      protocolo: string | null;
+      tipo_ausencia_nome: string | null;
+      data_inicio: string;
+      data_fim: string;
+      created_at: string;
+    }>;
+    return { duplicadas };
   });
 
 /** Prazo de 24h calculado a partir de created_at (fonte: banco). */
