@@ -141,9 +141,12 @@ export function RetificarAusenciaDialog({
     queryKey: ["opcoes_por_tipo", tipoId],
     enabled: open && !!tipoId,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_opcoes_periodo_por_tipo" as never, {
-        _tipo_id: tipoId,
-      } as never);
+      const { data, error } = await supabase.rpc(
+        "get_opcoes_periodo_por_tipo" as never,
+        {
+          _tipo_id: tipoId,
+        } as never,
+      );
       if (error) throw error;
       return (data ?? []) as unknown as PeriodoOpt[];
     },
@@ -235,7 +238,8 @@ export function RetificarAusenciaDialog({
             Retificar ausência
           </DialogTitle>
           <DialogDescription>
-            O lançamento original é preservado: mesmo protocolo, mesmo colaborador e histórico completo.
+            O lançamento original é preservado: mesmo protocolo, mesmo colaborador e histórico
+            completo.
           </DialogDescription>
         </DialogHeader>
 
@@ -264,9 +268,7 @@ export function RetificarAusenciaDialog({
           {podeIgnorarPrazo ? (
             <span>Seu perfil pode retificar sem limite de prazo.</span>
           ) : bloqueadoPorPrazo ? (
-            <span>
-              Janela de 24 horas expirada. Solicite a correção ao RH ou Super Admin.
-            </span>
+            <span>Janela de 24 horas expirada. Solicite a correção ao RH ou Super Admin.</span>
           ) : (
             <span>
               Tempo restante da janela de 24 horas:{" "}
@@ -278,11 +280,22 @@ export function RetificarAusenciaDialog({
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label>Novo tipo de ausência</Label>
-            <Select value={tipoId} onValueChange={(v) => { setTipoId(v); setPeriodoId(""); }} disabled={bloqueadoPorPrazo}>
-              <SelectTrigger><SelectValue placeholder="Selecione o tipo" /></SelectTrigger>
+            <Select
+              value={tipoId}
+              onValueChange={(v) => {
+                setTipoId(v);
+                setPeriodoId("");
+              }}
+              disabled={bloqueadoPorPrazo}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
               <SelectContent>
                 {(tiposQ.data ?? []).map((t) => (
-                  <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.nome}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -290,11 +303,19 @@ export function RetificarAusenciaDialog({
 
           <div className="space-y-2">
             <Label>Período</Label>
-            <Select value={periodoId} onValueChange={setPeriodoId} disabled={bloqueadoPorPrazo || !tipoId}>
-              <SelectTrigger><SelectValue placeholder="Selecione o período" /></SelectTrigger>
+            <Select
+              value={periodoId}
+              onValueChange={setPeriodoId}
+              disabled={bloqueadoPorPrazo || !tipoId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o período" />
+              </SelectTrigger>
               <SelectContent>
                 {(periodosQ.data ?? []).map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.nome}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>

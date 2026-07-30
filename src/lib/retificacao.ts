@@ -22,8 +22,7 @@ export function mapRetificacaoError(message: string): string {
     return "A janela de 24 horas para retificação expirou. Solicite a correção ao RH ou Super Admin.";
   if (/PROJECT_SCOPE_DENIED/.test(message))
     return "Esta ausência está fora do seu escopo de projeto.";
-  if (/DOCUMENTO_OBRIGATORIO/.test(message))
-    return "O tipo selecionado exige documento anexado.";
+  if (/DOCUMENTO_OBRIGATORIO/.test(message)) return "O tipo selecionado exige documento anexado.";
   if (/PERMISSION_DENIED|insufficient_privilege|row-level security/i.test(message))
     return "Você não tem permissão para retificar esta ausência.";
   if (/RESOURCE_NOT_FOUND/.test(message)) return "Ausência não encontrada.";
