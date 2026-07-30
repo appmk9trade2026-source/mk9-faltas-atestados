@@ -13,7 +13,7 @@ import {
   formatarRestante,
   mapRetificacaoError,
   prazoRetificacao,
-} from "@/lib/retificacao.functions";
+} from "@/lib/retificacao";
 
 // ---------------------------------------------------------------- fixtures
 type Papel = "super_admin" | "rh" | "coordenador" | "supervisor" | "outro";
