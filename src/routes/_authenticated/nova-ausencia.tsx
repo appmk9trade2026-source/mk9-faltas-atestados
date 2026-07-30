@@ -1093,7 +1093,10 @@ function NovaAusenciaPage() {
         {
           description: isScope
             ? undefined
-            : friendly.description ?? (friendly.correlationId ? `ref: ${friendly.correlationId.slice(0, 8)}` : undefined),
+            : [friendly.description, friendly.correlationId ? `ref: ${friendly.correlationId.slice(0, 8)}` : null]
+                .filter(Boolean)
+                .join(" • ") || undefined,
+
         },
       );
     },
