@@ -117,6 +117,15 @@ type Ausencia = {
   lancado_em: string | null;
   created_at: string;
   updated_at: string;
+  retificada?: boolean | null;
+  retificada_em?: string | null;
+  retificacoes_count?: number | null;
+  tipo_ausencia_id?: string | null;
+  tipo_ausencia_nome?: string | null;
+  opcao_periodo_id?: string | null;
+  opcao_periodo_nome?: string | null;
+  cid?: string | null;
+
   empresa?: { nome: string } | null;
   projeto?: { nome: string } | null;
   colaborador?: { nome_completo: string; matricula: string; cargo: string | null } | null;
