@@ -342,17 +342,20 @@ export const createAusencia = createServerFn({ method: "POST" })
       );
       if (error) {
         const msg = error.message || "";
+        // Duplicidade e escopo têm precedência: a mensagem de duplicidade cita
+        // "colaborador" e antes era engolida pelo ramo de falha de cadastro.
+        const classificado = ausenciaDbError(error, "rpc_manual", gate.correlationId);
         if (
-          /row-level security|permission denied|not authorized/i.test(msg) ||
-          /fora do seu escopo|não pertence à empresa informada/i.test(msg)
+          !/DUPLICIDADE_AUSENCIA/i.test(msg) &&
+          !classificado.message.startsWith("PROJECT_SCOPE_DENIED") &&
+          /colaborador/i.test(msg) &&
+          /salvar|inserir|insert|colaboradores/i.test(msg)
         ) {
-          throw new Error("PROJECT_SCOPE_DENIED: bloqueado por política de acesso");
-        }
-        if (/colaborador/i.test(msg)) {
           throw new Error("COLLABORATOR_SAVE_FAILED: Não foi possível salvar o colaborador. Revise os dados informados e tente novamente.");
         }
-        throw new Error(`CONFLICT: ${msg}`);
+        throw classificado;
       }
+
 
       const out = (res ?? {}) as {
         colaborador_id?: string; colaborador_criado?: boolean;
