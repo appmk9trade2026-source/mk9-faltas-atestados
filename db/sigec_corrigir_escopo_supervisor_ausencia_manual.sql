@@ -202,6 +202,9 @@ BEGIN
 END;
 $function$;
 
+REVOKE ALL ON FUNCTION public.tg_ausencia_supervisor_escopo() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.tg_ausencia_supervisor_escopo() FROM anon;
+
 -- ---------------------------------------------------------------------
 -- 6) require_permission — apenas o passo 4 (escopo de projeto) passa a
 --    aceitar o mesmo critério canônico. Demais regras inalteradas.
@@ -331,6 +334,7 @@ END;
 $function$;
 
 REVOKE ALL ON FUNCTION public.require_permission(text, text, uuid, uuid, uuid, uuid, text) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.require_permission(text, text, uuid, uuid, uuid, uuid, text) FROM anon;
 GRANT EXECUTE ON FUNCTION public.require_permission(text, text, uuid, uuid, uuid, uuid, text) TO authenticated;
 
 -- ---------------------------------------------------------------------
@@ -484,6 +488,7 @@ END;
 $function$;
 
 REVOKE ALL ON FUNCTION public.registrar_ausencia_com_colaborador_manual(jsonb, jsonb) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.registrar_ausencia_com_colaborador_manual(jsonb, jsonb) FROM anon;
 GRANT EXECUTE ON FUNCTION public.registrar_ausencia_com_colaborador_manual(jsonb, jsonb) TO authenticated;
 
 COMMIT;
