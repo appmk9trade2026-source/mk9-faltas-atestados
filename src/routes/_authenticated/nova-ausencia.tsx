@@ -290,8 +290,7 @@ function NovaAusenciaPage() {
   const { id: editId } = Route.useSearch();
   const isEdit = !!editId;
 
-  /** Filtro de Supervisor (Coordenador) aplicado à busca por matrícula. */
-  const [supervisorFiltro, setSupervisorFiltro] = useState<string>("");
+
 
 
   // Escopo do supervisor: projetos vinculados
