@@ -114,6 +114,13 @@ export function ReadonlyField({
   );
 }
 
+export interface SupervisorOpcao {
+  id: string;
+  nome: string;
+  email?: string | null;
+  telefone?: string | null;
+}
+
 export interface DadosColaboradorFieldsProps {
   modo: ModoDados;
   colaboradorEncontrado: ColabResumo | null;
@@ -125,6 +132,13 @@ export interface DadosColaboradorFieldsProps {
   form: UseFormReturn<any>;
   empresasDisponiveis?: OpcaoSelect[];
   projetosDisponiveis?: OpcaoSelect[];
+  /**
+   * Quando informado, o campo Supervisor vira uma lista fechada com apenas os
+   * supervisores permitidos ao usuário (ex.: equipe do Coordenador).
+   * O nome/telefone continuam sendo persistidos como snapshot.
+   */
+  supervisoresDisponiveis?: SupervisorOpcao[];
+  usarSelectSupervisor?: boolean;
 }
 
 export function DadosColaboradorFields({
@@ -135,6 +149,8 @@ export function DadosColaboradorFields({
   form,
   empresasDisponiveis = [],
   projetosDisponiveis = [],
+  supervisoresDisponiveis = [],
+  usarSelectSupervisor = false,
 }: DadosColaboradorFieldsProps) {
   const manual = modo === "MANUAL";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -143,6 +159,8 @@ export function DadosColaboradorFields({
 
   const empresaId = (form.watch("empresa_id") as string) || "";
   const projetoId = (form.watch("projeto_id") as string) || "";
+  const supervisorUsuarioId = (form.watch("manual_supervisor_usuario_id") as string) || "";
+
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -269,7 +287,43 @@ export function DadosColaboradorFields({
       )}
 
       {/* 7. Supervisor(a) */}
-      {manual ? (
+      {manual && usarSelectSupervisor ? (
+        <FieldShell
+          label="Supervisor(a)"
+          icon={UserIcon}
+          required
+          hint="Apenas supervisores da sua coordenação"
+          error={err("manual_supervisor_usuario_id") ?? err("manual_supervisor_nome")}
+        >
+          <Select
+            value={supervisorUsuarioId || undefined}
+            onValueChange={(v) => {
+              const sup = supervisoresDisponiveis.find((s) => s.id === v);
+              form.setValue("manual_supervisor_usuario_id", v, { shouldValidate: true });
+              form.setValue("manual_supervisor_nome", sup?.nome ?? "", { shouldValidate: true });
+              if (sup?.telefone) {
+                form.setValue("manual_supervisor_telefone", sup.telefone, { shouldValidate: true });
+              }
+            }}
+            disabled={!projetoId}
+          >
+            <SelectTrigger>
+              <SelectValue
+                placeholder={projetoId ? "Selecione o supervisor..." : "Escolha o projeto primeiro"}
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {supervisoresDisponiveis
+                .filter((s) => s.id)
+                .map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.nome}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        </FieldShell>
+      ) : manual ? (
         <FieldShell
           label="Supervisor(a)"
           icon={UserIcon}
@@ -283,6 +337,7 @@ export function DadosColaboradorFields({
           />
         </FieldShell>
       ) : (
+
         <ReadonlyField
           label="Supervisor(a)"
           required

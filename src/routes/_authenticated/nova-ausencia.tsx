@@ -97,6 +97,8 @@ import { createAusencia, updateAusencia } from "@/lib/ausencias.functions";
 import { friendlyRbacError, parseRbacError } from "@/lib/rbac/errors";
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { useProjetosAtivosPorEmpresa } from "@/hooks/use-projetos";
+import { useSupervisoresLancamento } from "@/hooks/use-supervisores-lancamento";
+
 import { DadosColaboradorFields } from "@/components/ausencias/dados-colaborador-fields";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -209,6 +211,9 @@ const schema = z
     manual_email: z.string().max(150).optional().or(z.literal("")),
     manual_supervisor_nome: z.string().max(150).optional().or(z.literal("")),
     manual_supervisor_telefone: z.string().max(20).optional().or(z.literal("")),
+    /** Supervisor canônico (obrigatório para Coordenador — validado na submissão). */
+    manual_supervisor_usuario_id: z.string().uuid().optional().or(z.literal("")),
+
   })
   .superRefine((v, ctx) => {
     const req = (path: keyof typeof v, message: string) =>
@@ -272,10 +277,21 @@ function NovaAusenciaPage() {
     !roles.includes("super_admin") &&
     !roles.includes("rh") &&
     !roles.includes("coordenador");
+  /**
+   * Coordenador "puro": lança dentro da própria hierarquia (equipe de
+   * supervisores). Papéis privilegiados (super_admin/rh) mantêm o fluxo atual.
+   */
+  const isCoordenadorEscopo =
+    roles.includes("coordenador") &&
+    !roles.includes("super_admin") &&
+    !roles.includes("rh");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { id: editId } = Route.useSearch();
   const isEdit = !!editId;
+
+
+
 
   // Escopo do supervisor: projetos vinculados
   const supervisorProjetosQ = useQuery({
@@ -353,6 +369,7 @@ function NovaAusenciaPage() {
       manual_email: "",
       manual_supervisor_nome: "",
       manual_supervisor_telefone: "",
+      manual_supervisor_usuario_id: "",
     },
   });
 
@@ -364,6 +381,32 @@ function NovaAusenciaPage() {
   const cid = form.watch("cid") ?? "";
   const modoManual = form.watch("modo_manual");
   const manualEmpresaId = form.watch("empresa_id") ?? "";
+  const manualProjetoId = form.watch("projeto_id") ?? "";
+
+  /**
+   * Supervisores permitidos ao usuário. O banco resolve o escopo
+   * (`supervisores_para_lancamento`): Coordenador vê apenas a própria equipe.
+   * No modo manual a lista é restrita ao projeto escolhido.
+   */
+  const supervisoresQ = useSupervisoresLancamento(
+    modoManual ? manualProjetoId || null : null,
+    isCoordenadorEscopo,
+  );
+  const supervisoresDisponiveis = supervisoresQ.data ?? [];
+
+  // Trocar o projeto invalida um supervisor que pode não pertencer mais à lista.
+  useEffect(() => {
+    if (!isCoordenadorEscopo || !modoManual) return;
+    const atual = form.getValues("manual_supervisor_usuario_id");
+    if (!atual) return;
+    if (supervisoresQ.isSuccess && !supervisoresDisponiveis.some((s) => s.id === atual)) {
+      form.setValue("manual_supervisor_usuario_id", "");
+      form.setValue("manual_supervisor_nome", "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manualProjetoId, supervisoresQ.isSuccess, supervisoresQ.dataUpdatedAt]);
+
+
   
 
   // Empresas e projetos disponíveis para o lançamento manual (RLS já filtra o escopo).
@@ -976,6 +1019,14 @@ function NovaAusenciaPage() {
     mutationFn: async (values: FormData) => {
       const dataInicioIso = values.data_inicio;
 
+      // Coordenador precisa indicar a qual supervisor da sua equipe o
+      // colaborador manual pertence (o servidor revalida esse vínculo).
+      if (values.modo_manual && isCoordenadorEscopo && !values.manual_supervisor_usuario_id) {
+        throw new Error("INVALID_PAYLOAD: Selecione o Supervisor responsável pelo colaborador.");
+      }
+
+
+
       let arquivo_url: string | null | undefined = undefined;
       let arquivo_nome: string | null | undefined = undefined;
       let arquivo_mime: string | null | undefined = undefined;
@@ -1023,6 +1074,10 @@ function NovaAusenciaPage() {
             manual_email: values.manual_email?.trim() || null,
             manual_supervisor_nome: values.manual_supervisor_nome?.trim() || null,
             manual_supervisor_telefone: values.manual_supervisor_telefone?.trim() || null,
+            // Coordenador: supervisor canônico do vínculo. O servidor revalida
+            // se ele pertence à coordenação antes de criar o colaborador.
+            manual_supervisor_usuario_id: values.manual_supervisor_usuario_id || null,
+
           }
         : { origem_registro: "AUTOMATICO" as const, colaborador_id: values.colaborador_id! };
 
@@ -1250,6 +1305,9 @@ function NovaAusenciaPage() {
                       form={form}
                       empresasDisponiveis={empresasManualQ.data ?? []}
                       projetosDisponiveis={projetosManualQ.data ?? []}
+                      usarSelectSupervisor={isCoordenadorEscopo}
+                      supervisoresDisponiveis={supervisoresDisponiveis}
+
                       matriculaSlot={
                         <div className="space-y-1.5">
                           {coach.visible && !isEdit && !bloqueado && (

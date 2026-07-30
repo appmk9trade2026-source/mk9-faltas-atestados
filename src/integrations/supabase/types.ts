@@ -5122,6 +5122,15 @@ export type Database = {
         Args: { _projeto_id: string; _user_id: string }
         Returns: boolean
       }
+      supervisores_para_lancamento: {
+        Args: { _projeto_id?: string }
+        Returns: {
+          email: string
+          id: string
+          nome: string
+          telefone: string
+        }[]
+      }
       unaccent: { Args: { "": string }; Returns: string }
       unaccent_if_available: { Args: { p: string }; Returns: string }
       user_has_projeto: {
