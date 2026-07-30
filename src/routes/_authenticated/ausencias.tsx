@@ -202,6 +202,12 @@ function AusenciasPage() {
   const [viewing, setViewing] = useState<Ausencia | null>(null);
   const [confirmLancar, setConfirmLancar] = useState<Ausencia | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [retificando, setRetificando] = useState<Ausencia | null>(null);
+  const podeIgnorarPrazo = roles.includes("super_admin") || roles.includes("rh");
+  const podeRetificar =
+    podeIgnorarPrazo || roles.includes("supervisor") || roles.includes("coordenador");
+  const podeVerCid =
+    roles.includes("super_admin") || roles.includes("rh") || roles.includes("compliance");
 
   const empresasQ = useQuery({
     queryKey: ["empresas", "todas", ...scope.keyParts],
@@ -668,6 +674,11 @@ function AusenciasPage() {
                         {row.possui_anexo && (
                           <DropdownMenuItem onClick={() => baixarAnexo(row)}>
                             <Download className="mr-2 h-4 w-4" /> Baixar anexo
+                          </DropdownMenuItem>
+                        )}
+                        {podeRetificar && row.status === "PENDENTE" && (
+                          <DropdownMenuItem onClick={() => setRetificando(row)}>
+                            <RefreshCcw className="mr-2 h-4 w-4" /> Retificar ausência
                           </DropdownMenuItem>
                         )}
                         {podeLancar && row.status === "PENDENTE" && (
