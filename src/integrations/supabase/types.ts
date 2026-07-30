@@ -613,6 +613,104 @@ export type Database = {
         }
         Relationships: []
       }
+      ausencia_retificacoes: {
+        Row: {
+          anexo_anterior: boolean | null
+          anexo_novo: boolean | null
+          ausencia_id: string
+          colaborador_id: string | null
+          correlation_id: string
+          created_at: string
+          data_fim_anterior: string | null
+          data_fim_nova: string | null
+          data_inicio_anterior: string | null
+          data_inicio_nova: string | null
+          empresa_id: string
+          id: string
+          motivo_operacional: string
+          observacao: string | null
+          papel_usuario: string
+          periodo_anterior_id: string | null
+          periodo_anterior_nome: string | null
+          periodo_novo_id: string | null
+          periodo_novo_nome: string | null
+          projeto_id: string
+          protocolo: string | null
+          retificado_em: string
+          tipo_anterior_id: string | null
+          tipo_anterior_nome: string | null
+          tipo_novo_id: string | null
+          tipo_novo_nome: string | null
+          usuario_id: string
+        }
+        Insert: {
+          anexo_anterior?: boolean | null
+          anexo_novo?: boolean | null
+          ausencia_id: string
+          colaborador_id?: string | null
+          correlation_id?: string
+          created_at?: string
+          data_fim_anterior?: string | null
+          data_fim_nova?: string | null
+          data_inicio_anterior?: string | null
+          data_inicio_nova?: string | null
+          empresa_id: string
+          id?: string
+          motivo_operacional: string
+          observacao?: string | null
+          papel_usuario: string
+          periodo_anterior_id?: string | null
+          periodo_anterior_nome?: string | null
+          periodo_novo_id?: string | null
+          periodo_novo_nome?: string | null
+          projeto_id: string
+          protocolo?: string | null
+          retificado_em?: string
+          tipo_anterior_id?: string | null
+          tipo_anterior_nome?: string | null
+          tipo_novo_id?: string | null
+          tipo_novo_nome?: string | null
+          usuario_id: string
+        }
+        Update: {
+          anexo_anterior?: boolean | null
+          anexo_novo?: boolean | null
+          ausencia_id?: string
+          colaborador_id?: string | null
+          correlation_id?: string
+          created_at?: string
+          data_fim_anterior?: string | null
+          data_fim_nova?: string | null
+          data_inicio_anterior?: string | null
+          data_inicio_nova?: string | null
+          empresa_id?: string
+          id?: string
+          motivo_operacional?: string
+          observacao?: string | null
+          papel_usuario?: string
+          periodo_anterior_id?: string | null
+          periodo_anterior_nome?: string | null
+          periodo_novo_id?: string | null
+          periodo_novo_nome?: string | null
+          projeto_id?: string
+          protocolo?: string | null
+          retificado_em?: string
+          tipo_anterior_id?: string | null
+          tipo_anterior_nome?: string | null
+          tipo_novo_id?: string | null
+          tipo_novo_nome?: string | null
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ausencia_retificacoes_ausencia_id_fkey"
+            columns: ["ausencia_id"]
+            isOneToOne: false
+            referencedRelation: "ausencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ausencias: {
         Row: {
           acidente_atendimento_medico: boolean | null
@@ -672,6 +770,10 @@ export type Database = {
           quantidade_dias_calculada: number | null
           registrado_em: string
           registrado_por: string | null
+          retificacoes_count: number
+          retificada: boolean
+          retificada_em: string | null
+          retificada_por: string | null
           status: Database["public"]["Enums"]["status_ausencia"]
           tipo: Database["public"]["Enums"]["tipo_ausencia"]
           tipo_ausencia_codigo: string | null
@@ -738,6 +840,10 @@ export type Database = {
           quantidade_dias_calculada?: number | null
           registrado_em?: string
           registrado_por?: string | null
+          retificacoes_count?: number
+          retificada?: boolean
+          retificada_em?: string | null
+          retificada_por?: string | null
           status?: Database["public"]["Enums"]["status_ausencia"]
           tipo: Database["public"]["Enums"]["tipo_ausencia"]
           tipo_ausencia_codigo?: string | null
@@ -804,6 +910,10 @@ export type Database = {
           quantidade_dias_calculada?: number | null
           registrado_em?: string
           registrado_por?: string | null
+          retificacoes_count?: number
+          retificada?: boolean
+          retificada_em?: string | null
+          retificada_por?: string | null
           status?: Database["public"]["Enums"]["status_ausencia"]
           tipo?: Database["public"]["Enums"]["tipo_ausencia"]
           tipo_ausencia_codigo?: string | null
@@ -4147,6 +4257,25 @@ export type Database = {
         Returns: Json
       }
       audit_kpis: { Args: { _inicio?: string }; Returns: Json }
+      ausencia_duplicada_existente: {
+        Args: {
+          _colaborador_id: string
+          _data_fim: string
+          _data_inicio: string
+          _ignorar_id?: string
+          _manual_matricula?: string
+          _opcao_periodo_id: string
+          _projeto_id: string
+        }
+        Returns: {
+          created_at: string
+          data_fim: string
+          data_inicio: string
+          id: string
+          protocolo: string
+          tipo_ausencia_nome: string
+        }[]
+      }
       ausencias_manuais_orfas_sugestoes: {
         Args: never
         Returns: {
@@ -4593,6 +4722,44 @@ export type Database = {
           tipo: Database["public"]["Enums"]["notif_tipo"]
         }[]
       }
+      listar_retificacoes_ausencia: {
+        Args: { _ausencia_id: string }
+        Returns: {
+          anexo_anterior: boolean | null
+          anexo_novo: boolean | null
+          ausencia_id: string
+          colaborador_id: string | null
+          correlation_id: string
+          created_at: string
+          data_fim_anterior: string | null
+          data_fim_nova: string | null
+          data_inicio_anterior: string | null
+          data_inicio_nova: string | null
+          empresa_id: string
+          id: string
+          motivo_operacional: string
+          observacao: string | null
+          papel_usuario: string
+          periodo_anterior_id: string | null
+          periodo_anterior_nome: string | null
+          periodo_novo_id: string | null
+          periodo_novo_nome: string | null
+          projeto_id: string
+          protocolo: string | null
+          retificado_em: string
+          tipo_anterior_id: string | null
+          tipo_anterior_nome: string | null
+          tipo_novo_id: string | null
+          tipo_novo_nome: string | null
+          usuario_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "ausencia_retificacoes"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       log_audit_event: {
         Args: {
           _acao: Database["public"]["Enums"]["audit_action"]
@@ -4869,6 +5036,21 @@ export type Database = {
         }[]
       }
       restaurar_preferencias_padrao: { Args: never; Returns: number }
+      retificar_ausencia: {
+        Args: {
+          p_arquivo?: Json
+          p_ausencia_id: string
+          p_cid?: string
+          p_data_inicio: string
+          p_motivo?: string
+          p_motivo_operacional: string
+          p_observacao?: string
+          p_opcao_periodo_id: string
+          p_tipo_ausencia_id: string
+          p_tipo_detalhe?: string
+        }
+        Returns: Json
+      }
       revogar_sessao: {
         Args: { _motivo?: string; _session_id: string }
         Returns: undefined
@@ -5257,6 +5439,8 @@ export type Database = {
         | "COORDENADOR_VINCULADO"
         | "COORDENADOR_ALTERADO"
         | "COORDENADOR_DESVINCULADO"
+        | "AUSENCIA_RETIFICADA"
+        | "AUSENCIA_DUPLICIDADE_BLOQUEADA"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       changelog_tipo:
         | "NOVA_FUNCIONALIDADE"
@@ -5705,6 +5889,8 @@ export const Constants = {
         "COORDENADOR_VINCULADO",
         "COORDENADOR_ALTERADO",
         "COORDENADOR_DESVINCULADO",
+        "AUSENCIA_RETIFICADA",
+        "AUSENCIA_DUPLICIDADE_BLOQUEADA",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       changelog_tipo: [
