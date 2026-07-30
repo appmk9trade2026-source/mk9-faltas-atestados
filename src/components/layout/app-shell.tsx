@@ -61,16 +61,24 @@ function initials(name: string) {
  */
 export const EmbeddedAppShellContext = createContext(false);
 
-export function AppShell({ title, breadcrumb, children }: { title: string; breadcrumb?: string[]; children: ReactNode }) {
+type AppShellProps = { title: string; breadcrumb?: string[]; children: ReactNode };
+
+export function AppShell(props: AppShellProps) {
   const embedded = useContext(EmbeddedAppShellContext);
   if (embedded) {
-    return <>{children}</>;
+    return <>{props.children}</>;
   }
+  return <AppShellFull {...props} />;
+}
+
+function AppShellFull({ title, breadcrumb, children }: AppShellProps) {
   const { profile, roles, primaryRole } = useSession();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [sendingReset, setSendingReset] = useState(false);
+
 
   async function handleLogout() {
     if (signingOut) return;
