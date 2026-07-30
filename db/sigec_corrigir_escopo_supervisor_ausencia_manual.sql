@@ -46,6 +46,7 @@ AS $function$
 $function$;
 
 REVOKE ALL ON FUNCTION public.user_pode_projeto_escopo_manual(uuid, uuid) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.user_pode_projeto_escopo_manual(uuid, uuid) FROM anon;
 GRANT EXECUTE ON FUNCTION public.user_pode_projeto_escopo_manual(uuid, uuid) TO authenticated;
 
 -- ---------------------------------------------------------------------
