@@ -275,7 +275,10 @@ export const createAusencia = createServerFn({ method: "POST" })
       );
       if (error) {
         const msg = error.message || "";
-        if (/row-level security|permission denied|not authorized/i.test(msg)) {
+        if (
+          /row-level security|permission denied|not authorized/i.test(msg) ||
+          /fora do seu escopo|não pertence à empresa informada/i.test(msg)
+        ) {
           throw new Error("PROJECT_SCOPE_DENIED: bloqueado por política de acesso");
         }
         if (/colaborador/i.test(msg)) {
@@ -283,6 +286,7 @@ export const createAusencia = createServerFn({ method: "POST" })
         }
         throw new Error(`CONFLICT: ${msg}`);
       }
+
       const out = (res ?? {}) as {
         colaborador_id?: string; colaborador_criado?: boolean;
         ausencia_id?: string; protocolo?: string | null;

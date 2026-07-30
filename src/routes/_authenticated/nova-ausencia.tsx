@@ -94,7 +94,7 @@ import {
   suggestMotivoFromCID as suggestMotivoFromCIDFn,
 } from "@/lib/ai.functions";
 import { createAusencia, updateAusencia } from "@/lib/ausencias.functions";
-import { friendlyRbacError } from "@/lib/rbac/errors";
+import { friendlyRbacError, parseRbacError } from "@/lib/rbac/errors";
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { useProjetosAtivosPorEmpresa } from "@/hooks/use-projetos";
 import { DadosColaboradorFields } from "@/components/ausencias/dados-colaborador-fields";
@@ -1085,9 +1085,17 @@ function NovaAusenciaPage() {
 
     onError: (err: unknown) => {
       const friendly = friendlyRbacError(err);
-      toast.error(friendly.title, {
-        description: friendly.description ?? (friendly.correlationId ? `ref: ${friendly.correlationId.slice(0, 8)}` : undefined),
-      });
+      const isScope = parseRbacError(err).code === "PROJECT_SCOPE_DENIED";
+      toast.error(
+        isScope
+          ? "Você não possui permissão para registrar uma ausência neste projeto."
+          : friendly.title,
+        {
+          description: isScope
+            ? undefined
+            : friendly.description ?? (friendly.correlationId ? `ref: ${friendly.correlationId.slice(0, 8)}` : undefined),
+        },
+      );
     },
   });
 
