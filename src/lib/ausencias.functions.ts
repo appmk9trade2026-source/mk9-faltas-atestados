@@ -548,10 +548,7 @@ export const updateAusencia = createServerFn({ method: "POST" })
       .eq("id", data.id)
       .eq("status", "PENDENTE");
     if (error) {
-      if (/row-level security|permission denied/i.test(error.message)) {
-        throw new Error("PROJECT_SCOPE_DENIED: bloqueado por política de acesso");
-      }
-      throw new Error(`CONFLICT: ${error.message}`);
+      throw ausenciaDbError(error, "update_ausencia", gate.correlationId);
     }
 
     await audit(context.supabase, "AUSENCIA_EDITADA", data.id, gate.correlationId,
@@ -589,10 +586,7 @@ export const deleteAusencia = createServerFn({ method: "POST" })
 
     const { error } = await context.supabase.from("ausencias").delete().eq("id", data.id);
     if (error) {
-      if (/row-level security|permission denied/i.test(error.message)) {
-        throw new Error("PROJECT_SCOPE_DENIED: bloqueado por política de acesso");
-      }
-      throw new Error(`CONFLICT: ${error.message}`);
+      throw ausenciaDbError(error, "delete_ausencia", gate.correlationId);
     }
 
     await audit(context.supabase, "AUSENCIA_EXCLUIDA", data.id, gate.correlationId,
@@ -638,10 +632,7 @@ export const alterarStatusAusencia = createServerFn({ method: "POST" })
       .update({ status: data.status } as never)
       .eq("id", data.id);
     if (error) {
-      if (/row-level security|permission denied/i.test(error.message)) {
-        throw new Error("PROJECT_SCOPE_DENIED: bloqueado por política de acesso");
-      }
-      throw new Error(`CONFLICT: ${error.message}`);
+      throw ausenciaDbError(error, "status_ausencia", gate.correlationId);
     }
 
     await audit(context.supabase, "AUSENCIA_STATUS_ALTERADO", data.id, gate.correlationId,
