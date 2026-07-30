@@ -94,7 +94,7 @@ import {
   suggestMotivoFromCID as suggestMotivoFromCIDFn,
 } from "@/lib/ai.functions";
 import { createAusencia, updateAusencia } from "@/lib/ausencias.functions";
-import { friendlyRbacError } from "@/lib/rbac/errors";
+import { friendlyRbacError, parseRbacError } from "@/lib/rbac/errors";
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { useProjetosAtivosPorEmpresa } from "@/hooks/use-projetos";
 import { DadosColaboradorFields } from "@/components/ausencias/dados-colaborador-fields";
