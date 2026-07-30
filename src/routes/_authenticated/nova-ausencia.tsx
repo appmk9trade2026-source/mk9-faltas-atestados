@@ -1020,6 +1020,14 @@ function NovaAusenciaPage() {
     mutationFn: async (values: FormData) => {
       const dataInicioIso = values.data_inicio;
 
+      // Coordenador precisa indicar a qual supervisor da sua equipe o
+      // colaborador manual pertence (o servidor revalida esse vínculo).
+      if (values.modo_manual && isCoordenadorEscopo && !values.manual_supervisor_usuario_id) {
+        throw new Error("INVALID_PAYLOAD: Selecione o Supervisor responsável pelo colaborador.");
+      }
+
+
+
       let arquivo_url: string | null | undefined = undefined;
       let arquivo_nome: string | null | undefined = undefined;
       let arquivo_mime: string | null | undefined = undefined;
