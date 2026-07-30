@@ -16,11 +16,18 @@ export function useProjetosAtivosPorEmpresa(empresaId: string | null | undefined
     enabled: scope.ready && !!empresaId,
     queryFn: async (): Promise<ProjetoOption[]> => {
       if (!empresaId) return [];
-      const { data, error } = await supabase.rpc("get_projetos_ativos_por_empresa", {
-        _empresa_id: empresaId,
-      });
+      // Leitura direta na tabela: o RLS de `projetos` já aplica o predicado canônico
+      // (vínculo direto via user_has_projeto + vínculo via equipe de supervisor/coordenador
+      // + acessos de rh/compliance/super_admin). Evita o critério mais restrito da RPC.
+      const { data, error } = await supabase
+        .from("projetos")
+        .select("id, nome, codigo_protocolo")
+        .eq("empresa_id", empresaId)
+        .eq("ativo", true)
+        .order("nome", { ascending: true });
       if (error) throw error;
       return (data ?? []) as ProjetoOption[];
     },
   });
 }
+
