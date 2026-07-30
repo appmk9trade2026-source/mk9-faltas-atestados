@@ -42,7 +42,6 @@ function invalid(err: unknown): Error {
   return new Error(`INVALID_PAYLOAD: ${msg.slice(0, 240)}`);
 }
 
-
 export const retificarAusencia = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => {
@@ -168,5 +167,3 @@ export const verificarDuplicidadeAusencia = createServerFn({ method: "POST" })
     }>;
     return { duplicadas };
   });
-
-

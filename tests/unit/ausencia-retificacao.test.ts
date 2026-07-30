@@ -9,11 +9,7 @@
  * o trigger tg_ausencias_campos_imutaveis e o bloqueio de duplicidade.
  */
 import { describe, expect, it } from "vitest";
-import {
-  formatarRestante,
-  mapRetificacaoError,
-  prazoRetificacao,
-} from "@/lib/retificacao";
+import { formatarRestante, mapRetificacaoError, prazoRetificacao } from "@/lib/retificacao";
 
 // ---------------------------------------------------------------- fixtures
 type Papel = "super_admin" | "rh" | "coordenador" | "supervisor" | "outro";
@@ -45,8 +41,20 @@ type Tipo = { id: string; codigo: string; nome: string; exige_documento: boolean
 
 const TIPOS: Record<string, Tipo> = {
   falta: { id: "t-falta", codigo: "FALTA", nome: "Falta", exige_documento: false, ativo: true },
-  atestado: { id: "t-atest", codigo: "ATESTADO", nome: "Atestado", exige_documento: true, ativo: true },
-  justificada: { id: "t-just", codigo: "FALTA_JUSTIFICADA", nome: "Falta justificada", exige_documento: false, ativo: true },
+  atestado: {
+    id: "t-atest",
+    codigo: "ATESTADO",
+    nome: "Atestado",
+    exige_documento: true,
+    ativo: true,
+  },
+  justificada: {
+    id: "t-just",
+    codigo: "FALTA_JUSTIFICADA",
+    nome: "Falta justificada",
+    exige_documento: false,
+    ativo: true,
+  },
 };
 const PERIODO = { id: "p-1", nome: "1 dia", quantidade_dias: 1 };
 
@@ -153,7 +161,8 @@ function retificar(db: Db, c: Chamada) {
 
     let arquivo = a.arquivo_url;
     if (c.arquivo) {
-      if (!db.storage.includes(c.arquivo.path)) throw new Error("INVALID_PAYLOAD: arquivo inexistente");
+      if (!db.storage.includes(c.arquivo.path))
+        throw new Error("INVALID_PAYLOAD: arquivo inexistente");
       if (a.colaborador_id && c.arquivo.path.split("/")[1] !== a.colaborador_id) {
         throw new Error("INVALID_PAYLOAD: arquivo de outro colaborador");
       }
@@ -221,14 +230,24 @@ describe("retificação — conversões dentro da janela", () => {
   it("1. Falta → Atestado dentro de 24h", () => {
     const db = novoDb();
     db.storage.push("ausencias/c-1/doc.pdf");
-    const r = retificar(db, { ...base, tipo: TIPOS.atestado, arquivo: { path: "ausencias/c-1/doc.pdf" } });
+    const r = retificar(db, {
+      ...base,
+      tipo: TIPOS.atestado,
+      arquivo: { path: "ausencias/c-1/doc.pdf" },
+    });
     expect(r.ok).toBe(true);
     expect(db.ausencias[0].tipo).toBe("ATESTADO");
     expect(db.ausencias[0].protocolo).toBe("PRT-0001");
   });
 
   it("2. Atestado → Falta dentro de 24h", () => {
-    const db = novoDb(novaAusencia({ tipo: "ATESTADO", tipo_ausencia_id: TIPOS.atestado.id, arquivo_url: "ausencias/c-1/x.pdf" }));
+    const db = novoDb(
+      novaAusencia({
+        tipo: "ATESTADO",
+        tipo_ausencia_id: TIPOS.atestado.id,
+        arquivo_url: "ausencias/c-1/x.pdf",
+      }),
+    );
     const r = retificar(db, { ...base, tipo: TIPOS.falta });
     expect(r.ok).toBe(true);
     expect(db.ausencias[0].tipo).toBe("FALTA");
@@ -245,20 +264,36 @@ describe("retificação — conversões dentro da janela", () => {
 describe("retificação — prazo e papéis", () => {
   it("4. supervisor após 24h é bloqueado", () => {
     const db = novoDb();
-    const r = retificar(db, { ...base, tipo: TIPOS.justificada, agora: "2026-08-02T12:00:00.000Z" });
+    const r = retificar(db, {
+      ...base,
+      tipo: TIPOS.justificada,
+      agora: "2026-08-02T12:00:00.000Z",
+    });
     expect(r).toMatchObject({ ok: false, erro: "PRAZO_EXPIRADO" });
     expect(db.ausencias[0].retificada).toBe(false);
   });
 
   it("5. RH pode retificar após 24h", () => {
     const db = novoDb();
-    const r = retificar(db, { ...base, uid: "u-rh", papel: "rh", tipo: TIPOS.justificada, agora: "2026-09-01T12:00:00.000Z" });
+    const r = retificar(db, {
+      ...base,
+      uid: "u-rh",
+      papel: "rh",
+      tipo: TIPOS.justificada,
+      agora: "2026-09-01T12:00:00.000Z",
+    });
     expect(r.ok).toBe(true);
   });
 
   it("6. Super Admin pode retificar após 24h", () => {
     const db = novoDb();
-    const r = retificar(db, { ...base, uid: "u-sa", papel: "super_admin", tipo: TIPOS.justificada, agora: "2026-09-01T12:00:00.000Z" });
+    const r = retificar(db, {
+      ...base,
+      uid: "u-sa",
+      papel: "super_admin",
+      tipo: TIPOS.justificada,
+      agora: "2026-09-01T12:00:00.000Z",
+    });
     expect(r.ok).toBe(true);
   });
 
@@ -307,14 +342,22 @@ describe("retificação — anexo (14 e 15)", () => {
   it("15. documento de outro colaborador é rejeitado", () => {
     const db = novoDb();
     db.storage.push("ausencias/c-999/doc.pdf");
-    const r = retificar(db, { ...base, tipo: TIPOS.atestado, arquivo: { path: "ausencias/c-999/doc.pdf" } });
+    const r = retificar(db, {
+      ...base,
+      tipo: TIPOS.atestado,
+      arquivo: { path: "ausencias/c-999/doc.pdf" },
+    });
     expect(r.ok).toBe(false);
     expect(r.ok === false && r.erro).toMatch(/outro colaborador/);
   });
 
   it("caminho inexistente no bucket é rejeitado", () => {
     const db = novoDb();
-    const r = retificar(db, { ...base, tipo: TIPOS.atestado, arquivo: { path: "qualquer/coisa.pdf" } });
+    const r = retificar(db, {
+      ...base,
+      tipo: TIPOS.atestado,
+      arquivo: { path: "qualquer/coisa.pdf" },
+    });
     expect(r.ok).toBe(false);
   });
 });
@@ -371,8 +414,20 @@ describe("retificação — concorrência e rollback (19 e 20)", () => {
 
 describe("duplicidade (21 e 22)", () => {
   function duplicadas(
-    existentes: Array<{ colaborador_id: string; projeto_id: string; data_inicio: string; data_fim: string; opcao_periodo_id: string }>,
-    nova: { colaborador_id: string; projeto_id: string; data_inicio: string; data_fim: string; opcao_periodo_id: string },
+    existentes: Array<{
+      colaborador_id: string;
+      projeto_id: string;
+      data_inicio: string;
+      data_fim: string;
+      opcao_periodo_id: string;
+    }>,
+    nova: {
+      colaborador_id: string;
+      projeto_id: string;
+      data_inicio: string;
+      data_fim: string;
+      opcao_periodo_id: string;
+    },
   ) {
     return existentes.filter(
       (e) =>
@@ -384,7 +439,13 @@ describe("duplicidade (21 e 22)", () => {
     );
   }
 
-  const existente = { colaborador_id: "c-1", projeto_id: "pj-1", data_inicio: "2026-07-30", data_fim: "2026-07-30", opcao_periodo_id: "p-1" };
+  const existente = {
+    colaborador_id: "c-1",
+    projeto_id: "pj-1",
+    data_inicio: "2026-07-30",
+    data_fim: "2026-07-30",
+    opcao_periodo_id: "p-1",
+  };
 
   it("21. mesmo colaborador, período e dia é detectado", () => {
     expect(duplicadas([existente], { ...existente })).toHaveLength(1);
@@ -425,6 +486,8 @@ describe("utilitários de prazo e mensagens", () => {
     expect(mapRetificacaoError("PRAZO_EXPIRADO: ...")).toMatch(/24 horas/);
     expect(mapRetificacaoError("PROJECT_SCOPE_DENIED: ...")).toMatch(/escopo/);
     expect(mapRetificacaoError("DOCUMENTO_OBRIGATORIO: ...")).toMatch(/documento/i);
-    expect(mapRetificacaoError("boom pg internal")).toBe("Não foi possível concluir a retificação.");
+    expect(mapRetificacaoError("boom pg internal")).toBe(
+      "Não foi possível concluir a retificação.",
+    );
   });
 });
