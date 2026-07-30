@@ -115,6 +115,73 @@ function toInvalidPayload(err: unknown): Error {
   return new Error(`INVALID_PAYLOAD: ${msg.slice(0, 240)}`);
 }
 
+/**
+ * Classificação precisa de erros vindos do Postgres/PostgREST.
+ *
+ * Antes, QUALQUER falha de banco virava `CONFLICT: <msg>` e a UI descartava a
+ * descrição — o usuário via apenas "Operação em conflito com o estado atual do
+ * registro." e a causa real (ex.: SQLSTATE 23505 do trigger
+ * `trg_ausencias_bloqueia_duplicidade`) ficava invisível.
+ *
+ * Agora: SQLSTATE + mensagem original são logados no servidor e o código
+ * devolvido ao cliente carrega a razão específica.
+ */
+function ausenciaDbError(
+  err: unknown,
+  etapa: "insert_ausencia" | "rpc_manual" | "update_ausencia" | "delete_ausencia" | "status_ausencia",
+  correlationId?: string,
+): Error {
+  const e = (err ?? {}) as { message?: string; code?: string; details?: string; hint?: string };
+  const msg = (e.message ?? String(err)) || "";
+  const sqlstate = e.code ?? "";
+
+  console.error(
+    "[ausencias] falha de banco",
+    JSON.stringify({
+      etapa,
+      correlation_id: correlationId ?? null,
+      sqlstate: sqlstate || null,
+      message: msg,
+      details: e.details ?? null,
+      hint: e.hint ?? null,
+    }),
+  );
+
+  // Permissão / RLS
+  if (sqlstate === "42501" || /row-level security|permission denied|not authorized/i.test(msg)) {
+    return new Error("PROJECT_SCOPE_DENIED: bloqueado por política de acesso");
+  }
+  if (/fora do seu escopo|não pertence à empresa informada|não está vinculado a você/i.test(msg)) {
+    return new Error("PROJECT_SCOPE_DENIED: bloqueado por política de acesso");
+  }
+
+  // Duplicidade (trigger trg_ausencias_bloqueia_duplicidade — SQLSTATE 23505)
+  if (sqlstate === "23505" || /DUPLICIDADE_AUSENCIA/i.test(msg)) {
+    const limpa = msg.replace(/^.*DUPLICIDADE_AUSENCIA:\s*/s, "").trim();
+    return new Error(
+      `CONFLICT: ${limpa || "Já existe uma ausência registrada para este colaborador neste período. Retifique o lançamento existente."}`,
+    );
+  }
+
+  // Projeto sem código de protocolo (gerar_protocolo_ausencia)
+  if (/PROJETO_SEM_CODIGO_PROTOCOLO/i.test(msg)) {
+    return new Error(
+      "CONFLICT: O projeto não possui código de protocolo configurado. Cadastre o código do projeto antes de lançar.",
+    );
+  }
+  if (/PROTOCOLO_NAO_PODE_SER_INFORMADO/i.test(msg)) {
+    return new Error("INVALID_PAYLOAD: o protocolo é gerado pelo sistema e não pode ser informado.");
+  }
+
+  // Violações de regra/estrutura → payload inválido, com a razão original
+  if (sqlstate === "23514" || sqlstate === "23503" || sqlstate === "23502" || sqlstate === "22P02") {
+    return new Error(`INVALID_PAYLOAD: ${msg.slice(0, 240)}`);
+  }
+
+  return new Error(`CONFLICT: ${msg.slice(0, 240) || "falha ao gravar a ausência"}`);
+}
+
+
 async function audit(
   supabase: import("@/lib/rbac/guards.server").MiddlewareContext["supabase"],
   acao: "AUSENCIA_CRIADA" | "AUSENCIA_EDITADA" | "AUSENCIA_EXCLUIDA" | "AUSENCIA_STATUS_ALTERADO",
