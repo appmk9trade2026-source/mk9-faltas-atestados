@@ -77,6 +77,13 @@ const manualPayloadSchema = commonPayloadSchema.extend({
   manual_email: z.string().trim().max(150).nullable().optional(),
   manual_supervisor_nome: z.string().trim().max(150).nullable().optional(),
   manual_supervisor_telefone: z.string().trim().max(20).nullable().optional(),
+  /**
+   * Supervisor canônico escolhido no formulário (Coordenador).
+   * NÃO é coluna de `ausencias` — vai apenas no `_colaborador` da RPC, que
+   * revalida no servidor se o supervisor pertence à coordenação do usuário.
+   */
+  manual_supervisor_usuario_id: uuid.nullable().optional(),
+
 });
 
 const basePayloadSchema = z.discriminatedUnion("origem_registro", [
@@ -147,10 +154,25 @@ function ausenciaDbError(
     }),
   );
 
+  // Escopo hierárquico do Coordenador — mensagens de negócio definidas na RPC.
+  if (/SUPERVISOR_FORA_DA_COORDENACAO/i.test(msg)) {
+    return new Error("PROJECT_SCOPE_DENIED: O Supervisor selecionado não pertence à sua coordenação.");
+  }
+  if (/SUPERVISOR_OBRIGATORIO/i.test(msg)) {
+    return new Error("INVALID_PAYLOAD: Selecione o Supervisor responsável pelo colaborador.");
+  }
+  if (/COLABORADOR_FORA_DO_SUPERVISOR/i.test(msg)) {
+    return new Error("COLLABORATOR_SCOPE_DENIED: Colaborador não encontrado no seu escopo.");
+  }
+  if (/PROJETO_FORA_DO_ESCOPO|Projeto fora do seu escopo/i.test(msg)) {
+    return new Error("PROJECT_SCOPE_DENIED: O projeto selecionado não pertence ao seu escopo.");
+  }
+
   // Permissão / RLS
   if (sqlstate === "42501" || /row-level security|permission denied|not authorized/i.test(msg)) {
     return new Error("PROJECT_SCOPE_DENIED: bloqueado por política de acesso");
   }
+
   if (/fora do seu escopo|não pertence à empresa informada|não está vinculado a você/i.test(msg)) {
     return new Error("PROJECT_SCOPE_DENIED: bloqueado por política de acesso");
   }
@@ -313,6 +335,8 @@ export const createAusencia = createServerFn({ method: "POST" })
 
     if (isManual) {
       // Supervisor que lança assume a chave canônica do vínculo.
+      // Coordenador: usa o Supervisor escolhido na tela — a RPC revalida no
+      // servidor se ele pertence à coordenação (nunca confiar na lista suspensa).
       let supervisorUsuarioId: string | null = null;
       try {
         const { data: isSup } = await context.supabase.rpc("has_role", {
@@ -320,6 +344,10 @@ export const createAusencia = createServerFn({ method: "POST" })
         } as never);
         if (isSup) supervisorUsuarioId = gate.userId;
       } catch { /* best-effort */ }
+      if (!supervisorUsuarioId && data.manual_supervisor_usuario_id) {
+        supervisorUsuarioId = data.manual_supervisor_usuario_id;
+      }
+
 
       const manualCols = manualColumns(data, gate.userId);
       const { data: res, error } = await context.supabase.rpc(

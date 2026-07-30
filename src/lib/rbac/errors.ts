@@ -58,7 +58,16 @@ const FRIENDLY: Record<RbacErrorCode, string> = {
  * Sem isso, causas reais (ex.: duplicidade de ausência) ficavam invisíveis
  * atrás do título genérico.
  */
-const CODES_COM_DETALHE = new Set<RbacErrorCode>(["CONFLICT", "INVALID_PAYLOAD", "RESOURCE_NOT_FOUND"]);
+const CODES_COM_DETALHE = new Set<RbacErrorCode>([
+  "CONFLICT",
+  "INVALID_PAYLOAD",
+  "RESOURCE_NOT_FOUND",
+  // Escopo: o servidor devolve a razão exata (projeto/supervisor/colaborador
+  // fora da hierarquia). É informação de negócio, não detalhe técnico.
+  "PROJECT_SCOPE_DENIED",
+  "COLLABORATOR_SCOPE_DENIED",
+]);
+
 
 /** Mensagem amigável ao usuário — nunca vaza detalhes técnicos. */
 export function friendlyRbacError(err: unknown): { title: string; description?: string; correlationId?: string } {
