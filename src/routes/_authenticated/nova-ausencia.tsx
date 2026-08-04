@@ -295,10 +295,6 @@ function NovaAusenciaPage() {
     !roles.includes("super_admin") &&
     !roles.includes("rh");
   const navigate = useNavigate();
-  const checkConflitosFn = useServerFn(checkConflitosAusencia);
-  const [conflitoDialogOpen, setConflitoDialogOpen] = useState(false);
-  const [conflitos, setConflitos] = useState<any[]>([]);
-  const [pendingValues, setPendingValues] = useState<AusenciaFormValues | null>(null);
 
   const queryClient = useQueryClient();
 
