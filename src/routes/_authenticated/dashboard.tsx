@@ -7,7 +7,7 @@ import {
   Activity, AlertTriangle, ArrowDown, ArrowUp, Ban, BriefcaseMedical,
   Calendar as CalendarIcon, CheckCircle2, ClipboardList, Clock, Download,
   FileText, LayoutDashboard, Lightbulb, MessageSquare, RefreshCw, ShieldAlert,
-  TrendingDown, TrendingUp, Trophy, Truck, UserRound, Users, X,
+  TrendingDown, TrendingUp, Trophy, Truck, UserRound, Users, X, History as HistoryIcon
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -143,6 +143,7 @@ function delta(curr: number, prev: number): { pct: number; up: boolean } {
 function DashboardPage() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const scope = useSessionScope();
+  const { roles } = useSession();
   const [filters, setFilters] = useState<Filters>(() => {
     const r = presetRange("30d");
     return { preset: "30d", inicio: r.i, fim: r.f };
@@ -341,7 +342,7 @@ function DashboardPage() {
           <Card className="bg-slate-50/50 dark:bg-slate-900/20 border-slate-200/60 dark:border-slate-800/60">
             <CardContent className="p-4 flex items-center gap-4">
               <div className="p-2.5 rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
-                <History className="h-5 w-5" />
+                <HistoryIcon className="h-5 w-5" />
               </div>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Backlog Administrativo</p>
