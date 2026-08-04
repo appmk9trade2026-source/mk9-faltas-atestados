@@ -41,6 +41,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { FileText, MapPin, Hash, Phone, Mail } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/processamento")({
   head: () => ({ meta: [{ title: "Central de Processamento · CRM MK9" }] }),
@@ -72,6 +82,8 @@ function CentralProcessamentoPage() {
   const [search, setSearch] = useState("");
   const [statusFiltro, setStatusFiltro] = useState<string>("all");
   const [prioridadeFiltro, setPrioridadeFiltro] = useState<string>("all");
+  const [detalhesAbertos, setDetalhesAbertos] = useState(false);
+  const [registroSelecionado, setRegistroSelecionado] = useState<AusenciaCardData | null>(null);
   
   const getKpisFn = useServerFn(getCentralProcessamentoKpis);
   const iniciarFn = useServerFn(iniciarProcessamentoAdm);
@@ -289,12 +301,157 @@ function CentralProcessamentoPage() {
                 onIniciar={(id) => iniciarMut.mutate(id)}
                 onConcluir={(id) => concluirMut.mutate(id)}
                 onVerDetalhes={(data) => {
-                  toast.info("Ver detalhes (Sheet Lateral) será implementado na próxima onda.");
+                  setRegistroSelecionado(data);
+                  setDetalhesAbertos(true);
                 }}
               />
             ))
           )}
         </div>
+
+        {/* Sheet de Detalhes */}
+        <Sheet open={detalhesAbertos} onOpenChange={setDetalhesAbertos}>
+          <SheetContent className="sm:max-w-md md:max-w-lg w-full">
+            <SheetHeader className="pr-6">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="outline" className="text-[10px] font-bold">
+                  PROTOCOLO: {registroSelecionado?.protocolo || "—"}
+                </Badge>
+                {registroSelecionado?.sla_status === "FORA" && (
+                  <Badge variant="destructive" className="text-[10px] font-bold animate-pulse">
+                    FORA DO SLA
+                  </Badge>
+                )}
+              </div>
+              <SheetTitle className="text-xl">
+                {registroSelecionado?.colaborador_nome}
+              </SheetTitle>
+              <SheetDescription className="text-xs">
+                {registroSelecionado?.empresa_nome} • {registroSelecionado?.projeto_nome}
+              </SheetDescription>
+            </SheetHeader>
+
+            <Separator className="my-6" />
+
+            {registroSelecionado && (
+              <ScrollArea className="h-[calc(100vh-200px)] pr-4">
+                <div className="space-y-6">
+                  {/* Seção Dados do Colaborador */}
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                      <UserRound className="h-3.5 w-3.5" />
+                      Dados do Colaborador
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4 bg-muted/30 p-3 rounded-lg border border-border/50">
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] text-muted-foreground">Matrícula</p>
+                        <p className="text-sm font-medium">{registroSelecionado.colaborador_matricula}</p>
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] text-muted-foreground">Supervisor</p>
+                        <p className="text-sm font-medium">{registroSelecionado.supervisor_nome}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Seção Detalhes da Ausência */}
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                      <FileText className="h-3.5 w-3.5" />
+                      Detalhes da Ausência
+                    </h4>
+                    <div className="space-y-4 bg-card border rounded-lg p-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-0.5">
+                          <p className="text-[10px] text-muted-foreground">Tipo</p>
+                          <Badge variant="secondary" className="font-semibold">{registroSelecionado.tipo}</Badge>
+                        </div>
+                        <div className="space-y-0.5">
+                          <p className="text-[10px] text-muted-foreground">Período</p>
+                          <p className="text-sm font-medium">
+                            {new Date(registroSelecionado.data_inicio + "T00:00:00").toLocaleDateString("pt-BR")} 
+                            {registroSelecionado.data_fim && ` até ${new Date(registroSelecionado.data_fim + "T00:00:00").toLocaleDateString("pt-BR")}`}
+                          </p>
+                        </div>
+                      </div>
+
+                      {registroSelecionado.motivo && (
+                        <div className="space-y-1">
+                          <p className="text-[10px] text-muted-foreground">Observações / Motivo</p>
+                          <p className="text-sm text-foreground/90 bg-muted/50 p-2 rounded italic">
+                            "{registroSelecionado.motivo}"
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2 text-[11px] text-muted-foreground bg-amber-50 dark:bg-amber-900/10 p-2 rounded border border-amber-100 dark:border-amber-900/20">
+                        <Clock className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                        Registrado em {new Date(registroSelecionado.registrado_em).toLocaleString("pt-BR")}
+                        <span className="font-bold">({registroSelecionado.tempo_aguardando} dias na fila)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Histórico de Processamento */}
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-2">
+                      <History className="h-3.5 w-3.5" />
+                      Status de Processamento
+                    </h4>
+                    <div className="bg-muted/30 p-4 rounded-lg border border-dashed flex flex-col gap-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs">Status Atual:</span>
+                        <Badge className={cn(
+                          "text-[10px]",
+                          registroSelecionado.status_processamento === "EM_PROCESSAMENTO" ? "bg-blue-600" : "bg-slate-500"
+                        )}>
+                          {registroSelecionado.status_processamento.replace(/_/g, " ")}
+                        </Badge>
+                      </div>
+                      
+                      {registroSelecionado.responsavel_processamento_nome && (
+                        <div className="flex items-center justify-between border-t border-border/50 pt-2">
+                          <span className="text-xs">Responsável:</span>
+                          <span className="text-sm font-semibold text-primary">{registroSelecionado.responsavel_processamento_nome}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Ações Rápidas dentro do Sheet */}
+                  <div className="pt-6 flex gap-3">
+                    {registroSelecionado.status_processamento === "AGUARDANDO" ? (
+                      <Button 
+                        className="flex-1 bg-blue-600 hover:bg-blue-700"
+                        onClick={() => {
+                          iniciarMut.mutate(registroSelecionado.id);
+                          setDetalhesAbertos(false);
+                        }}
+                        disabled={iniciarMut.isPending}
+                      >
+                        <Play className="h-4 w-4 mr-2" />
+                        Iniciar Processamento
+                      </Button>
+                    ) : (
+                      <Button 
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                        onClick={() => {
+                          concluirMut.mutate(registroSelecionado.id);
+                          setDetalhesAbertos(false);
+                        }}
+                        disabled={concluirMut.isPending || (registroSelecionado.responsavel_processamento_id !== user?.id)}
+                        title={registroSelecionado.responsavel_processamento_id !== user?.id ? "Apenas o responsável pode concluir" : ""}
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        Concluir Registro
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </ScrollArea>
+            )}
+          </SheetContent>
+        </Sheet>
       </div>
     </AppShell>
   );
