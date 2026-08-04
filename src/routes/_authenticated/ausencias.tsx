@@ -549,6 +549,7 @@ function AusenciasPage() {
             </div>
           </div>
 
+
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <label className="text-xs text-muted-foreground">Período:</label>
             <Input
