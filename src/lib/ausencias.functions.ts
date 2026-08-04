@@ -13,12 +13,6 @@ import { Database } from "@/integrations/supabase/types";
 type StatusProcessamento = Database["public"]["Enums"]["ausencia_status_processamento"];
 
 
-import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { requirePermission } from "@/lib/rbac/guards.server";
-import { PERMISSION_MAP } from "@/lib/permissions-map";
-
 const uuid = z.string().uuid();
 const iso = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "data inválida");
 
