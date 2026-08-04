@@ -7,8 +7,10 @@ import {
   Activity, AlertTriangle, ArrowDown, ArrowUp, Ban, BriefcaseMedical,
   Calendar as CalendarIcon, CheckCircle2, ClipboardList, Clock, Download,
   FileText, LayoutDashboard, Lightbulb, MessageSquare, RefreshCw, ShieldAlert,
-  TrendingDown, TrendingUp, Trophy, Truck, UserRound, Users, X, History as HistoryIcon
+  TrendingDown, TrendingUp, Trophy, Truck, UserRound, Users, X, History as HistoryIcon,
+  Replace
 } from "lucide-react";
+
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, Legend,
@@ -56,6 +58,8 @@ import {
   useComparativoPeriodoAnterior,
   type FiltroSugerido,
 } from "@/components/dashboard/alertas-inteligentes";
+import { getAusenciaConversoesKpis } from "@/lib/ausencias.functions";
+
 
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -203,6 +207,22 @@ function DashboardPage() {
     staleTime: 30_000,
   });
 
+  const convKpisFn = useServerFn(getAusenciaConversoesKpis);
+  const convQuery = useQuery({
+    queryKey: ["dashboard-conversions", filters.inicio, filters.fim, filters.empresa_id, filters.projeto_id],
+    enabled: scope.ready && (roles.includes("super_admin") || roles.includes("rh") || roles.includes("compliance")),
+    queryFn: () => convKpisFn({
+      data: {
+        data_inicio: filters.inicio,
+        data_fim: filters.fim,
+        empresa_id: filters.empresa_id,
+        projeto_id: filters.projeto_id,
+      }
+    }),
+    staleTime: 5 * 60_000,
+  });
+
+
   const data = query.data;
 
   function setPreset(p: Preset) {
@@ -339,7 +359,8 @@ function DashboardPage() {
       
       {/* KPIs de Processamento (Fase 2) - Visíveis para RH/Admin */}
       {(roles.includes("super_admin") || roles.includes("rh") || roles.includes("compliance")) && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
           <Card className="bg-slate-50/50 dark:bg-slate-900/20 border-slate-200/60 dark:border-slate-800/60">
             <CardContent className="p-4 flex items-center gap-4">
               <div className="p-2.5 rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
@@ -378,8 +399,22 @@ function DashboardPage() {
               </div>
             </CardContent>
           </Card>
+
+          <Card className="bg-slate-50/50 dark:bg-slate-900/20 border-slate-200/60 dark:border-slate-800/60">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="p-2.5 rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
+                <Replace className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Conversão Falta → At.</p>
+                <h3 className="text-xl font-bold">{convQuery.data?.total_conversoes ?? 0}</h3>
+                <p className="text-[10px] text-muted-foreground">Substituições detectadas</p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
+
 
       {/* ---- Filters bar */}
       <Card className="p-4">
