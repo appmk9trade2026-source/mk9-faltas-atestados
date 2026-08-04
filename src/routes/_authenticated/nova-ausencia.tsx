@@ -93,11 +93,18 @@ import {
   scoreCompliance as scoreComplianceFn,
   suggestMotivoFromCID as suggestMotivoFromCIDFn,
 } from "@/lib/ai.functions";
-import { createAusencia, updateAusencia } from "@/lib/ausencias.functions";
+import { 
+  createAusencia, 
+  updateAusencia, 
+  checkConflitosAusencia,
+  substituirAusenciaConflito
+} from "@/lib/ausencias.functions";
 import { friendlyRbacError, parseRbacError } from "@/lib/rbac/errors";
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { useProjetosAtivosPorEmpresa } from "@/hooks/use-projetos";
 import { useSupervisoresLancamento } from "@/hooks/use-supervisores-lancamento";
+import { ConflitoAusenciaDialog } from "@/components/ausencias/conflito-ausencia-dialog";
+
 
 import { DadosColaboradorFields } from "@/components/ausencias/dados-colaborador-fields";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
