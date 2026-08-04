@@ -768,11 +768,16 @@ export type Database = {
           possui_anexo: boolean
           processado_em: string | null
           processado_por: string | null
+          processamento_concluido_em: string | null
+          processamento_concluido_por: string | null
+          processamento_iniciado_em: string | null
           projeto_id: string
           protocolo: string | null
           quantidade_dias_calculada: number | null
           registrado_em: string
           registrado_por: string | null
+          responsavel_processamento_id: string | null
+          responsavel_processamento_nome: string | null
           retificacoes_count: number
           retificada: boolean
           retificada_em: string | null
@@ -842,11 +847,16 @@ export type Database = {
           possui_anexo?: boolean
           processado_em?: string | null
           processado_por?: string | null
+          processamento_concluido_em?: string | null
+          processamento_concluido_por?: string | null
+          processamento_iniciado_em?: string | null
           projeto_id: string
           protocolo?: string | null
           quantidade_dias_calculada?: number | null
           registrado_em?: string
           registrado_por?: string | null
+          responsavel_processamento_id?: string | null
+          responsavel_processamento_nome?: string | null
           retificacoes_count?: number
           retificada?: boolean
           retificada_em?: string | null
@@ -916,11 +926,16 @@ export type Database = {
           possui_anexo?: boolean
           processado_em?: string | null
           processado_por?: string | null
+          processamento_concluido_em?: string | null
+          processamento_concluido_por?: string | null
+          processamento_iniciado_em?: string | null
           projeto_id?: string
           protocolo?: string | null
           quantidade_dias_calculada?: number | null
           registrado_em?: string
           registrado_por?: string | null
+          responsavel_processamento_id?: string | null
+          responsavel_processamento_nome?: string | null
           retificacoes_count?: number
           retificada?: boolean
           retificada_em?: string | null
@@ -4412,6 +4427,10 @@ export type Database = {
           nome: string
         }[]
       }
+      concluir_processamento_ausencia: {
+        Args: { _ausencia_id: string; _observacao?: string }
+        Returns: Json
+      }
       confirmar_vinculo_supervisor: {
         Args: { _colaborador_id: string; _supervisor_usuario_id: string }
         Returns: Json
@@ -4628,6 +4647,7 @@ export type Database = {
           tipo_periodo: Database["public"]["Enums"]["tipo_periodo_ausencia"]
         }[]
       }
+      get_processamento_kpis: { Args: never; Returns: Json }
       get_projetos_ativos_por_empresa: {
         Args: { _empresa_id: string }
         Returns: {
@@ -4662,6 +4682,10 @@ export type Database = {
       }
       import_projetos_atomic: {
         Args: { _correlation_id: string; _rows: Json }
+        Returns: Json
+      }
+      iniciar_processamento_ausencia: {
+        Args: { _ausencia_id: string }
         Returns: Json
       }
       inteligencia_alerta_atribuir: {
