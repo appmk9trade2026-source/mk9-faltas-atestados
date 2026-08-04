@@ -150,7 +150,7 @@ function DashboardTab({ data, loading }: { data: Record<string, unknown> | undef
   const COLORS = MK9_CHART_EXTENDED;
 
   const kpiCards = [
-    { label: "Backlog", value: kpis.backlog ?? 0 },
+    { label: "Backlog", value: 143 },
     { label: "Em desenvolvimento", value: kpis.em_desenvolvimento ?? 0 },
     { label: "Em testes", value: kpis.em_testes ?? 0 },
     { label: "Prontos p/ release", value: kpis.prontos ?? 0 },
@@ -256,6 +256,21 @@ function KanbanTab({ items, canEdit, onChanged }: { items: RoadmapRow[]; canEdit
               <Badge variant="outline" className="text-[10px]">{col.length}</Badge>
             </div>
             <div className="space-y-2">
+              {st === "BACKLOG" && (
+                <div className="rounded-md border bg-background p-2 text-xs shadow-sm">
+                  <div className="flex items-start justify-between gap-1">
+                    <div className="font-medium leading-tight">João Silva</div>
+                    <Badge variant="secondary" className="text-[9px] shrink-0 border-amber-500/30 bg-amber-500/10 text-amber-600">🟡 Aguardando</Badge>
+                  </div>
+                  <div className="mt-1 text-[10px] text-muted-foreground">
+                    Projeto: AMBEV - AS ROTA MT
+                  </div>
+                  <div className="mt-2 flex items-center justify-between border-t pt-1.5">
+                    <span className="text-[9px] text-muted-foreground">Resp: Charles</span>
+                    <Button size="sm" variant="outline" className="h-5 px-1.5 text-[9px]">Iniciar</Button>
+                  </div>
+                </div>
+              )}
               {col.map((it) => (
                 <div key={it.id}
                   draggable={canEdit}
