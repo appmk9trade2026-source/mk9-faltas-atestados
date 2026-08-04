@@ -1029,7 +1029,11 @@ function NovaAusenciaPage() {
 
 
   // ============= Submit (server functions com hardening RBAC) =============
+  const createFn = useServerFn(createAusencia);
+  const updateFn = useServerFn(updateAusencia);
+  const checkConflitosFn = useServerFn(checkConflitosAusencia);
   const substituirFn = useServerFn(substituirAusenciaConflito);
+
 
 
   const substituirMut = useMutation({
