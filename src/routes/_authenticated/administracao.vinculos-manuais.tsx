@@ -83,7 +83,7 @@ function VinculosManuaisPage() {
   const [busca, setBusca] = React.useState("");
   const [alvo, setAlvo] = React.useState<Sugestao | null>(null);
 
-  const permitido = roles.includes("super_admin") || roles.includes("rh");
+  const permitido = roles.includes("super_admin") || roles.includes("rh") || roles.includes("compliance");
 
   const q = useQuery({
     queryKey: ["ausencias-manuais-orfas", ...scope.keyParts],
