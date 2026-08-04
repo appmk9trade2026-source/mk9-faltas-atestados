@@ -682,7 +682,7 @@ export const processarAusenciaInterno = createServerFn({ method: "POST" })
     }).parse(data);
   })
   .handler(async ({ data, context }) => {
-    // Validação de permissão (RH, Compliance, Admin)
+    // Validação de Papel (RH, Compliance, Admin)
     const { data: roles } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
     const userRoles = roles?.map(r => r.role) ?? [];
     const hasAccess = userRoles.some(r => ["admin", "rh", "compliance"].includes(r));
@@ -704,5 +704,67 @@ export const processarAusenciaInterno = createServerFn({ method: "POST" })
 
     return { success: true };
   });
+
+/**
+ * FASE 2: Iniciar processamento administrativo com trava de concorrência.
+ */
+export const iniciarProcessamentoAdm = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => {
+    return z.object({ ausencia_id: z.string().uuid() }).parse(data);
+  })
+  .handler(async ({ data, context }) => {
+    const { data: res, error } = await context.supabase.rpc("iniciar_processamento_ausencia", {
+      _ausencia_id: data.ausencia_id,
+    });
+    if (error) throw error;
+    return res as { success: boolean; status: string };
+  });
+
+/**
+ * FASE 2: Concluir processamento administrativo.
+ */
+export const concluirProcessamentoAdm = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => {
+    return z.object({
+      ausencia_id: z.string().uuid(),
+      observacao: z.string().trim().max(1000).nullable().optional(),
+    }).parse(data);
+  })
+  .handler(async ({ data, context }) => {
+    const { data: res, error } = await context.supabase.rpc("concluir_processamento_ausencia", {
+      _ausencia_id: data.ausencia_id,
+      _observacao: data.observacao ?? undefined,
+    });
+    if (error) throw error;
+    return res as { success: boolean; status: string };
+  });
+
+/**
+ * FASE 2: Obter KPIs da Central de Processamento.
+ */
+export const getCentralProcessamentoKpis = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    // Validação de Papel
+    const { data: roles } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
+    const userRoles = roles?.map(r => r.role) ?? [];
+    const hasAccess = userRoles.some(r => ["admin", "rh", "compliance", "coordenador"].includes(r));
+
+    if (!hasAccess) {
+      throw new Error("FORBIDDEN: Acesso negado.");
+    }
+
+    const { data: kpis, error } = await context.supabase.rpc("get_processamento_kpis");
+    if (error) throw error;
+    return kpis as {
+      backlog: number;
+      em_processamento: number;
+      processados_hoje: number;
+      fora_sla: number;
+    };
+  });
+
 
 
