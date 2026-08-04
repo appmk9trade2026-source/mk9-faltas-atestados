@@ -353,6 +353,12 @@ function NovaAusenciaPage() {
   const [acidenteCatEmitida, setAcidenteCatEmitida] = useState<boolean | null>(null);
   const [acidenteObs, setAcidenteObs] = useState<string>("");
 
+  // Conflitos de Ausência
+  const [conflitos, setConflitos] = useState<any[]>([]);
+  const [conflitoDialogOpen, setConflitoDialogOpen] = useState(false);
+  const [pendingValues, setPendingValues] = useState<FormData | null>(null);
+
+
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
