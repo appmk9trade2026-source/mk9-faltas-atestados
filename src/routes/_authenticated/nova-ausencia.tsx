@@ -97,8 +97,10 @@ import {
   createAusencia, 
   updateAusencia, 
   checkConflitosAusencia,
-  substituirAusenciaConflito
+  substituirAusenciaConflito,
+  checkConflitosAusencia
 } from "@/lib/ausencias.functions";
+
 import { friendlyRbacError, parseRbacError } from "@/lib/rbac/errors";
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { useProjetosAtivosPorEmpresa } from "@/hooks/use-projetos";
@@ -293,7 +295,13 @@ function NovaAusenciaPage() {
     !roles.includes("super_admin") &&
     !roles.includes("rh");
   const navigate = useNavigate();
+  const checkConflitosFn = useServerFn(checkConflitosAusencia);
+  const [conflitoDialogOpen, setConflitoDialogOpen] = useState(false);
+  const [conflitos, setConflitos] = useState<any[]>([]);
+  const [pendingValues, setPendingValues] = useState<AusenciaFormValues | null>(null);
+
   const queryClient = useQueryClient();
+
   const { id: editId } = Route.useSearch();
   const isEdit = !!editId;
 
@@ -2404,9 +2412,36 @@ function NovaAusenciaPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ConflitoAusenciaDialog
+        open={conflitoDialogOpen}
+        onOpenChange={setConflitoDialogOpen}
+        conflitos={conflitos}
+        novoTipo={tipoSelecionado?.nome || "Ausência"}
+        isSubmitting={substituirMut.isPending}
+        onConfirmSubstituir={(idAntiga) => {
+          if (pendingValues) {
+            substituirMut.mutate({
+              idAntiga,
+              values: pendingValues,
+              motivo: "Substituição automática por conflito detectado no lançamento."
+            });
+          }
+        }}
+        onConfirmManterAmbos={() => {
+          if (pendingValues) {
+            setConflitoDialogOpen(false);
+            salvarMut.mutate(pendingValues);
+          }
+        }}
+        onCancel={() => {
+          setConflitoDialogOpen(false);
+          setPendingValues(null);
+        }}
+      />
     </AppShell>
   );
 }
+
 
 // ============= Read-only field ================
 type ReadonlyFieldProps = {
