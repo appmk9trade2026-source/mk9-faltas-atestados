@@ -28,7 +28,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@/hooks/use-session";
+import { useSession, type AppRole } from "@/hooks/use-session";
 import { useSessionScope } from "@/hooks/use-session-scope";
 import { friendlyRbacError } from "@/lib/rbac/errors";
 
