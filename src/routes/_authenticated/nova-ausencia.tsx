@@ -1094,11 +1094,15 @@ function NovaAusenciaPage() {
         } : {})
       };
 
-      return substituirFn({
-        ausencia_id_antiga: params.idAntiga,
-        dados_nova_ausencia: payload,
-        motivo_substituicao: params.motivo,
+      const res = await substituirFn({
+        data: {
+          ausencia_id_antiga: params.idAntiga,
+          dados_nova_ausencia: payload,
+          motivo_substituicao: params.motivo,
+        }
       });
+      return res;
+
     },
     onSuccess: () => {
       toast.success("Substituição realizada com sucesso.", {
@@ -1373,8 +1377,8 @@ function NovaAusenciaPage() {
             <Form {...form}>
               <fieldset disabled={bloqueado || (supervisorSemProjetos && !isEdit)} className="contents">
                 <form
-                  onSubmit={form.handleSubmit((v) => {
-                    if (salvarMut.isPending || bloqueado) return;
+                  onSubmit={form.handleSubmit(async (v) => {
+                    if (salvarMut.isPending || substituirMut.isPending || bloqueado) return;
                     if (supervisorSemProjetos && !isEdit) {
                       toast.error("Sem projetos vinculados. Procure um administrador.");
                       return;
@@ -1383,9 +1387,39 @@ function NovaAusenciaPage() {
                       toast.error("Busque um colaborador pela matrícula ou use o preenchimento manual.");
                       return;
                     }
+
+                    // 1. Detecção de Conflitos (Etapa 1)
+                    if (!isEdit) {
+                      try {
+                        const tipo = tipoSelecionado?.codigo ? tipoBaseFromDetalhe(tipoSelecionado.codigo) : "FALTA";
+                        const confs = await checkConflitosFn({
+                          data: {
+                            colaborador_id: v.modo_manual ? null : v.colaborador_id,
+                            data_inicio: v.data_inicio,
+                            data_fim: dataFim,
+                            tipo: tipo as any,
+                            origem_registro: v.modo_manual ? "MANUAL" : "AUTOMATICO",
+                            manual_matricula: v.modo_manual ? v.manual_matricula : null,
+                            empresa_id: v.modo_manual ? v.empresa_id : null,
+                          }
+                        });
+
+                        if (confs && confs.length > 0) {
+                          setConflitos(confs);
+                          setPendingValues(v);
+                          setConflitoDialogOpen(true);
+                          return;
+                        }
+                      } catch (err) {
+                        console.error("Erro ao verificar conflitos:", err);
+                        // Se falhar a verificação, prossegue com o salvamento normal
+                      }
+                    }
+
                     if (colab && !colab.projeto?.codigo_protocolo) {
                       toast.error(
                         "O projeto do colaborador está sem código de protocolo. Peça a um administrador para cadastrar em Configurações → Projetos.",
+
                       );
                       return;
                     }
