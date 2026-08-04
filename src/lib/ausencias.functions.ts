@@ -858,9 +858,10 @@ export const getAusenciaConversoesKpis = createServerFn({ method: "GET" })
     const { data: stats, error } = await context.supabase.rpc("get_ausencia_conversoes_stats", {
       _data_inicio: data.data_inicio,
       _data_fim: data.data_fim,
-      _empresa_id: data.empresa_id ?? null,
-      _projeto_id: data.projeto_id ?? null,
-    });
+      _empresa_id: data.empresa_id || null,
+      _projeto_id: data.projeto_id || null,
+    } as any);
+
 
     if (error) throw error;
     return (stats?.[0] || { total_conversoes: 0, tempo_medio_conversao_horas: 0 }) as {
