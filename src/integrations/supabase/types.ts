@@ -759,6 +759,7 @@ export type Database = {
           manual_telefone: string | null
           manual_whatsapp: string | null
           motivo: string | null
+          motivo_substituicao: string | null
           observacao_processamento: string | null
           observacoes: string | null
           opcao_periodo_codigo: string | null
@@ -784,6 +785,9 @@ export type Database = {
           retificada_por: string | null
           status: Database["public"]["Enums"]["status_ausencia"]
           status_processamento: Database["public"]["Enums"]["ausencia_status_processamento"]
+          substituida_em: string | null
+          substituida_por_ausencia_id: string | null
+          substituida_por_usuario_id: string | null
           tipo: Database["public"]["Enums"]["tipo_ausencia"]
           tipo_ausencia_codigo: string | null
           tipo_ausencia_id: string | null
@@ -838,6 +842,7 @@ export type Database = {
           manual_telefone?: string | null
           manual_whatsapp?: string | null
           motivo?: string | null
+          motivo_substituicao?: string | null
           observacao_processamento?: string | null
           observacoes?: string | null
           opcao_periodo_codigo?: string | null
@@ -863,6 +868,9 @@ export type Database = {
           retificada_por?: string | null
           status?: Database["public"]["Enums"]["status_ausencia"]
           status_processamento?: Database["public"]["Enums"]["ausencia_status_processamento"]
+          substituida_em?: string | null
+          substituida_por_ausencia_id?: string | null
+          substituida_por_usuario_id?: string | null
           tipo: Database["public"]["Enums"]["tipo_ausencia"]
           tipo_ausencia_codigo?: string | null
           tipo_ausencia_id?: string | null
@@ -917,6 +925,7 @@ export type Database = {
           manual_telefone?: string | null
           manual_whatsapp?: string | null
           motivo?: string | null
+          motivo_substituicao?: string | null
           observacao_processamento?: string | null
           observacoes?: string | null
           opcao_periodo_codigo?: string | null
@@ -942,6 +951,9 @@ export type Database = {
           retificada_por?: string | null
           status?: Database["public"]["Enums"]["status_ausencia"]
           status_processamento?: Database["public"]["Enums"]["ausencia_status_processamento"]
+          substituida_em?: string | null
+          substituida_por_ausencia_id?: string | null
+          substituida_por_usuario_id?: string | null
           tipo?: Database["public"]["Enums"]["tipo_ausencia"]
           tipo_ausencia_codigo?: string | null
           tipo_ausencia_id?: string | null
@@ -983,6 +995,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ausencias_substituida_por_ausencia_id_fkey"
+            columns: ["substituida_por_ausencia_id"]
+            isOneToOne: false
+            referencedRelation: "ausencias"
             referencedColumns: ["id"]
           },
           {
@@ -5684,7 +5703,7 @@ export type Database = {
         | "UX"
         | "DOCUMENTACAO"
       session_status: "ATIVA" | "ENCERRADA" | "EXPIRADA" | "REVOGADA"
-      status_ausencia: "PENDENTE" | "LANCADO"
+      status_ausencia: "PENDENTE" | "LANCADO" | "SUBSTITUIDA" | "CANCELADO"
       status_comunicacao: "RASCUNHO" | "APROVADO" | "ENVIADO" | "ERRO"
       tipo_ausencia:
         | "FALTA"
@@ -6158,7 +6177,7 @@ export const Constants = {
         "DOCUMENTACAO",
       ],
       session_status: ["ATIVA", "ENCERRADA", "EXPIRADA", "REVOGADA"],
-      status_ausencia: ["PENDENTE", "LANCADO"],
+      status_ausencia: ["PENDENTE", "LANCADO", "SUBSTITUIDA", "CANCELADO"],
       status_comunicacao: ["RASCUNHO", "APROVADO", "ENVIADO", "ERRO"],
       tipo_ausencia: ["FALTA", "ATESTADO", "DECLARACAO", "SUSPENSAO", "OUTROS"],
       tipo_periodo_ausencia: [
