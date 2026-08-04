@@ -100,7 +100,7 @@ const CRIT_STYLE: Record<Criticidade, { badge: string; ring: string; icon: React
 };
 
 function IntegridadePage() {
-  const { primaryRole: role, loading: sessionLoading } = useSession();
+  const { roles, loading: sessionLoading } = useSession();
   const scope = useSessionScope();
   const navigate = useNavigate();
 
