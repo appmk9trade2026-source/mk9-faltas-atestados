@@ -150,7 +150,7 @@ function DashboardTab({ data, loading }: { data: Record<string, unknown> | undef
   const COLORS = MK9_CHART_EXTENDED;
 
   const kpiCards = [
-    { label: "Backlog", value: 143 },
+    { label: "Backlog Adm", value: 143 },
     { label: "Em desenvolvimento", value: kpis.em_desenvolvimento ?? 0 },
     { label: "Em testes", value: kpis.em_testes ?? 0 },
     { label: "Prontos p/ release", value: kpis.prontos ?? 0 },
