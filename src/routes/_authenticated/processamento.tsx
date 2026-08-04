@@ -374,6 +374,10 @@ function CentralProcessamentoPage() {
                         <p className="text-[10px] text-muted-foreground">Supervisor</p>
                         <p className="text-sm font-medium">{registroSelecionado.supervisor_nome}</p>
                       </div>
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] text-muted-foreground">Origem</p>
+                        <Badge variant="outline" className="text-[10px] uppercase">{registroSelecionado.origem_registro}</Badge>
+                      </div>
                     </div>
                   </div>
 
@@ -390,13 +394,27 @@ function CentralProcessamentoPage() {
                           <Badge variant="secondary" className="font-semibold">{registroSelecionado.tipo}</Badge>
                         </div>
                         <div className="space-y-0.5">
+                          <p className="text-[10px] text-muted-foreground">Status RH</p>
+                          <Badge variant="outline" className="font-semibold">{registroSelecionado.status_rh}</Badge>
+                        </div>
+                        <div className="space-y-0.5">
                           <p className="text-[10px] text-muted-foreground">Período</p>
                           <p className="text-sm font-medium">
                             {new Date(registroSelecionado.data_inicio + "T00:00:00").toLocaleDateString("pt-BR")} 
                             {registroSelecionado.data_fim && ` até ${new Date(registroSelecionado.data_fim + "T00:00:00").toLocaleDateString("pt-BR")}`}
                           </p>
                         </div>
+                        <div className="space-y-0.5">
+                          <p className="text-[10px] text-muted-foreground">CID</p>
+                          <p className="text-sm font-bold text-primary">{registroSelecionado.cid || "—"}</p>
+                        </div>
                       </div>
+
+                      {registroSelecionado.acidente_trabalho && (
+                        <Badge variant="destructive" className="w-full justify-center py-1">
+                          ACIDENTE DE TRABALHO / TRAJETO
+                        </Badge>
+                      )}
 
                       {registroSelecionado.motivo && (
                         <div className="space-y-1">
