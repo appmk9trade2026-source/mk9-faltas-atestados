@@ -904,7 +904,20 @@ function AusenciasPage() {
                   </dd>
                   <dt className="text-muted-foreground">Lançado em</dt>
                   <dd className="col-span-2">{formatDateTime(viewing.lancado_em)}</dd>
+                  {viewing.status === "SUBSTITUIDA" && (
+                    <>
+                      <dt className="text-blue-600 font-semibold">Substituída em</dt>
+                      <dd className="col-span-2 text-blue-600 font-semibold">
+                        {formatDateTime(viewing.retificada_em || (viewing as any).substituida_em)}
+                      </dd>
+                      <dt className="text-muted-foreground">Motivo Subst.</dt>
+                      <dd className="col-span-2 italic">
+                        {(viewing as any).motivo_substituicao ?? "Conflito de período."}
+                      </dd>
+                    </>
+                  )}
                 </dl>
+
               </section>
               <section>
                 <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
