@@ -101,7 +101,7 @@ function RoadmapPage() {
   });
 
   return (
-    <AppShell title="Roadmap & Releases" breadcrumb={["Sistema", "Roadmap"]}>
+    <AppShell title="Processamento Interno" breadcrumb={["Sistema", "Processamento Interno"]}>
       <Tabs defaultValue="dashboard" className="space-y-4">
         <TabsList className="flex-wrap">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
