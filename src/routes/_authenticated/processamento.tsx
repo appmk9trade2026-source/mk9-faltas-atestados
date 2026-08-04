@@ -6,6 +6,7 @@ import {
   iniciarProcessamentoAdm, 
   concluirProcessamentoAdm 
 } from "@/lib/ausencias.functions";
+import { resolveAusenciaIdentidade } from "@/lib/ausencia-identidade";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -106,7 +107,7 @@ function CentralProcessamentoPage() {
           *,
           empresa:empresas(nome),
           projeto:projetos(nome),
-          colaborador:colaboradores(nome_completo, matricula)
+          colaborador:colaboradores(nome_completo, matricula, email, telefone)
         `)
         .neq("status_processamento", "PROCESSADO")
         .order("registrado_em", { ascending: true });
@@ -117,6 +118,22 @@ function CentralProcessamentoPage() {
         const registradoEm = row.registrado_em;
         const aguardando = differenceInDays(new Date(), new Date(registradoEm));
         
+        // Usar o resolver canônico para identidade e supervisor
+        const { 
+          nome, 
+          matricula, 
+          supervisor_nome,
+          email,
+          telefone
+        } = resolveAusenciaIdentidade({
+          ...row,
+          colaborador: row.colaborador ? {
+            ...row.colaborador,
+            supervisor_nome: row.manual_supervisor_nome,
+            supervisor_telefone: null
+          } : null
+        });
+
         const card: AusenciaCardData = {
           id: row.id,
           protocolo: row.protocolo,
@@ -131,11 +148,15 @@ function CentralProcessamentoPage() {
           prioridade: calcularPrioridade(registradoEm),
           tempo_aguardando: aguardando,
           sla_status: getSlaStatus(registradoEm),
-          colaborador_nome: row.colaborador?.nome_completo || row.manual_nome || "N/A",
-          colaborador_matricula: row.colaborador?.matricula || row.manual_matricula || "N/A",
+          colaborador_nome: nome || "N/A",
+          colaborador_matricula: matricula || "N/A",
           empresa_nome: row.empresa?.nome || "N/A",
           projeto_nome: row.projeto?.nome || "N/A",
-          supervisor_nome: row.manual_supervisor_nome || "N/A" // Simplified
+          supervisor_nome: supervisor_nome || "N/A",
+          origem_registro: row.origem_registro,
+          cid: row.cid,
+          acidente_trabalho: row.acidente_trabalho_trajeto,
+          status_rh: row.status
         };
         return card;
       });
@@ -353,6 +374,10 @@ function CentralProcessamentoPage() {
                         <p className="text-[10px] text-muted-foreground">Supervisor</p>
                         <p className="text-sm font-medium">{registroSelecionado.supervisor_nome}</p>
                       </div>
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] text-muted-foreground">Origem</p>
+                        <Badge variant="outline" className="text-[10px] uppercase">{registroSelecionado.origem_registro}</Badge>
+                      </div>
                     </div>
                   </div>
 
@@ -369,13 +394,27 @@ function CentralProcessamentoPage() {
                           <Badge variant="secondary" className="font-semibold">{registroSelecionado.tipo}</Badge>
                         </div>
                         <div className="space-y-0.5">
+                          <p className="text-[10px] text-muted-foreground">Status RH</p>
+                          <Badge variant="outline" className="font-semibold">{registroSelecionado.status_rh}</Badge>
+                        </div>
+                        <div className="space-y-0.5">
                           <p className="text-[10px] text-muted-foreground">Período</p>
                           <p className="text-sm font-medium">
                             {new Date(registroSelecionado.data_inicio + "T00:00:00").toLocaleDateString("pt-BR")} 
                             {registroSelecionado.data_fim && ` até ${new Date(registroSelecionado.data_fim + "T00:00:00").toLocaleDateString("pt-BR")}`}
                           </p>
                         </div>
+                        <div className="space-y-0.5">
+                          <p className="text-[10px] text-muted-foreground">CID</p>
+                          <p className="text-sm font-bold text-primary">{registroSelecionado.cid || "—"}</p>
+                        </div>
                       </div>
+
+                      {registroSelecionado.acidente_trabalho && (
+                        <Badge variant="destructive" className="w-full justify-center py-1">
+                          ACIDENTE DE TRABALHO / TRAJETO
+                        </Badge>
+                      )}
 
                       {registroSelecionado.motivo && (
                         <div className="space-y-1">

@@ -28,4 +28,8 @@ export interface AusenciaCardData {
   empresa_nome: string;
   projeto_nome: string;
   supervisor_nome: string;
+  origem_registro: string | null;
+  cid: string | null;
+  acidente_trabalho: boolean | null;
+  status_rh: string | null;
 }

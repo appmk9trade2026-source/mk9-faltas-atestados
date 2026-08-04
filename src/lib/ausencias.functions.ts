@@ -747,13 +747,13 @@ export const concluirProcessamentoAdm = createServerFn({ method: "POST" })
 export const getCentralProcessamentoKpis = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // Validação de Papel
+    // Validação de Papel (Centralizado)
     const { data: roles } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
     const userRoles = roles?.map(r => r.role) ?? [];
-    const hasAccess = userRoles.some(r => ["super_admin", "rh", "compliance", "coordenador"].includes(r));
+    const hasAccess = userRoles.some(r => ["super_admin", "rh", "compliance"].includes(r));
 
     if (!hasAccess) {
-      throw new Error("FORBIDDEN: Acesso negado.");
+      throw new Error("FORBIDDEN: Acesso negado. Apenas usuários do RH, Compliance ou Super Admin podem acessar a Central de Processamento.");
     }
 
     const { data: kpis, error } = await context.supabase.rpc("get_processamento_kpis");
