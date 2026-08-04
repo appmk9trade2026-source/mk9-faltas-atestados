@@ -257,7 +257,7 @@ function KanbanTab({ items, canEdit, onChanged }: { items: RoadmapRow[]; canEdit
             </div>
             <div className="space-y-2">
               {st === "BACKLOG" && (
-                <div className="rounded-md border bg-background p-2 text-xs shadow-sm">
+                <div className="rounded-md border bg-background p-2 text-xs shadow-sm border-l-4 border-l-amber-500">
                   <div className="flex items-start justify-between gap-1">
                     <div className="font-medium leading-tight">João Silva</div>
                     <Badge variant="secondary" className="text-[9px] shrink-0 border-amber-500/30 bg-amber-500/10 text-amber-600">🟡 Aguardando</Badge>
@@ -266,8 +266,11 @@ function KanbanTab({ items, canEdit, onChanged }: { items: RoadmapRow[]; canEdit
                     Projeto: AMBEV - AS ROTA MT
                   </div>
                   <div className="mt-2 flex items-center justify-between border-t pt-1.5">
-                    <span className="text-[9px] text-muted-foreground">Resp: Charles</span>
-                    <Button size="sm" variant="outline" className="h-5 px-1.5 text-[9px]">Iniciar</Button>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] text-muted-foreground">Resp: Charles</span>
+                      <span className="text-[8px] text-red-500 font-bold">CRÍTICO: 6 dias na fila</span>
+                    </div>
+                    <Button size="sm" variant="outline" className="h-5 px-1.5 text-[9px] bg-blue-600 text-white hover:bg-blue-700 hover:text-white border-none">Iniciar</Button>
                   </div>
                 </div>
               )}
