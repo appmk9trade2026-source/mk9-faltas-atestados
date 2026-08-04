@@ -531,8 +531,9 @@ function AusenciasPage() {
                   <SelectItem value="LANCADO">Lançado</SelectItem>
                 </SelectContent>
               </Select>
-              </div>
             </div>
+          </div>
+
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
               <Select value={processamentoFiltro} onValueChange={(v) => { setProcessamentoFiltro(v); setPage(1); }}>
                 <SelectTrigger>
@@ -745,6 +746,19 @@ function AusenciasPage() {
                         <DropdownMenuItem onClick={() => setViewing(row)}>
                           <Eye className="mr-2 h-4 w-4" /> Visualizar
                         </DropdownMenuItem>
+
+                        {podeProcessarInterno && row.status_processamento === "AGUARDANDO" && (
+                          <DropdownMenuItem onClick={() => processarMut.mutate({ id: row.id, status: "EM_PROCESSAMENTO" })}>
+                            <RefreshCcw className="mr-2 h-4 w-4" /> Iniciar processamento
+                          </DropdownMenuItem>
+                        )}
+
+                        {podeProcessarInterno && row.status_processamento === "EM_PROCESSAMENTO" && (
+                          <DropdownMenuItem onClick={() => processarMut.mutate({ id: row.id, status: "PROCESSADO" })}>
+                            <CheckCircle2 className="mr-2 h-4 w-4" /> Concluir processamento
+                          </DropdownMenuItem>
+                        )}
+
                         {podeCadastrar && row.status === "PENDENTE" && (
                           <DropdownMenuItem asChild>
                             <Link to="/nova-ausencia" search={{ id: row.id }}>
