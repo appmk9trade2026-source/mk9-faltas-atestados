@@ -143,7 +143,7 @@ function VinculosManuaisPage() {
     return (
       <AppShell title="Vínculos de Lançamentos Manuais">
         <Card className="p-8 text-center text-sm text-muted-foreground">
-          Esta rotina administrativa está disponível apenas para Super Admin e RH.
+          Esta rotina administrativa está disponível apenas para Super Admin, RH e Compliance.
         </Card>
       </AppShell>
     );
