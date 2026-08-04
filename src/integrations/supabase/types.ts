@@ -759,12 +759,15 @@ export type Database = {
           manual_telefone: string | null
           manual_whatsapp: string | null
           motivo: string | null
+          observacao_processamento: string | null
           observacoes: string | null
           opcao_periodo_codigo: string | null
           opcao_periodo_id: string | null
           opcao_periodo_nome: string | null
           origem_registro: string
           possui_anexo: boolean
+          processado_em: string | null
+          processado_por: string | null
           projeto_id: string
           protocolo: string | null
           quantidade_dias_calculada: number | null
@@ -775,6 +778,7 @@ export type Database = {
           retificada_em: string | null
           retificada_por: string | null
           status: Database["public"]["Enums"]["status_ausencia"]
+          status_processamento: Database["public"]["Enums"]["ausencia_status_processamento"]
           tipo: Database["public"]["Enums"]["tipo_ausencia"]
           tipo_ausencia_codigo: string | null
           tipo_ausencia_id: string | null
@@ -829,12 +833,15 @@ export type Database = {
           manual_telefone?: string | null
           manual_whatsapp?: string | null
           motivo?: string | null
+          observacao_processamento?: string | null
           observacoes?: string | null
           opcao_periodo_codigo?: string | null
           opcao_periodo_id?: string | null
           opcao_periodo_nome?: string | null
           origem_registro?: string
           possui_anexo?: boolean
+          processado_em?: string | null
+          processado_por?: string | null
           projeto_id: string
           protocolo?: string | null
           quantidade_dias_calculada?: number | null
@@ -845,6 +852,7 @@ export type Database = {
           retificada_em?: string | null
           retificada_por?: string | null
           status?: Database["public"]["Enums"]["status_ausencia"]
+          status_processamento?: Database["public"]["Enums"]["ausencia_status_processamento"]
           tipo: Database["public"]["Enums"]["tipo_ausencia"]
           tipo_ausencia_codigo?: string | null
           tipo_ausencia_id?: string | null
@@ -899,12 +907,15 @@ export type Database = {
           manual_telefone?: string | null
           manual_whatsapp?: string | null
           motivo?: string | null
+          observacao_processamento?: string | null
           observacoes?: string | null
           opcao_periodo_codigo?: string | null
           opcao_periodo_id?: string | null
           opcao_periodo_nome?: string | null
           origem_registro?: string
           possui_anexo?: boolean
+          processado_em?: string | null
+          processado_por?: string | null
           projeto_id?: string
           protocolo?: string | null
           quantidade_dias_calculada?: number | null
@@ -915,6 +926,7 @@ export type Database = {
           retificada_em?: string | null
           retificada_por?: string | null
           status?: Database["public"]["Enums"]["status_ausencia"]
+          status_processamento?: Database["public"]["Enums"]["ausencia_status_processamento"]
           tipo?: Database["public"]["Enums"]["tipo_ausencia"]
           tipo_ausencia_codigo?: string | null
           tipo_ausencia_id?: string | null
@@ -4891,6 +4903,14 @@ export type Database = {
         Args: { p_duplicado_id: string; p_principal_id: string }
         Returns: Json
       }
+      processar_ausencia: {
+        Args: {
+          _ausencia_id: string
+          _novo_status: Database["public"]["Enums"]["ausencia_status_processamento"]
+          _observacao?: string
+        }
+        Returns: undefined
+      }
       processar_escalonamentos_pendentes: { Args: never; Returns: Json }
       rbac_apply_role_matrix: { Args: { _changes: Json }; Returns: Json }
       rbac_apply_user_permission: {
@@ -5450,6 +5470,10 @@ export type Database = {
         | "COORDENADOR_DESVINCULADO"
         | "AUSENCIA_RETIFICADA"
         | "AUSENCIA_DUPLICIDADE_BLOQUEADA"
+      ausencia_status_processamento:
+        | "AGUARDANDO"
+        | "EM_PROCESSAMENTO"
+        | "PROCESSADO"
       canal_comunicacao: "EMAIL" | "WHATSAPP" | "SMS" | "INTERNO"
       changelog_tipo:
         | "NOVA_FUNCIONALIDADE"
@@ -5900,6 +5924,11 @@ export const Constants = {
         "COORDENADOR_DESVINCULADO",
         "AUSENCIA_RETIFICADA",
         "AUSENCIA_DUPLICIDADE_BLOQUEADA",
+      ],
+      ausencia_status_processamento: [
+        "AGUARDANDO",
+        "EM_PROCESSAMENTO",
+        "PROCESSADO",
       ],
       canal_comunicacao: ["EMAIL", "WHATSAPP", "SMS", "INTERNO"],
       changelog_tipo: [
