@@ -2,16 +2,16 @@
 //
 // TODAS as mutações de ausência agora passam por aqui. Nunca chame
 // supabase.from("ausencias").insert/update/delete direto do client.
-//
-// Ordem de decisão (por Server Function):
-//   1. auth (via requireSupabaseAuth)
-//   2. PermissionCode via PERMISSION_MAP
-//   3. public.has_permission
-//   4. escopo de colaborador (deriva projeto+empresa)
-//   5. RLS (2ª camada)
-//   6. Regra de negócio
-//   7. Mutação
-//   8. Auditoria com correlation_id
+
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requirePermission } from "@/lib/rbac/guards.server";
+import { PERMISSION_MAP } from "@/lib/permissions-map";
+import { Database } from "@/integrations/supabase/types";
+
+type StatusProcessamento = Database["public"]["Enums"]["ausencia_status_processamento"];
+
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -670,3 +670,43 @@ export const alterarStatusAusencia = createServerFn({ method: "POST" })
     );
     return { ok: true, correlation_id: gate.correlationId };
   });
+
+/**
+ * ETAPA 6: Nova Ação — Alterar status de processamento administrativo interno.
+ * Somente RH, Compliance e Super Admin.
+ */
+export const processarAusenciaInterno = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => {
+    const uuid = z.string().uuid();
+    return z.object({
+      ausencia_id: uuid,
+      novo_status: z.enum(["AGUARDANDO", "EM_PROCESSAMENTO", "PROCESSADO"]),
+      observacao: z.string().trim().max(1000).nullable().optional(),
+    }).parse(data);
+  })
+  .handler(async ({ data, context }) => {
+    // Validação de permissão (RH, Compliance, Admin)
+    const { data: roles } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
+    const userRoles = roles?.map(r => r.role) ?? [];
+    const hasAccess = userRoles.some(r => ["admin", "rh", "compliance"].includes(r));
+
+    if (!hasAccess) {
+      throw new Error("FORBIDDEN: Acesso negado. Somente RH, Compliance ou Admin podem alterar o processamento.");
+    }
+
+    const { error } = await context.supabase.rpc("processar_ausencia", {
+      _ausencia_id: data.ausencia_id,
+      _novo_status: data.novo_status as StatusProcessamento,
+      _observacao: data.observacao ?? null,
+    });
+
+    if (error) {
+       // Reutiliza o mapeamento de erro existente
+       const { DatabaseError } = await import("./ausencias.functions");
+       throw error; 
+    }
+
+    return { success: true };
+  });
+
