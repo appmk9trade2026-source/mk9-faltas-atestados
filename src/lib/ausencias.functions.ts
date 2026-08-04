@@ -766,5 +766,110 @@ export const getCentralProcessamentoKpis = createServerFn({ method: "GET" })
     };
   });
 
+/**
+ * Detecta conflitos de ausência (sobreposição entre falta e atestado).
+ */
+export const checkConflitosAusencia = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => {
+    return z.object({
+      colaborador_id: uuid.nullable().optional(),
+      data_inicio: iso,
+      data_fim: iso,
+      tipo: z.enum(["FALTA", "ATESTADO", "DECLARACAO", "SUSPENSAO", "OUTROS"]),
+      origem_registro: z.enum(["AUTOMATICO", "MANUAL"]),
+      manual_matricula: z.string().nullable().optional(),
+      empresa_id: uuid.nullable().optional(),
+    }).parse(data);
+  })
+  .handler(async ({ data, context }) => {
+    const { data: conflitos, error } = await context.supabase.rpc("detectar_conflitos_ausencia", {
+      _colaborador_id: data.colaborador_id || null,
+      _data_inicio: data.data_inicio,
+      _data_fim: data.data_fim,
+      _tipo: data.tipo as any,
+      _origem_registro: data.origem_registro,
+      _manual_matricula: data.manual_matricula || null,
+      _empresa_id: data.empresa_id || null,
+    } as any);
+
+
+    if (error) throw error;
+    return (conflitos || []) as Array<{
+      id: string;
+      tipo: string;
+      data_inicio: string;
+      data_fim: string;
+      registrado_por: string;
+      registrado_em: string;
+      protocolo: string | null;
+      status: string;
+      registrado_por_nome: string | null;
+    }>;
+  });
+
+/**
+ * Substitui uma ausência em conflito por uma nova.
+ */
+export const substituirAusenciaConflito = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => {
+    return z.object({
+      ausencia_id_antiga: uuid,
+      dados_nova_ausencia: z.any(), // Reutiliza o payload de createAusencia
+      motivo_substituicao: z.string().trim().min(5).max(500),
+    }).parse(data);
+  })
+  .handler(async ({ data, context }) => {
+    // Validação de permissão simplificada: a RPC já roda com SECURITY DEFINER
+    // e revalida escopo internamente se necessário (via triggers), 
+    // mas aqui garantimos que o usuário pode criar ausências.
+    await requirePermission({
+      ctx: context,
+      permission: PERMISSION_MAP.createAbsence,
+      route: "/nova-ausencia",
+      observacoes: "substituição de conflito",
+    });
+
+    const { data: novaId, error } = await context.supabase.rpc("substituir_ausencia_conflito", {
+      _ausencia_id_antiga: data.ausencia_id_antiga,
+      _dados_nova_ausencia: data.dados_nova_ausencia,
+      _motivo_substituicao: data.motivo_substituicao,
+    });
+
+    if (error) throw ausenciaDbError(error, "insert_ausencia");
+    return { id: novaId as string };
+  });
+
+/**
+ * KPIs de Conversão para o Dashboard.
+ */
+export const getAusenciaConversoesKpis = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => {
+    return z.object({
+      data_inicio: iso,
+      data_fim: iso,
+      empresa_id: uuid.optional(),
+      projeto_id: uuid.optional(),
+    }).parse(data);
+  })
+  .handler(async ({ data, context }) => {
+    const { data: stats, error } = await context.supabase.rpc("get_ausencia_conversoes_stats", {
+      _data_inicio: data.data_inicio,
+      _data_fim: data.data_fim,
+      _empresa_id: data.empresa_id || null,
+      _projeto_id: data.projeto_id || null,
+    } as any);
+
+
+    if (error) throw error;
+    return (stats?.[0] || { total_conversoes: 0, tempo_medio_conversao_horas: 0 }) as {
+      total_conversoes: number;
+      tempo_medio_conversao_horas: number;
+    };
+  });
+
+
 
 

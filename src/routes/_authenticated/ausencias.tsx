@@ -170,7 +170,7 @@ function formatSize(n: number | null | undefined) {
   return `${(n / 1024 / 1024).toFixed(2)} MB`;
 }
 
-function StatusBadge({ status }: { status: StatusAusencia }) {
+function StatusBadge({ status }: { status: StatusAusencia | "SUBSTITUIDA" | "CANCELADO" }) {
   if (status === "PENDENTE")
     return (
       <Badge
@@ -178,6 +178,24 @@ function StatusBadge({ status }: { status: StatusAusencia }) {
         className="border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
       >
         Pendente
+      </Badge>
+    );
+  if (status === "SUBSTITUIDA")
+    return (
+      <Badge
+        variant="secondary"
+        className="border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300"
+      >
+        Substituída
+      </Badge>
+    );
+  if (status === "CANCELADO")
+    return (
+      <Badge
+        variant="secondary"
+        className="border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300"
+      >
+        Cancelado
       </Badge>
     );
   return (
@@ -189,6 +207,7 @@ function StatusBadge({ status }: { status: StatusAusencia }) {
     </Badge>
   );
 }
+
 
 function ProcessamentoBadge({ status }: { status: StatusProcessamento }) {
   switch (status) {
@@ -526,9 +545,12 @@ function AusenciasPage() {
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="all">Todos os status</SelectItem>
                   <SelectItem value="PENDENTE">Pendente</SelectItem>
                   <SelectItem value="LANCADO">Lançado</SelectItem>
+                  <SelectItem value="SUBSTITUIDA">Substituída</SelectItem>
+                  <SelectItem value="CANCELADO">Cancelado</SelectItem>
+
                 </SelectContent>
               </Select>
             </div>
@@ -882,7 +904,20 @@ function AusenciasPage() {
                   </dd>
                   <dt className="text-muted-foreground">Lançado em</dt>
                   <dd className="col-span-2">{formatDateTime(viewing.lancado_em)}</dd>
+                  {viewing.status === "SUBSTITUIDA" && (
+                    <>
+                      <dt className="text-blue-600 font-semibold">Substituída em</dt>
+                      <dd className="col-span-2 text-blue-600 font-semibold">
+                        {formatDateTime(viewing.retificada_em || (viewing as any).substituida_em)}
+                      </dd>
+                      <dt className="text-muted-foreground">Motivo Subst.</dt>
+                      <dd className="col-span-2 italic">
+                        {(viewing as any).motivo_substituicao ?? "Conflito de período."}
+                      </dd>
+                    </>
+                  )}
                 </dl>
+
               </section>
               <section>
                 <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">

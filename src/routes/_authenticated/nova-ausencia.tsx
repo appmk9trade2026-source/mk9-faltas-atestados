@@ -93,11 +93,20 @@ import {
   scoreCompliance as scoreComplianceFn,
   suggestMotivoFromCID as suggestMotivoFromCIDFn,
 } from "@/lib/ai.functions";
-import { createAusencia, updateAusencia } from "@/lib/ausencias.functions";
+import { 
+  createAusencia, 
+  updateAusencia, 
+  checkConflitosAusencia,
+  substituirAusenciaConflito
+} from "@/lib/ausencias.functions";
+
+
 import { friendlyRbacError, parseRbacError } from "@/lib/rbac/errors";
 import { useFormDraft } from "@/hooks/use-form-draft";
 import { useProjetosAtivosPorEmpresa } from "@/hooks/use-projetos";
 import { useSupervisoresLancamento } from "@/hooks/use-supervisores-lancamento";
+import { ConflitoAusenciaDialog } from "@/components/ausencias/conflito-ausencia-dialog";
+
 
 import { DadosColaboradorFields } from "@/components/ausencias/dados-colaborador-fields";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -286,7 +295,9 @@ function NovaAusenciaPage() {
     !roles.includes("super_admin") &&
     !roles.includes("rh");
   const navigate = useNavigate();
+
   const queryClient = useQueryClient();
+
   const { id: editId } = Route.useSearch();
   const isEdit = !!editId;
 
@@ -345,6 +356,12 @@ function NovaAusenciaPage() {
   const [acidenteDiasAfast, setAcidenteDiasAfast] = useState<string>("");
   const [acidenteCatEmitida, setAcidenteCatEmitida] = useState<boolean | null>(null);
   const [acidenteObs, setAcidenteObs] = useState<string>("");
+
+  // Conflitos de Ausência
+  const [conflitos, setConflitos] = useState<any[]>([]);
+  const [conflitoDialogOpen, setConflitoDialogOpen] = useState(false);
+  const [pendingValues, setPendingValues] = useState<FormData | null>(null);
+
 
 
   const form = useForm<FormData>({
@@ -1014,6 +1031,100 @@ function NovaAusenciaPage() {
   // ============= Submit (server functions com hardening RBAC) =============
   const createFn = useServerFn(createAusencia);
   const updateFn = useServerFn(updateAusencia);
+  const checkConflitosFn = useServerFn(checkConflitosAusencia);
+  const substituirFn = useServerFn(substituirAusenciaConflito);
+
+
+
+  const substituirMut = useMutation({
+    mutationFn: async (params: { idAntiga: string; values: FormData; motivo: string }) => {
+      // 1. Upload do arquivo se houver (mesma lógica de salvarMut)
+      let arquivo_url: string | null | undefined = undefined;
+      let arquivo_nome: string | null | undefined = undefined;
+      let arquivo_mime: string | null | undefined = undefined;
+      let arquivo_tamanho: number | null | undefined = undefined;
+
+      if (file) {
+        const ext = file.name.split(".").pop() ?? "bin";
+        const path = `ausencias/${params.values.colaborador_id || "manual"}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+        const { error } = await supabase.storage.from(BUCKET_ATESTADOS).upload(path, file);
+        if (error) throw error;
+        arquivo_url = path;
+        arquivo_nome = file.name;
+        arquivo_mime = file.type;
+        arquivo_tamanho = file.size;
+      }
+
+      const isAcidente = tipoSelecionado?.codigo === "ACIDENTE_TRABALHO";
+      
+      const payload = {
+        colaborador_id: params.values.colaborador_id || null,
+        empresa_id: params.values.modo_manual ? params.values.empresa_id : colab?.empresa_id,
+        projeto_id: params.values.modo_manual ? params.values.projeto_id : colab?.projeto_id,
+        origem_registro: params.values.modo_manual ? "MANUAL" : "AUTOMATICO",
+        tipo_ausencia_id: params.values.tipo_ausencia_id,
+        opcao_periodo_id: params.values.opcao_periodo_id,
+        data_inicio: params.values.data_inicio,
+        data_fim: dataFim,
+        localidade: params.values.localidade,
+        loja_codigo_nome: params.values.loja_codigo_nome,
+        cid: params.values.cid?.toUpperCase() || null,
+        acidente_trabalho_trajeto: params.values.acidente_trabalho_trajeto === "sim",
+        motivo: params.values.motivo,
+        arquivo_url,
+        arquivo_nome,
+        arquivo_mime,
+        arquivo_tamanho,
+        tipo: tipoBaseFromDetalhe(tipoSelecionado?.codigo || ""),
+        ...(isAcidente ? {
+          acidente_data: acidenteData,
+          acidente_hora: acidenteHora,
+          acidente_local: acidenteLocal,
+          acidente_descricao: acidenteDescricao,
+          acidente_atendimento_medico: acidenteAtendMedico,
+          acidente_houve_afastamento: acidenteAfastamento,
+          acidente_dias_afastamento_inicial: parseInt(acidenteDiasAfast) || 0,
+          acidente_cat_emitida: acidenteCatEmitida,
+          acidente_observacoes: acidenteObs,
+        } : {}),
+        // Campos manuais se necessário
+        ...(params.values.modo_manual ? {
+          manual_nome: params.values.manual_nome,
+          manual_matricula: params.values.manual_matricula,
+          manual_telefone: params.values.manual_telefone,
+          manual_whatsapp: params.values.manual_whatsapp,
+          manual_email: params.values.manual_email,
+          manual_supervisor_nome: params.values.manual_supervisor_nome,
+          manual_supervisor_telefone: params.values.manual_supervisor_telefone,
+          manual_supervisor_usuario_id: params.values.manual_supervisor_usuario_id || null,
+        } : {})
+      };
+
+      const res = await substituirFn({
+        data: {
+          ausencia_id_antiga: params.idAntiga,
+          dados_nova_ausencia: payload,
+          motivo_substituicao: params.motivo,
+        }
+      });
+      return res;
+
+    },
+    onSuccess: () => {
+      toast.success("Substituição realizada com sucesso.", {
+        description: "A falta anterior foi substituída pelo novo atestado.",
+      });
+      setConflitoDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["ausencias"] });
+      navigate({ to: "/ausencias" });
+    },
+    onError: (err) => {
+      toast.error("Falha ao realizar substituição.", {
+        description: err instanceof Error ? err.message : "Erro desconhecido",
+      });
+    }
+  });
+
 
   const salvarMut = useMutation({
     mutationFn: async (values: FormData) => {
@@ -1272,8 +1383,8 @@ function NovaAusenciaPage() {
             <Form {...form}>
               <fieldset disabled={bloqueado || (supervisorSemProjetos && !isEdit)} className="contents">
                 <form
-                  onSubmit={form.handleSubmit((v) => {
-                    if (salvarMut.isPending || bloqueado) return;
+                  onSubmit={form.handleSubmit(async (v) => {
+                    if (salvarMut.isPending || substituirMut.isPending || bloqueado) return;
                     if (supervisorSemProjetos && !isEdit) {
                       toast.error("Sem projetos vinculados. Procure um administrador.");
                       return;
@@ -1282,9 +1393,40 @@ function NovaAusenciaPage() {
                       toast.error("Busque um colaborador pela matrícula ou use o preenchimento manual.");
                       return;
                     }
+
+                    // 1. Detecção de Conflitos (Etapa 1)
+                    if (!isEdit) {
+                      try {
+                        const tipo = tipoSelecionado?.codigo ? tipoBaseFromDetalhe(tipoSelecionado.codigo) : "FALTA";
+                        const confs = await checkConflitosFn({
+                          data: {
+                            colaborador_id: v.modo_manual ? null : v.colaborador_id,
+                            data_inicio: v.data_inicio,
+                            data_fim: dataFim || v.data_inicio,
+                            tipo: tipo as any,
+                            origem_registro: v.modo_manual ? "MANUAL" : "AUTOMATICO",
+                            manual_matricula: v.modo_manual ? v.manual_matricula : null,
+                            empresa_id: v.modo_manual ? v.empresa_id : null,
+                          }
+                        });
+
+
+                        if (confs && confs.length > 0) {
+                          setConflitos(confs);
+                          setPendingValues(v);
+                          setConflitoDialogOpen(true);
+                          return;
+                        }
+                      } catch (err) {
+                        console.error("Erro ao verificar conflitos:", err);
+                        // Se falhar a verificação, prossegue com o salvamento normal
+                      }
+                    }
+
                     if (colab && !colab.projeto?.codigo_protocolo) {
                       toast.error(
                         "O projeto do colaborador está sem código de protocolo. Peça a um administrador para cadastrar em Configurações → Projetos.",
+
                       );
                       return;
                     }
@@ -2269,9 +2411,36 @@ function NovaAusenciaPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ConflitoAusenciaDialog
+        open={conflitoDialogOpen}
+        onOpenChange={setConflitoDialogOpen}
+        conflitos={conflitos}
+        novoTipo={tipoSelecionado?.nome || "Ausência"}
+        isSubmitting={substituirMut.isPending}
+        onConfirmSubstituir={(idAntiga) => {
+          if (pendingValues) {
+            substituirMut.mutate({
+              idAntiga,
+              values: pendingValues,
+              motivo: "Substituição automática por conflito detectado no lançamento."
+            });
+          }
+        }}
+        onConfirmManterAmbos={() => {
+          if (pendingValues) {
+            setConflitoDialogOpen(false);
+            salvarMut.mutate(pendingValues);
+          }
+        }}
+        onCancel={() => {
+          setConflitoDialogOpen(false);
+          setPendingValues(null);
+        }}
+      />
     </AppShell>
   );
 }
+
 
 // ============= Read-only field ================
 type ReadonlyFieldProps = {

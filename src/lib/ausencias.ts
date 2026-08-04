@@ -3,8 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 export const TIPO_AUSENCIA = ["FALTA", "ATESTADO", "DECLARACAO", "SUSPENSAO", "OUTROS"] as const;
 export type TipoAusencia = (typeof TIPO_AUSENCIA)[number];
 
-export const STATUS_AUSENCIA = ["PENDENTE", "LANCADO"] as const;
+export const STATUS_AUSENCIA = ["PENDENTE", "LANCADO", "SUBSTITUIDA", "CANCELADO"] as const;
 export type StatusAusencia = (typeof STATUS_AUSENCIA)[number];
+
 
 
 export const STATUS_PROCESSAMENTO = ["AGUARDANDO", "EM_PROCESSAMENTO", "PROCESSADO"] as const;
