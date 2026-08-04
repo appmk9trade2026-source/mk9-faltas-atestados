@@ -693,8 +693,9 @@ export const processarAusenciaInterno = createServerFn({ method: "POST" })
     const { error } = await context.supabase.rpc("processar_ausencia", {
       _ausencia_id: data.ausencia_id,
       _novo_status: data.novo_status as StatusProcessamento,
-      _observacao: data.observacao ?? null,
+      _observacao: data.observacao ?? undefined,
     });
+
 
     if (error) {
        throw error; 
