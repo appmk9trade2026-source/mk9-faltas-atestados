@@ -362,6 +362,10 @@ function DashboardPage() {
       {/* KPIs de Processamento (Fase 2) - Visíveis para RH/Admin */}
       {(roles.includes("super_admin") || roles.includes("rh") || roles.includes("compliance")) && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <Link 
+            to="/processamento"
+            className="block transition-transform hover:scale-[1.02] active:scale-[0.98]"
+          >
 
           <Card className="bg-slate-50/50 dark:bg-slate-900/20 border-slate-200/60 dark:border-slate-800/60">
             <CardContent className="p-4 flex items-center gap-4">

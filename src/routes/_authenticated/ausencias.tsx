@@ -208,24 +208,23 @@ function StatusBadge({ status }: { status: StatusAusencia | "SUBSTITUIDA" | "CAN
   );
 }
 
-
 function ProcessamentoBadge({ status }: { status: StatusProcessamento }) {
   switch (status) {
     case "AGUARDANDO":
       return (
-        <Badge variant="outline" className="border-slate-400 bg-slate-100 text-slate-600 dark:bg-slate-900/50 dark:text-slate-400">
+        <Badge variant="outline" className="border-amber-500 bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400">
           Aguardando
         </Badge>
       );
     case "EM_PROCESSAMENTO":
       return (
-        <Badge variant="outline" className="border-blue-500 bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400">
+        <Badge variant="outline" className="border-blue-500 bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
           Em processamento
         </Badge>
       );
     case "PROCESSADO":
       return (
-        <Badge variant="outline" className="border-emerald-500 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400">
+        <Badge variant="outline" className="border-emerald-500 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
           Processado
         </Badge>
       );
@@ -627,7 +626,26 @@ function AusenciasPage() {
                   </button>
                 </TableHead>
                 <TableHead className="text-center">Dias</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="w-[120px]">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger className="flex items-center gap-1 cursor-help">
+                          Status RH <Info className="h-3 w-3 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent>Representa o lançamento da ausência pelo Supervisor/RH.</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableHead>
+                  <TableHead className="w-[140px]">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger className="flex items-center gap-1 cursor-help">
+                          Processamento <Info className="h-3 w-3 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent>Representa o andamento administrativo interno.</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableHead>
                   <TableHead>Processamento</TableHead>
 
                 <TableHead className="text-center">Anexo</TableHead>
@@ -877,15 +895,90 @@ function AusenciasPage() {
                     {formatBRDate(viewing.data_inicio)} — {formatBRDate(viewing.data_fim)} ·{" "}
                     <span className="text-muted-foreground">{viewing.dias} dia(s)</span>
                   </dd>
-                  <dt className="text-muted-foreground">Status</dt>
+                  <dt className="text-muted-foreground">Status RH</dt>
                   <dd className="col-span-2">
                     <StatusBadge status={viewing.status} />
+                  </dd>
+                  <dt className="text-muted-foreground">Processamento</dt>
+                  <dd className="col-span-2">
+                    <ProcessamentoBadge status={viewing.status_processamento} />
                   </dd>
                   <dt className="text-muted-foreground">Motivo</dt>
                   <dd className="col-span-2 whitespace-pre-wrap">{viewing.motivo ?? "—"}</dd>
                   <dt className="text-muted-foreground">Observações</dt>
                   <dd className="col-span-2 whitespace-pre-wrap">{viewing.observacoes ?? "—"}</dd>
+                  {viewing.status_processamento !== "AGUARDANDO" && (
+                    <>
+                      <dt className="text-muted-foreground">Proc. Iniciado</dt>
+                      <dd className="col-span-2">{formatDateTime(viewing.processado_em || (viewing as any).processamento_iniciado_em)}</dd>
+                      <dt className="text-muted-foreground">Responsável</dt>
+                      <dd className="col-span-2">{viewing.processado_por || (viewing as any).responsavel_processamento_nome || "—"}</dd>
+                    </>
+                  )}
+                  {viewing.status_processamento === "PROCESSADO" && (
+                    <>
+                      <dt className="text-muted-foreground">Proc. Concluído</dt>
+                      <dd className="col-span-2">{formatDateTime((viewing as any).processamento_concluido_em)}</dd>
+                    </>
+                  )}
                 </dl>
+              </section>
+              
+              <section>
+                <h4 className="mb-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+                  <HistoryIcon className="h-3.5 w-3.5" /> Timeline de Processamento
+                </h4>
+                <div className="relative pl-6 space-y-6 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-muted">
+                  <div className="relative">
+                    <div className="absolute -left-[23px] top-1.5 h-4 w-4 rounded-full border-2 border-background bg-muted flex items-center justify-center">
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Registrou ausência</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {formatDateTime(viewing.registrado_em)} • {viewing.registrador?.nome || "Supervisor"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {viewing.lancado_em && (
+                    <div className="relative">
+                      <div className="absolute -left-[23px] top-1.5 h-4 w-4 rounded-full border-2 border-background bg-emerald-500" />
+                      <div>
+                        <p className="text-sm font-medium">Status RH: LANÇADO</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {formatDateTime(viewing.lancado_em)} • {viewing.lancador?.nome || "RH"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {viewing.status_processamento !== "AGUARDANDO" && (
+                    <div className="relative">
+                      <div className="absolute -left-[23px] top-1.5 h-4 w-4 rounded-full border-2 border-background bg-blue-500" />
+                      <div>
+                        <p className="text-sm font-medium">Processamento Iniciado</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {formatDateTime(viewing.processado_em || (viewing as any).processamento_iniciado_em)} • {viewing.processado_por || (viewing as any).responsavel_processamento_nome || "Administrativo"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {viewing.status_processamento === "PROCESSADO" && (
+                    <div className="relative">
+                      <div className="absolute -left-[23px] top-1.5 h-4 w-4 rounded-full border-2 border-background bg-emerald-500 flex items-center justify-center">
+                        <Check className="h-2.5 w-2.5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Processamento Concluído</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {formatDateTime((viewing as any).processamento_concluido_em)} • {viewing.processado_por || (viewing as any).responsavel_processamento_nome || "Administrativo"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </section>
               <section>
                 <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
