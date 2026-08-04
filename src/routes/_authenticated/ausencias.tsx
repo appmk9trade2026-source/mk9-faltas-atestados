@@ -13,6 +13,7 @@ import {
 } from "@/lib/ausencia-identidade";
 import {
   ArrowUpDown,
+  Check,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
@@ -20,6 +21,7 @@ import {
   Eye,
   FileText,
   History as HistoryIcon,
+  Info,
   MoreHorizontal,
   Paperclip,
   Pencil,
@@ -58,6 +60,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   AlertDialog,
   AlertDialogAction,
