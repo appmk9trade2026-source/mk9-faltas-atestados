@@ -545,9 +545,12 @@ function AusenciasPage() {
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="all">Todos os status</SelectItem>
                   <SelectItem value="PENDENTE">Pendente</SelectItem>
                   <SelectItem value="LANCADO">Lançado</SelectItem>
+                  <SelectItem value="SUBSTITUIDA">Substituída</SelectItem>
+                  <SelectItem value="CANCELADO">Cancelado</SelectItem>
+
                 </SelectContent>
               </Select>
             </div>
