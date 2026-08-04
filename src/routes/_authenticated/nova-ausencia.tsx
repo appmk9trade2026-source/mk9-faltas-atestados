@@ -1111,8 +1111,8 @@ function NovaAusenciaPage() {
 
     },
     onSuccess: () => {
-      toast.success("Substituição realizada com sucesso.", {
-        description: "A falta anterior foi substituída pelo novo atestado.",
+      toast.success("Ausência lançada com sucesso.", {
+        description: "Registro enviado automaticamente para a Central de Processamento.",
       });
       setConflitoDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ["ausencias"] });
@@ -1240,8 +1240,8 @@ function NovaAusenciaPage() {
             ? "Ausência registrada e colaborador salvo para futuros lançamentos."
             : "Ausência registrada e vinculada ao colaborador existente."
           : "Status inicial: PENDENTE.";
-      toast.success(isEdit ? "Ausência atualizada." : "Ausência registrada.", {
-        description: descricao,
+      toast.success(isEdit ? "Ausência atualizada." : "Ausência lançada com sucesso.", {
+        description: isEdit ? "As alterações foram salvas." : "Registro enviado automaticamente para a Central de Processamento.",
       });
       queryClient.invalidateQueries({ queryKey: ["ausencias"] });
       queryClient.invalidateQueries({ queryKey: ["ausencia", editId] });

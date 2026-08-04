@@ -404,8 +404,10 @@ function CentralProcessamentoPage() {
                       <div className="flex items-center justify-between">
                         <span className="text-xs">Status Atual:</span>
                         <Badge className={cn(
-                          "text-[10px]",
-                          registroSelecionado.status_processamento === "EM_PROCESSAMENTO" ? "bg-blue-600" : "bg-slate-500"
+                          "text-[10px] uppercase font-bold",
+                          registroSelecionado.status_processamento === "AGUARDANDO" ? "bg-amber-500 text-white" : 
+                          registroSelecionado.status_processamento === "EM_PROCESSAMENTO" ? "bg-blue-600 text-white" : 
+                          "bg-emerald-600 text-white"
                         )}>
                           {registroSelecionado.status_processamento.replace(/_/g, " ")}
                         </Badge>

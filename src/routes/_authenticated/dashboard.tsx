@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createFileRoute, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -362,19 +362,23 @@ function DashboardPage() {
       {/* KPIs de Processamento (Fase 2) - Visíveis para RH/Admin */}
       {(roles.includes("super_admin") || roles.includes("rh") || roles.includes("compliance")) && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-
-          <Card className="bg-slate-50/50 dark:bg-slate-900/20 border-slate-200/60 dark:border-slate-800/60">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-2.5 rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
-                <HistoryIcon className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Backlog Administrativo</p>
-                <h3 className="text-xl font-bold">{data?.kpis?.backlog_processamento ?? 0}</h3>
-                <p className="text-[10px] text-muted-foreground">Registros aguardando Charles</p>
-              </div>
-            </CardContent>
-          </Card>
+          <Link 
+            to="/processamento"
+            className="block transition-transform hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <Card className="bg-slate-50/50 dark:bg-slate-900/20 border-slate-200/60 dark:border-slate-800/60">
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="p-2.5 rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                  <HistoryIcon className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Backlog Administrativo</p>
+                  <h3 className="text-xl font-bold">{data?.kpis?.backlog_processamento ?? 0}</h3>
+                  <p className="text-[10px] text-muted-foreground">Registros aguardando processamento</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
           
           <Card className="bg-slate-50/50 dark:bg-slate-900/20 border-slate-200/60 dark:border-slate-800/60">
             <CardContent className="p-4 flex items-center gap-4">
