@@ -4,8 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Play, Check, Eye, Clock, User, Building2, Briefcase, Calendar } from "lucide-react";
 import { AusenciaCardData } from "./types";
 import { getPrioridadeLabel } from "./utils";
-import { formatBRDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+
+function formatBRDate(d: string | null | undefined) {
+  if (!d) return "—";
+  return new Date(d + "T00:00:00").toLocaleDateString("pt-BR");
+}
 
 interface ProcessamentoCardProps {
   data: AusenciaCardData;
