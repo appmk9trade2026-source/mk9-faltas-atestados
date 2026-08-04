@@ -106,7 +106,7 @@ function RoadmapPage() {
         <TabsList className="flex-wrap">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="kanban"><KanbanIcon className="h-3.5 w-3.5 mr-1" />Kanban</TabsTrigger>
-          <TabsTrigger value="lista">Backlog</TabsTrigger>
+          <TabsTrigger value="lista">Trabalho</TabsTrigger>
           <TabsTrigger value="releases"><Rocket className="h-3.5 w-3.5 mr-1" />Releases</TabsTrigger>
           <TabsTrigger value="changelog">Changelog</TabsTrigger>
           <TabsTrigger value="versoes"><FileText className="h-3.5 w-3.5 mr-1" />Versões</TabsTrigger>
