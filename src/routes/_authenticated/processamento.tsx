@@ -107,7 +107,7 @@ function CentralProcessamentoPage() {
           *,
           empresa:empresas(nome),
           projeto:projetos(nome),
-          colaborador:colaboradores(*, supervisor:profiles!supervisor_usuario_id(nome_completo, telefone))
+          colaborador:colaboradores(nome_completo, matricula, email, telefone)
         `)
         .neq("status_processamento", "PROCESSADO")
         .order("registrado_em", { ascending: true });
@@ -124,14 +124,13 @@ function CentralProcessamentoPage() {
           matricula, 
           supervisor_nome,
           email,
-          telefone,
-          whatsapp
+          telefone
         } = resolveAusenciaIdentidade({
           ...row,
           colaborador: row.colaborador ? {
             ...row.colaborador,
-            supervisor_nome: row.colaborador.supervisor?.nome_completo,
-            supervisor_telefone: row.colaborador.supervisor?.telefone
+            supervisor_nome: row.manual_supervisor_nome,
+            supervisor_telefone: null
           } : null
         });
 
@@ -151,18 +150,12 @@ function CentralProcessamentoPage() {
           sla_status: getSlaStatus(registradoEm),
           colaborador_nome: nome || "N/A",
           colaborador_matricula: matricula || "N/A",
-          colaborador_email: email,
-          colaborador_telefone: telefone,
-          colaborador_whatsapp: whatsapp,
           empresa_nome: row.empresa?.nome || "N/A",
           projeto_nome: row.projeto?.nome || "N/A",
           supervisor_nome: supervisor_nome || "N/A",
           origem_registro: row.origem_registro,
           cid: row.cid,
           acidente_trabalho: row.acidente_trabalho_trajeto,
-          registrado_por_nome: row.registrado_por_nome,
-          lancado_em: row.lancado_em,
-          processamento_iniciado_em: row.processamento_iniciado_em,
           status_rh: row.status
         };
         return card;
