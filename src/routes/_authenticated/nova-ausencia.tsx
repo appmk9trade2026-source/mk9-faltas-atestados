@@ -1027,6 +1027,94 @@ function NovaAusenciaPage() {
   // ============= Submit (server functions com hardening RBAC) =============
   const createFn = useServerFn(createAusencia);
   const updateFn = useServerFn(updateAusencia);
+  const checkConflitosFn = useServerFn(checkConflitosAusencia);
+  const substituirFn = useServerFn(substituirAusenciaConflito);
+
+  const substituirMut = useMutation({
+    mutationFn: async (params: { idAntiga: string; values: FormData; motivo: string }) => {
+      // 1. Upload do arquivo se houver (mesma lógica de salvarMut)
+      let arquivo_url: string | null | undefined = undefined;
+      let arquivo_nome: string | null | undefined = undefined;
+      let arquivo_mime: string | null | undefined = undefined;
+      let arquivo_tamanho: number | null | undefined = undefined;
+
+      if (file) {
+        const ext = file.name.split(".").pop() ?? "bin";
+        const path = `ausencias/${params.values.colaborador_id || "manual"}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+        const { error } = await supabase.storage.from(BUCKET_ATESTADOS).upload(path, file);
+        if (error) throw error;
+        arquivo_url = path;
+        arquivo_nome = file.name;
+        arquivo_mime = file.type;
+        arquivo_tamanho = file.size;
+      }
+
+      const isAcidente = tipoSelecionado?.codigo === "ACIDENTE_TRABALHO";
+      
+      const payload = {
+        colaborador_id: params.values.colaborador_id || null,
+        empresa_id: params.values.modo_manual ? params.values.empresa_id : colab?.empresa_id,
+        projeto_id: params.values.modo_manual ? params.values.projeto_id : colab?.projeto_id,
+        origem_registro: params.values.modo_manual ? "MANUAL" : "AUTOMATICO",
+        tipo_ausencia_id: params.values.tipo_ausencia_id,
+        opcao_periodo_id: params.values.opcao_periodo_id,
+        data_inicio: params.values.data_inicio,
+        data_fim: dataFim,
+        localidade: params.values.localidade,
+        loja_codigo_nome: params.values.loja_codigo_nome,
+        cid: params.values.cid?.toUpperCase() || null,
+        acidente_trabalho_trajeto: params.values.acidente_trabalho_trajeto === "sim",
+        motivo: params.values.motivo,
+        arquivo_url,
+        arquivo_nome,
+        arquivo_mime,
+        arquivo_tamanho,
+        tipo: tipoBaseFromDetalhe(tipoSelecionado?.codigo || ""),
+        ...(isAcidente ? {
+          acidente_data: acidenteData,
+          acidente_hora: acidenteHora,
+          acidente_local: acidenteLocal,
+          acidente_descricao: acidenteDescricao,
+          acidente_atendimento_medico: acidenteAtendMedico,
+          acidente_houve_afastamento: acidenteAfastamento,
+          acidente_dias_afastamento_inicial: parseInt(acidenteDiasAfast) || 0,
+          acidente_cat_emitida: acidenteCatEmitida,
+          acidente_observacoes: acidenteObs,
+        } : {}),
+        // Campos manuais se necessário
+        ...(params.values.modo_manual ? {
+          manual_nome: params.values.manual_nome,
+          manual_matricula: params.values.manual_matricula,
+          manual_telefone: params.values.manual_telefone,
+          manual_whatsapp: params.values.manual_whatsapp,
+          manual_email: params.values.manual_email,
+          manual_supervisor_nome: params.values.manual_supervisor_nome,
+          manual_supervisor_telefone: params.values.manual_supervisor_telefone,
+          manual_supervisor_usuario_id: params.values.manual_supervisor_usuario_id || null,
+        } : {})
+      };
+
+      return substituirFn({
+        ausencia_id_antiga: params.idAntiga,
+        dados_nova_ausencia: payload,
+        motivo_substituicao: params.motivo,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Substituição realizada com sucesso.", {
+        description: "A falta anterior foi substituída pelo novo atestado.",
+      });
+      setConflitoDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["ausencias"] });
+      navigate({ to: "/ausencias" });
+    },
+    onError: (err) => {
+      toast.error("Falha ao realizar substituição.", {
+        description: err instanceof Error ? err.message : "Erro desconhecido",
+      });
+    }
+  });
+
 
   const salvarMut = useMutation({
     mutationFn: async (values: FormData) => {
