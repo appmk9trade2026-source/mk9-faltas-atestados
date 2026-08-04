@@ -134,30 +134,34 @@ function CentralProcessamentoPage() {
           } : null
         });
 
-        const card: AusenciaCardData = {
-          id: row.id,
-          protocolo: row.protocolo,
-          tipo: row.tipo_ausencia_nome || row.tipo,
-          motivo: row.motivo,
-          data_inicio: row.data_inicio,
-          data_fim: row.data_fim,
-          registrado_em: row.registrado_em,
-          status_processamento: row.status_processamento as StatusProcessamento,
-          responsavel_processamento_id: row.responsavel_processamento_id,
-          responsavel_processamento_nome: row.responsavel_processamento_nome,
-          prioridade: calcularPrioridade(registradoEm),
-          tempo_aguardando: aguardando,
-          sla_status: getSlaStatus(registradoEm),
-          colaborador_nome: nome || "N/A",
-          colaborador_matricula: matricula || "N/A",
-          empresa_nome: row.empresa?.nome || "N/A",
-          projeto_nome: row.projeto?.nome || "N/A",
-          supervisor_nome: supervisor_nome || "N/A",
-          origem_registro: row.origem_registro,
-          cid: row.cid,
-          acidente_trabalho: row.acidente_trabalho_trajeto,
-          status_rh: row.status
-        };
+          const card: AusenciaCardData = {
+            id: row.id,
+            protocolo: row.protocolo,
+            tipo: row.tipo_ausencia_nome || row.tipo,
+            motivo: row.motivo,
+            data_inicio: row.data_inicio,
+            data_fim: row.data_fim,
+            dias: row.dias,
+            registrado_em: row.registrado_em,
+            lancado_em: row.lancado_em,
+            processamento_iniciado_em: row.processamento_iniciado_em,
+            processamento_concluido_em: row.processamento_concluido_em,
+            status_processamento: row.status_processamento as StatusProcessamento,
+            responsavel_processamento_id: row.responsavel_processamento_id,
+            responsavel_processamento_nome: row.responsavel_processamento_nome,
+            prioridade: calcularPrioridade(registradoEm),
+            tempo_aguardando: aguardando,
+            sla_status: getSlaStatus(registradoEm),
+            colaborador_nome: nome || "N/A",
+            colaborador_matricula: matricula || "N/A",
+            empresa_nome: row.empresa?.nome || "N/A",
+            projeto_nome: row.projeto?.nome || "N/A",
+            supervisor_nome: supervisor_nome || "N/A",
+            origem_registro: row.origem_registro,
+            cid: row.cid,
+            acidente_trabalho: row.acidente_trabalho_trajeto,
+            status_rh: row.status
+          };
         return card;
       });
     }
