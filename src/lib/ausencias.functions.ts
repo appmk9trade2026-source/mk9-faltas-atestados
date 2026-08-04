@@ -696,11 +696,10 @@ export const processarAusenciaInterno = createServerFn({ method: "POST" })
     });
 
     if (error) {
-       // Reutiliza o mapeamento de erro existente
-       const { DatabaseError } = await import("./ausencias.functions");
        throw error; 
     }
 
     return { success: true };
   });
+
 
