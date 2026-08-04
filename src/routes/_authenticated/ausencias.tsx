@@ -634,27 +634,26 @@ function AusenciasPage() {
                   </button>
                 </TableHead>
                 <TableHead className="text-center">Dias</TableHead>
-                  <TableHead className="w-[120px]">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger className="flex items-center gap-1 cursor-help">
-                          Status RH <Info className="h-3 w-3 text-muted-foreground" />
-                        </TooltipTrigger>
-                        <TooltipContent>Representa o lançamento da ausência pelo Supervisor/RH.</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </TableHead>
-                  <TableHead className="w-[140px]">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger className="flex items-center gap-1 cursor-help">
-                          Processamento <Info className="h-3 w-3 text-muted-foreground" />
-                        </TooltipTrigger>
-                        <TooltipContent>Representa o andamento administrativo interno.</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </TableHead>
-                  <TableHead>Processamento</TableHead>
+                <TableHead className="w-[120px]">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger className="flex items-center gap-1 cursor-help">
+                        Status RH <Info className="h-3 w-3 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>Representa o lançamento da ausência pelo Supervisor/RH.</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </TableHead>
+                <TableHead className="w-[140px]">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger className="flex items-center gap-1 cursor-help">
+                        Processamento <Info className="h-3 w-3 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>Representa o andamento administrativo interno.</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </TableHead>
 
                 <TableHead className="text-center">Anexo</TableHead>
                 <TableHead className="hidden xl:table-cell">Registrado por</TableHead>
