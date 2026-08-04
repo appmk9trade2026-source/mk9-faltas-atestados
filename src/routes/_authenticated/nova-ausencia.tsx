@@ -1402,13 +1402,14 @@ function NovaAusenciaPage() {
                           data: {
                             colaborador_id: v.modo_manual ? null : v.colaborador_id,
                             data_inicio: v.data_inicio,
-                            data_fim: dataFim,
+                            data_fim: dataFim || v.data_inicio,
                             tipo: tipo as any,
                             origem_registro: v.modo_manual ? "MANUAL" : "AUTOMATICO",
                             manual_matricula: v.modo_manual ? v.manual_matricula : null,
                             empresa_id: v.modo_manual ? v.empresa_id : null,
                           }
                         });
+
 
                         if (confs && confs.length > 0) {
                           setConflitos(confs);
