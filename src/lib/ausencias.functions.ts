@@ -660,7 +660,8 @@ export const alterarStatusAusencia = createServerFn({ method: "POST" })
     await audit(context.supabase, "AUSENCIA_STATUS_ALTERADO", data.id, gate.correlationId,
       { status: current.status }, { status: data.status },
       `status: ${current.status} → ${data.status}`,
-      gate.empresaId, gate.projetoId,
+      gate.empresaId ?? undefined, gate.projetoId ?? undefined,
+
     );
     return { ok: true, correlation_id: gate.correlationId };
   });
