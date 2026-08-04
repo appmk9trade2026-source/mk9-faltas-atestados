@@ -931,14 +931,40 @@ function AusenciasPage() {
                 </dl>
               </section>
               
+              <section className="rounded-lg border bg-muted/30 p-4">
+                <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                  <RefreshCcw className="h-3.5 w-3.5" /> Processamento Administrativo
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-muted-foreground uppercase font-medium">Status Atual</p>
+                    <ProcessamentoBadge status={viewing.status_processamento} />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-muted-foreground uppercase font-medium">Responsável</p>
+                    <p className="text-sm font-semibold">{viewing.processado_por || (viewing as any).responsavel_processamento_nome || "—"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-muted-foreground uppercase font-medium">Iniciado em</p>
+                    <p className="text-sm">{formatDateTime(viewing.processado_em || (viewing as any).processamento_iniciado_em)}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-muted-foreground uppercase font-medium">Tempo aguardando</p>
+                    <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                      {Math.max(0, Math.floor((new Date().getTime() - new Date(viewing.registrado_em).getTime()) / (1000 * 60 * 60 * 24)))} dias
+                    </p>
+                  </div>
+                </div>
+              </section>
+
               <section>
                 <h4 className="mb-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-                  <HistoryIcon className="h-3.5 w-3.5" /> Timeline de Processamento
+                  <HistoryIcon className="h-3.5 w-3.5" /> Timeline de Eventos
                 </h4>
                 <div className="relative pl-6 space-y-6 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-muted">
                   <div className="relative">
-                    <div className="absolute -left-[23px] top-1.5 h-4 w-4 rounded-full border-2 border-background bg-muted flex items-center justify-center">
-                      <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    <div className="absolute -left-[23px] top-1.5 h-4 w-4 rounded-full border-2 border-background bg-slate-200 flex items-center justify-center">
+                      <div className="h-1.5 w-1.5 rounded-full bg-slate-500" />
                     </div>
                     <div>
                       <p className="text-sm font-medium">Registrou ausência</p>
@@ -950,7 +976,9 @@ function AusenciasPage() {
 
                   {viewing.lancado_em && (
                     <div className="relative">
-                      <div className="absolute -left-[23px] top-1.5 h-4 w-4 rounded-full border-2 border-background bg-emerald-500" />
+                      <div className="absolute -left-[23px] top-1.5 h-4 w-4 rounded-full border-2 border-background bg-emerald-100 flex items-center justify-center">
+                        <CheckCircle2 className="h-2.5 w-2.5 text-emerald-600" />
+                      </div>
                       <div>
                         <p className="text-sm font-medium">Status RH: LANÇADO</p>
                         <p className="text-[10px] text-muted-foreground">
@@ -962,7 +990,9 @@ function AusenciasPage() {
 
                   {viewing.status_processamento !== "AGUARDANDO" && (
                     <div className="relative">
-                      <div className="absolute -left-[23px] top-1.5 h-4 w-4 rounded-full border-2 border-background bg-blue-500" />
+                      <div className="absolute -left-[23px] top-1.5 h-4 w-4 rounded-full border-2 border-background bg-blue-100 flex items-center justify-center">
+                        <RefreshCcw className="h-2.5 w-2.5 text-blue-600" />
+                      </div>
                       <div>
                         <p className="text-sm font-medium">Processamento Iniciado</p>
                         <p className="text-[10px] text-muted-foreground">
@@ -987,9 +1017,10 @@ function AusenciasPage() {
                   )}
                 </div>
               </section>
+
               <section>
                 <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Histórico
+                  Registro Original
                 </h4>
                 <dl className="grid grid-cols-3 gap-2">
                   <dt className="text-muted-foreground">Registrado por</dt>
@@ -1017,7 +1048,6 @@ function AusenciasPage() {
                     </>
                   )}
                 </dl>
-
               </section>
               <section>
                 <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
