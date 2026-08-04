@@ -784,14 +784,15 @@ export const checkConflitosAusencia = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { data: conflitos, error } = await context.supabase.rpc("detectar_conflitos_ausencia", {
-      _colaborador_id: data.colaborador_id ?? null,
+      _colaborador_id: data.colaborador_id || null,
       _data_inicio: data.data_inicio,
       _data_fim: data.data_fim,
       _tipo: data.tipo as any,
       _origem_registro: data.origem_registro,
-      _manual_matricula: data.manual_matricula ?? null,
-      _empresa_id: data.empresa_id ?? null,
-    });
+      _manual_matricula: data.manual_matricula || null,
+      _empresa_id: data.empresa_id || null,
+    } as any);
+
 
     if (error) throw error;
     return (conflitos || []) as Array<{
