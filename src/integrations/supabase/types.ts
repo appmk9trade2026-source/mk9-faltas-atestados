@@ -4630,6 +4630,28 @@ export type Database = {
           total_exec_time_ms: number
         }[]
       }
+      detectar_conflitos_ausencia: {
+        Args: {
+          _colaborador_id: string
+          _data_fim: string
+          _data_inicio: string
+          _empresa_id?: string
+          _manual_matricula?: string
+          _origem_registro?: string
+          _tipo: Database["public"]["Enums"]["tipo_ausencia"]
+        }
+        Returns: {
+          data_fim: string
+          data_inicio: string
+          id: string
+          protocolo: string
+          registrado_em: string
+          registrado_por: string
+          registrado_por_nome: string
+          status: Database["public"]["Enums"]["status_ausencia"]
+          tipo: Database["public"]["Enums"]["tipo_ausencia"]
+        }[]
+      }
       diagnose_projetos_duplicados: { Args: never; Returns: Json }
       gen_projeto_codigo_protocolo: {
         Args: { _empresa_id: string; _exclude_id?: string; _nome: string }
@@ -4643,6 +4665,18 @@ export type Database = {
       gerar_protocolo_ausencia: {
         Args: { p_data: string; p_projeto_id: string }
         Returns: string
+      }
+      get_ausencia_conversoes_stats: {
+        Args: {
+          _data_fim: string
+          _data_inicio: string
+          _empresa_id?: string
+          _projeto_id?: string
+        }
+        Returns: {
+          tempo_medio_conversao_horas: number
+          total_conversoes: number
+        }[]
       }
       get_colaboradores_ativos: {
         Args: { _busca?: string; _empresa_id?: string; _projeto_id?: string }
@@ -5181,6 +5215,14 @@ export type Database = {
         }[]
       }
       simular_regras_escalonamento: { Args: { p_evento: Json }; Returns: Json }
+      substituir_ausencia_conflito: {
+        Args: {
+          _ausencia_id_antiga: string
+          _dados_nova_ausencia: Json
+          _motivo_substituicao: string
+        }
+        Returns: string
+      }
       supervisor_has_projeto_via_equipe: {
         Args: { _projeto_id: string; _user_id: string }
         Returns: boolean
