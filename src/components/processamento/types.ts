@@ -16,10 +16,14 @@ export interface AusenciaCardData {
   motivo: string | null;
   data_inicio: string;
   data_fim: string;
+  dias: number;
   registrado_em: string;
+  lancado_em: string | null;
   status_processamento: StatusProcessamento;
   responsavel_processamento_id: string | null;
   responsavel_processamento_nome: string | null;
+  processamento_iniciado_em: string | null;
+  processamento_concluido_em: string | null;
   prioridade: "NORMAL" | "ATENCAO" | "CRITICO";
   tempo_aguardando: number;
   sla_status: "DENTRO" | "ATENCAO" | "FORA";

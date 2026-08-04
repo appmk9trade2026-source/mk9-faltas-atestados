@@ -1,4 +1,4 @@
-import { differenceInDays } from "date-fns";
+import { differenceInDays, isToday, isYesterday, subHours } from "date-fns";
 
 export function calcularPrioridade(registradoEm: string): "NORMAL" | "ATENCAO" | "CRITICO" {
   const dias = differenceInDays(new Date(), new Date(registradoEm));
@@ -20,4 +20,12 @@ export function getPrioridadeLabel(p: "NORMAL" | "ATENCAO" | "CRITICO") {
     case "ATENCAO": return { label: "Atenção", color: "text-amber-600 bg-amber-50 dark:bg-amber-900/20 border-amber-200", icon: "🟡" };
     default: return { label: "Normal", color: "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200", icon: "🟢" };
   }
+}
+
+export function getSlaColor(registradoEm: string) {
+  const dias = differenceInDays(new Date(), new Date(registradoEm));
+  if (dias >= 4) return "bg-red-500 text-white"; // Fora SLA
+  if (dias >= 3) return "bg-orange-500 text-white"; // Vence hoje
+  if (dias >= 2) return "bg-amber-400 text-black"; // Até 24h
+  return "bg-emerald-500 text-white"; // Dentro SLA
 }
