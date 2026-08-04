@@ -7,7 +7,7 @@ import {
   Activity, AlertTriangle, ArrowDown, ArrowUp, Ban, BriefcaseMedical,
   Calendar as CalendarIcon, CheckCircle2, ClipboardList, Clock, Download,
   FileText, LayoutDashboard, Lightbulb, MessageSquare, RefreshCw, ShieldAlert,
-  TrendingDown, TrendingUp, Trophy, Truck, UserRound, Users, X,
+  TrendingDown, TrendingUp, Trophy, Truck, UserRound, Users, X, History as HistoryIcon
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/hooks/use-session";
 import { fetchCategorias, CATEGORIA_CORES, type Categoria } from "@/lib/categorias";
 import { useSessionScope } from "@/hooks/use-session-scope";
 import { SupervisorEmptyState } from "@/components/supervisor-empty-state";
@@ -83,6 +84,9 @@ type Kpis = {
   tempo_medio_lanc_h: number;
   colaboradores_ativos: number;
   comunicacoes_enviadas: number;
+  backlog_processamento: number;
+  processados_hoje: number;
+  tempo_medio_processamento_h: number;
 };
 type DashboardData = {
   periodo: { inicio: string; fim: string; prev_inicio: string; prev_fim: string };
@@ -140,6 +144,7 @@ function delta(curr: number, prev: number): { pct: number; up: boolean } {
 function DashboardPage() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const scope = useSessionScope();
+  const { roles } = useSession();
   const [filters, setFilters] = useState<Filters>(() => {
     const r = presetRange("30d");
     return { preset: "30d", inicio: r.i, fim: r.f };
@@ -331,6 +336,51 @@ function DashboardPage() {
           description="Nenhum colaborador está vinculado ao seu usuário. Solicite ao RH ou Super Admin a atribuição administrativa para que os indicadores comecem a aparecer."
         />
       )}
+      
+      {/* KPIs de Processamento (Fase 2) - Visíveis para RH/Admin */}
+      {(roles.includes("super_admin") || roles.includes("rh") || roles.includes("compliance")) && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card className="bg-slate-50/50 dark:bg-slate-900/20 border-slate-200/60 dark:border-slate-800/60">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="p-2.5 rounded-xl bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                <HistoryIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Backlog Administrativo</p>
+                <h3 className="text-xl font-bold">{data?.kpis?.backlog_processamento ?? 0}</h3>
+                <p className="text-[10px] text-muted-foreground">Registros aguardando Charles</p>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-slate-50/50 dark:bg-slate-900/20 border-slate-200/60 dark:border-slate-800/60">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="p-2.5 rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Processados Hoje</p>
+                <h3 className="text-xl font-bold">{data?.kpis?.processados_hoje ?? 0}</h3>
+                <p className="text-[10px] text-muted-foreground">Concluídos pela Central</p>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-slate-50/50 dark:bg-slate-900/20 border-slate-200/60 dark:border-slate-800/60">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="p-2.5 rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                <Clock className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Tempo Médio Proc.</p>
+                <h3 className="text-xl font-bold">{(data?.kpis?.tempo_medio_processamento_h ?? 0).toFixed(1)}h</h3>
+                <p className="text-[10px] text-muted-foreground">Média de conclusão administrativa</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* ---- Filters bar */}
       <Card className="p-4">
         <div className="flex flex-wrap items-end gap-3">

@@ -18,6 +18,7 @@ import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedSaudeRouteImport } from './routes/_authenticated/saude'
 import { Route as AuthenticatedRoadmapRouteImport } from './routes/_authenticated/roadmap'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
+import { Route as AuthenticatedProcessamentoRouteImport } from './routes/_authenticated/processamento'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedPainelRhRouteImport } from './routes/_authenticated/painel-rh'
 import { Route as AuthenticatedOperacoesRouteImport } from './routes/_authenticated/operacoes'
@@ -123,6 +124,12 @@ const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
   path: '/relatorios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProcessamentoRoute =
+  AuthenticatedProcessamentoRouteImport.update({
+    id: '/processamento',
+    path: '/processamento',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
@@ -500,6 +507,7 @@ export interface FileRoutesByFullPath {
   '/operacoes': typeof AuthenticatedOperacoesRoute
   '/painel-rh': typeof AuthenticatedPainelRhRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/processamento': typeof AuthenticatedProcessamentoRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/roadmap': typeof AuthenticatedRoadmapRoute
   '/saude': typeof AuthenticatedSaudeRoute
@@ -569,6 +577,7 @@ export interface FileRoutesByTo {
   '/operacoes': typeof AuthenticatedOperacoesRoute
   '/painel-rh': typeof AuthenticatedPainelRhRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/processamento': typeof AuthenticatedProcessamentoRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/roadmap': typeof AuthenticatedRoadmapRoute
   '/saude': typeof AuthenticatedSaudeRoute
@@ -640,6 +649,7 @@ export interface FileRoutesById {
   '/_authenticated/operacoes': typeof AuthenticatedOperacoesRoute
   '/_authenticated/painel-rh': typeof AuthenticatedPainelRhRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/_authenticated/processamento': typeof AuthenticatedProcessamentoRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/roadmap': typeof AuthenticatedRoadmapRoute
   '/_authenticated/saude': typeof AuthenticatedSaudeRoute
@@ -712,6 +722,7 @@ export interface FileRouteTypes {
     | '/operacoes'
     | '/painel-rh'
     | '/perfil'
+    | '/processamento'
     | '/relatorios'
     | '/roadmap'
     | '/saude'
@@ -781,6 +792,7 @@ export interface FileRouteTypes {
     | '/operacoes'
     | '/painel-rh'
     | '/perfil'
+    | '/processamento'
     | '/relatorios'
     | '/roadmap'
     | '/saude'
@@ -851,6 +863,7 @@ export interface FileRouteTypes {
     | '/_authenticated/operacoes'
     | '/_authenticated/painel-rh'
     | '/_authenticated/perfil'
+    | '/_authenticated/processamento'
     | '/_authenticated/relatorios'
     | '/_authenticated/roadmap'
     | '/_authenticated/saude'
@@ -968,6 +981,13 @@ declare module '@tanstack/react-router' {
       path: '/relatorios'
       fullPath: '/relatorios'
       preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/processamento': {
+      id: '/_authenticated/processamento'
+      path: '/processamento'
+      fullPath: '/processamento'
+      preLoaderRoute: typeof AuthenticatedProcessamentoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/perfil': {
@@ -1547,6 +1567,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOperacoesRoute: typeof AuthenticatedOperacoesRoute
   AuthenticatedPainelRhRoute: typeof AuthenticatedPainelRhRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
+  AuthenticatedProcessamentoRoute: typeof AuthenticatedProcessamentoRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedRoadmapRoute: typeof AuthenticatedRoadmapRoute
   AuthenticatedSaudeRoute: typeof AuthenticatedSaudeRoute
@@ -1588,6 +1609,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOperacoesRoute: AuthenticatedOperacoesRoute,
   AuthenticatedPainelRhRoute: AuthenticatedPainelRhRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
+  AuthenticatedProcessamentoRoute: AuthenticatedProcessamentoRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedRoadmapRoute: AuthenticatedRoadmapRoute,
   AuthenticatedSaudeRoute: AuthenticatedSaudeRoute,
@@ -1632,13 +1654,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

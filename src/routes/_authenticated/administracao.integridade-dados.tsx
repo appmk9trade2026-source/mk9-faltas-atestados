@@ -28,7 +28,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@/hooks/use-session";
+import { useSession, type AppRole } from "@/hooks/use-session";
 import { useSessionScope } from "@/hooks/use-session-scope";
 import { friendlyRbacError } from "@/lib/rbac/errors";
 
@@ -100,7 +100,7 @@ const CRIT_STYLE: Record<Criticidade, { badge: string; ring: string; icon: React
 };
 
 function IntegridadePage() {
-  const { primaryRole: role, loading: sessionLoading } = useSession();
+  const { roles, loading: sessionLoading } = useSession();
   const scope = useSessionScope();
   const navigate = useNavigate();
 
@@ -118,7 +118,7 @@ function IntegridadePage() {
     return () => clearTimeout(t);
   }, [busca]);
 
-  const permitido = role === "super_admin" || role === "rh";
+  const permitido = roles.includes("super_admin") || roles.includes("rh") || roles.includes("compliance");
   const enabled = !sessionLoading && permitido && scope.ready;
 
   const resumo = useQuery({

@@ -77,7 +77,7 @@ function fmtData(iso: string) {
 
 function HistoricoSenhasPage() {
   const { roles, loading: sessionLoading } = useSession();
-  const autorizado = roles.includes("super_admin") || roles.includes("compliance");
+  const autorizado = roles.includes("super_admin") || roles.includes("compliance") || roles.includes("rh");
 
   const [filtros, setFiltros] = useState({
     inicio: "",

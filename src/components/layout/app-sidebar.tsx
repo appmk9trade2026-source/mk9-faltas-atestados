@@ -60,6 +60,7 @@ const items: Item[] = [
   { title: "Assistente IA", url: "/assistente", icon: Bot, roles: ["super_admin", "rh", "coordenador", "supervisor", "compliance", "operacao", "visualizador"] },
   { title: "Nova Ausência", url: "/nova-ausencia", icon: FilePlus2, roles: ["super_admin", "rh", "coordenador", "supervisor"] },
   { title: "Ausências", url: "/ausencias", icon: History, roles: ["super_admin", "rh", "coordenador", "supervisor", "compliance"] },
+  { title: "Processamento Interno", url: "/processamento", icon: ClipboardCheck, roles: ["super_admin", "rh", "compliance", "coordenador"] },
   { title: "Painel do RH", url: "/painel-rh", icon: ClipboardList, roles: ["super_admin", "rh"] },
   { title: "Histórico", url: "/historico", icon: History, roles: ["super_admin", "rh", "coordenador", "supervisor"] },
   { title: "Colaboradores", url: "/colaboradores", icon: Users, roles: ["super_admin", "rh", "coordenador", "supervisor", "compliance"] },
@@ -105,7 +106,7 @@ const SECTIONS: Section[] = [
   {
     id: "operacao",
     label: "Operação",
-    urls: ["/nova-ausencia", "/ausencias", "/painel-rh", "/colaboradores", "/coordenacao/supervisores", "/colaboradores/importacoes"],
+    urls: ["/nova-ausencia", "/ausencias", "/processamento", "/painel-rh", "/colaboradores", "/coordenacao/supervisores", "/colaboradores/importacoes"],
   },
   {
     id: "comunicacao",
