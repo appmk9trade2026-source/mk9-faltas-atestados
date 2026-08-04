@@ -22,7 +22,9 @@ import {
   AlertCircle,
   TrendingUp,
   History,
-  AlertTriangle
+  AlertTriangle,
+  UserRound,
+  Play
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
