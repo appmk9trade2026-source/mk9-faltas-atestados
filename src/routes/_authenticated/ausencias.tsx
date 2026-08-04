@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { alterarStatusAusencia } from "@/lib/ausencias.functions";
+import { alterarStatusAusencia, processarAusenciaInterno } from "@/lib/ausencias.functions";
+
 import { friendlyRbacError } from "@/lib/rbac/errors";
 import {
   identidadeBuscaTexto,
@@ -84,8 +85,10 @@ import {
   TIPO_LABEL,
   getSignedAtestadoUrl,
   type StatusAusencia,
+  type StatusProcessamento,
   type TipoAusencia,
 } from "@/lib/ausencias";
+
 
 export const Route = createFileRoute("/_authenticated/ausencias")({
   head: () => ({ meta: [{ title: "Ausências · CRM MK9" }] }),
@@ -119,6 +122,10 @@ type Ausencia = {
   lancado_em: string | null;
   created_at: string;
   updated_at: string;
+  status_processamento: StatusProcessamento;
+  processado_por: string | null;
+  processado_em: string | null;
+  observacao_processamento: string | null;
   retificada?: boolean | null;
   retificada_em?: string | null;
   retificacoes_count?: number | null;
@@ -127,6 +134,7 @@ type Ausencia = {
   opcao_periodo_id?: string | null;
   opcao_periodo_nome?: string | null;
   cid?: string | null;
+
 
   empresa?: { nome: string } | null;
   projeto?: { nome: string } | null;
@@ -182,6 +190,32 @@ function StatusBadge({ status }: { status: StatusAusencia }) {
   );
 }
 
+function ProcessamentoBadge({ status }: { status: StatusProcessamento }) {
+  switch (status) {
+    case "AGUARDANDO":
+      return (
+        <Badge variant="outline" className="border-slate-400 bg-slate-100 text-slate-600 dark:bg-slate-900/50 dark:text-slate-400">
+          Aguardando
+        </Badge>
+      );
+    case "EM_PROCESSAMENTO":
+      return (
+        <Badge variant="outline" className="border-blue-500 bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400">
+          Em processamento
+        </Badge>
+      );
+    case "PROCESSADO":
+      return (
+        <Badge variant="outline" className="border-emerald-500 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400">
+          Processado
+        </Badge>
+      );
+    default:
+      return <Badge variant="outline">{status}</Badge>;
+  }
+}
+
+
 function AusenciasPage() {
   const { roles } = useSession();
   const scope = useSessionScope();
@@ -195,6 +229,8 @@ function AusenciasPage() {
   const [projetoFiltro, setProjetoFiltro] = useState<string>("all");
   const [tipoFiltro, setTipoFiltro] = useState<string>("all");
   const [statusFiltro, setStatusFiltro] = useState<string>("all");
+  const [processamentoFiltro, setProcessamentoFiltro] = useState<string>("all");
+
   const [periodoIni, setPeriodoIni] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
   const [sortBy, setSortBy] = useState<"data_inicio" | "created_at" | "colaborador">("data_inicio");
@@ -210,6 +246,9 @@ function AusenciasPage() {
     podeIgnorarPrazo || roles.includes("supervisor") || roles.includes("coordenador");
   const podeVerCid =
     roles.includes("super_admin") || roles.includes("rh") || roles.includes("compliance");
+  const podeProcessarInterno =
+    roles.includes("super_admin") || roles.includes("rh") || roles.includes("compliance");
+
 
   const empresasQ = useQuery({
     queryKey: ["empresas", "todas", ...scope.keyParts],
@@ -296,6 +335,8 @@ function AusenciasPage() {
     if (projetoFiltro !== "all") list = list.filter((a) => a.projeto_id === projetoFiltro);
     if (tipoFiltro !== "all") list = list.filter((a) => a.tipo === tipoFiltro);
     if (statusFiltro !== "all") list = list.filter((a) => a.status === statusFiltro);
+    if (processamentoFiltro !== "all") list = list.filter((a) => a.status_processamento === processamentoFiltro);
+
     if (periodoIni) list = list.filter((a) => a.data_fim >= periodoIni);
     if (periodoFim) list = list.filter((a) => a.data_inicio <= periodoFim);
 
@@ -352,6 +393,23 @@ function AusenciasPage() {
       setConfirmLancar(null);
     },
   });
+  
+  const processarInternoFn = useServerFn(processarAusenciaInterno);
+  const processarMut = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: StatusProcessamento }) => {
+      await processarInternoFn({ data: { ausencia_id: id, novo_status: status } });
+    },
+    onSuccess: (_, variables) => {
+      const msg = variables.status === "EM_PROCESSAMENTO" ? "Processamento iniciado." : "Processamento concluído.";
+      toast.success(msg);
+      queryClient.invalidateQueries({ queryKey: ["ausencias"] });
+    },
+    onError: (err: unknown) => {
+      const friendly = friendlyRbacError(err);
+      toast.error(friendly.title, { description: friendly.description });
+    },
+  });
+
 
   async function baixarAnexo(row: Ausencia) {
     if (!row.arquivo_url) return;
@@ -473,8 +531,23 @@ function AusenciasPage() {
                   <SelectItem value="LANCADO">Lançado</SelectItem>
                 </SelectContent>
               </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+              <Select value={processamentoFiltro} onValueChange={(v) => { setProcessamentoFiltro(v); setPage(1); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Status de Processamento" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Processamentos</SelectItem>
+                  <SelectItem value="AGUARDANDO">Aguardando</SelectItem>
+                  <SelectItem value="EM_PROCESSAMENTO">Em processamento</SelectItem>
+                  <SelectItem value="PROCESSADO">Processado</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
+
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <label className="text-xs text-muted-foreground">Período:</label>
             <Input
@@ -530,7 +603,9 @@ function AusenciasPage() {
                   </button>
                 </TableHead>
                 <TableHead className="text-center">Dias</TableHead>
-                <TableHead>Status</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Processamento</TableHead>
+
                 <TableHead className="text-center">Anexo</TableHead>
                 <TableHead className="hidden xl:table-cell">Registrado por</TableHead>
                 <TableHead className="hidden lg:table-cell">
@@ -629,9 +704,13 @@ function AusenciasPage() {
                     {formatBRDate(row.data_inicio)} — {formatBRDate(row.data_fim)}
                   </TableCell>
                   <TableCell className="text-center">{row.dias}</TableCell>
-                  <TableCell>
-                    <StatusBadge status={row.status} />
-                  </TableCell>
+                      <TableCell>
+                        <StatusBadge status={row.status} />
+                      </TableCell>
+                      <TableCell>
+                        <ProcessamentoBadge status={row.status_processamento} />
+                      </TableCell>
+
                   <TableCell className="text-center">
                     {row.possui_anexo ? (
                       <Button
