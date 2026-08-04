@@ -6,7 +6,12 @@ export type TipoAusencia = (typeof TIPO_AUSENCIA)[number];
 export const STATUS_AUSENCIA = ["PENDENTE", "LANCADO"] as const;
 export type StatusAusencia = (typeof STATUS_AUSENCIA)[number];
 
+
+export const STATUS_PROCESSAMENTO = ["AGUARDANDO", "EM_PROCESSAMENTO", "PROCESSADO"] as const;
+export type StatusProcessamento = (typeof STATUS_PROCESSAMENTO)[number];
+
 export const TIPO_LABEL: Record<TipoAusencia, string> = {
+
   FALTA: "Falta",
   ATESTADO: "Atestado",
   DECLARACAO: "Declaração",
