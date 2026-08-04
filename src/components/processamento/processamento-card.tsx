@@ -80,12 +80,16 @@ export function ProcessamentoCard({
 
           <div className="flex items-center justify-between border-t pt-3 mt-1">
             <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground bg-muted/50 p-1.5 rounded">
                 <Clock className="h-3 w-3" />
-                <span>Aguardando há {data.tempo_aguardando} dias</span>
+                <span>Aguardando há <span className="font-bold">{data.tempo_aguardando} dias</span></span>
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-1">
+                <Calendar className="h-3 w-3" />
+                <span>Lançado em: {new Date(data.registrado_em).toLocaleDateString("pt-BR")}</span>
               </div>
               {data.responsavel_processamento_nome && (
-                <div className="flex items-center gap-1.5 text-[10px] font-medium text-primary">
+                <div className="flex items-center gap-1.5 text-[10px] font-medium text-blue-600 dark:text-blue-400 mt-1">
                   <User className="h-3 w-3" />
                   <span>Resp: {data.responsavel_processamento_nome}</span>
                 </div>

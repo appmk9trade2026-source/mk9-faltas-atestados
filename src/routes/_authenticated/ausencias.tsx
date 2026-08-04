@@ -754,12 +754,12 @@ function AusenciasPage() {
                     {formatBRDate(row.data_inicio)} — {formatBRDate(row.data_fim)}
                   </TableCell>
                   <TableCell className="text-center">{row.dias}</TableCell>
-                      <TableCell>
-                        <StatusBadge status={row.status} />
-                      </TableCell>
-                      <TableCell>
-                        <ProcessamentoBadge status={row.status_processamento} />
-                      </TableCell>
+                  <TableCell>
+                    <StatusBadge status={row.status} />
+                  </TableCell>
+                  <TableCell>
+                    <ProcessamentoBadge status={row.status_processamento} />
+                  </TableCell>
 
                   <TableCell className="text-center">
                     {row.possui_anexo ? (
