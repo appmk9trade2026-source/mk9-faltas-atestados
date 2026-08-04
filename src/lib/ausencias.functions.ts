@@ -711,7 +711,7 @@ export const processarAusenciaInterno = createServerFn({ method: "POST" })
 export const iniciarProcessamentoAdm = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => {
-    return z.object({ ausencia_id: z.string().uuid() }).parse(data);
+    return z.object({ ausencia_id: uuid }).parse(data);
   })
   .handler(async ({ data, context }) => {
     const { data: res, error } = await context.supabase.rpc("iniciar_processamento_ausencia", {
@@ -728,7 +728,7 @@ export const concluirProcessamentoAdm = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => {
     return z.object({
-      ausencia_id: z.string().uuid(),
+      ausencia_id: uuid,
       observacao: z.string().trim().max(1000).nullable().optional(),
     }).parse(data);
   })
@@ -750,7 +750,7 @@ export const getCentralProcessamentoKpis = createServerFn({ method: "GET" })
     // Validação de Papel
     const { data: roles } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
     const userRoles = roles?.map(r => r.role) ?? [];
-    const hasAccess = userRoles.some(r => ["admin", "rh", "compliance", "coordenador"].includes(r));
+    const hasAccess = userRoles.some(r => ["super_admin", "rh", "compliance", "coordenador"].includes(r));
 
     if (!hasAccess) {
       throw new Error("FORBIDDEN: Acesso negado.");
