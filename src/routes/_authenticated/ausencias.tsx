@@ -532,19 +532,21 @@ function AusenciasPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
-              <Select value={processamentoFiltro} onValueChange={(v) => { setProcessamentoFiltro(v); setPage(1); }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Status de Processamento" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os Processamentos</SelectItem>
-                  <SelectItem value="AGUARDANDO">Aguardando</SelectItem>
-                  <SelectItem value="EM_PROCESSAMENTO">Em processamento</SelectItem>
-                  <SelectItem value="PROCESSADO">Processado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <Select value={processamentoFiltro} onValueChange={(v) => { setProcessamentoFiltro(v); setPage(1); }}>
+              <SelectTrigger>
+                <SelectValue placeholder="Status de Processamento" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Processamentos</SelectItem>
+                <SelectItem value="AGUARDANDO">Aguardando</SelectItem>
+                <SelectItem value="EM_PROCESSAMENTO">Em processamento</SelectItem>
+                <SelectItem value="PROCESSADO">Processado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
 
 
 
