@@ -118,7 +118,7 @@ function IntegridadePage() {
     return () => clearTimeout(t);
   }, [busca]);
 
-  const permitido = role === "super_admin" || role === "rh" || role === "compliance";
+  const permitido = roles.includes("super_admin") || roles.includes("rh") || roles.includes("compliance");
   const enabled = !sessionLoading && permitido && scope.ready;
 
   const resumo = useQuery({
