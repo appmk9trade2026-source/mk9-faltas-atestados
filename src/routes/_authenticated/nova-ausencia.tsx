@@ -235,6 +235,11 @@ const schema = z
     if (!v.projeto_id) req("projeto_id", "Selecione o projeto.");
     const nomeManual = normalizeManualText(v.manual_nome);
     if (v.modo_manual && nomeManual.length < 3) {
+      console.error("VALIDAÇÃO RESPONSÁVEL: Frontend Schema (nova-ausencia.tsx)", {
+        valor_recebido: v.manual_nome,
+        normalizado: nomeManual,
+        modo_manual: v.modo_manual
+      });
       req("manual_nome", "Informe o nome completo do colaborador (mínimo 3 caracteres).");
     }
     if (normalizeManualText(v.manual_matricula).length === 0) req("manual_matricula", "Informe a matrícula.");
@@ -1253,6 +1258,10 @@ function NovaAusenciaPage() {
     },
 
     onError: (err: unknown) => {
+      console.error("VALIDAÇÃO RESPONSÁVEL: Frontend Mutation Error (nova-ausencia.tsx)", {
+        error: err,
+        message: err instanceof Error ? err.message : String(err)
+      });
       const friendly = friendlyRbacError(err);
       const isScope = parseRbacError(err).code === "PROJECT_SCOPE_DENIED";
       toast.error(
@@ -1433,6 +1442,7 @@ function NovaAusenciaPage() {
                       );
                       return;
                     }
+                    console.log("DEBUG: Iniciando mutate com os valores:", v);
                     salvarMut.mutate(v);
                   })}
                   className="space-y-6"

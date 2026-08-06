@@ -76,7 +76,16 @@ const manualPayloadSchema = commonPayloadSchema.extend({
   projeto_id: uuid,
   manual_motivo: z.enum(MANUAL_MOTIVOS),
   manual_motivo_detalhe: z.string().trim().max(300).nullable().optional(),
-  manual_nome: z.string().trim().min(3, "Informe o nome completo do colaborador (mínimo 3 caracteres).").max(150),
+  manual_nome: z.string().trim().refine(val => {
+    const ok = val.length >= 3;
+    if (!ok) {
+      console.error("VALIDAÇÃO RESPONSÁVEL: Server Function Schema (ausencias.functions.ts)", {
+        valor_recebido: val,
+        tamanho: val.length
+      });
+    }
+    return ok;
+  }, { message: "Informe o nome completo do colaborador (mínimo 3 caracteres)." }).transform(v => v.trim()),
   manual_matricula: z.string().trim().min(1).max(50),
   manual_telefone: z.string().trim().max(20).nullable().optional(),
   manual_whatsapp: z.string().trim().max(20).nullable().optional(),
@@ -254,7 +263,15 @@ async function audit(
 export const createAusencia = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => {
-    try { return basePayloadSchema.parse(data); } catch (e) { throw toInvalidPayload(e); }
+    try { 
+      return basePayloadSchema.parse(data); 
+    } catch (e) { 
+      console.error("VALIDAÇÃO RESPONSÁVEL: Server Function Input Validator (Os dados enviados são inválidos)", {
+        error: e,
+        received_data: data
+      });
+      throw toInvalidPayload(e); 
+    }
   })
   .handler(async ({ data, context }) => {
     const isManual = data.origem_registro === "MANUAL";
