@@ -57,7 +57,9 @@ type Tipo =
   | "usuario_sem_projeto"
   | "matricula_duplicada"
   | "vinculo_orfao"
-  | "ausencias_sem_autoria";
+  | "ausencias_sem_autoria"
+  | "ausencias_sem_hash"
+  | "ausencias_hash_invalido";
 
 
 type Criticidade = "critica" | "alta" | "media" | "baixa";
@@ -93,6 +95,8 @@ const TIPO_META: Record<Tipo, { label: string; criticidade: Criticidade; acao: "
   matricula_duplicada: { label: "Matrículas duplicadas", criticidade: "alta", acao: "editar_usuario" },
   vinculo_orfao: { label: "Vínculos órfãos ou inválidos", criticidade: "critica", acao: "pendencias" },
   ausencias_sem_autoria: { label: "Ausências sem autoria", criticidade: "media", acao: "pendencias" },
+  ausencias_sem_hash: { label: "Ausências sem hash de integridade", criticidade: "critica", acao: "pendencias" },
+  ausencias_hash_invalido: { label: "Ausências com hash inválido", criticidade: "critica", acao: "pendencias" },
 };
 
 

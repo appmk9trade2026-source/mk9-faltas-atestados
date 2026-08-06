@@ -1,4 +1,4 @@
-// Ausências — Server Functions com hardening RBAC Fase 3 (Onda 1).
+// Ausências — Server Functions com hardening RBAC e Auditoria Forense.
 //
 // TODAS as mutações de ausência agora passam por aqui. Nunca chame
 // supabase.from("ausencias").insert/update/delete direto do client.
@@ -12,6 +12,7 @@ import { Database } from "@/integrations/supabase/types";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { enfileirarNotificacoesAusencia } from "./notificacoes-ausencia.server";
 import { format } from "date-fns";
+import { calculateIntegrityHash, resolveOperationMetadata } from "./integridade-forense.server";
 
 async function getSnapshot(supabase: any, userId: string) {
   const { data, error } = await supabase.rpc("get_user_snapshot", { _user_id: userId });
@@ -256,6 +257,7 @@ export const createAusencia = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const isManual = data.origem_registro === "MANUAL";
+    const meta = resolveOperationMetadata(context.request);
     // 1-4. auth + permissão + escopo:
     //  • AUTOMATICO → escopo do colaborador (deriva empresa/projeto)
     //  • MANUAL     → escopo do PROJETO informado (require_permission valida vínculo)
@@ -334,6 +336,15 @@ export const createAusencia = createServerFn({ method: "POST" })
       autor_papel_snapshot: userSnapshot?.papel,
       status_documental: "ATIVO",
 
+      // Auditoria Forense - Etapa 2 e 3
+      operacao_origem: "WEB",
+      operacao_ip: meta.ip,
+      operacao_user_agent: meta.userAgent,
+      operacao_sistema_operacional: meta.os,
+      operacao_navegador: meta.browser,
+      operacao_dispositivo_tipo: meta.deviceType,
+      operacao_timestamp_utc: new Date().toISOString(),
+
       ...(isAcidente ? {
         acidente_data: data.acidente_data,
         acidente_hora: data.acidente_hora,
@@ -346,6 +357,12 @@ export const createAusencia = createServerFn({ method: "POST" })
         acidente_observacoes: data.acidente_observacoes?.trim() ?? null,
       } : {}),
     };
+
+    // Auditoria Forense - Etapa 1
+    const hash = calculateIntegrityHash(insertPayload);
+    (insertPayload as any).hash_integridade = hash;
+    (insertPayload as any).hash_atual = hash;
+    (insertPayload as any).hash_anterior = null;
 
 
 

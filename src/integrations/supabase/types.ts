@@ -663,6 +663,53 @@ export type Database = {
           },
         ]
       }
+      ausencia_field_audit: {
+        Row: {
+          ausencia_id: string | null
+          campo: string
+          correlation_id: string | null
+          data_hora: string | null
+          id: string
+          responsavel_nome: string | null
+          responsavel_papel: string | null
+          responsavel_usuario_id: string | null
+          valor_anterior: Json | null
+          valor_novo: Json | null
+        }
+        Insert: {
+          ausencia_id?: string | null
+          campo: string
+          correlation_id?: string | null
+          data_hora?: string | null
+          id?: string
+          responsavel_nome?: string | null
+          responsavel_papel?: string | null
+          responsavel_usuario_id?: string | null
+          valor_anterior?: Json | null
+          valor_novo?: Json | null
+        }
+        Update: {
+          ausencia_id?: string | null
+          campo?: string
+          correlation_id?: string | null
+          data_hora?: string | null
+          id?: string
+          responsavel_nome?: string | null
+          responsavel_papel?: string | null
+          responsavel_usuario_id?: string | null
+          valor_anterior?: Json | null
+          valor_novo?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ausencia_field_audit_ausencia_id_fkey"
+            columns: ["ausencia_id"]
+            isOneToOne: false
+            referencedRelation: "ausencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ausencia_retificacoes: {
         Row: {
           anexo_anterior: boolean | null
@@ -795,6 +842,9 @@ export type Database = {
           dias: number
           dias_label: string | null
           empresa_id: string
+          hash_anterior: string | null
+          hash_atual: string | null
+          hash_integridade: string | null
           id: string
           lancado_em: string | null
           lancado_por: string | null
@@ -823,6 +873,13 @@ export type Database = {
           opcao_periodo_codigo: string | null
           opcao_periodo_id: string | null
           opcao_periodo_nome: string | null
+          operacao_dispositivo_tipo: string | null
+          operacao_ip: string | null
+          operacao_navegador: string | null
+          operacao_origem: string | null
+          operacao_sistema_operacional: string | null
+          operacao_timestamp_utc: string | null
+          operacao_user_agent: string | null
           origem_registro: string
           possui_anexo: boolean
           processado_em: string | null
@@ -888,6 +945,9 @@ export type Database = {
           dias?: number
           dias_label?: string | null
           empresa_id: string
+          hash_anterior?: string | null
+          hash_atual?: string | null
+          hash_integridade?: string | null
           id?: string
           lancado_em?: string | null
           lancado_por?: string | null
@@ -916,6 +976,13 @@ export type Database = {
           opcao_periodo_codigo?: string | null
           opcao_periodo_id?: string | null
           opcao_periodo_nome?: string | null
+          operacao_dispositivo_tipo?: string | null
+          operacao_ip?: string | null
+          operacao_navegador?: string | null
+          operacao_origem?: string | null
+          operacao_sistema_operacional?: string | null
+          operacao_timestamp_utc?: string | null
+          operacao_user_agent?: string | null
           origem_registro?: string
           possui_anexo?: boolean
           processado_em?: string | null
@@ -981,6 +1048,9 @@ export type Database = {
           dias?: number
           dias_label?: string | null
           empresa_id?: string
+          hash_anterior?: string | null
+          hash_atual?: string | null
+          hash_integridade?: string | null
           id?: string
           lancado_em?: string | null
           lancado_por?: string | null
@@ -1009,6 +1079,13 @@ export type Database = {
           opcao_periodo_codigo?: string | null
           opcao_periodo_id?: string | null
           opcao_periodo_nome?: string | null
+          operacao_dispositivo_tipo?: string | null
+          operacao_ip?: string | null
+          operacao_navegador?: string | null
+          operacao_origem?: string | null
+          operacao_sistema_operacional?: string | null
+          operacao_timestamp_utc?: string | null
+          operacao_user_agent?: string | null
           origem_registro?: string
           possui_anexo?: boolean
           processado_em?: string | null
@@ -4744,6 +4821,16 @@ export type Database = {
         }[]
       }
       diagnose_projetos_duplicados: { Args: never; Returns: Json }
+      diagnosticar_integridade_ausencias: {
+        Args: never
+        Returns: {
+          total_alteradas: number
+          total_contestadas: number
+          total_hash_invalido: number
+          total_sem_autoria: number
+          total_sem_hash: number
+        }[]
+      }
       gen_projeto_codigo_protocolo: {
         Args: { _empresa_id: string; _exclude_id?: string; _nome: string }
         Returns: string
