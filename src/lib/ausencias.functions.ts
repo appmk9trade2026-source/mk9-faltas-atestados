@@ -79,9 +79,12 @@ const manualPayloadSchema = commonPayloadSchema.extend({
   manual_nome: z.string().trim().refine(val => {
     const ok = val.length >= 3;
     if (!ok) {
-      console.error("VALIDAÇÃO RESPONSÁVEL: Server Function Schema (ausencias.functions.ts)", {
-        valor_recebido: val,
-        tamanho: val.length
+      console.error("ETAPA 8 — LOG DO MANUAL PAYLOAD SCHEMA", {
+        correlation_id: (globalThis as any).__lastCorrelationId || "unknown",
+        etapa: "server-manual-schema",
+        manual_nome_type: typeof val,
+        manual_nome_length: val.length,
+        manual_nome_present: true
       });
     }
     return ok;
@@ -262,13 +265,28 @@ async function audit(
 // ==================== CREATE ====================
 export const createAusencia = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => {
+  .inputValidator((data: any) => {
+    const correlationId = (data as any)?.correlation_id || "no-correlation-id";
+    (globalThis as any).__lastCorrelationId = correlationId;
+
+    console.log("ETAPA 7 — LOG DO INPUT VALIDATOR DO SERVIDOR", {
+      correlation_id: correlationId,
+      etapa: "server-input-validator",
+      received_keys: data ? Object.keys(data) : [],
+      manual_nome_location: data?.manual_nome !== undefined ? "root" : "missing",
+      manual_nome_type: typeof data?.manual_nome,
+      manual_nome_length: (data?.manual_nome ?? "").length,
+      manual_nome_present: data?.manual_nome !== undefined,
+      modo_manual: data?.origem_registro === "MANUAL"
+    });
+
     try { 
       return basePayloadSchema.parse(data); 
     } catch (e) { 
-      console.error("VALIDAÇÃO RESPONSÁVEL: Server Function Input Validator (Os dados enviados são inválidos)", {
+      console.error("ETAPA 7 — FALHA NO INPUT VALIDATOR", {
+        correlation_id: correlationId,
         error: e,
-        received_data: data
+        received_data_keys: data ? Object.keys(data) : []
       });
       throw toInvalidPayload(e); 
     }
