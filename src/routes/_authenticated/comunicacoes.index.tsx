@@ -176,7 +176,7 @@ function ComunicacoesPage() {
     if (ausenciaParam && isRH) {
       setInitialAusenciaId(ausenciaParam);
       setCreating(true);
-      navigate({ search: {}, replace: true });
+      navigate({ search: (prev: any) => ({ ...prev, ausencia: undefined }), replace: true });
     }
   }, [ausenciaParam, isRH, navigate]);
 
