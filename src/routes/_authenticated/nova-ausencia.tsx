@@ -1182,8 +1182,6 @@ function NovaAusenciaPage() {
       const correlationId = `manual-submit-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
       (globalThis as any).__manualCorrelationId = correlationId;
 
-      const correlationId = `manual-submit-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-      (globalThis as any).__manualCorrelationId = correlationId;
 
       const normalized_manual_nome = normalizeManualText(values.manual_nome || "");
 
