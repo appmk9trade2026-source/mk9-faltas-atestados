@@ -1391,16 +1391,27 @@ function NovaAusenciaPage() {
             <Form {...form}>
               <fieldset disabled={bloqueado || (supervisorSemProjetos && !isEdit)} className="contents">
                 <form
-                  onSubmit={form.handleSubmit(async (v) => {
-                    if (salvarMut.isPending || substituirMut.isPending || bloqueado) return;
-                    if (supervisorSemProjetos && !isEdit) {
-                      toast.error("Sem projetos vinculados. Procure um administrador.");
-                      return;
-                    }
-                    if (!colab && !isEdit && !v.modo_manual) {
-                      toast.error("Busque um colaborador pela matrícula ou use o preenchimento manual.");
-                      return;
-                    }
+                  onSubmit={(e) => {
+                    console.log("DEBUG_LANCAMENTO_MANUAL_FE_SUBMIT_START", {
+                      form_values: form.getValues(),
+                      modo_manual: form.getValues("modo_manual"),
+                    });
+                    
+                    form.handleSubmit(async (v) => {
+                      console.log("DEBUG_LANCAMENTO_MANUAL_FE_INSIDE_HANDLE_SUBMIT", {
+                        v_manual_nome: v.manual_nome,
+                        v_modo_manual: v.modo_manual
+                      });
+
+                      if (salvarMut.isPending || substituirMut.isPending || bloqueado) return;
+                      if (supervisorSemProjetos && !isEdit) {
+                        toast.error("Sem projetos vinculados. Procure um administrador.");
+                        return;
+                      }
+                      if (!colab && !isEdit && !v.modo_manual) {
+                        toast.error("Busque um colaborador pela matrícula ou use o preenchimento manual.");
+                        return;
+                      }
 
                     // 1. Detecção de Conflitos (Etapa 1)
                     if (!isEdit) {
