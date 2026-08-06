@@ -26,6 +26,7 @@ const PRIMEIRO_ACESSO_TOAST_ID = "primeiro-acesso-pendente";
 
 const searchSchema = z.object({
   inactive: z.string().optional(),
+  error: z.string().optional(),
 });
 
 export const Route = createFileRoute("/auth")({
@@ -65,14 +66,17 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const { inactive } = useSearch({ from: "/auth" });
+  const { inactive, error: searchError } = useSearch({ from: "/auth" });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(
-    inactive ? "Sua conta está inativa. Contate o Super Admin." : null,
-  );
+  const [error, setError] = useState<string | null>(() => {
+    if (inactive) return "Sua conta está inativa. Contate o Super Admin.";
+    if (searchError === "no_profile") return "Seu perfil de acesso não foi encontrado. Contate o suporte.";
+    if (searchError === "db_error") return "Não foi possível carregar seu perfil. Tente novamente.";
+    return null;
+  });
 
   const [forgotOpen, setForgotOpen] = useState(false);
   const [firstAccessOpen, setFirstAccessOpen] = useState(false);
@@ -119,27 +123,24 @@ function AuthPage() {
         console.log("3. profile.ativo:", profile?.ativo);
         console.log("4. Erro Banco:", profileErr || rolesErr);
         console.log("5. Papéis:", userRoles?.map(r => r.role));
-        console.log("6. Código Decisor: src/routes/auth.tsx L114-140 (Novo)");
+        console.log("6. Código Decisor: src/routes/auth.tsx L114-140 (Corrigido)");
         console.groupEnd();
       }
 
       if (profileErr) {
         await supabase.auth.signOut();
-        // CAUSA RAIZ: Erro de RLS ou permissão na tabela profiles
-        setError(`ERRO BANCO (code: ${profileErr.code}): ${profileErr.message}. Detalhes: ${profileErr.details || 'N/A'}. Hint: ${profileErr.hint || 'N/A'}`);
+        setError("Não foi possível carregar seu perfil. Tente novamente.");
         return;
       }
 
       if (!profile) {
         await supabase.auth.signOut();
-        // CAUSA RAIZ: O registro no auth.users não possui um correspondente na tabela public.profiles
-        setError("CAUSA RAIZ: Perfil não localizado (null) na tabela public.profiles para este UID.");
+        setError("Seu perfil de acesso não foi encontrado. Contate o suporte.");
         return;
       }
 
       if (profile.ativo === false) {
         await supabase.auth.signOut();
-        // CAUSA RAIZ: O campo 'ativo' está explicitamente FALSE no banco de dados.
         setError("Sua conta está inativa. Contate o Super Admin.");
         return;
       }
