@@ -90,6 +90,8 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { usePermissions } from "@/lib/permissions";
+import { PERMISSION_MAP } from "@/lib/permissions-map";
 import { useSessionScope } from "@/hooks/use-session-scope";
 import { SupervisorEmptyState } from "@/components/supervisor-empty-state";
 import {
@@ -259,11 +261,13 @@ function ProcessamentoBadge({ status }: { status: StatusProcessamento }) {
 
 function AusenciasPage() {
   const { roles } = useSession();
+  const { has: hasPermission } = usePermissions();
   const scope = useSessionScope();
   const podeCadastrar =
     roles.includes("super_admin") || roles.includes("rh") || roles.includes("supervisor") || roles.includes("coordenador");
   const podeLancar = roles.includes("super_admin") || roles.includes("rh") || roles.includes("coordenador");
   const queryClient = useQueryClient();
+  const podeExcluir = hasPermission(PERMISSION_MAP.deleteAbsence) || roles.includes("super_admin") || roles.includes("rh");
 
   const [search, setSearch] = useState("");
   const [empresaFiltro, setEmpresaFiltro] = useState<string>("all");
@@ -471,7 +475,7 @@ function AusenciasPage() {
       });
     },
     onSuccess: () => {
-      toast.success("Lançamento excluído com sucesso.");
+      toast.success("Lançamento excluído dos fluxos operacionais. O histórico foi preservado para auditoria.");
       queryClient.invalidateQueries({ queryKey: ["ausencias"] });
       setConfirmExcluir(null);
       setExcluirCategoria("");
@@ -898,11 +902,12 @@ function AusenciasPage() {
                             <CheckCircle2 className="mr-2 h-4 w-4" /> Marcar como lançado
                           </DropdownMenuItem>
                         )}
-                        {(roles.includes("super_admin") || roles.includes("rh")) && row.status_documental !== "EXCLUIDO" && (
+                        {podeExcluir && row.status_documental !== "EXCLUIDO" && (
                           <>
                             <div className="my-1 h-px bg-muted" />
                             <DropdownMenuItem 
                               className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                              aria-label="Excluir lançamento"
                               onClick={() => {
                                 setConfirmExcluir(row);
                                 setExcluirCategoria("");
