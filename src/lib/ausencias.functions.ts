@@ -210,7 +210,7 @@ function ausenciaDbError(
 
 async function audit(
   supabase: import("@/lib/rbac/guards.server").MiddlewareContext["supabase"],
-  acao: "AUSENCIA_CRIADA" | "AUSENCIA_EDITADA" | "AUSENCIA_EXCLUIDA" | "AUSENCIA_STATUS_ALTERADO",
+  acao: string,
   registroId: string | null,
   correlationId: string,
   antes: unknown,
@@ -218,17 +218,34 @@ async function audit(
   observacoes: string,
   empresaId?: string | null,
   projetoId?: string | null,
+  userId?: string | null,
 ) {
   try {
+    const snapshot = userId ? await getSnapshot(supabase, userId) : null;
+    
     await supabase.rpc("log_audit_event", {
       _modulo: "ausencias",
-      _acao: acao as never,
+      _acao: acao as any,
       _entidade: "Ausência",
       _registro_id: registroId,
       _empresa_id: empresaId ?? null,
       _projeto_id: projetoId ?? null,
-      _antes: (antes ?? null) as never,
-      _depois: (depois ?? null) as never,
+      _antes: (antes ?? null) as any,
+      _depois: (depois ?? null) as any,
+      _sucesso: true,
+      _observacoes: `[corr=${correlationId}] ${observacoes}`,
+      _origem: "server",
+      ...(snapshot ? {
+        _usuario_id: userId,
+        _usuario_nome: snapshot.nome,
+        _perfil: snapshot.papel
+      } : {})
+    } as any);
+  } catch (err) { 
+    console.error("[Audit Error]", err);
+  }
+}
+
       _sucesso: true,
       _observacoes: `[corr=${correlationId}] ${observacoes}`,
       _origem: "server",
