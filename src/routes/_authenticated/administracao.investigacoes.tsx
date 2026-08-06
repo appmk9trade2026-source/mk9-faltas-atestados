@@ -3,19 +3,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { 
   Search, 
-  History, 
   ShieldCheck, 
-  AlertTriangle, 
   FileText, 
-  User, 
-  Clock, 
   Fingerprint,
-  ExternalLink,
   ChevronRight,
   Printer,
   FileSearch,
   CheckCircle2,
-  XCircle,
   Activity
 } from "lucide-react";
 
@@ -30,7 +24,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/administracao/investigacoes")({
@@ -49,12 +42,10 @@ function InvestigacoesPage() {
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const permitido = roles.includes("super_admin") || roles.includes("compliance");
 
-  // Mock search results for now - will be replaced by RPC
   const { data: searchResults, isLoading: isSearching } = useQuery({
     queryKey: ["investigacoes-busca", searchQuery],
     enabled: !!searchQuery && permitido,
     queryFn: async () => {
-      // Temporary: busca direta para validar layout
       const { data, error } = await supabase
         .from("ausencias")
         .select(`
@@ -81,6 +72,7 @@ function InvestigacoesPage() {
     queryKey: ["investigacoes-detalhe", activeId],
     enabled: !!activeId && permitido,
     queryFn: async () => {
+      if (!activeId) return null;
       const { data, error } = await supabase
         .from("ausencias")
         .select(`
@@ -182,7 +174,7 @@ function InvestigacoesPage() {
                 Utilize a busca lateral para localizar uma ausência e iniciar a análise forense consolidada.
               </p>
             </Card>
-          ) : isLoadingRecord ? (
+          ) : isLoadingRecord || !selectedRecord ? (
             <Card className="h-full flex items-center justify-center">
               <Activity className="h-8 w-8 animate-spin text-primary/40" />
             </Card>
@@ -190,8 +182,8 @@ function InvestigacoesPage() {
             <>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Badge variant="outline" className="font-mono">{selectedRecord?.protocolo}</Badge>
-                  <h2 className="text-xl font-bold">{selectedRecord?.tipo}</h2>
+                  <Badge variant="outline" className="font-mono">{selectedRecord.protocolo}</Badge>
+                  <h2 className="text-xl font-bold">{selectedRecord.tipo}</h2>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm" onClick={() => toast.info("Exportação em desenvolvimento")}>
@@ -322,7 +314,9 @@ function InvestigacoesPage() {
                         </div>
                         <div className="flex justify-between text-xs border-b pb-1">
                           <span className="text-muted-foreground">User Agent</span>
-                          <span className="truncate max-w-[150px]" title={selectedRecord.operacao_user_agent}>{selectedRecord.operacao_user_agent}</span>
+                          <span className="truncate max-w-[150px]" title={selectedRecord.operacao_user_agent ?? ""}>
+                            {selectedRecord.operacao_user_agent}
+                          </span>
                         </div>
                         <div className="flex justify-between text-xs border-b pb-1">
                           <span className="text-muted-foreground">Canal</span>
@@ -355,13 +349,13 @@ function InvestigacoesPage() {
                       <CardDescription>Rastreabilidade granular de edições (ausencia_field_audit).</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      {!selectedRecord.field_audit?.length ? (
+                      {!(selectedRecord as any).field_audit?.length ? (
                         <div className="text-center py-8 text-xs text-muted-foreground">
                           Nenhuma alteração de campo registrada.
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          {selectedRecord.field_audit.map((audit: any) => (
+                          {(selectedRecord as any).field_audit.map((audit: any) => (
                             <div key={audit.id} className="flex items-center justify-between p-2 bg-muted/30 rounded border border-muted text-xs">
                               <div className="flex items-center gap-2">
                                 <Badge variant="outline" className="font-mono text-[10px]">{audit.field_name}</Badge>
