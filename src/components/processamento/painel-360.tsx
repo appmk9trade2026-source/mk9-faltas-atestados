@@ -64,12 +64,29 @@ export function Painel360({
   };
 
   const timelineSteps = [
-    { id: "REGISTRO", label: "Registrado no Sistema", icon: FileText, date: data.registrado_em, description: "Ausência informada via portal/manual" },
-    { id: "LANCADO", label: "Lançado no RH", icon: CheckCircle2, date: data.lancado_em, description: "Vínculo com sistema de folha confirmado" },
+    { 
+      id: "REGISTRO", 
+      label: "Registrado no Sistema", 
+      icon: FileText, 
+      date: data.registrado_em, 
+      description: data.autor_nome_snapshot 
+        ? `Por ${data.autor_nome_snapshot} (${data.autor_papel_snapshot || 'Usuário'})`
+        : "Ausência informada via portal/manual" 
+    },
+    { 
+      id: "LANCADO", 
+      label: "Lançado no RH", 
+      icon: CheckCircle2, 
+      date: data.lancado_em, 
+      description: data.lancado_por_nome 
+        ? `Por ${data.lancado_por_nome}` 
+        : "Vínculo com sistema de folha confirmado" 
+    },
     { id: "AGUARDANDO", label: "Fila de Processamento", icon: History, date: isAwaiting ? new Date().toISOString() : data.processamento_iniciado_em, description: "Aguardando triagem operacional" },
     { id: "EM_PROCESSAMENTO", label: "Análise Técnica", icon: Activity, date: data.processamento_iniciado_em, description: `Assumido por ${data.responsavel_processamento_nome || 'Operador'}` },
     { id: "PROCESSADO", label: "Concluído", icon: Shield, date: data.processamento_concluido_em, description: "Processamento finalizado e auditado" },
   ];
+
 
   const currentStepIndex = data.status_processamento === "PROCESSADO" ? 4 
     : data.status_processamento === "EM_PROCESSAMENTO" ? 3
@@ -86,11 +103,22 @@ export function Painel360({
               <Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter bg-white/50">
                 PROT: {data.protocolo || "—"}
               </Badge>
+              {data.status_documental === "CONTESTADO" && (
+                <Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter bg-amber-500 text-white border-amber-600">
+                  CONTESTADO
+                </Badge>
+              )}
+              {data.status_documental === "CANCELADO" && (
+                <Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter bg-red-500 text-white border-red-600">
+                  CANCELADO
+                </Badge>
+              )}
               {data.sla_status === "FORA" && (
                 <Badge variant="destructive" className="text-[10px] font-black animate-pulse">
                   FORA DO SLA
                 </Badge>
               )}
+
             </div>
             <h2 className="text-xl font-black tracking-tight leading-tight uppercase">{data.colaborador_nome}</h2>
             <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground uppercase">

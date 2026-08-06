@@ -36,4 +36,10 @@ export interface AusenciaCardData {
   cid: string | null;
   acidente_trabalho: boolean | null;
   status_rh: string | null;
+  // Snapshot de autoria (Etapa 4/5)
+  autor_nome_snapshot?: string | null;
+  autor_papel_snapshot?: string | null;
+  status_documental?: string | null;
+  lancado_por_nome?: string | null;
 }
+

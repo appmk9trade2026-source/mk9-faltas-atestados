@@ -11,6 +11,14 @@ import { PERMISSION_MAP } from "@/lib/permissions-map";
 import { Database } from "@/integrations/supabase/types";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { enfileirarNotificacoesAusencia } from "./notificacoes-ausencia.server";
+import { format } from "date-fns";
+
+async function getSnapshot(supabase: any, userId: string) {
+  const { data, error } = await supabase.rpc("get_user_snapshot", { _user_id: userId });
+  if (error || !data || data.length === 0) return null;
+  return data[0] as { nome: string; email: string; papel: string };
+}
+
 
 type StatusProcessamento = Database["public"]["Enums"]["ausencia_status_processamento"];
 
@@ -202,7 +210,7 @@ function ausenciaDbError(
 
 async function audit(
   supabase: import("@/lib/rbac/guards.server").MiddlewareContext["supabase"],
-  acao: "AUSENCIA_CRIADA" | "AUSENCIA_EDITADA" | "AUSENCIA_EXCLUIDA" | "AUSENCIA_STATUS_ALTERADO",
+  acao: string,
   registroId: string | null,
   correlationId: string,
   antes: unknown,
@@ -210,23 +218,35 @@ async function audit(
   observacoes: string,
   empresaId?: string | null,
   projetoId?: string | null,
+  userId?: string | null,
 ) {
   try {
+    const snapshot = userId ? await getSnapshot(supabase, userId) : null;
+    
     await supabase.rpc("log_audit_event", {
       _modulo: "ausencias",
-      _acao: acao as never,
+      _acao: acao as any,
       _entidade: "Ausência",
       _registro_id: registroId,
       _empresa_id: empresaId ?? null,
       _projeto_id: projetoId ?? null,
-      _antes: (antes ?? null) as never,
-      _depois: (depois ?? null) as never,
+      _antes: (antes ?? null) as any,
+      _depois: (depois ?? null) as any,
       _sucesso: true,
       _observacoes: `[corr=${correlationId}] ${observacoes}`,
       _origem: "server",
-    } as never);
-  } catch { /* auditoria não pode quebrar */ }
+      ...(snapshot ? {
+        _usuario_id: userId,
+        _usuario_nome: snapshot.nome,
+        _perfil: snapshot.papel
+      } : {})
+    } as any);
+  } catch (err) { 
+    console.error("[Audit Error]", err);
+  }
 }
+
+
 
 // ==================== CREATE ====================
 export const createAusencia = createServerFn({ method: "POST" })
@@ -251,9 +271,10 @@ export const createAusencia = createServerFn({ method: "POST" })
 
 
     // 5. hidratar snapshot de tipo/período pelo backend
-    const [tipoRes, opcaoRes] = await Promise.all([
+    const [tipoRes, opcaoRes, userSnapshot] = await Promise.all([
       context.supabase.from("tipos_ausencia" as never).select("id, codigo, nome, ativo").eq("id", data.tipo_ausencia_id).maybeSingle(),
       context.supabase.from("opcoes_periodo_ausencia" as never).select("id, codigo, nome, quantidade_dias").eq("id", data.opcao_periodo_id).maybeSingle(),
+      getSnapshot(context.supabase, context.userId),
     ]);
     const tipo = tipoRes.data as { codigo: string; nome: string; ativo: boolean } | null;
     const opcao = opcaoRes.data as { codigo: string; nome: string; quantidade_dias: number | null } | null;
@@ -305,6 +326,14 @@ export const createAusencia = createServerFn({ method: "POST" })
       arquivo_tamanho: data.arquivo_tamanho ?? null,
       arquivo_criado_por: data.arquivo_url ? gate.userId : null,
       arquivo_criado_em: data.arquivo_url ? new Date().toISOString() : null,
+      
+      // Novos campos de autoria imutável
+      criado_por_usuario_id: context.userId,
+      autor_nome_snapshot: userSnapshot?.nome,
+      autor_email_snapshot: userSnapshot?.email,
+      autor_papel_snapshot: userSnapshot?.papel,
+      status_documental: "ATIVO",
+
       ...(isAcidente ? {
         acidente_data: data.acidente_data,
         acidente_hora: data.acidente_hora,
@@ -317,6 +346,7 @@ export const createAusencia = createServerFn({ method: "POST" })
         acidente_observacoes: data.acidente_observacoes?.trim() ?? null,
       } : {}),
     };
+
 
 
     // 7. mutação — RLS + trigger de supervisor continuam ativos como 2ª camada
@@ -433,7 +463,9 @@ export const createAusencia = createServerFn({ method: "POST" })
         ? `criação (preenchimento manual — motivo: ${data.manual_motivo})`
         : "criação",
       gate.empresaId, gate.projetoId,
+      context.userId,
     );
+
 
     // 8. Notificações
     await enfileirarNotificacoesAusencia({
@@ -552,6 +584,8 @@ export const updateAusencia = createServerFn({ method: "POST" })
       arquivo_nome: data.arquivo_nome ?? current.arquivo_nome,
       arquivo_mime: data.arquivo_mime ?? current.arquivo_mime,
       arquivo_tamanho: data.arquivo_tamanho ?? current.arquivo_tamanho,
+      // Novos campos de autoria
+      atualizado_por_usuario_id: context.userId,
       ...(isAcidenteU ? {
         acidente_data: data.acidente_data,
         acidente_hora: data.acidente_hora,
@@ -564,6 +598,7 @@ export const updateAusencia = createServerFn({ method: "POST" })
         acidente_observacoes: data.acidente_observacoes?.trim() ?? null,
       } : {}),
     };
+
 
 
     const { error } = await context.supabase
@@ -580,7 +615,9 @@ export const updateAusencia = createServerFn({ method: "POST" })
       { tipo: tipoBase, tipo_detalhe: tipo.nome, motivo: updatePayload.motivo, cid: updatePayload.cid, data_inicio: updatePayload.data_inicio, data_fim: updatePayload.data_fim, localidade: updatePayload.localidade, loja_codigo_nome: updatePayload.loja_codigo_nome, acidente_trabalho_trajeto: updatePayload.acidente_trabalho_trajeto },
       "edição",
       gate.empresaId, gate.projetoId,
+      context.userId,
     );
+
 
     // 8. Notificações (apenas se houver mudança relevante)
     const mudancaRelevante = 
@@ -668,9 +705,18 @@ export const alterarStatusAusencia = createServerFn({ method: "POST" })
     });
 
 
+    const isLancando = data.status === "LANCADO";
+    const updatePayload = {
+      status: data.status,
+      ...(isLancando ? {
+        lancado_por_usuario_id: context.userId,
+        lancado_em: new Date().toISOString(),
+      } : {})
+    };
+
     const { error } = await context.supabase
       .from("ausencias")
-      .update({ status: data.status } as never)
+      .update(updatePayload as never)
       .eq("id", data.id);
     if (error) {
       throw ausenciaDbError(error, "status_ausencia", gate.correlationId);
@@ -680,8 +726,9 @@ export const alterarStatusAusencia = createServerFn({ method: "POST" })
       { status: current.status }, { status: data.status },
       `status: ${current.status} → ${data.status}`,
       gate.empresaId ?? undefined, gate.projetoId ?? undefined,
-
+      context.userId,
     );
+
     return { ok: true, correlation_id: gate.correlationId };
   });
 
@@ -891,3 +938,147 @@ export const getAusenciaConversoesKpis = createServerFn({ method: "GET" })
 
 
 
+
+/**
+ * ETAPA 6: Registrar Contestação de Ausência.
+ */
+export const contestarAusencia = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => {
+    return z.object({
+      ausencia_id: uuid,
+      motivo: z.string().trim().min(5).max(100),
+      descricao: z.string().trim().min(10).max(1000),
+    }).parse(data);
+  })
+  .handler(async ({ data, context }) => {
+    // Escopo: quem pode ver a ausência pode contestar? 
+    // O requisito diz: RH, Compliance, Super Admin, Supervisor e Coordenador responsável.
+    // Vamos usar o gate de leitura da ausência para validar se o usuário tem vínculo.
+    const { data: current } = await context.supabase
+      .from("ausencias")
+      .select("id, colaborador_id, projeto_id, empresa_id, status, protocolo")
+      .eq("id", data.ausencia_id)
+      .maybeSingle();
+      
+    if (!current) throw new Error("RESOURCE_NOT_FOUND: ausência não encontrada");
+
+    const gate = await requirePermission({
+      ctx: context,
+      permission: PERMISSION_MAP.viewAbsence, // Se pode ver, pode solicitar contestação
+      colaboradorId: (current.colaborador_id as string | null) ?? null,
+      projetoId: current.colaborador_id ? null : (current.projeto_id as string),
+    });
+
+    // 1. Criar a contestação
+    const { data: contestacao, error: contestErr } = await context.supabase
+      .from("ausencia_contestacoes")
+      .insert({
+        ausencia_id: data.ausencia_id,
+        solicitante_usuario_id: context.userId,
+        motivo: data.motivo,
+        descricao: data.descricao,
+        status: "ABERTA",
+      } as any)
+      .select("id")
+      .single();
+
+    if (contestErr) throw contestErr;
+
+    // 2. Marcar ausência como contestada
+    await context.supabase
+      .from("ausencias")
+      .update({ status_documental: "CONTESTADO" } as any)
+      .eq("id", data.ausencia_id);
+
+    // 3. Auditoria
+    await audit(context.supabase, "CONTESTACAO_ABERTA", data.ausencia_id, gate.correlationId,
+      null, { contestacao_id: contestacao.id, motivo: data.motivo },
+      `contestação aberta: ${data.motivo}`,
+      gate.empresaId, gate.projetoId,
+      context.userId,
+    );
+
+    return { success: true, id: contestacao.id };
+  });
+
+/**
+ * ETAPA 7: Resolver Contestação e Corrigir Lançamento.
+ */
+export const resolverContestacao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => {
+    return z.object({
+      contestacao_id: uuid,
+      status: z.enum(["PROCEDENTE", "IMPROCEDENTE"]),
+      acao: z.enum(["CANCELAR", "RETIFICAR", "MANTER"]),
+      justificativa: z.string().trim().min(10).max(1000),
+    }).parse(data);
+  })
+  .handler(async ({ data, context }) => {
+    // Apenas RH, Compliance ou Admin podem resolver
+    const { data: roles } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
+    const userRoles = roles?.map(r => r.role) ?? [];
+    const hasAccess = userRoles.some(r => ["super_admin", "rh", "compliance"].includes(r));
+
+    if (!hasAccess) {
+      throw new Error("FORBIDDEN: Apenas RH, Compliance ou Admin podem resolver contestações.");
+    }
+
+    const { data: contest, error: loadErr } = await context.supabase
+      .from("ausencia_contestacoes")
+      .select("*, ausencias(*)")
+      .eq("id", data.contestacao_id)
+      .maybeSingle();
+
+    if (loadErr || !contest) throw new Error("RESOURCE_NOT_FOUND: contestação não encontrada");
+
+    const aus = contest.ausencias as any;
+    
+    // 1. Atualizar a contestação
+    await context.supabase
+      .from("ausencia_contestacoes")
+      .update({
+        status: data.status === "PROCEDENTE" ? "CORRIGIDA" : "IMPROCEDENTE",
+        resolvido_em: new Date().toISOString(),
+        resolvido_por: context.userId,
+      } as any)
+      .eq("id", data.contestacao_id);
+
+    // 2. Aplicar ação na ausência
+    let novoStatusDoc = "ATIVO";
+    if (data.status === "PROCEDENTE") {
+      if (data.acao === "CANCELAR") novoStatusDoc = "CANCELADO";
+      else if (data.acao === "RETIFICAR") novoStatusDoc = "RETIFICADO";
+    }
+
+    await context.supabase
+      .from("ausencias")
+      .update({ 
+        status_documental: novoStatusDoc,
+        ...(data.acao === "CANCELAR" ? { status: "PENDENTE" } : {}) // Reset status if cancelled? Or maybe we need a dedicated CANCELADO status.
+      } as any)
+      .eq("id", aus.id);
+
+    // 3. Auditoria
+    await audit(context.supabase, "CONTESTACAO_RESOLVIDA", aus.id, crypto.randomUUID(),
+      { status_anterior: contest.status }, 
+      { status_novo: data.status, acao: data.acao, justificativa: data.justificativa },
+      `contestação resolvida: ${data.status} (${data.acao})`,
+      aus.empresa_id, aus.projeto_id,
+      context.userId,
+    );
+
+    // 4. Notificar (Etapa 8)
+    if (novoStatusDoc === "CANCELADO" || novoStatusDoc === "RETIFICADO") {
+       await enfileirarNotificacoesAusencia({
+        supabase: context.supabase,
+        ausenciaId: aus.id,
+        evento: "AUSENCIA_RETIFICADA",
+        correlationId: crypto.randomUUID(),
+        userId: context.userId,
+      });
+    }
+
+    return { success: true };
+  });

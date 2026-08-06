@@ -361,6 +361,8 @@ function NovaAusenciaPage() {
   const [conflitos, setConflitos] = useState<any[]>([]);
   const [conflitoDialogOpen, setConflitoDialogOpen] = useState(false);
   const [pendingValues, setPendingValues] = useState<FormData | null>(null);
+  const [confirmado, setConfirmado] = useState(false);
+
 
 
 
@@ -2237,24 +2239,41 @@ function NovaAusenciaPage() {
 
                   {/* Botão de envio */}
                   {!bloqueado && (
-                    <div className="flex flex-col items-center gap-3 border-t pt-6 sm:flex-row sm:justify-center">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={handleCancelClick}
-                        disabled={salvarMut.isPending}
-                      >
-                        Cancelar
-                      </Button>
-                      <Button
-                        type="submit"
-                        size="lg"
-                        disabled={
-                          salvarMut.isPending ||
-                          (!isEdit && !!colab && !colab.projeto?.codigo_protocolo)
-                        }
-                        className="min-w-[220px] bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:from-blue-700 hover:to-indigo-800"
-                      >
+                    <div className="flex flex-col items-center gap-6 border-t pt-6">
+                      {!isEdit && (
+                        <div className="flex items-start gap-3 rounded-lg border border-blue-100 bg-blue-50/50 p-4 max-w-2xl">
+                          <input
+                            type="checkbox"
+                            id="confirmacao-lancamento"
+                            checked={confirmado}
+                            onChange={(e) => setConfirmado(e.target.checked)}
+                            className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <Label htmlFor="confirmacao-lancamento" className="text-sm font-normal leading-relaxed text-blue-900 cursor-pointer">
+                            Confirmo que as informações prestadas são verdadeiras e que o documento anexo (se houver) é autêntico. Estou ciente de que o lançamento de informações falsas pode acarretar sanções disciplinares.
+                          </Label>
+                        </div>
+                      )}
+
+                      <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center w-full">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={handleCancelClick}
+                          disabled={salvarMut.isPending}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          type="submit"
+                          size="lg"
+                          disabled={
+                            salvarMut.isPending ||
+                            (!isEdit && (!confirmado || (!!colab && !colab.projeto?.codigo_protocolo)))
+                          }
+                          className="min-w-[220px] bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:from-blue-700 hover:to-indigo-800"
+                        >
+
                         {salvarMut.isPending ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
@@ -2267,7 +2286,9 @@ function NovaAusenciaPage() {
                             : "Enviar Lançamento"}
                       </Button>
                     </div>
+                  </div>
                   )}
+
                 </form>
               </fieldset>
             </Form>
