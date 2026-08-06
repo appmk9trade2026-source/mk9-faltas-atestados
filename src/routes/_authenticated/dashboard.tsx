@@ -420,28 +420,6 @@ function DashboardPage() {
           </Card>
         </div>
       )}
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Tempo Médio Proc.</p>
-                <h3 className="text-xl font-bold">{(data?.kpis?.tempo_medio_processamento_h ?? 0).toFixed(1)}h</h3>
-                <p className="text-[10px] text-muted-foreground">Média de conclusão administrativa</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-slate-50/50 dark:bg-slate-900/20 border-slate-200/60 dark:border-slate-800/60">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-2.5 rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
-                <Replace className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Conversão Falta → At.</p>
-                <h3 className="text-xl font-bold">{convQuery.data?.total_conversoes ?? 0}</h3>
-                <p className="text-[10px] text-muted-foreground">Substituições detectadas</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
 
       {/* ---- Filters bar */}
