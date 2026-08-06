@@ -237,14 +237,14 @@ const schema = z
     if (v.modo_manual && nomeManual.length < 3) {
       req("manual_nome", "Informe o nome completo do colaborador (mínimo 3 caracteres).");
     }
-    if (!(v.manual_matricula ?? "").trim()) req("manual_matricula", "Informe a matrícula.");
-    if (!(v.manual_telefone ?? "").trim()) {
+    if (normalizeManualText(v.manual_matricula).length === 0) req("manual_matricula", "Informe a matrícula.");
+    if (normalizeManualText(v.manual_telefone).length === 0) {
       req("manual_telefone", "Informe o telefone do colaborador.");
     }
-    if (!(v.manual_supervisor_nome ?? "").trim()) {
+    if (normalizeManualText(v.manual_supervisor_nome).length === 0) {
       req("manual_supervisor_nome", "Informe o supervisor(a).");
     }
-    if (!(v.manual_supervisor_telefone ?? "").trim()) {
+    if (normalizeManualText(v.manual_supervisor_telefone).length === 0) {
       req("manual_supervisor_telefone", "Informe o telefone do supervisor.");
     }
     const email = (v.manual_email ?? "").trim();
