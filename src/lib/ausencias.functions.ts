@@ -271,9 +271,10 @@ export const createAusencia = createServerFn({ method: "POST" })
 
 
     // 5. hidratar snapshot de tipo/período pelo backend
-    const [tipoRes, opcaoRes] = await Promise.all([
+    const [tipoRes, opcaoRes, userSnapshot] = await Promise.all([
       context.supabase.from("tipos_ausencia" as never).select("id, codigo, nome, ativo").eq("id", data.tipo_ausencia_id).maybeSingle(),
       context.supabase.from("opcoes_periodo_ausencia" as never).select("id, codigo, nome, quantidade_dias").eq("id", data.opcao_periodo_id).maybeSingle(),
+      getSnapshot(context.supabase, context.userId),
     ]);
     const tipo = tipoRes.data as { codigo: string; nome: string; ativo: boolean } | null;
     const opcao = opcaoRes.data as { codigo: string; nome: string; quantidade_dias: number | null } | null;
@@ -325,6 +326,14 @@ export const createAusencia = createServerFn({ method: "POST" })
       arquivo_tamanho: data.arquivo_tamanho ?? null,
       arquivo_criado_por: data.arquivo_url ? gate.userId : null,
       arquivo_criado_em: data.arquivo_url ? new Date().toISOString() : null,
+      
+      // Novos campos de autoria imutável
+      criado_por_usuario_id: context.userId,
+      autor_nome_snapshot: userSnapshot?.nome,
+      autor_email_snapshot: userSnapshot?.email,
+      autor_papel_snapshot: userSnapshot?.papel,
+      status_documental: "ATIVO",
+
       ...(isAcidente ? {
         acidente_data: data.acidente_data,
         acidente_hora: data.acidente_hora,
@@ -337,6 +346,7 @@ export const createAusencia = createServerFn({ method: "POST" })
         acidente_observacoes: data.acidente_observacoes?.trim() ?? null,
       } : {}),
     };
+
 
 
     // 7. mutação — RLS + trigger de supervisor continuam ativos como 2ª camada
