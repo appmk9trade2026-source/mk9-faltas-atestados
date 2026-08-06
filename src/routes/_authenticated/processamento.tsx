@@ -87,6 +87,7 @@ function CentralProcessamentoPage() {
           colaborador:colaboradores(
             nome_completo, 
             matricula,
+            supervisor_usuario_id,
             supervisor:profiles!colaboradores_supervisor_profiles_fkey(
               nome,
               email,
