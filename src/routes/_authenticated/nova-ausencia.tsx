@@ -232,8 +232,8 @@ const schema = z
     }
     if (!v.empresa_id) req("empresa_id", "Selecione a empresa.");
     if (!v.projeto_id) req("projeto_id", "Selecione o projeto.");
-    if ((v.manual_nome ?? "").trim().length < 3) {
-      req("manual_nome", "Informe o nome completo (mínimo 3 caracteres).");
+    if (v.modo_manual && (v.manual_nome ?? "").trim().length < 3) {
+      req("manual_nome", "Informe o nome completo do colaborador (mínimo 3 caracteres).");
     }
     if (!(v.manual_matricula ?? "").trim()) req("manual_matricula", "Informe a matrícula.");
     if (!(v.manual_telefone ?? "").trim()) {
@@ -1220,6 +1220,13 @@ function NovaAusenciaPage() {
         } : {}),
       };
 
+
+      console.log("DEBUG_LANCAMENTO_MANUAL:", {
+        input_visivel: values.manual_nome,
+        get_values: form.getValues("manual_nome"),
+        schema_result: schema.safeParse(values).success,
+        payload_enviado: payload.manual_nome
+      });
 
       if (isEdit && editId) {
         await updateFn({ data: { ...payload, id: editId } });

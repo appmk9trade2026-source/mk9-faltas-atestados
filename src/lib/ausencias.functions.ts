@@ -76,7 +76,7 @@ const manualPayloadSchema = commonPayloadSchema.extend({
   projeto_id: uuid,
   manual_motivo: z.enum(MANUAL_MOTIVOS),
   manual_motivo_detalhe: z.string().trim().max(300).nullable().optional(),
-  manual_nome: z.string().trim().min(3).max(150),
+  manual_nome: z.string().trim().min(3, "Informe o nome completo do colaborador (mínimo 3 caracteres).").max(150),
   manual_matricula: z.string().trim().min(1).max(50),
   manual_telefone: z.string().trim().max(20).nullable().optional(),
   manual_whatsapp: z.string().trim().max(20).nullable().optional(),
