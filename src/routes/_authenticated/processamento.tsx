@@ -96,6 +96,62 @@ function CentralProcessamentoPage() {
       if (error) throw error;
 
       return await Promise.all((data || []).map(async row => {
+        let supervisorProfile = null;
+        const supervisorId = row.colaborador?.supervisor_usuario_id;
+        
+        if (supervisorId) {
+          const { data: sData } = await supabase
+            .from("profiles")
+            .select("nome, email, telefone")
+            .eq("id", supervisorId)
+            .maybeSingle();
+          supervisorProfile = sData;
+        }
+
+        const { nome, matricula, supervisor_nome } = resolveAusenciaIdentidade({ 
+          ...row, 
+          colaborador: row.colaborador ? { 
+            ...row.colaborador, 
+            supervisor: supervisorProfile 
+          } : null 
+        });
+
+        return {
+          id: row.id, 
+          protocolo: row.protocolo, 
+          tipo: row.tipo_ausencia_nome || row.tipo, 
+          motivo: row.motivo,
+          data_inicio: row.data_inicio, 
+          data_fim: row.data_fim, 
+          dias: row.dias, 
+          registrado_em: row.registrado_em,
+          lancado_em: row.lancado_em, 
+          processamento_iniciado_em: row.processamento_iniciado_em, 
+          processamento_concluido_em: row.processamento_concluido_em,
+          status_processamento: row.status_processamento as StatusProcessamento, 
+          responsavel_processamento_id: row.responsavel_processamento_id,
+          responsavel_processamento_nome: row.responsavel_processamento_nome, 
+          prioridade: calcularPrioridade(row.registrado_em),
+          tempo_aguardando: differenceInDays(new Date(), new Date(row.registrado_em)), 
+          sla_status: getSlaStatus(row.registrado_em),
+          colaborador_nome: nome || (row.colaborador_id ? "Dados do colaborador indisponíveis" : "—"), 
+          colaborador_matricula: matricula || (row.colaborador_id ? "Dados do colaborador indisponíveis" : "—"), 
+          empresa_nome: row.empresa?.nome || "N/A",
+          projeto_nome: row.projeto?.nome || "N/A", 
+          supervisor_nome: supervisor_nome || (supervisorId ? "Supervisor vinculado, mas não carregado" : "Colaborador sem Supervisor vinculado"), 
+          origem_registro: row.origem_registro,
+          cid: row.cid, 
+          acidente_trabalho: row.acidente_trabalho_trajeto, 
+          status_rh: row.status
+        } as AusenciaCardData;
+      }));
+    }
+        .neq("status_processamento", "PROCESSADO")
+        .order("registrado_em", { ascending: true });
+      
+      if (error) throw error;
+
+      return await Promise.all((data || []).map(async row => {
         // Busca o supervisor separadamente se houver supervisor_usuario_id
         let supervisorProfile = null;
         const supervisorId = row.colaborador?.supervisor_usuario_id;
