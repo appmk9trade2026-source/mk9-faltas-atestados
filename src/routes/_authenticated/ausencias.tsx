@@ -30,6 +30,8 @@ import {
   RefreshCcw,
   Trash2,
   AlertTriangle,
+  Ban,
+  ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { RetificarAusenciaDialog } from "@/components/ausencias/retificar-ausencia-dialog";
