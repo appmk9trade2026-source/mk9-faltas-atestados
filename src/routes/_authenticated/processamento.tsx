@@ -167,18 +167,11 @@ function CentralProcessamentoPage() {
     else toast.info("Nenhum registro aguardando.");
   };
 
-  const timelineSteps = [
-    { id: "REGISTRO", label: "Registrado", icon: FileText, date: registroSelecionado?.registrado_em },
-    { id: "LANCADO", label: "Lançado RH", icon: CheckCircle2, date: registroSelecionado?.lancado_em },
-    { id: "AGUARDANDO", label: "Aguardando", icon: History, date: registroSelecionado?.status_processamento === "AGUARDANDO" ? new Date().toISOString() : null },
-    { id: "EM_PROCESSAMENTO", label: "Em Processamento", icon: TrendingUp, date: registroSelecionado?.processamento_iniciado_em },
-    { id: "PROCESSADO", label: "Processado", icon: Zap, date: registroSelecionado?.processamento_concluido_em },
-  ];
-
   const currentStepIndex = registroSelecionado?.status_processamento === "PROCESSADO" ? 4 
     : registroSelecionado?.status_processamento === "EM_PROCESSAMENTO" ? 3
     : registroSelecionado?.status_processamento === "AGUARDANDO" ? 2
     : registroSelecionado?.lancado_em ? 1 : 0;
+
 
   return (
     <AppShell title="Central de Processamento" breadcrumb={["Operações", "Central de Processamento"]}>
@@ -250,7 +243,6 @@ function CentralProcessamentoPage() {
             />
           )}
         </SheetContent>
-      </Sheet>
       </Sheet>
     </AppShell>
   );
