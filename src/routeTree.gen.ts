@@ -64,6 +64,7 @@ import { Route as AuthenticatedAdministracaoPendenciasSupervisorRouteImport } fr
 import { Route as AuthenticatedAdministracaoIntegridadeDadosRouteImport } from './routes/_authenticated/administracao.integridade-dados'
 import { Route as AuthenticatedAdministracaoHistoricoSenhasRouteImport } from './routes/_authenticated/administracao.historico-senhas'
 import { Route as AuthenticatedAdministracaoCoordenacaoRouteImport } from './routes/_authenticated/administracao.coordenacao'
+import { Route as AuthenticatedAdministracaoAuditoriaForenseRouteImport } from './routes/_authenticated/administracao.auditoria-forense'
 import { Route as AuthenticatedAdminHardeningRouteImport } from './routes/_authenticated/admin.hardening'
 import { Route as AuthenticatedComunicacoesWhatsappIndexRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.index'
 import { Route as ApiPublicHooksProcessWhatsappOutboxRouteImport } from './routes/api/public/hooks/process-whatsapp-outbox'
@@ -389,6 +390,12 @@ const AuthenticatedAdministracaoCoordenacaoRoute =
     path: '/administracao/coordenacao',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdministracaoAuditoriaForenseRoute =
+  AuthenticatedAdministracaoAuditoriaForenseRouteImport.update({
+    id: '/administracao/auditoria-forense',
+    path: '/administracao/auditoria-forense',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminHardeningRoute =
   AuthenticatedAdminHardeningRouteImport.update({
     id: '/admin/hardening',
@@ -514,6 +521,7 @@ export interface FileRoutesByFullPath {
   '/usuarios': typeof AuthenticatedUsuariosRouteWithChildren
   '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/admin/hardening': typeof AuthenticatedAdminHardeningRoute
+  '/administracao/auditoria-forense': typeof AuthenticatedAdministracaoAuditoriaForenseRoute
   '/administracao/coordenacao': typeof AuthenticatedAdministracaoCoordenacaoRoute
   '/administracao/historico-senhas': typeof AuthenticatedAdministracaoHistoricoSenhasRoute
   '/administracao/integridade-dados': typeof AuthenticatedAdministracaoIntegridadeDadosRoute
@@ -584,6 +592,7 @@ export interface FileRoutesByTo {
   '/usuarios': typeof AuthenticatedUsuariosRouteWithChildren
   '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/admin/hardening': typeof AuthenticatedAdminHardeningRoute
+  '/administracao/auditoria-forense': typeof AuthenticatedAdministracaoAuditoriaForenseRoute
   '/administracao/coordenacao': typeof AuthenticatedAdministracaoCoordenacaoRoute
   '/administracao/historico-senhas': typeof AuthenticatedAdministracaoHistoricoSenhasRoute
   '/administracao/integridade-dados': typeof AuthenticatedAdministracaoIntegridadeDadosRoute
@@ -656,6 +665,7 @@ export interface FileRoutesById {
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRouteWithChildren
   '/auth_/nova-senha': typeof AuthNovaSenhaRoute
   '/_authenticated/admin/hardening': typeof AuthenticatedAdminHardeningRoute
+  '/_authenticated/administracao/auditoria-forense': typeof AuthenticatedAdministracaoAuditoriaForenseRoute
   '/_authenticated/administracao/coordenacao': typeof AuthenticatedAdministracaoCoordenacaoRoute
   '/_authenticated/administracao/historico-senhas': typeof AuthenticatedAdministracaoHistoricoSenhasRoute
   '/_authenticated/administracao/integridade-dados': typeof AuthenticatedAdministracaoIntegridadeDadosRoute
@@ -729,6 +739,7 @@ export interface FileRouteTypes {
     | '/usuarios'
     | '/auth/nova-senha'
     | '/admin/hardening'
+    | '/administracao/auditoria-forense'
     | '/administracao/coordenacao'
     | '/administracao/historico-senhas'
     | '/administracao/integridade-dados'
@@ -799,6 +810,7 @@ export interface FileRouteTypes {
     | '/usuarios'
     | '/auth/nova-senha'
     | '/admin/hardening'
+    | '/administracao/auditoria-forense'
     | '/administracao/coordenacao'
     | '/administracao/historico-senhas'
     | '/administracao/integridade-dados'
@@ -870,6 +882,7 @@ export interface FileRouteTypes {
     | '/_authenticated/usuarios'
     | '/auth_/nova-senha'
     | '/_authenticated/admin/hardening'
+    | '/_authenticated/administracao/auditoria-forense'
     | '/_authenticated/administracao/coordenacao'
     | '/_authenticated/administracao/historico-senhas'
     | '/_authenticated/administracao/integridade-dados'
@@ -1305,6 +1318,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdministracaoCoordenacaoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/administracao/auditoria-forense': {
+      id: '/_authenticated/administracao/auditoria-forense'
+      path: '/administracao/auditoria-forense'
+      fullPath: '/administracao/auditoria-forense'
+      preLoaderRoute: typeof AuthenticatedAdministracaoAuditoriaForenseRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/hardening': {
       id: '/_authenticated/admin/hardening'
       path: '/admin/hardening'
@@ -1573,6 +1593,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSaudeRoute: typeof AuthenticatedSaudeRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRouteWithChildren
   AuthenticatedAdminHardeningRoute: typeof AuthenticatedAdminHardeningRoute
+  AuthenticatedAdministracaoAuditoriaForenseRoute: typeof AuthenticatedAdministracaoAuditoriaForenseRoute
   AuthenticatedAdministracaoCoordenacaoRoute: typeof AuthenticatedAdministracaoCoordenacaoRoute
   AuthenticatedAdministracaoHistoricoSenhasRoute: typeof AuthenticatedAdministracaoHistoricoSenhasRoute
   AuthenticatedAdministracaoIntegridadeDadosRoute: typeof AuthenticatedAdministracaoIntegridadeDadosRoute
@@ -1615,6 +1636,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSaudeRoute: AuthenticatedSaudeRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRouteWithChildren,
   AuthenticatedAdminHardeningRoute: AuthenticatedAdminHardeningRoute,
+  AuthenticatedAdministracaoAuditoriaForenseRoute:
+    AuthenticatedAdministracaoAuditoriaForenseRoute,
   AuthenticatedAdministracaoCoordenacaoRoute:
     AuthenticatedAdministracaoCoordenacaoRoute,
   AuthenticatedAdministracaoHistoricoSenhasRoute:
