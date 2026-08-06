@@ -94,48 +94,52 @@ function AuthPage() {
       });
       if (signErr || !data.user) {
         if (import.meta.env.DEV) {
-          console.error("[Login Debug] auth.signInWithPassword error:", signErr);
+          console.error("[Login Debug] Erro signInWithPassword:", signErr);
         }
         setError(mapAuthError(signErr, "login"));
         return;
       }
 
+      // IMPORTANTE: Captura o erro original do banco para a CAUSA RAIZ
       const { data: profile, error: profileErr } = await supabase
         .from("profiles")
-        .select("ativo, primeiro_acesso_pendente")
+        .select("id, ativo, primeiro_acesso_pendente")
         .eq("id", data.user.id)
         .maybeSingle();
 
-      const { data: userRoles } = await supabase
+      const { data: userRoles, error: rolesErr } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", data.user.id);
 
       if (import.meta.env.DEV) {
-        console.log("[Login Debug]", {
-          uid: data.user.id,
-          profile,
-          profileErr,
-          roles: userRoles?.map(r => r.role),
-          ativo: profile?.ativo,
-          primeiro_acesso: profile?.primeiro_acesso_pendente
-        });
+        console.group("CAUSA RAIZ LOGIN");
+        console.log("1. auth.uid():", data.user.id);
+        console.log("2. profile.id:", profile?.id);
+        console.log("3. profile.ativo:", profile?.ativo);
+        console.log("4. Erro Banco:", profileErr || rolesErr);
+        console.log("5. Papéis:", userRoles?.map(r => r.role));
+        console.log("6. Código Decisor: src/routes/auth.tsx L114-140 (Novo)");
+        console.groupEnd();
       }
 
       if (profileErr) {
         await supabase.auth.signOut();
-        setError(`Erro ao carregar perfil: ${profileErr.message} (${profileErr.code})`);
+        // CAUSA RAIZ: Erro de RLS ou permissão na tabela profiles
+        setError(`ERRO BANCO (code: ${profileErr.code}): ${profileErr.message}. Detalhes: ${profileErr.details || 'N/A'}. Hint: ${profileErr.hint || 'N/A'}`);
         return;
       }
 
       if (!profile) {
         await supabase.auth.signOut();
-        setError("Perfil de acesso não localizado (null). Contate o suporte técnico.");
+        // CAUSA RAIZ: O registro no auth.users não possui um correspondente na tabela public.profiles
+        setError("CAUSA RAIZ: Perfil não localizado (null) na tabela public.profiles para este UID.");
         return;
       }
 
       if (profile.ativo === false) {
         await supabase.auth.signOut();
+        // CAUSA RAIZ: O campo 'ativo' está explicitamente FALSE no banco de dados.
         setError("Sua conta está inativa. Contate o Super Admin.");
         return;
       }
