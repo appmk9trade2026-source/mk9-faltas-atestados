@@ -459,12 +459,34 @@ function FirstAccessDialog({
         setError(mapAuthError(signErr, "primeiro_acesso"));
         return;
       }
-      const { data: prof } = await supabase
+      const { data: prof, error: profileErr } = await supabase
         .from("profiles")
         .select("ativo, primeiro_acesso_pendente")
         .eq("id", data.user.id)
         .maybeSingle();
-      if (!prof || prof.ativo === false) {
+
+      if (import.meta.env.DEV) {
+        console.log("[First Access Debug]", {
+          uid: data.user.id,
+          prof,
+          profileErr,
+          ativo: prof?.ativo
+        });
+      }
+
+      if (profileErr) {
+        await supabase.auth.signOut();
+        setError(`Erro ao carregar perfil: ${profileErr.message}`);
+        return;
+      }
+
+      if (!prof) {
+        await supabase.auth.signOut();
+        setError("Perfil de acesso não localizado (null). Contate o suporte técnico.");
+        return;
+      }
+
+      if (prof.ativo === false) {
         await supabase.auth.signOut();
         setError("Sua conta está inativa. Contate o Super Admin.");
         return;
