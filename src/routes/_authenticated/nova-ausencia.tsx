@@ -212,17 +212,15 @@ const schema = z
       .trim()
       .min(5, "Mínimo de 5 caracteres.")
       .max(500, "Máximo de 500 caracteres."),
-    // Preenchimento manual — mesmos campos do formulário padrão
-    manual_nome: z.string().max(150).optional().or(z.literal("")),
-    manual_matricula: z.string().max(50).optional().or(z.literal("")),
-    manual_telefone: z.string().max(20).optional().or(z.literal("")),
-    manual_whatsapp: z.string().max(20).optional().or(z.literal("")),
-    manual_email: z.string().max(150).optional().or(z.literal("")),
-    manual_supervisor_nome: z.string().max(150).optional().or(z.literal("")),
-    manual_supervisor_telefone: z.string().max(20).optional().or(z.literal("")),
-    /** Supervisor canônico (obrigatório para Coordenador — validado na submissão). */
+    // Preenchimento manual — nome_completo é a chave canônica no schema e no banco
+    manual_nome: z.string().trim().max(150).optional().or(z.literal("")),
+    manual_matricula: z.string().trim().max(50).optional().or(z.literal("")),
+    manual_telefone: z.string().trim().max(20).optional().or(z.literal("")),
+    manual_whatsapp: z.string().trim().max(20).optional().or(z.literal("")),
+    manual_email: z.string().trim().max(150).optional().or(z.literal("")),
+    manual_supervisor_nome: z.string().trim().max(150).optional().or(z.literal("")),
+    manual_supervisor_telefone: z.string().trim().max(20).optional().or(z.literal("")),
     manual_supervisor_usuario_id: z.string().uuid().optional().or(z.literal("")),
-
   })
   .superRefine((v, ctx) => {
     const req = (path: keyof typeof v, message: string) =>
@@ -1180,7 +1178,7 @@ function NovaAusenciaPage() {
             // Motivo fixo — o operador não digita nem escolhe; a auditoria recebe a origem.
             manual_motivo: MANUAL_MOTIVO_PADRAO,
             manual_motivo_detalhe: "Colaborador não localizado pela matrícula informada.",
-            manual_nome: values.manual_nome!.trim(),
+            manual_nome: values.manual_nome?.trim() || "",
             manual_matricula: (values.manual_matricula || matriculaInput).trim(),
             manual_telefone: values.manual_telefone?.trim() || null,
             manual_whatsapp: values.manual_whatsapp?.trim() || null,
