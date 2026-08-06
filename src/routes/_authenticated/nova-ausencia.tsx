@@ -232,7 +232,7 @@ const schema = z
     }
     if (!v.empresa_id) req("empresa_id", "Selecione a empresa.");
     if (!v.projeto_id) req("projeto_id", "Selecione o projeto.");
-    const nomeManual = (v.manual_nome || "").trim();
+    const nomeManual = normalizeManualText(v.manual_nome);
     if (v.modo_manual && nomeManual.length < 3) {
       req("manual_nome", "Informe o nome completo do colaborador (mínimo 3 caracteres).");
     }
