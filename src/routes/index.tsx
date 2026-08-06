@@ -3,30 +3,82 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const Route = createFileRoute('/')({
   loader: async () => {
-    // CRM MK9 — HOMOLOGAR E ENDURECER A CORREÇÃO DE manual_nome NO LANÇAMENTO MANUAL
+    // CRM MK9 — EXECUTAR O RASTREAMENTO E IDENTIFICAR A VALIDAÇÃO RESPONSÁVEL
     //
     // PROJECT REF
     // wgozydjiuimxxddhodax
     //
     // CONTEXTO
-    // A causa raiz do falso erro de validação foi identificada:
-    // O objeto values recebido pelo handleSubmit podia não conter o valor atualizado de manual_nome e de outros campos manuais no momento do clique, especialmente quando o último campo ainda não havia disparado blur ou change final.
-    // Foi aplicado fallback: (values.manual_nome || form.getValues("manual_nome") || "").trim()
+    // Os marcadores de diagnóstico já foram adicionados nas seguintes camadas:
+    // 
+    // 1. Frontend Schema
+    //    src/routes/_authenticated/nova-ausencia.tsx
+    //    superRefine
+    // 
+    // 2. Server Function Schema
+    //    src/lib/ausencias.functions.ts
+    //    manualPayloadSchema
+    // 
+    // 3. Server Function Input Validator
+    //    src/lib/ausencias.functions.ts
+    //    inputValidator
+    // 
+    // 4. Frontend Mutation
+    //    src/routes/_authenticated/nova-ausencia.tsx
+    //    onError
+    //
+    // O erro continua sendo:
+    //
+    // “Os dados enviados são inválidos.
+    // Informe o nome completo do colaborador (mínimo 3 caracteres).”
     //
     // OBJETIVO
-    // Homologar a correção no ambiente publicado e garantir que o fallback não esteja apenas mascarando uma ligação incorreta entre o input e o React Hook Form.
+    // Executar agora o fluxo real, coletar os logs correlacionados e identificar definitivamente qual camada gera a mensagem.
     //
-    // ETAPAS DE HOMOLOGAÇÃO:
-    // 1. Validar vinculação do Input (manual_nome, value, onChange, onBlur, ref).
-    // 2. Validar o Submit (handleSubmit + nullish coalescing ?? para fallbacks).
-    // 3. Centralizar normalização (normalizeManualText).
-    // 4. Validar todos os campos manuais (nome, email, tel, etc).
-    // 5. Teste obrigatório sem blur (reprodução da causa raiz).
-    // 6. Teste mobile/teclado/autofill.
-    // 7. Teste real Supervisor (GUSTAVO WILLIAM FERREIRA).
-    // 8. Teste RH/Admin.
-    // 9. Teste reutilização de matrícula.
-    // 10. Suíte de testes automatizados.
+    // Não pedir novamente para o usuário abrir o F12.
+    //
+    // O diagnóstico deve ser executado pelo agente no preview/ambiente de teste e apresentado de forma objetiva.
+    //
+    // DIRETRIZ DE SEGURANÇA
+    // Não registrar payload bruto contendo:
+    // - e-mail completo;
+    // - telefone completo;
+    // - WhatsApp;
+    // - dados médicos;
+    // - motivo da ausência;
+    // - anexos;
+    // - tokens;
+    // - cookies;
+    // - access token.
+    //
+    // Mascarar os dados pessoais.
+    //
+    // Pode registrar:
+    // - presença ou ausência do campo;
+    // - comprimento da string;
+    // - primeiros e últimos caracteres mascarados;
+    // - tipo do valor;
+    // - estrutura das chaves;
+    // - correlation_id.
+    //
+    // ETAPA 1 — CRIAR CORRELATION ID
+    // No início do submit, gerar um identificador único, por exemplo:
+    // manual-submit-<timestamp>-<random>
+    // Propagar esse correlation_id por:
+    // Frontend -> Mutation -> Server Function -> Validação -> RPC -> Resposta
+    // Todos os logs devem conter o mesmo correlation_id.
+    //
+    // ETAPA 2 — REPRODUZIR O CASO
+    // Usar o cenário:
+    // Matrícula: 2727
+    // Nome: GUSTAVO WILLIAM FERREIRA
+    // Executar:
+    // 1. matrícula inexistente;
+    // 2. ativar preenchimento manual;
+    // 3. preencher todos os campos obrigatórios;
+    // 4. manter o foco no último campo;
+    // 5. clicar diretamente em Enviar Lançamento;
+    // 6. capturar a cadeia completa.
 
     const { data: { session } } = await supabase.auth.getSession();
     
