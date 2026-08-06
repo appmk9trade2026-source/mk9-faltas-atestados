@@ -232,7 +232,8 @@ const schema = z
     }
     if (!v.empresa_id) req("empresa_id", "Selecione a empresa.");
     if (!v.projeto_id) req("projeto_id", "Selecione o projeto.");
-    if (v.modo_manual && (v.manual_nome ?? "").trim().length < 3) {
+    const nomeManual = (v.manual_nome || "").trim();
+    if (v.modo_manual && nomeManual.length < 3) {
       req("manual_nome", "Informe o nome completo do colaborador (mínimo 3 caracteres).");
     }
     if (!(v.manual_matricula ?? "").trim()) req("manual_matricula", "Informe a matrícula.");
@@ -1178,8 +1179,8 @@ function NovaAusenciaPage() {
             // Motivo fixo — o operador não digita nem escolhe; a auditoria recebe a origem.
             manual_motivo: MANUAL_MOTIVO_PADRAO,
             manual_motivo_detalhe: "Colaborador não localizado pela matrícula informada.",
-            manual_nome: values.manual_nome?.trim() || "",
-            manual_matricula: (values.manual_matricula || matriculaInput).trim(),
+            manual_nome: (values.manual_nome || "").trim(),
+            manual_matricula: (values.manual_matricula || matriculaInput || "").trim(),
             manual_telefone: values.manual_telefone?.trim() || null,
             manual_whatsapp: values.manual_whatsapp?.trim() || null,
             manual_email: values.manual_email?.trim() || null,
@@ -1221,13 +1222,7 @@ function NovaAusenciaPage() {
       };
 
 
-      console.log("DEBUG_LANCAMENTO_MANUAL:", {
-        input_visivel: values.manual_nome,
-        get_values: form.getValues("manual_nome"),
-        schema_result: schema.safeParse(values).success,
-        payload_enviado: payload.manual_nome
-      });
-
+      // Debug logs removidos após correção
       if (isEdit && editId) {
         await updateFn({ data: { ...payload, id: editId } });
         return { manual: false, colaboradorCriado: false };
