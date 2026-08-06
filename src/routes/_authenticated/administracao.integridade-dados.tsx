@@ -56,7 +56,9 @@ type Tipo =
   | "usuario_sem_empresa"
   | "usuario_sem_projeto"
   | "matricula_duplicada"
-  | "vinculo_orfao";
+  | "vinculo_orfao"
+  | "ausencias_sem_autoria";
+
 
 type Criticidade = "critica" | "alta" | "media" | "baixa";
 
