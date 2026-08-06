@@ -232,8 +232,8 @@ const schema = z
     }
     if (!v.empresa_id) req("empresa_id", "Selecione a empresa.");
     if (!v.projeto_id) req("projeto_id", "Selecione o projeto.");
-    if ((v.manual_nome ?? "").trim().length < 3) {
-      req("manual_nome", "Informe o nome completo (mínimo 3 caracteres).");
+    if (v.modo_manual && (v.manual_nome ?? "").trim().length < 3) {
+      req("manual_nome", "Informe o nome completo do colaborador (mínimo 3 caracteres).");
     }
     if (!(v.manual_matricula ?? "").trim()) req("manual_matricula", "Informe a matrícula.");
     if (!(v.manual_telefone ?? "").trim()) {
