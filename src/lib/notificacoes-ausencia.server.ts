@@ -86,8 +86,34 @@ export async function enfileirarNotificacoesAusencia({
           usuario_id: supProfile.id,
           whatsapp: supProfile.telefone_whatsapp || undefined,
           nome: supProfile.nome || "Supervisor"
-        });
+      });
+    }
+
+    // D. RH (Interna + WhatsApp se configurado)
+    const { data: rhRoles } = await supabase
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "rh");
+    
+    if (rhRoles && rhRoles.length > 0) {
+      for (const role of rhRoles) {
+        const { data: rhProfile } = await supabase
+          .from("profiles")
+          .select("id, nome, telefone_whatsapp")
+          .eq("id", role.user_id)
+          .maybeSingle();
+        
+        if (rhProfile) {
+          destinatarios.push({
+            tipo: "RH",
+            usuario_id: rhProfile.id,
+            whatsapp: rhProfile.telefone_whatsapp || undefined,
+            nome: rhProfile.nome || "RH"
+          });
+        }
       }
+    }
+
     }
 
     // C. Coordenador (Interna)
