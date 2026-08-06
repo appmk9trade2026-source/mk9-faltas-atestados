@@ -1,5 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "@/integrations/supabase/types";
+import { createHash } from "crypto";
 
 export type EventoNotificacao = "AUSENCIA_CRIADA" | "AUSENCIA_RETIFICADA" | "AUSENCIA_EXCLUIDA";
 
@@ -86,6 +87,16 @@ export async function enfileirarNotificacoesAusencia({
           usuario_id: supProfile.id,
           whatsapp: supProfile.telefone_whatsapp || undefined,
           nome: supProfile.nome || "Supervisor"
+        });
+      }
+    }
+
+    // C. Coordenador (Interna)
+    if (projeto?.coordenador_usuario_id) {
+      destinatarios.push({
+        tipo: "COORDENADOR",
+        usuario_id: projeto.coordenador_usuario_id,
+        nome: "Coordenador"
       });
     }
 
@@ -114,17 +125,6 @@ export async function enfileirarNotificacoesAusencia({
       }
     }
 
-    }
-
-    // C. Coordenador (Interna)
-    if (projeto?.coordenador_usuario_id) {
-      destinatarios.push({
-        tipo: "COORDENADOR",
-        usuario_id: projeto.coordenador_usuario_id,
-        nome: "Coordenador"
-      });
-    }
-
     // 2. Criar Notificações
     const promises: Promise<any>[] = [];
 
@@ -137,7 +137,6 @@ export async function enfileirarNotificacoesAusencia({
       else if (dest.tipo === "SUPERVISOR") templateCodigo = "AUSENCIA_LANCADA_SUPERVISOR_V1";
       else if (dest.tipo === "RH") templateCodigo = "AUSENCIA_LANCADA_RH_V1";
 
-
       if (dest.whatsapp && templateCodigo) {
         // Buscar ID do template ativo
         const { data: template } = await supabase
@@ -148,6 +147,13 @@ export async function enfileirarNotificacoesAusencia({
           .maybeSingle();
 
         if (template) {
+          // Normalizar telefone para hash (somente números, prefixo 55 se faltar)
+          let cleanPhone = dest.whatsapp.replace(/\D/g, '');
+          if (cleanPhone.length === 11 && cleanPhone.startsWith('9')) cleanPhone = '55' + cleanPhone; // Fallback para Brasil se tiver 11 dígitos começando com 9
+          else if (cleanPhone.length === 10) cleanPhone = '55' + cleanPhone;
+          
+          const phoneHash = createHash("sha256").update(cleanPhone).digest("hex");
+
           const insertWa = supabase.from("whatsapp_outbox").insert({
             ausencia_id: ausenciaId,
             evento_tipo: evento,
@@ -161,7 +167,7 @@ export async function enfileirarNotificacoesAusencia({
             publico: dest.tipo === "COLABORADOR" ? "COLABORADOR" : "INTERNO",
             prioridade: "ALTA",
             status: "PENDENTE",
-            telefone_hash: "hash_placeholder",
+            telefone_hash: phoneHash,
             telefone_mascarado: dest.whatsapp.replace(/(\d{2})(\d{5})(\d{4})/, "$1*****$3"),
             payload: {
               protocolo: aus.protocolo,
@@ -176,10 +182,8 @@ export async function enfileirarNotificacoesAusencia({
         }
       }
 
-
       // 2.2 Notificações Internas (Alertas) para Supervisor, Coordenador e RH
       if (dest.usuario_id && (dest.tipo === "SUPERVISOR" || dest.tipo === "COORDENADOR" || dest.tipo === "RH")) {
-
         const insertAlerta = supabase.from("alertas").insert({
           ausencia_id: ausenciaId,
           colaborador_id: colab.id,
