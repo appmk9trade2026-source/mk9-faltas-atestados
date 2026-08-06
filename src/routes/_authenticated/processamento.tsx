@@ -127,7 +127,7 @@ function CentralProcessamentoPage() {
           colaborador_matricula: matricula || (row.colaborador_id ? "Dados do colaborador indisponíveis" : "—"), 
           empresa_nome: row.empresa?.nome || "N/A",
           projeto_nome: row.projeto?.nome || "N/A", 
-          supervisor_nome: supervisor_nome || (supervisorId ? "Supervisor vinculado, mas não carregado" : "Colaborador sem Supervisor vinculado"), 
+          supervisor_nome: supervisor_nome || (row.colaborador?.supervisor_usuario_id ? "Supervisor vinculado, mas não carregado" : "Colaborador sem Supervisor vinculado"), 
           origem_registro: row.origem_registro,
           cid: row.cid, 
           acidente_trabalho: row.acidente_trabalho_trajeto, 
