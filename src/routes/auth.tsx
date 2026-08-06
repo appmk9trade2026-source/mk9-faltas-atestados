@@ -117,25 +117,35 @@ function AuthPage() {
         .eq("user_id", data.user.id);
 
       if (import.meta.env.DEV) {
-        console.group("CAUSA RAIZ LOGIN");
+        console.group("DIAGNÓSTICO CRÍTICO LOGIN");
         console.log("1. auth.uid():", data.user.id);
-        console.log("2. profile.id:", profile?.id);
-        console.log("3. profile.ativo:", profile?.ativo);
-        console.log("4. Erro Banco:", profileErr || rolesErr);
-        console.log("5. Papéis:", userRoles?.map(r => r.role));
-        console.log("6. Código Decisor: src/routes/auth.tsx L114-140 (Corrigido)");
+        console.log("2. profile data:", profile);
+        console.log("3. profile error:", profileErr);
+        if (profileErr) {
+          console.log("   - code:", profileErr.code);
+          console.log("   - message:", profileErr.message);
+          console.log("   - details:", profileErr.details);
+          console.log("   - hint:", profileErr.hint);
+        }
+        console.log("4. roles data:", userRoles);
+        console.log("5. roles error:", rolesErr);
         console.groupEnd();
       }
 
+      // Se profileErr existe, não é apenas "não encontrado", é uma falha de banco/RLS
       if (profileErr) {
         await supabase.auth.signOut();
-        setError("Não foi possível carregar seu perfil. Tente novamente.");
+        // Exibimos o erro detalhado em DEV para a ETAPA 5
+        const msg = import.meta.env.DEV 
+          ? `Erro banco (${profileErr.code}): ${profileErr.message}. ${profileErr.hint || ""}`
+          : "Não foi possível carregar seu perfil. Erro de comunicação com o banco.";
+        setError(msg);
         return;
       }
 
       if (!profile) {
         await supabase.auth.signOut();
-        setError("Seu perfil de acesso não foi encontrado. Contate o suporte.");
+        setError("Seu perfil de acesso não foi encontrado no sistema (Tabela profiles). Contate o suporte.");
         return;
       }
 
