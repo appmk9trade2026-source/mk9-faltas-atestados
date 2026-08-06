@@ -1155,6 +1155,55 @@ function AusenciasPage() {
                   )}
                 </dl>
               </section>
+
+              {viewing.status_documental === "EXCLUIDO" && (
+                <section className="rounded-lg border border-red-200 bg-red-50/50 p-4 dark:border-red-900/30 dark:bg-red-900/10">
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-full bg-red-100 p-2 dark:bg-red-900/40">
+                      <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-sm font-bold text-red-700 dark:text-red-400 uppercase tracking-tight">
+                        REGISTRO EXCLUÍDO
+                      </h4>
+                      <p className="text-xs text-red-600 dark:text-red-300 leading-relaxed">
+                        Este lançamento permanece preservado para auditoria, porém não possui efeitos operacionais.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 grid grid-cols-2 gap-4 border-t border-red-200 pt-4 dark:border-red-900/30">
+                    <div>
+                      <h5 className="text-[10px] font-bold uppercase text-red-800 dark:text-red-400 mb-2">Impacto da Exclusão</h5>
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 text-[10px] text-red-600 dark:text-red-300">
+                          <Ban className="h-3 w-3" /> Removido do Dashboard & KPIs
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] text-red-600 dark:text-red-300">
+                          <Ban className="h-3 w-3" /> Removido do BI Executivo
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] text-red-600 dark:text-red-300">
+                          <Ban className="h-3 w-3" /> Suspenso da Central de Proc.
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <h5 className="text-[10px] font-bold uppercase text-red-800 dark:text-red-400 mb-2">Preservação Forense</h5>
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 text-[10px] text-emerald-600 dark:text-emerald-400">
+                          <ShieldCheck className="h-3 w-3" /> Mantido em Auditoria
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] text-emerald-600 dark:text-emerald-400">
+                          <ShieldCheck className="h-3 w-3" /> Central de Investigações
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] text-emerald-600 dark:text-emerald-400">
+                          <ShieldCheck className="h-3 w-3" /> Histórico Administrativo
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              )}
               <section>
                 <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Anexo
