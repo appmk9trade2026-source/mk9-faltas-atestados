@@ -196,7 +196,18 @@ export function DadosColaboradorFields({
           <Input
             maxLength={150}
             placeholder="Nome completo do colaborador"
-            {...form.register("manual_nome")}
+            {...form.register("manual_nome", {
+              onChange: (e) => {
+                // Log de depuração para validar sincronização imediata
+                const val = e.target.value;
+                if (process.env.NODE_ENV === "development") {
+                  console.log("onChange manual_nome:", {
+                    length: val.length,
+                    present: val.trim().length > 0
+                  });
+                }
+              }
+            })}
           />
         </FieldShell>
       ) : (
