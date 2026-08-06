@@ -1221,11 +1221,11 @@ function NovaAusenciaPage() {
       };
 
 
-      console.log("DEBUG_LANCAMENTO_MANUAL:", {
-        input_visivel: values.manual_nome,
-        get_values: form.getValues("manual_nome"),
-        schema_result: schema.safeParse(values).success,
-        payload_enviado: payload.manual_nome
+      console.log("DEBUG_LANCAMENTO_MANUAL_FE:", {
+        values_manual_nome: values.manual_nome,
+        form_getValues: form.getValues("manual_nome"),
+        safeParse_result: schema.safeParse(values),
+        payload_manual_nome: payload.manual_nome
       });
 
       if (isEdit && editId) {
