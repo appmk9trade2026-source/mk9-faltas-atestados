@@ -26,6 +26,7 @@ const PRIMEIRO_ACESSO_TOAST_ID = "primeiro-acesso-pendente";
 
 const searchSchema = z.object({
   inactive: z.string().optional(),
+  error: z.string().optional(),
 });
 
 export const Route = createFileRoute("/auth")({
