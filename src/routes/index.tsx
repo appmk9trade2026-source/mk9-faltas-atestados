@@ -16,20 +16,24 @@ export const Route = createFileRoute("/")({
       .eq("id", session.user.id)
       .maybeSingle();
 
-    if (error || !profile || profile.ativo === false) {
-      // Se houver erro de RLS (error), perfil ausente (!profile) ou inativo (false),
-      // forçamos o logout para limpar o estado e redirecionamos para login.
+    if (error) {
+      console.error("[Root Loader] Erro RLS/Banco:", error);
       await supabase.auth.signOut();
-      
-      const searchParams: Record<string, string> = {};
-      if (profile?.ativo === false) searchParams.inactive = "true";
-      else if (error) searchParams.error = "db_error";
-      else searchParams.error = "no_profile";
-
       throw redirect({ 
         to: "/auth", 
-        search: searchParams
+        search: { error: "db_error", code: error.code, msg: error.message }
       });
+    }
+
+    if (!profile) {
+      console.error("[Root Loader] Perfil não encontrado para UID:", session.user.id);
+      await supabase.auth.signOut();
+      throw redirect({ to: "/auth", search: { error: "no_profile" } });
+    }
+
+    if (profile.ativo === false) {
+      await supabase.auth.signOut();
+      throw redirect({ to: "/auth", search: { inactive: "true" } });
     }
 
     if (profile.primeiro_acesso_pendente) {
