@@ -80,7 +80,21 @@ function CentralProcessamentoPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ausencias")
-        .select("*, empresa:empresas(nome), projeto:projetos(nome), colaborador:colaboradores(nome_completo, matricula)")
+        .select(`
+          *, 
+          empresa:empresas(nome), 
+          projeto:projetos(nome), 
+          colaborador:colaboradores(
+            nome_completo, 
+            matricula,
+            supervisor_usuario_id,
+            supervisor:profiles!colaboradores_supervisor_profiles_fkey(
+              nome,
+              email,
+              telefone_whatsapp
+            )
+          )
+        `)
         .neq("status_processamento", "PROCESSADO")
         .order("registrado_em", { ascending: true });
       
@@ -89,8 +103,9 @@ function CentralProcessamentoPage() {
       return (data || []).map(row => {
         const { nome, matricula, supervisor_nome } = resolveAusenciaIdentidade({ 
           ...row, 
-          colaborador: row.colaborador ? { ...row.colaborador, supervisor_nome: row.manual_supervisor_nome } : null 
+          colaborador: row.colaborador as any
         });
+
         return {
           id: row.id, 
           protocolo: row.protocolo, 
@@ -109,11 +124,11 @@ function CentralProcessamentoPage() {
           prioridade: calcularPrioridade(row.registrado_em),
           tempo_aguardando: differenceInDays(new Date(), new Date(row.registrado_em)), 
           sla_status: getSlaStatus(row.registrado_em),
-          colaborador_nome: nome || "N/A", 
-          colaborador_matricula: matricula || "N/A", 
+          colaborador_nome: nome || (row.colaborador_id ? "Dados do colaborador indisponíveis" : "—"), 
+          colaborador_matricula: matricula || (row.colaborador_id ? "Dados do colaborador indisponíveis" : "—"), 
           empresa_nome: row.empresa?.nome || "N/A",
           projeto_nome: row.projeto?.nome || "N/A", 
-          supervisor_nome: supervisor_nome || "N/A", 
+          supervisor_nome: supervisor_nome || (row.colaborador?.supervisor_usuario_id ? "Supervisor vinculado, mas não carregado" : "Colaborador sem Supervisor vinculado"), 
           origem_registro: row.origem_registro,
           cid: row.cid, 
           acidente_trabalho: row.acidente_trabalho_trajeto, 
