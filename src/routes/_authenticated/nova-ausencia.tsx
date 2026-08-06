@@ -1227,7 +1227,8 @@ function NovaAusenciaPage() {
         form_getValues: form.getValues("manual_nome"),
         safeParse_result: schema.safeParse(values),
         payload_manual_nome: payload.manual_nome,
-        modo_manual: values.modo_manual
+        modo_manual: values.modo_manual,
+        is_manual_nome_empty_in_v: !values.manual_nome
       });
 
       if (isEdit && editId) {
