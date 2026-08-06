@@ -93,20 +93,50 @@ function AuthPage() {
         password: senhaNorm,
       });
       if (signErr || !data.user) {
+        if (import.meta.env.DEV) {
+          console.error("[Login Debug] auth.signInWithPassword error:", signErr);
+        }
         setError(mapAuthError(signErr, "login"));
         return;
       }
-      const { data: profile } = await supabase
+
+      const { data: profile, error: profileErr } = await supabase
         .from("profiles")
         .select("ativo, primeiro_acesso_pendente")
         .eq("id", data.user.id)
         .maybeSingle();
-      if (!profile || profile.ativo === false) {
+
+      const { data: userRoles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.user.id);
+
+      if (import.meta.env.DEV) {
+        console.log("[Login Debug]", {
+          uid: data.user.id,
+          profile,
+          profileErr,
+          roles: userRoles?.map(r => r.role),
+          ativo: profile?.ativo,
+          primeiro_acesso: profile?.primeiro_acesso_pendente
+        });
+      }
+
+      if (profileErr) {
         await supabase.auth.signOut();
-        const msg = profile?.ativo === false 
-          ? "Sua conta está inativa. Contate o Super Admin."
-          : "Perfil de acesso não localizado. Contate o suporte técnico.";
-        setError(msg);
+        setError(`Erro ao carregar perfil: ${profileErr.message} (${profileErr.code})`);
+        return;
+      }
+
+      if (!profile) {
+        await supabase.auth.signOut();
+        setError("Perfil de acesso não localizado (null). Contate o suporte técnico.");
+        return;
+      }
+
+      if (profile.ativo === false) {
+        await supabase.auth.signOut();
+        setError("Sua conta está inativa. Contate o Super Admin.");
         return;
       }
       if (profile.primeiro_acesso_pendente) {
@@ -429,12 +459,34 @@ function FirstAccessDialog({
         setError(mapAuthError(signErr, "primeiro_acesso"));
         return;
       }
-      const { data: prof } = await supabase
+      const { data: prof, error: profileErr } = await supabase
         .from("profiles")
         .select("ativo, primeiro_acesso_pendente")
         .eq("id", data.user.id)
         .maybeSingle();
-      if (!prof || prof.ativo === false) {
+
+      if (import.meta.env.DEV) {
+        console.log("[First Access Debug]", {
+          uid: data.user.id,
+          prof,
+          profileErr,
+          ativo: prof?.ativo
+        });
+      }
+
+      if (profileErr) {
+        await supabase.auth.signOut();
+        setError(`Erro ao carregar perfil: ${profileErr.message}`);
+        return;
+      }
+
+      if (!prof) {
+        await supabase.auth.signOut();
+        setError("Perfil de acesso não localizado (null). Contate o suporte técnico.");
+        return;
+      }
+
+      if (prof.ativo === false) {
         await supabase.auth.signOut();
         setError("Sua conta está inativa. Contate o Super Admin.");
         return;
