@@ -435,6 +435,15 @@ export const createAusencia = createServerFn({ method: "POST" })
       gate.empresaId, gate.projetoId,
     );
 
+    // 8. Notificações
+    await enfileirarNotificacoesAusencia({
+      supabase: context.supabase,
+      ausenciaId: rowId,
+      evento: "AUSENCIA_CRIADA",
+      correlationId: gate.correlationId,
+      userId: gate.userId,
+    });
+
     return {
       id: rowId,
       protocolo,
