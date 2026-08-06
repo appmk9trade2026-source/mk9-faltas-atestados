@@ -113,7 +113,7 @@ function WhatsappAdminLayout() {
             </p>
             <div className="mt-5">
               <Button variant="outline" asChild>
-                <Link to="/comunicacoes">
+                <Link to="/comunicacoes" search={{ ausencia: undefined }}>
                   <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para Comunicações
                 </Link>
               </Button>
