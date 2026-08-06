@@ -234,23 +234,27 @@ const schema = z
     if (!v.empresa_id) req("empresa_id", "Selecione a empresa.");
     if (!v.projeto_id) req("projeto_id", "Selecione o projeto.");
     const correlationId = (globalThis as any).__manualCorrelationId || "no-correlation-id";
-    const rawVal = v.manual_nome;
-    const nomeManual = normalizeManualText(rawVal);
+    
+    // Ponte de Segurança: Se o valor no objeto de validação for insuficiente, tenta ler direto do DOM
+    // Isso resolve atrasos de sincronização do React Hook Form no clique direto em Enviar.
+    const inputNome = typeof document !== "undefined" ? (document.querySelector('input[name="manual_nome"]') as HTMLInputElement)?.value : undefined;
+    const nomeManual = normalizeManualText(v.manual_nome || inputNome);
     
     if (v.modo_manual && nomeManual.length < 3) {
       console.error("ETAPA 4 — LOG DO SCHEMA DO FRONTEND", {
         correlation_id: correlationId,
         etapa: "frontend-schema",
-        raw_manual_nome: rawVal,
-        raw_manual_nome_type: typeof rawVal,
-        raw_manual_nome_length: (rawVal ?? "").length,
-        normalized_nome_length: nomeManual.length,
-        modo_manual: v.modo_manual,
-        issue_message: "Informe o nome completo do colaborador (mínimo 3 caracteres)."
+        val_in_schema: v.manual_nome,
+        val_in_dom: inputNome,
+        normalized_length: nomeManual.length,
+        modo_manual: v.modo_manual
       });
       req("manual_nome", "Informe o nome completo do colaborador (mínimo 3 caracteres).");
     }
-    if (normalizeManualText(v.manual_matricula).length === 0) req("manual_matricula", "Informe a matrícula.");
+    
+    const inputMatricula = typeof document !== "undefined" ? (document.querySelector('input[placeholder="Digite a matrícula"]') as HTMLInputElement)?.value : undefined;
+    if (normalizeManualText(v.manual_matricula || inputMatricula).length === 0) req("manual_matricula", "Informe a matrícula.");
+
     if (normalizeManualText(v.manual_telefone).length === 0) {
       req("manual_telefone", "Informe o telefone do colaborador.");
     }
