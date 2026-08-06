@@ -161,6 +161,12 @@ type Ausencia = {
   manual_supervisor_email?: string | null;
   registrador?: { nome: string | null; email: string | null } | null;
   lancador?: { nome: string | null; email: string | null } | null;
+  excluida_em?: string | null;
+  excluidora_nome_snapshot?: string | null;
+  excluidora_papel_snapshot?: string | null;
+  motivo_exclusao_categoria?: string | null;
+  motivo_exclusao_detalhe?: string | null;
+  status_documental?: "ATIVO" | "EXCLUIDO" | null;
 };
 
 const PAGE_SIZE = 10;
@@ -261,14 +267,20 @@ function AusenciasPage() {
 
   const [periodoIni, setPeriodoIni] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
+  const [docStatusFiltro, setDocStatusFiltro] = useState<string>("ATIVO");
   const [sortBy, setSortBy] = useState<"data_inicio" | "created_at" | "colaborador">("data_inicio");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
 
   const [viewing, setViewing] = useState<Ausencia | null>(null);
   const [confirmLancar, setConfirmLancar] = useState<Ausencia | null>(null);
+  const [confirmExcluir, setConfirmExcluir] = useState<Ausencia | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
   const [retificando, setRetificando] = useState<Ausencia | null>(null);
+
+  const [excluirCategoria, setExcluirCategoria] = useState("");
+  const [excluirMotivo, setExcluirMotivo] = useState("");
+  const [excluirConfirmado, setExcluirConfirmado] = useState(false);
   const podeIgnorarPrazo = roles.includes("super_admin") || roles.includes("rh");
   const podeRetificar =
     podeIgnorarPrazo || roles.includes("supervisor") || roles.includes("coordenador");
@@ -364,6 +376,8 @@ function AusenciasPage() {
     if (tipoFiltro !== "all") list = list.filter((a) => a.tipo === tipoFiltro);
     if (statusFiltro !== "all") list = list.filter((a) => a.status === statusFiltro);
     if (processamentoFiltro !== "all") list = list.filter((a) => a.status_processamento === processamentoFiltro);
+    if (docStatusFiltro === "ATIVO") list = list.filter((a) => (a.status_documental ?? "ATIVO") === "ATIVO");
+    if (docStatusFiltro === "EXCLUIDO") list = list.filter((a) => a.status_documental === "EXCLUIDO");
 
     if (periodoIni) list = list.filter((a) => a.data_fim >= periodoIni);
     if (periodoFim) list = list.filter((a) => a.data_inicio <= periodoFim);
