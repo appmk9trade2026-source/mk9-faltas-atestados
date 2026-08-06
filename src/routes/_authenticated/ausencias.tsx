@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { alterarStatusAusencia, processarAusenciaInterno } from "@/lib/ausencias.functions";
+import { alterarStatusAusencia, processarAusenciaInterno, deleteAusencia } from "@/lib/ausencias.functions";
 
 import { friendlyRbacError } from "@/lib/rbac/errors";
 import {
@@ -28,6 +28,8 @@ import {
   Plus,
   Search,
   RefreshCcw,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { RetificarAusenciaDialog } from "@/components/ausencias/retificar-ausencia-dialog";
@@ -159,6 +161,12 @@ type Ausencia = {
   manual_supervisor_email?: string | null;
   registrador?: { nome: string | null; email: string | null } | null;
   lancador?: { nome: string | null; email: string | null } | null;
+  excluida_em?: string | null;
+  excluidora_nome_snapshot?: string | null;
+  excluidora_papel_snapshot?: string | null;
+  motivo_exclusao_categoria?: string | null;
+  motivo_exclusao_detalhe?: string | null;
+  status_documental?: "ATIVO" | "EXCLUIDO" | null;
 };
 
 const PAGE_SIZE = 10;
@@ -259,14 +267,20 @@ function AusenciasPage() {
 
   const [periodoIni, setPeriodoIni] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
+  const [docStatusFiltro, setDocStatusFiltro] = useState<string>("ATIVO");
   const [sortBy, setSortBy] = useState<"data_inicio" | "created_at" | "colaborador">("data_inicio");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
 
   const [viewing, setViewing] = useState<Ausencia | null>(null);
   const [confirmLancar, setConfirmLancar] = useState<Ausencia | null>(null);
+  const [confirmExcluir, setConfirmExcluir] = useState<Ausencia | null>(null);
   const [downloading, setDownloading] = useState<string | null>(null);
   const [retificando, setRetificando] = useState<Ausencia | null>(null);
+
+  const [excluirCategoria, setExcluirCategoria] = useState("");
+  const [excluirMotivo, setExcluirMotivo] = useState("");
+  const [excluirConfirmado, setExcluirConfirmado] = useState(false);
   const podeIgnorarPrazo = roles.includes("super_admin") || roles.includes("rh");
   const podeRetificar =
     podeIgnorarPrazo || roles.includes("supervisor") || roles.includes("coordenador");
@@ -362,6 +376,8 @@ function AusenciasPage() {
     if (tipoFiltro !== "all") list = list.filter((a) => a.tipo === tipoFiltro);
     if (statusFiltro !== "all") list = list.filter((a) => a.status === statusFiltro);
     if (processamentoFiltro !== "all") list = list.filter((a) => a.status_processamento === processamentoFiltro);
+    if (docStatusFiltro === "ATIVO") list = list.filter((a) => (a.status_documental ?? "ATIVO") === "ATIVO");
+    if (docStatusFiltro === "EXCLUIDO") list = list.filter((a) => a.status_documental === "EXCLUIDO");
 
     if (periodoIni) list = list.filter((a) => a.data_fim >= periodoIni);
     if (periodoFim) list = list.filter((a) => a.data_inicio <= periodoFim);
@@ -429,6 +445,31 @@ function AusenciasPage() {
       const msg = variables.status === "EM_PROCESSAMENTO" ? "Processamento iniciado." : "Processamento concluído.";
       toast.success(msg);
       queryClient.invalidateQueries({ queryKey: ["ausencias"] });
+    },
+    onError: (err: unknown) => {
+      const friendly = friendlyRbacError(err);
+      toast.error(friendly.title, { description: friendly.description });
+    },
+  });
+
+  const deleteAusenciaFn = useServerFn(deleteAusencia);
+  const excluirMut = useMutation({
+    mutationFn: async (row: Ausencia) => {
+      await deleteAusenciaFn({ 
+        data: { 
+          id: row.id, 
+          categoria_motivo: excluirCategoria, 
+          motivo: excluirMotivo 
+        } 
+      });
+    },
+    onSuccess: () => {
+      toast.success("Lançamento excluído com sucesso.");
+      queryClient.invalidateQueries({ queryKey: ["ausencias"] });
+      setConfirmExcluir(null);
+      setExcluirCategoria("");
+      setExcluirMotivo("");
+      setExcluirConfirmado(false);
     },
     onError: (err: unknown) => {
       const friendly = friendlyRbacError(err);
@@ -574,6 +615,19 @@ function AusenciasPage() {
                 <SelectItem value="PROCESSADO">Processado</SelectItem>
               </SelectContent>
             </Select>
+
+            {(roles.includes("super_admin") || roles.includes("rh")) && (
+              <Select value={docStatusFiltro} onValueChange={(v) => { setDocStatusFiltro(v); setPage(1); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Status Documental" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos (Ativos e Excluídos)</SelectItem>
+                  <SelectItem value="ATIVO">Ativos</SelectItem>
+                  <SelectItem value="EXCLUIDO">Excluídos</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
 
@@ -738,6 +792,14 @@ function AusenciasPage() {
                   <TableCell>
                     <div className="flex flex-wrap items-center gap-1">
                       <Badge variant="outline">{TIPO_LABEL[row.tipo]}</Badge>
+                      {row.status_documental === "EXCLUIDO" && (
+                        <Badge
+                          variant="destructive"
+                          className="bg-red-500/10 text-red-700 border-red-500/30"
+                        >
+                          EXCLUÍDO
+                        </Badge>
+                      )}
                       {row.retificada && (
                         <Badge
                           variant="secondary"
@@ -829,6 +891,22 @@ function AusenciasPage() {
                             <CheckCircle2 className="mr-2 h-4 w-4" /> Marcar como lançado
                           </DropdownMenuItem>
                         )}
+                        {(roles.includes("super_admin") || roles.includes("rh")) && row.status_documental !== "EXCLUIDO" && (
+                          <>
+                            <div className="my-1 h-px bg-muted" />
+                            <DropdownMenuItem 
+                              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                              onClick={() => {
+                                setConfirmExcluir(row);
+                                setExcluirCategoria("");
+                                setExcluirMotivo("");
+                                setExcluirConfirmado(false);
+                              }}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" /> Excluir lançamento
+                            </DropdownMenuItem>
+                          </>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -890,6 +968,34 @@ function AusenciasPage() {
                   <dd className="col-span-2">{viewing.projeto?.nome ?? "—"}</dd>
                 </dl>
               </section>
+
+              {viewing.status_documental === "EXCLUIDO" && (
+                <section className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                  <h4 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-red-700 dark:text-red-400">
+                    <Trash2 className="h-3 w-3" /> Exclusão Administrativa
+                  </h4>
+                  <dl className="grid grid-cols-3 gap-2 text-xs">
+                    <dt className="text-muted-foreground font-medium">Status:</dt>
+                    <dd className="col-span-2"><Badge variant="destructive" className="h-5 text-[10px] py-0">EXCLUÍDO</Badge></dd>
+                    
+                    <dt className="text-muted-foreground font-medium">Excluído por:</dt>
+                    <dd className="col-span-2">{viewing.excluidora_nome_snapshot ?? "—"}</dd>
+                    
+                    <dt className="text-muted-foreground font-medium">Papel:</dt>
+                    <dd className="col-span-2 uppercase">{viewing.excluidora_papel_snapshot ?? "—"}</dd>
+                    
+                    <dt className="text-muted-foreground font-medium">Data:</dt>
+                    <dd className="col-span-2">{formatDateTime(viewing.excluida_em)}</dd>
+                    
+                    <dt className="text-muted-foreground font-medium">Categoria:</dt>
+                    <dd className="col-span-2">{viewing.motivo_exclusao_categoria ?? "—"}</dd>
+                    
+                    <dt className="text-muted-foreground font-medium">Motivo:</dt>
+                    <dd className="col-span-2 italic text-muted-foreground">{viewing.motivo_exclusao_detalhe ?? "—"}</dd>
+                  </dl>
+                </section>
+              )}
+
               <section>
                 <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Ausência
@@ -1118,6 +1224,119 @@ function AusenciasPage() {
         nomeColaborador={retificando ? labelNomeColaborador(retificando) : "—"}
       />
 
+      <AlertDialog open={!!confirmExcluir} onOpenChange={(o) => !o && setConfirmExcluir(null)}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" /> Excluir lançamento?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                Este lançamento será retirado dos fluxos operacionais e dos indicadores, 
+                mas continuará preservado no histórico de auditoria.
+              </p>
+              
+              {confirmExcluir && (
+                <div className="rounded-md border bg-muted/50 p-3 text-xs space-y-1 text-foreground">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Colaborador:</span>
+                    <span className="font-medium">{labelNomeColaborador(confirmExcluir)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Matrícula:</span>
+                    <span className="font-mono">{labelMatriculaColaborador(confirmExcluir)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Empresa/Proj:</span>
+                    <span>{confirmExcluir.empresa?.nome} / {confirmExcluir.projeto?.nome}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Protocolo:</span>
+                    <span className="font-mono">{confirmExcluir.protocolo || "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Tipo/Período:</span>
+                    <span>{TIPO_LABEL[confirmExcluir.tipo]} ({formatBRDate(confirmExcluir.data_inicio)})</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Status RH/Proc:</span>
+                    <span>{confirmExcluir.status} / {confirmExcluir.status_processamento}</span>
+                  </div>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Categoria do motivo</label>
+              <Select value={excluirCategoria} onValueChange={setExcluirCategoria}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a categoria..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Colaborador incorreto">Colaborador incorreto</SelectItem>
+                  <SelectItem value="Matrícula incorreta">Matrícula incorreta</SelectItem>
+                  <SelectItem value="Tipo incorreto">Tipo incorreto</SelectItem>
+                  <SelectItem value="Período incorreto">Período incorreto</SelectItem>
+                  <SelectItem value="Registro duplicado">Registro duplicado</SelectItem>
+                  <SelectItem value="Teste indevido">Teste indevido</SelectItem>
+                  <SelectItem value="Lançamento sem fundamento">Lançamento sem fundamento</SelectItem>
+                  <SelectItem value="Outro">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Motivo detalhado {excluirCategoria === "Outro" && <span className="text-destructive">*</span>}
+              </label>
+              <Input 
+                value={excluirMotivo}
+                onChange={(e) => setExcluirMotivo(e.target.value)}
+                placeholder="Descreva a razão da exclusão..."
+              />
+            </div>
+
+            <div className="flex items-center space-x-2 rounded-md border p-3">
+              <input 
+                type="checkbox" 
+                id="confirm_exc"
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
+                checked={excluirConfirmado}
+                onChange={(e) => setExcluirConfirmado(e.target.checked)}
+              />
+              <label htmlFor="confirm_exc" className="text-xs text-muted-foreground cursor-pointer leading-tight">
+                Confirmo que esta exclusão é definitiva para fins operacionais e que os dados 
+                de autoria serão registrados para auditoria.
+              </label>
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setExcluirCategoria("");
+              setExcluirMotivo("");
+              setExcluirConfirmado(false);
+            }}>
+              Cancelar
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              disabled={
+                !excluirCategoria || 
+                (excluirCategoria === "Outro" && !excluirMotivo.trim()) || 
+                !excluirMotivo.trim() ||
+                !excluirConfirmado ||
+                excluirMut.isPending
+              }
+              onClick={() => confirmExcluir && excluirMut.mutate(confirmExcluir)}
+            >
+              {excluirMut.isPending ? "Excluindo..." : "Excluir lançamento"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppShell>
   );
 }

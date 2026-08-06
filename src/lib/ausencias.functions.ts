@@ -708,39 +708,62 @@ export const updateAusencia = createServerFn({ method: "POST" })
 
   });
 
-// ==================== DELETE (soft) ====================
+// ==================== DELETE (Lógica) ====================
+const deleteSchema = z.object({
+  id: uuid,
+  categoria_motivo: z.string().min(1),
+  motivo: z.string().min(1),
+});
+
 export const deleteAusencia = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => {
-    try { return z.object({ id: uuid }).parse(data); } catch (e) { throw toInvalidPayload(e); }
+    try { return deleteSchema.parse(data); } catch (e) { throw toInvalidPayload(e); }
   })
   .handler(async ({ data, context }) => {
-    const { data: current } = await context.supabase
+    const { data: current, error: fetchErr } = await context.supabase
       .from("ausencias")
-      .select("id, colaborador_id, empresa_id, projeto_id, status")
+      .select("id, colaborador_id, empresa_id, projeto_id, status, protocolo, data_inicio, data_fim")
       .eq("id", data.id)
       .maybeSingle();
+    
+    if (fetchErr) throw new Error(`DATABASE_ERROR: ${fetchErr.message}`);
     if (!current) throw new Error("RESOURCE_NOT_FOUND: ausência não encontrada");
 
-    const gate = await requirePermission({
-      ctx: context,
-      permission: PERMISSION_MAP.deleteAbsence,
-      colaboradorId: (current.colaborador_id as string | null) ?? null,
-      projetoId: current.colaborador_id ? null : (current.projeto_id as string),
-      route: "/ausencias",
-    });
-
-
-    const { error } = await context.supabase.from("ausencias").delete().eq("id", data.id);
-    if (error) {
-      throw ausenciaDbError(error, "delete_ausencia", gate.correlationId);
+    // Permissão: super_admin ou rh
+    const { data: userRoles } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
+    const roles = userRoles?.map(r => r.role) ?? [];
+    if (!roles.includes("super_admin") && !roles.includes("rh")) {
+      throw new Error("FORBIDDEN: Apenas RH e Super Admin podem excluir lançamentos.");
     }
 
-    await audit(context.supabase, "AUSENCIA_EXCLUIDA", data.id, gate.correlationId,
-      current, null, "exclusão",
-      gate.empresaId, gate.projetoId,
-    );
-    return { ok: true, correlation_id: gate.correlationId };
+    const correlationId = `EXC-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+
+    // Chamar RPC de exclusão segura
+    const { data: res, error: rpcErr } = await context.supabase.rpc("excluir_ausencia_segura" as any, {
+      p_ausencia_id: data.id,
+      p_categoria_motivo: data.categoria_motivo,
+      p_motivo: data.motivo
+    });
+
+    if (rpcErr) {
+      throw ausenciaDbError(rpcErr, "delete_ausencia", correlationId);
+    }
+
+    // Notificar os envolvidos
+    try {
+      await enfileirarNotificacoesAusencia({
+        supabase: context.supabase,
+        ausenciaId: data.id,
+        evento: "AUSENCIA_EXCLUIDA",
+        correlationId: correlationId,
+        userId: context.userId,
+      });
+    } catch (notifErr) {
+      console.error("[Notificação de Exclusão] Falha não impeditiva:", notifErr);
+    }
+
+    return { ok: true, correlation_id: correlationId };
   });
 
 // ==================== STATUS ====================
