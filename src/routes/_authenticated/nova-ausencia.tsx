@@ -1192,41 +1192,27 @@ function NovaAusenciaPage() {
       const correlationId = `manual-submit-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
       (globalThis as any).__manualCorrelationId = correlationId;
 
-      const inputElement = document.querySelector('input[name="manual_nome"]') as HTMLInputElement;
-      const inputVal = inputElement?.value;
-      const getValuesVal = form.getValues("manual_nome");
-      const valuesVal = values.manual_nome;
+      const inputNomeEl = typeof document !== "undefined" ? document.querySelector('input[name="manual_nome"]') as HTMLInputElement : null;
+      const inputMatriculaEl = typeof document !== "undefined" ? document.querySelector('input[placeholder="Digite a matrícula"]') as HTMLInputElement : null;
+      
+      const valNome = values.manual_nome || form.getValues("manual_nome") || inputNomeEl?.value;
+      const valMatricula = values.manual_matricula || form.getValues("manual_matricula") || inputMatriculaEl?.value;
 
       console.error("DIAGNÓSTICO CRÍTICO — VALORES CAPTURADOS", {
         correlation_id: correlationId,
-        input_dom_value: inputVal,
-        form_get_values: getValuesVal,
-        submit_values_object: valuesVal,
-        manual_mode: values.modo_manual
+        input_dom_name: inputNomeEl?.value,
+        form_get_values_name: form.getValues("manual_nome"),
+        submit_values_object_name: values.manual_nome,
+        final_val_used: valNome
       });
 
-      console.log("ETAPA 3 — LOG DO FRONTEND ANTES DO HANDLE SUBMIT", {
-        correlation_id: correlationId,
-        etapa: "frontend-before-submit",
-        manual_mode: !!values.modo_manual,
-        input_nome_length: (inputVal ?? "").length,
-        field_value_length: (values.manual_nome ?? "").length,
-        get_values_nome_length: (form.getValues("manual_nome") ?? "").length,
-        input_nome_present: inputVal !== undefined,
-        field_value_present: values.manual_nome !== undefined,
-        get_values_nome_present: form.getValues("manual_nome") !== undefined
-      });
-
-      const normalized_manual_nome = normalizeManualText(values.manual_nome ?? form.getValues("manual_nome"));
+      const normalized_manual_nome = normalizeManualText(valNome);
       
       console.log("ETAPA 5 — LOG DO HANDLE SUBMIT", {
         correlation_id: correlationId,
         etapa: "handle-submit",
-        values_keys: Object.keys(values),
         values_manual_nome_length: (values.manual_nome ?? "").length,
-        get_values_manual_nome_length: (form.getValues("manual_nome") ?? "").length,
         normalized_manual_nome_length: normalized_manual_nome.length,
-        manual_mode: !!values.modo_manual
       });
 
       const origemFields = values.modo_manual
@@ -1237,7 +1223,7 @@ function NovaAusenciaPage() {
             manual_motivo: MANUAL_MOTIVO_PADRAO,
             manual_motivo_detalhe: "Colaborador não localizado pela matrícula informada.",
             manual_nome: normalized_manual_nome,
-            manual_matricula: normalizeManualText(values.manual_matricula ?? form.getValues("manual_matricula") ?? matriculaInput),
+            manual_matricula: normalizeManualText(valMatricula),
             manual_telefone: normalizeManualText(values.manual_telefone ?? form.getValues("manual_telefone")),
             manual_whatsapp: normalizeManualText(values.manual_whatsapp ?? form.getValues("manual_whatsapp")),
             manual_email: normalizeManualText(values.manual_email ?? form.getValues("manual_email")),
