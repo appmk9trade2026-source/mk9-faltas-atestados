@@ -234,7 +234,7 @@ const schema = z
     if (!v.projeto_id) req("projeto_id", "Selecione o projeto.");
     const nomeManual = (v.manual_nome || "").trim();
     if (v.modo_manual && nomeManual.length < 3) {
-      req("manual_nome", `Informe o nome completo do colaborador (mínimo 3 caracteres). Recebido: "${nomeManual}"`);
+      req("manual_nome", "Informe o nome completo do colaborador (mínimo 3 caracteres).");
     }
     if (!(v.manual_matricula ?? "").trim()) req("manual_matricula", "Informe a matrícula.");
     if (!(v.manual_telefone ?? "").trim()) {
@@ -1179,8 +1179,8 @@ function NovaAusenciaPage() {
             // Motivo fixo — o operador não digita nem escolhe; a auditoria recebe a origem.
             manual_motivo: MANUAL_MOTIVO_PADRAO,
             manual_motivo_detalhe: "Colaborador não localizado pela matrícula informada.",
-            manual_nome: (values.manual_nome || "").trim() || (form.getValues("manual_nome") || "").trim(),
-            manual_matricula: (values.manual_matricula || matriculaInput || "").trim() || (form.getValues("manual_matricula") || "").trim(),
+            manual_nome: (values.manual_nome || "").trim(),
+            manual_matricula: (values.manual_matricula || matriculaInput || "").trim(),
             manual_telefone: values.manual_telefone?.trim() || null,
             manual_whatsapp: values.manual_whatsapp?.trim() || null,
             manual_email: values.manual_email?.trim() || null,
@@ -1222,15 +1222,7 @@ function NovaAusenciaPage() {
       };
 
 
-      console.log("DEBUG_LANCAMENTO_MANUAL_FE:", {
-        values_manual_nome: values.manual_nome,
-        form_getValues: form.getValues("manual_nome"),
-        safeParse_result: schema.safeParse(values),
-        payload_manual_nome: payload.manual_nome,
-        modo_manual: values.modo_manual,
-        is_manual_nome_empty_in_v: !values.manual_nome
-      });
-
+      // Debug logs removidos após correção
       if (isEdit && editId) {
         await updateFn({ data: { ...payload, id: editId } });
         return { manual: false, colaboradorCriado: false };
@@ -1393,27 +1385,16 @@ function NovaAusenciaPage() {
             <Form {...form}>
               <fieldset disabled={bloqueado || (supervisorSemProjetos && !isEdit)} className="contents">
                 <form
-                  onSubmit={(e) => {
-                    console.log("DEBUG_LANCAMENTO_MANUAL_FE_SUBMIT_START", {
-                      form_values: form.getValues(),
-                      modo_manual: form.getValues("modo_manual"),
-                    });
-                    
-                    form.handleSubmit(async (v) => {
-                      console.log("DEBUG_LANCAMENTO_MANUAL_FE_INSIDE_HANDLE_SUBMIT", {
-                        v_manual_nome: v.manual_nome,
-                        v_modo_manual: v.modo_manual
-                      });
-
-                      if (salvarMut.isPending || substituirMut.isPending || bloqueado) return;
-                      if (supervisorSemProjetos && !isEdit) {
-                        toast.error("Sem projetos vinculados. Procure um administrador.");
-                        return;
-                      }
-                      if (!colab && !isEdit && !v.modo_manual) {
-                        toast.error("Busque um colaborador pela matrícula ou use o preenchimento manual.");
-                        return;
-                      }
+                  onSubmit={form.handleSubmit(async (v) => {
+                    if (salvarMut.isPending || substituirMut.isPending || bloqueado) return;
+                    if (supervisorSemProjetos && !isEdit) {
+                      toast.error("Sem projetos vinculados. Procure um administrador.");
+                      return;
+                    }
+                    if (!colab && !isEdit && !v.modo_manual) {
+                      toast.error("Busque um colaborador pela matrícula ou use o preenchimento manual.");
+                      return;
+                    }
 
                     // 1. Detecção de Conflitos (Etapa 1)
                     if (!isEdit) {
@@ -1452,8 +1433,7 @@ function NovaAusenciaPage() {
                       return;
                     }
                     salvarMut.mutate(v);
-                  })(e);
-                }}
+                  })}
                   className="space-y-6"
                 >
                   {/* ============= SEÇÃO 1: Dados do Colaborador ============= */}
