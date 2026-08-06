@@ -1185,25 +1185,48 @@ function NovaAusenciaPage() {
         }
       }
 
+      const correlationId = `manual-submit-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      (globalThis as any).__manualCorrelationId = correlationId;
+
+      console.log("ETAPA 3 — LOG DO FRONTEND ANTES DO HANDLE SUBMIT", {
+        correlation_id: correlationId,
+        etapa: "frontend-before-submit",
+        manual_mode: !!values.modo_manual,
+        input_nome_length: (values.manual_nome ?? "").length,
+        field_value_length: (values.manual_nome ?? "").length,
+        get_values_nome_length: (form.getValues("manual_nome") ?? "").length,
+        input_nome_present: values.manual_nome !== undefined,
+        field_value_present: values.manual_nome !== undefined,
+        get_values_nome_present: form.getValues("manual_nome") !== undefined
+      });
+
+      const normalized_manual_nome = normalizeManualText(values.manual_nome ?? form.getValues("manual_nome"));
+      
+      console.log("ETAPA 5 — LOG DO HANDLE SUBMIT", {
+        correlation_id: correlationId,
+        etapa: "handle-submit",
+        values_keys: Object.keys(values),
+        values_manual_nome_length: (values.manual_nome ?? "").length,
+        get_values_manual_nome_length: (form.getValues("manual_nome") ?? "").length,
+        normalized_manual_nome_length: normalized_manual_nome.length,
+        manual_mode: !!values.modo_manual
+      });
+
       const origemFields = values.modo_manual
         ? {
             origem_registro: "MANUAL" as const,
             empresa_id: values.empresa_id!,
             projeto_id: values.projeto_id!,
-            // Motivo fixo — o operador não digita nem escolhe; a auditoria recebe a origem.
             manual_motivo: MANUAL_MOTIVO_PADRAO,
             manual_motivo_detalhe: "Colaborador não localizado pela matrícula informada.",
-            manual_nome: normalizeManualText(values.manual_nome ?? form.getValues("manual_nome")),
+            manual_nome: normalized_manual_nome,
             manual_matricula: normalizeManualText(values.manual_matricula ?? form.getValues("manual_matricula") ?? matriculaInput),
             manual_telefone: normalizeManualText(values.manual_telefone ?? form.getValues("manual_telefone")),
             manual_whatsapp: normalizeManualText(values.manual_whatsapp ?? form.getValues("manual_whatsapp")),
             manual_email: normalizeManualText(values.manual_email ?? form.getValues("manual_email")),
             manual_supervisor_nome: normalizeManualText(values.manual_supervisor_nome ?? form.getValues("manual_supervisor_nome")),
             manual_supervisor_telefone: normalizeManualText(values.manual_supervisor_telefone ?? form.getValues("manual_supervisor_telefone")),
-            // Coordenador: supervisor canônico do vínculo. No modo Supervisor, 
-            // a RPC ignora este campo e usa o auth.uid().
             manual_supervisor_usuario_id: values.manual_supervisor_usuario_id || null,
-
           }
         : { origem_registro: "AUTOMATICO" as const, colaborador_id: values.colaborador_id! };
 
@@ -1235,13 +1258,23 @@ function NovaAusenciaPage() {
         } : {}),
       };
 
+      console.log("ETAPA 6 — LOG DO PAYLOAD", {
+        correlation_id: (globalThis as any).__manualCorrelationId,
+        etapa: "frontend-payload",
+        payload_keys: Object.keys(payload),
+        manual_nome_location: (payload as any).manual_nome !== undefined ? "root" : "missing",
+        manual_nome_length: ((payload as any).manual_nome ?? "").length,
+        manual_nome_present: (payload as any).manual_nome !== undefined,
+        modo_manual: (payload as any).origem_registro === "MANUAL"
+      });
+
 
       // Debug logs removidos após correção
       if (isEdit && editId) {
         await updateFn({ data: { ...payload, id: editId } });
         return { manual: false, colaboradorCriado: false };
       }
-      const res = await createFn({ data: payload });
+      const res = await createFn({ data: { ...payload, correlation_id: correlationId } });
       return {
         manual: !!values.modo_manual,
         colaboradorCriado: !!(res as { colaborador_criado?: boolean } | undefined)?.colaborador_criado,
@@ -1266,7 +1299,8 @@ function NovaAusenciaPage() {
     },
 
     onError: (err: unknown) => {
-      console.error("VALIDAÇÃO RESPONSÁVEL: Frontend Mutation Error (nova-ausencia.tsx)", {
+      console.error("ETAPA 1 — ERRO DA MUTATION (CORRELATION ID PROPAGADO)", {
+        correlation_id: (globalThis as any).__manualCorrelationId,
         error: err,
         message: err instanceof Error ? err.message : String(err)
       });
