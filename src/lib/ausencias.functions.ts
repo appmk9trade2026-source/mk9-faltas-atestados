@@ -615,7 +615,9 @@ export const updateAusencia = createServerFn({ method: "POST" })
       { tipo: tipoBase, tipo_detalhe: tipo.nome, motivo: updatePayload.motivo, cid: updatePayload.cid, data_inicio: updatePayload.data_inicio, data_fim: updatePayload.data_fim, localidade: updatePayload.localidade, loja_codigo_nome: updatePayload.loja_codigo_nome, acidente_trabalho_trajeto: updatePayload.acidente_trabalho_trajeto },
       "edição",
       gate.empresaId, gate.projetoId,
+      context.userId,
     );
+
 
     // 8. Notificações (apenas se houver mudança relevante)
     const mudancaRelevante = 
