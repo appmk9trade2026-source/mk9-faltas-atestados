@@ -66,14 +66,17 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const { inactive } = useSearch({ from: "/auth" });
+  const { inactive, error: searchError } = useSearch({ from: "/auth" });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(
-    inactive ? "Sua conta está inativa. Contate o Super Admin." : null,
-  );
+  const [error, setError] = useState<string | null>(() => {
+    if (inactive) return "Sua conta está inativa. Contate o Super Admin.";
+    if (searchError === "no_profile") return "Seu perfil de acesso não foi encontrado. Contate o suporte.";
+    if (searchError === "db_error") return "Não foi possível carregar seu perfil. Tente novamente.";
+    return null;
+  });
 
   const [forgotOpen, setForgotOpen] = useState(false);
   const [firstAccessOpen, setFirstAccessOpen] = useState(false);
