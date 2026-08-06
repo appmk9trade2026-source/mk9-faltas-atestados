@@ -103,7 +103,10 @@ function AuthPage() {
         .maybeSingle();
       if (!profile || profile.ativo === false) {
         await supabase.auth.signOut();
-        setError("Sua conta está inativa. Contate o Super Admin.");
+        const msg = profile?.ativo === false 
+          ? "Sua conta está inativa. Contate o Super Admin."
+          : "Perfil de acesso não localizado. Contate o suporte técnico.";
+        setError(msg);
         return;
       }
       if (profile.primeiro_acesso_pendente) {
