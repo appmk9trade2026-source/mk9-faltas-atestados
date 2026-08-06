@@ -41,20 +41,5 @@ export const Route = createFileRoute("/")({
 
     throw redirect({ to: "/dashboard" });
   },
-  component: () => (
-    <div className="p-8 max-w-4xl mx-auto prose dark:prose-invert">
-      <h1>CRM MK9 — NOTIFICAÇÃO DE LANÇAMENTO DE FALTA E ATESTADO</h1>
-      <p><strong>PROJECT REF:</strong> wgozydjiuimxxddhodax</p>
-      
-      <h2>CONTEXTO</h2>
-      <p>Atualmente o sistema registra faltas e atestados corretamente, porém os envolvidos não recebem comunicação sobre o lançamento.</p>
-      
-      <h2>OBJETIVO</h2>
-      <p>Implementar um fluxo confiável, auditável e seguro de notificações após o registro de uma falta ou atestado.</p>
-      
-      <div className="bg-muted p-4 rounded-lg border">
-        <p><strong>Status:</strong> Em Auditoria (Etapa 1)</p>
-      </div>
-    </div>
-  ),
+  component: () => null,
 });
