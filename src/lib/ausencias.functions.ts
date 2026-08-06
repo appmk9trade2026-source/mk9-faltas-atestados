@@ -584,6 +584,8 @@ export const updateAusencia = createServerFn({ method: "POST" })
       arquivo_nome: data.arquivo_nome ?? current.arquivo_nome,
       arquivo_mime: data.arquivo_mime ?? current.arquivo_mime,
       arquivo_tamanho: data.arquivo_tamanho ?? current.arquivo_tamanho,
+      // Novos campos de autoria
+      atualizado_por_usuario_id: context.userId,
       ...(isAcidenteU ? {
         acidente_data: data.acidente_data,
         acidente_hora: data.acidente_hora,
@@ -596,6 +598,7 @@ export const updateAusencia = createServerFn({ method: "POST" })
         acidente_observacoes: data.acidente_observacoes?.trim() ?? null,
       } : {}),
     };
+
 
 
     const { error } = await context.supabase
