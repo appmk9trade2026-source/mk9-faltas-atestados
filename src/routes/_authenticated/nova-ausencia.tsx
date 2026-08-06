@@ -1188,14 +1188,17 @@ function NovaAusenciaPage() {
       const correlationId = `manual-submit-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
       (globalThis as any).__manualCorrelationId = correlationId;
 
+      const inputElement = document.querySelector('input[name="manual_nome"]') as HTMLInputElement;
+      const inputVal = inputElement?.value;
+
       console.log("ETAPA 3 — LOG DO FRONTEND ANTES DO HANDLE SUBMIT", {
         correlation_id: correlationId,
         etapa: "frontend-before-submit",
         manual_mode: !!values.modo_manual,
-        input_nome_length: (values.manual_nome ?? "").length,
+        input_nome_length: (inputVal ?? "").length,
         field_value_length: (values.manual_nome ?? "").length,
         get_values_nome_length: (form.getValues("manual_nome") ?? "").length,
-        input_nome_present: values.manual_nome !== undefined,
+        input_nome_present: inputVal !== undefined,
         field_value_present: values.manual_nome !== undefined,
         get_values_nome_present: form.getValues("manual_nome") !== undefined
       });
