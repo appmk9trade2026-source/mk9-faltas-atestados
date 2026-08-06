@@ -8,15 +8,24 @@ export const Route = createFileRoute("/_authenticated")({
     if (error || !data.user) throw redirect({ to: "/auth" });
 
     // Bloqueia usuário inativo e força troca da senha temporária.
-    const { data: profile } = await supabase
+    const { data: profile, error: profileErr } = await supabase
       .from("profiles")
-      .select("ativo, primeiro_acesso_pendente")
+      .select("id, ativo, primeiro_acesso_pendente")
       .eq("id", data.user.id)
       .maybeSingle();
 
-    if (!profile || profile.ativo === false) {
+    if (profileErr || !profile || profile.ativo === false) {
+      if (import.meta.env.DEV) {
+        console.error("Gate de Autenticação Bloqueado:", { profile, profileErr });
+      }
       await supabase.auth.signOut();
-      throw redirect({ to: "/auth", search: { inactive: "1" } });
+      throw redirect({ 
+        to: "/auth", 
+        search: { 
+          inactive: profile?.ativo === false ? "1" : undefined,
+          error: profileErr ? profileErr.message : (!profile ? "no_profile" : undefined)
+        } 
+      });
     }
 
     if (profile.primeiro_acesso_pendente === true) {
