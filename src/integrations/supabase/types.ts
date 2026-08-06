@@ -613,6 +613,56 @@ export type Database = {
         }
         Relationships: []
       }
+      ausencia_contestacoes: {
+        Row: {
+          ausencia_id: string
+          created_at: string | null
+          data_hora: string | null
+          descricao: string | null
+          id: string
+          motivo: string
+          resolvido_em: string | null
+          resolvido_por: string | null
+          solicitante_usuario_id: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ausencia_id: string
+          created_at?: string | null
+          data_hora?: string | null
+          descricao?: string | null
+          id?: string
+          motivo: string
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          solicitante_usuario_id: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ausencia_id?: string
+          created_at?: string | null
+          data_hora?: string | null
+          descricao?: string | null
+          id?: string
+          motivo?: string
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          solicitante_usuario_id?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ausencia_contestacoes_ausencia_id_fkey"
+            columns: ["ausencia_id"]
+            isOneToOne: false
+            referencedRelation: "ausencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ausencia_retificacoes: {
         Row: {
           anexo_anterior: boolean | null
@@ -729,9 +779,16 @@ export type Database = {
           arquivo_nome: string | null
           arquivo_tamanho: number | null
           arquivo_url: string | null
+          atualizado_por_usuario_id: string | null
+          autor_email_snapshot: string | null
+          autor_nome_snapshot: string | null
+          autor_papel_snapshot: string | null
+          cancelado_por_usuario_id: string | null
           cid: string | null
           colaborador_id: string | null
+          confirmacao_dados_ok: boolean | null
           created_at: string
+          criado_por_usuario_id: string | null
           data_fim: string
           data_inicio: string
           data_retorno: string | null
@@ -741,6 +798,7 @@ export type Database = {
           id: string
           lancado_em: string | null
           lancado_por: string | null
+          lancado_por_usuario_id: string | null
           localidade: string | null
           loja_codigo_nome: string | null
           manual_cargo: string | null
@@ -783,7 +841,9 @@ export type Database = {
           retificada: boolean
           retificada_em: string | null
           retificada_por: string | null
+          retificado_por_usuario_id: string | null
           status: Database["public"]["Enums"]["status_ausencia"]
+          status_documental: string | null
           status_processamento: Database["public"]["Enums"]["ausencia_status_processamento"]
           substituida_em: string | null
           substituida_por_ausencia_id: string | null
@@ -812,9 +872,16 @@ export type Database = {
           arquivo_nome?: string | null
           arquivo_tamanho?: number | null
           arquivo_url?: string | null
+          atualizado_por_usuario_id?: string | null
+          autor_email_snapshot?: string | null
+          autor_nome_snapshot?: string | null
+          autor_papel_snapshot?: string | null
+          cancelado_por_usuario_id?: string | null
           cid?: string | null
           colaborador_id?: string | null
+          confirmacao_dados_ok?: boolean | null
           created_at?: string
+          criado_por_usuario_id?: string | null
           data_fim: string
           data_inicio: string
           data_retorno?: string | null
@@ -824,6 +891,7 @@ export type Database = {
           id?: string
           lancado_em?: string | null
           lancado_por?: string | null
+          lancado_por_usuario_id?: string | null
           localidade?: string | null
           loja_codigo_nome?: string | null
           manual_cargo?: string | null
@@ -866,7 +934,9 @@ export type Database = {
           retificada?: boolean
           retificada_em?: string | null
           retificada_por?: string | null
+          retificado_por_usuario_id?: string | null
           status?: Database["public"]["Enums"]["status_ausencia"]
+          status_documental?: string | null
           status_processamento?: Database["public"]["Enums"]["ausencia_status_processamento"]
           substituida_em?: string | null
           substituida_por_ausencia_id?: string | null
@@ -895,9 +965,16 @@ export type Database = {
           arquivo_nome?: string | null
           arquivo_tamanho?: number | null
           arquivo_url?: string | null
+          atualizado_por_usuario_id?: string | null
+          autor_email_snapshot?: string | null
+          autor_nome_snapshot?: string | null
+          autor_papel_snapshot?: string | null
+          cancelado_por_usuario_id?: string | null
           cid?: string | null
           colaborador_id?: string | null
+          confirmacao_dados_ok?: boolean | null
           created_at?: string
+          criado_por_usuario_id?: string | null
           data_fim?: string
           data_inicio?: string
           data_retorno?: string | null
@@ -907,6 +984,7 @@ export type Database = {
           id?: string
           lancado_em?: string | null
           lancado_por?: string | null
+          lancado_por_usuario_id?: string | null
           localidade?: string | null
           loja_codigo_nome?: string | null
           manual_cargo?: string | null
@@ -949,7 +1027,9 @@ export type Database = {
           retificada?: boolean
           retificada_em?: string | null
           retificada_por?: string | null
+          retificado_por_usuario_id?: string | null
           status?: Database["public"]["Enums"]["status_ausencia"]
+          status_documental?: string | null
           status_processamento?: Database["public"]["Enums"]["ausencia_status_processamento"]
           substituida_em?: string | null
           substituida_por_ausencia_id?: string | null
@@ -4726,6 +4806,14 @@ export type Database = {
         Returns: {
           id: string
           nome: string
+        }[]
+      }
+      get_user_snapshot: {
+        Args: { _user_id: string }
+        Returns: {
+          email: string
+          nome: string
+          papel: string
         }[]
       }
       has_permission: {
