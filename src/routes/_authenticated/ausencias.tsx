@@ -845,6 +845,22 @@ function AusenciasPage() {
                             <CheckCircle2 className="mr-2 h-4 w-4" /> Marcar como lançado
                           </DropdownMenuItem>
                         )}
+                        {(roles.includes("super_admin") || roles.includes("rh")) && row.status_documental !== "EXCLUIDO" && (
+                          <>
+                            <div className="my-1 h-px bg-muted" />
+                            <DropdownMenuItem 
+                              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                              onClick={() => {
+                                setConfirmExcluir(row);
+                                setExcluirCategoria("");
+                                setExcluirMotivo("");
+                                setExcluirConfirmado(false);
+                              }}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" /> Excluir lançamento
+                            </DropdownMenuItem>
+                          </>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
