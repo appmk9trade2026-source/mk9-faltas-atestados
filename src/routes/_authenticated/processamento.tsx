@@ -146,6 +146,7 @@ function CentralProcessamentoPage() {
         } as AusenciaCardData;
       }));
     }
+  });
         .neq("status_processamento", "PROCESSADO")
         .order("registrado_em", { ascending: true });
       
