@@ -9,18 +9,26 @@ export const Route = createFileRoute("/")({
       throw redirect({ to: "/auth" });
     }
 
-    const { data: profile } = await supabase
+    // Usamos maybeSingle() e tratamos explicitamente o erro de permissão (RLS)
+    const { data: profile, error } = await supabase
       .from("profiles")
-      .select("ativo, primeiro_acesso_pendente")
+      .select("id, ativo, primeiro_acesso_pendente")
       .eq("id", session.user.id)
       .maybeSingle();
 
-    if (!profile || profile.ativo === false) {
-      // Se não tem perfil ou está inativo, força logout e vai para login com erro
+    if (error || !profile || profile.ativo === false) {
+      // Se houver erro de RLS (error), perfil ausente (!profile) ou inativo (false),
+      // forçamos o logout para limpar o estado e redirecionamos para login.
       await supabase.auth.signOut();
+      
+      const searchParams: Record<string, string> = {};
+      if (profile?.ativo === false) searchParams.inactive = "true";
+      else if (error) searchParams.error = "db_error";
+      else searchParams.error = "no_profile";
+
       throw redirect({ 
         to: "/auth", 
-        search: { inactive: "true" } 
+        search: searchParams
       });
     }
 
