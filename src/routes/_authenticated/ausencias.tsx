@@ -12,6 +12,7 @@ import {
   resolveAusenciaIdentidade,
 } from "@/lib/ausencia-identidade";
 import {
+  Activity,
   ArrowUpDown,
   Check,
   CheckCircle2,
