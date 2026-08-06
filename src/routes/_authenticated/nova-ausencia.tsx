@@ -2239,7 +2239,24 @@ function NovaAusenciaPage() {
 
                   {/* Botão de envio */}
                   {!bloqueado && (
-                    <div className="flex flex-col items-center gap-3 border-t pt-6 sm:flex-row sm:justify-center">
+                    <div className="flex flex-col items-center gap-6 border-t pt-6">
+                      {!isEdit && (
+                        <div className="flex items-start gap-3 rounded-lg border border-blue-100 bg-blue-50/50 p-4 max-w-2xl">
+                          <input
+                            type="checkbox"
+                            id="confirmacao-lancamento"
+                            checked={confirmado}
+                            onChange={(e) => setConfirmado(e.target.checked)}
+                            className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <Label htmlFor="confirmacao-lancamento" className="text-sm font-normal leading-relaxed text-blue-900 cursor-pointer">
+                            Confirmo que as informações prestadas são verdadeiras e que o documento anexo (se houver) é autêntico. Estou ciente de que o lançamento de informações falsas pode acarretar sanções disciplinares.
+                          </Label>
+                        </div>
+                      )}
+
+                      <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center w-full">
+
                       <Button
                         type="button"
                         variant="ghost"
