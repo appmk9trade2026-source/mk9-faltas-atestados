@@ -258,7 +258,7 @@
     background-color: var(--mk9-primary-dark);
   }
 }
-261: 
-262: #lovable-badge {
-263:   display: none !important;
-264: }
+
+#lovable-badge {
+  display: none !important;
+}
