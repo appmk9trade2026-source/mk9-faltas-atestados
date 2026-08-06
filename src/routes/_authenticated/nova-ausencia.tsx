@@ -1178,7 +1178,7 @@ function NovaAusenciaPage() {
             // Motivo fixo — o operador não digita nem escolhe; a auditoria recebe a origem.
             manual_motivo: MANUAL_MOTIVO_PADRAO,
             manual_motivo_detalhe: "Colaborador não localizado pela matrícula informada.",
-            manual_nome: values.manual_nome!.trim(),
+            manual_nome: values.manual_nome?.trim() || "",
             manual_matricula: (values.manual_matricula || matriculaInput).trim(),
             manual_telefone: values.manual_telefone?.trim() || null,
             manual_whatsapp: values.manual_whatsapp?.trim() || null,
