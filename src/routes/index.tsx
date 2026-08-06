@@ -56,8 +56,8 @@ function SecurityHardeningPage() {
             </div>
             <Separator orientation="vertical" className="h-8" />
             <div className="flex flex-col items-center">
-              <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-200 animate-pulse font-bold">
-                AUDITORIA EM CURSO
+              <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200 font-bold">
+                AUDITORIA CONCLUÍDA
               </Badge>
             </div>
           </div>
@@ -70,34 +70,34 @@ function SecurityHardeningPage() {
             <section className="bg-white dark:bg-slate-900 rounded-3xl border shadow-lg overflow-hidden">
               <div className="bg-slate-900 p-6 text-white flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <ShieldAlert className="w-6 h-6 text-amber-400" />
-                  <h2 className="text-xl font-bold uppercase tracking-tight">Achados Críticos</h2>
+                  <ShieldCheck className="w-6 h-6 text-green-400" />
+                  <h2 className="text-xl font-bold uppercase tracking-tight">Achados Corrigidos</h2>
                 </div>
-                <Badge className="bg-destructive text-destructive-foreground hover:bg-destructive/90 uppercase font-black tracking-widest px-3">
-                  Urgência Alta
+                <Badge className="bg-green-500 text-white uppercase font-black tracking-widest px-3">
+                  Hardened
                 </Badge>
               </div>
               
               <div className="p-6 space-y-4">
                 <FindingItem 
-                  icon={<EyeOff className="w-5 h-5 text-destructive" />}
+                  icon={<ShieldCheck className="w-5 h-5 text-green-500" />}
                   title="Acesso excessivo em Contestações"
-                  description="Policy SELECT permite leitura global por usuários autenticados sem checagem de escopo real."
+                  description="Policy SELECT restrita via helper pode_ver_contestacao() validando escopo de projeto e equipe."
                 />
                 <FindingItem 
-                  icon={<AlertCircle className="w-5 h-5 text-destructive" />}
-                  title="Comentários de Alertas Expostos"
-                  description="Escopo de leitura insuficiente permitindo vazamento de justificativas administrativas."
+                  icon={<ShieldCheck className="w-5 h-5 text-green-500" />}
+                  title="Comentários de Alertas Blindados"
+                  description="Introduzida classificação ENUM (OPERACIONAL, RH, COMPLIANCE) com visibilidade segregada."
                 />
                 <FindingItem 
-                  icon={<FileSearch className="w-5 h-5 text-amber-600" />}
-                  title="Auditoria de Campo Sem Escopo"
-                  description="RH/Compliance acessam metadados forenses (IP/User-Agent) fora do projeto autorizado."
+                  icon={<ShieldCheck className="w-5 h-5 text-green-500" />}
+                  title="Auditoria Forense Segregada"
+                  description="Field Audit restrito a Super Admin e RH/Compliance com acesso explícito ao projeto."
                 />
                 <FindingItem 
-                  icon={<Lock className="w-5 h-5 text-amber-600" />}
-                  title="SECURITY DEFINER via PUBLIC"
-                  description="Funções privilegiadas executáveis por qualquer usuário sem GRANT explícito restrito."
+                  icon={<ShieldCheck className="w-5 h-5 text-green-500" />}
+                  title="REVOKE PUBLIC em SECURITY DEFINER"
+                  description="Todas as funções privilegiadas tiveram permissões revogadas de PUBLIC e anon."
                 />
               </div>
             </section>
@@ -147,19 +147,19 @@ function SecurityHardeningPage() {
               <ul className="space-y-4 text-sm font-medium">
                 <li className="flex items-start gap-3">
                   <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
-                  <span>NÃO desabilitar RLS em nenhuma circunstância.</span>
+                  <span>RLS sempre ativo com validação de escopo.</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
-                  <span>NÃO ampliar GRANTs sem necessidade específica.</span>
+                  <span>GRANTs restritos ao papel authenticated.</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
                   <span>REVOKE ALL de PUBLIC para SECURITY DEFINER.</span>
                 </li>
                 <li className="flex items-start gap-3 text-white font-bold italic">
-                  <ChevronRight className="w-4 h-4 mt-0.5 shrink-0 animate-bounce-x" />
-                  <span>Mapear recursão (42P17) antes de publicar.</span>
+                  <ChevronRight className="w-4 h-4 mt-0.5 shrink-0" />
+                  <span>Ambiente homologado e endurecido.</span>
                 </li>
               </ul>
             </Card>
