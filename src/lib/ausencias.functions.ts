@@ -518,10 +518,13 @@ export const updateAusencia = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const isManual = data.origem_registro === "MANUAL";
+    const request = getRequest();
+    const meta = resolveOperationMetadata(request);
+
     // Carrega registro atual — para gate por colaborador ATUAL, não pelo enviado.
     const { data: current, error: loadErr } = await context.supabase
       .from("ausencias")
-      .select("id, empresa_id, projeto_id, colaborador_id, origem_registro, status, tipo, tipo_detalhe, dias, motivo, cid, data_inicio, data_fim, localidade, loja_codigo_nome, acidente_trabalho_trajeto, arquivo_url, arquivo_nome, arquivo_mime, arquivo_tamanho")
+      .select("id, empresa_id, projeto_id, colaborador_id, origem_registro, status, tipo, tipo_detalhe, dias, motivo, cid, data_inicio, data_fim, localidade, loja_codigo_nome, acidente_trabalho_trajeto, arquivo_url, arquivo_nome, arquivo_mime, arquivo_tamanho, hash_integridade")
       .eq("id", data.id)
       .maybeSingle();
     if (loadErr) throw new Error(`RESOURCE_NOT_FOUND: ${loadErr.message}`);
@@ -605,6 +608,16 @@ export const updateAusencia = createServerFn({ method: "POST" })
       arquivo_tamanho: data.arquivo_tamanho ?? current.arquivo_tamanho,
       // Novos campos de autoria
       atualizado_por_usuario_id: context.userId,
+
+      // Auditoria Forense - Etapa 1, 2 e 3
+      operacao_origem: "WEB",
+      operacao_ip: meta.ip,
+      operacao_user_agent: meta.userAgent,
+      operacao_sistema_operacional: meta.os,
+      operacao_navegador: meta.browser,
+      operacao_dispositivo_tipo: meta.deviceType,
+      operacao_timestamp_utc: new Date().toISOString(),
+
       ...(isAcidenteU ? {
         acidente_data: data.acidente_data,
         acidente_hora: data.acidente_hora,
@@ -617,6 +630,43 @@ export const updateAusencia = createServerFn({ method: "POST" })
         acidente_observacoes: data.acidente_observacoes?.trim() ?? null,
       } : {}),
     };
+
+    // Auditoria Forense - Etapa 1
+    const newHash = calculateIntegrityHash(updatePayload, current.hash_integridade);
+    (updatePayload as any).hash_integridade = newHash;
+    (updatePayload as any).hash_atual = newHash;
+    (updatePayload as any).hash_anterior = current.hash_integridade;
+
+    // Auditoria Forense - Etapa 4 (Field-Level Audit)
+    const fieldsToAudit = [
+      'tipo_ausencia_id', 'opcao_periodo_id', 'motivo', 'data_inicio', 'data_fim',
+      'localidade', 'loja_codigo_nome', 'cid', 'acidente_trabalho_trajeto'
+    ];
+    
+    const audits = [];
+    const snapshot = await getSnapshot(context.supabase, context.userId);
+    
+    for (const field of fieldsToAudit) {
+      const oldVal = (current as any)[field];
+      const newVal = (updatePayload as any)[field];
+      
+      if (oldVal !== newVal) {
+        audits.push({
+          ausencia_id: data.id,
+          campo: field,
+          valor_anterior: oldVal,
+          valor_novo: newVal,
+          responsavel_usuario_id: context.userId,
+          responsavel_nome: snapshot?.nome,
+          responsavel_papel: snapshot?.papel,
+          correlation_id: gate.correlationId
+        });
+      }
+    }
+
+    if (audits.length > 0) {
+      await context.supabase.from("ausencia_field_audit").insert(audits);
+    }
 
 
 
