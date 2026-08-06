@@ -361,6 +361,8 @@ function NovaAusenciaPage() {
   const [conflitos, setConflitos] = useState<any[]>([]);
   const [conflitoDialogOpen, setConflitoDialogOpen] = useState(false);
   const [pendingValues, setPendingValues] = useState<FormData | null>(null);
+  const [confirmado, setConfirmado] = useState(false);
+
 
 
 
