@@ -24,7 +24,7 @@ export async function enfileirarNotificacoesAusencia({
   userId,
 }: NotificarParams) {
   try {
-    // 1. Buscar dados da ausência e hierarquia (Colaborador -> Supervisor -> Coordenador)
+    // 1. Buscar dados da ausência e hierarquia
     const { data: aus, error: ausErr } = await supabase
       .from("ausencias")
       .select(`
@@ -44,8 +44,7 @@ export async function enfileirarNotificacoesAusencia({
           supervisor_usuario_id,
           projeto:projetos (
             id,
-            nome,
-            coordenador_usuario_id
+            nome
           )
         )
       `)
@@ -77,7 +76,7 @@ export async function enfileirarNotificacoesAusencia({
     if (colab.supervisor_usuario_id) {
       const { data: supProfile } = await supabase
         .from("profiles")
-        .select("id, nome, telefone_whatsapp")
+        .select("id, nome, telefone_whatsapp, coordenador_usuario_id")
         .eq("id", colab.supervisor_usuario_id)
         .maybeSingle();
       
@@ -88,19 +87,47 @@ export async function enfileirarNotificacoesAusencia({
           whatsapp: supProfile.telefone_whatsapp || undefined,
           nome: supProfile.nome || "Supervisor"
         });
+
+        // C. Coordenador direto do Supervisor (Interna)
+        if (supProfile.coordenador_usuario_id) {
+          destinatarios.push({
+            tipo: "COORDENADOR",
+            usuario_id: supProfile.coordenador_usuario_id,
+            nome: "Coordenador"
+          });
+        }
       }
     }
 
-    // C. Coordenador (Interna)
-    if (projeto?.coordenador_usuario_id) {
-      destinatarios.push({
-        tipo: "COORDENADOR",
-        usuario_id: projeto.coordenador_usuario_id,
-        nome: "Coordenador"
-      });
+    // D. Coordenadores vinculados ao Projeto (Interna)
+    if (aus.projeto_id) {
+      const { data: projCoords } = await supabase
+        .from("usuario_projetos")
+        .select("user_id")
+        .eq("projeto_id", aus.projeto_id);
+      
+      if (projCoords) {
+        for (const pc of projCoords) {
+          // Apenas se tiver a role de coordenador
+          const { data: isCoord } = await supabase
+            .from("user_roles")
+            .select("id")
+            .eq("user_id", pc.user_id)
+            .eq("role", "coordenador")
+            .maybeSingle();
+          
+          if (isCoord) {
+            destinatarios.push({
+              tipo: "COORDENADOR",
+              usuario_id: pc.user_id,
+              nome: "Coordenador do Projeto"
+            });
+          }
+        }
+      }
     }
 
-    // D. RH (Interna + WhatsApp se configurado)
+    // E. RH (Interna + WhatsApp se configurado)
     const { data: rhRoles } = await supabase
       .from("user_roles")
       .select("user_id")
@@ -129,7 +156,10 @@ export async function enfileirarNotificacoesAusencia({
     const promises: Promise<any>[] = [];
 
     for (const dest of destinatarios) {
-      const idempotencyBase = `${ausenciaId}:${evento}:${dest.tipo}:${dest.usuario_id || dest.colaborador_id}`;
+      const targetId = dest.usuario_id || dest.colaborador_id;
+      if (!targetId) continue;
+
+      const idempotencyBase = `${ausenciaId}:${evento}:${dest.tipo}:${targetId}`;
 
       // 2.1 WhatsApp Outbox
       let templateCodigo = "";
@@ -147,14 +177,14 @@ export async function enfileirarNotificacoesAusencia({
           .maybeSingle();
 
         if (template) {
-          // Normalizar telefone para hash (somente números, prefixo 55 se faltar)
+          // Normalizar telefone para hash
           let cleanPhone = dest.whatsapp.replace(/\D/g, '');
-          if (cleanPhone.length === 11 && cleanPhone.startsWith('9')) cleanPhone = '55' + cleanPhone; // Fallback para Brasil se tiver 11 dígitos começando com 9
+          if (cleanPhone.length === 11 && cleanPhone.startsWith('9')) cleanPhone = '55' + cleanPhone;
           else if (cleanPhone.length === 10) cleanPhone = '55' + cleanPhone;
           
           const phoneHash = createHash("sha256").update(cleanPhone).digest("hex");
 
-          const insertWa = supabase.from("whatsapp_outbox").insert({
+          promises.push(supabase.from("whatsapp_outbox").insert({
             ausencia_id: ausenciaId,
             evento_tipo: evento,
             evento_id: correlationId,
@@ -176,15 +206,13 @@ export async function enfileirarNotificacoesAusencia({
               data_inicio: aus.data_inicio,
               data_fim: aus.data_fim
             }
-          } as any);
-          
-          promises.push(insertWa as any);
+          } as any));
         }
       }
 
       // 2.2 Notificações Internas (Alertas) para Supervisor, Coordenador e RH
       if (dest.usuario_id && (dest.tipo === "SUPERVISOR" || dest.tipo === "COORDENADOR" || dest.tipo === "RH")) {
-        const insertAlerta = supabase.from("alertas").insert({
+        promises.push(supabase.from("alertas").insert({
           ausencia_id: ausenciaId,
           colaborador_id: colab.id,
           empresa_id: aus.empresa_id,
@@ -202,9 +230,7 @@ export async function enfileirarNotificacoesAusencia({
             tipo_detalhe: aus.tipo_detalhe,
             data_inicio: aus.data_inicio
           }
-        } as any);
-        
-        promises.push(insertAlerta as any);
+        } as any));
       }
     }
 
