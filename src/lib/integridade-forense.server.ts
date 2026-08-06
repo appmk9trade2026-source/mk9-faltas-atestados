@@ -1,4 +1,5 @@
 import { createHash } from "crypto";
+import canonicalize from "canonicalize";
 
 export type OperationMetadata = {
   ip?: string;
@@ -10,22 +11,42 @@ export type OperationMetadata = {
 
 /**
  * Calcula o hash de integridade de um registro de ausência.
- * Inclui campos críticos e o hash anterior para cadeia de custódia.
+ * Implementa serialização canônica para garantir determinismo (RFC 8785).
+ * 
+ * Ordem dos campos no payload:
+ * 1. colaborador_id
+ * 2. data_inicio
+ * 3. data_fim
+ * 4. tipo
+ * 5. motivo
+ * 6. empresa_id
+ * 7. projeto_id
+ * 8. hash_anterior (previousHash)
+ * 9. salt
  */
 export function calculateIntegrityHash(data: any, previousHash: string | null = null): string {
   const salt = process.env['HASH_SALT'] || 'sigec-mk9-forensic-2026';
-  const payload = JSON.stringify({
-    colaborador_id: data.colaborador_id,
-    data_inicio: data.data_inicio,
-    data_fim: data.data_fim,
-    tipo: data.tipo,
-    motivo: data.motivo,
-    empresa_id: data.empresa_id,
-    projeto_id: data.projeto_id,
-    previousHash,
-    salt
-  });
   
+  // Normalização de campos para evitar instabilidade com null/undefined
+  const normalizedData = {
+    colaborador_id: data.colaborador_id || "",
+    data_inicio: data.data_inicio || "",
+    data_fim: data.data_fim || "",
+    tipo: data.tipo || "",
+    motivo: data.motivo || "",
+    empresa_id: data.empresa_id || "",
+    projeto_id: data.projeto_id || "",
+    previousHash: previousHash || "",
+    salt: salt
+  };
+
+  // Serialização canônica garante que a ordem das chaves não mude o hash
+  const payload = canonicalize(normalizedData);
+  
+  if (!payload) {
+    throw new Error("Falha na serialização canônica do payload forense");
+  }
+
   return createHash('sha256').update(payload).digest('hex');
 }
 
