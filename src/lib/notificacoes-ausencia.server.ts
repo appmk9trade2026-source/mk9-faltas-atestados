@@ -177,8 +177,9 @@ export async function enfileirarNotificacoesAusencia({
       }
 
 
-      // 2.2 Notificações Internas (Alertas) para Supervisor e Coordenador
-      if (dest.usuario_id && (dest.tipo === "SUPERVISOR" || dest.tipo === "COORDENADOR")) {
+      // 2.2 Notificações Internas (Alertas) para Supervisor, Coordenador e RH
+      if (dest.usuario_id && (dest.tipo === "SUPERVISOR" || dest.tipo === "COORDENADOR" || dest.tipo === "RH")) {
+
         const insertAlerta = supabase.from("alertas").insert({
           ausencia_id: ausenciaId,
           colaborador_id: colab.id,
