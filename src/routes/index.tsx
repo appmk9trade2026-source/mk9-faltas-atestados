@@ -1,9 +1,10 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
+import { supabase } from '@/integrations/supabase/client';
 
 export const Route = createFileRoute('/')({
-  loader: async ({ context }) => {
+  loader: async () => {
     // Restaurando comportamento original: redirecionar para dashboard se logado, ou auth
-    const { data: { session } } = await context.supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
     
     if (session) {
       throw redirect({ to: '/dashboard' });
@@ -13,4 +14,3 @@ export const Route = createFileRoute('/')({
   },
   component: () => null,
 });
-
