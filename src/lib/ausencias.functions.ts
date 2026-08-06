@@ -11,6 +11,14 @@ import { PERMISSION_MAP } from "@/lib/permissions-map";
 import { Database } from "@/integrations/supabase/types";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { enfileirarNotificacoesAusencia } from "./notificacoes-ausencia.server";
+import { format } from "date-fns";
+
+async function getSnapshot(supabase: any, userId: string) {
+  const { data, error } = await supabase.rpc("get_user_snapshot", { _user_id: userId });
+  if (error || !data || data.length === 0) return null;
+  return data[0] as { nome: string; email: string; papel: string };
+}
+
 
 type StatusProcessamento = Database["public"]["Enums"]["ausencia_status_processamento"];
 
