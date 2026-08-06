@@ -102,7 +102,7 @@ function CentralProcessamentoPage() {
         if (supervisorId) {
           const { data: sData } = await supabase
             .from("profiles")
-            .select("nome, email, telefone")
+            .select("nome, email, telefone_whatsapp")
             .eq("id", supervisorId)
             .maybeSingle();
           supervisorProfile = sData;
