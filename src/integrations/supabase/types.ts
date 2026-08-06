@@ -842,6 +842,9 @@ export type Database = {
           dias: number
           dias_label: string | null
           empresa_id: string
+          excluida_em: string | null
+          excluidora_nome_snapshot: string | null
+          excluidora_papel_snapshot: string | null
           hash_anterior: string | null
           hash_atual: string | null
           hash_integridade: string | null
@@ -867,6 +870,8 @@ export type Database = {
           manual_telefone: string | null
           manual_whatsapp: string | null
           motivo: string | null
+          motivo_exclusao_categoria: string | null
+          motivo_exclusao_detalhe: string | null
           motivo_substituicao: string | null
           observacao_processamento: string | null
           observacoes: string | null
@@ -945,6 +950,9 @@ export type Database = {
           dias?: number
           dias_label?: string | null
           empresa_id: string
+          excluida_em?: string | null
+          excluidora_nome_snapshot?: string | null
+          excluidora_papel_snapshot?: string | null
           hash_anterior?: string | null
           hash_atual?: string | null
           hash_integridade?: string | null
@@ -970,6 +978,8 @@ export type Database = {
           manual_telefone?: string | null
           manual_whatsapp?: string | null
           motivo?: string | null
+          motivo_exclusao_categoria?: string | null
+          motivo_exclusao_detalhe?: string | null
           motivo_substituicao?: string | null
           observacao_processamento?: string | null
           observacoes?: string | null
@@ -1048,6 +1058,9 @@ export type Database = {
           dias?: number
           dias_label?: string | null
           empresa_id?: string
+          excluida_em?: string | null
+          excluidora_nome_snapshot?: string | null
+          excluidora_papel_snapshot?: string | null
           hash_anterior?: string | null
           hash_atual?: string | null
           hash_integridade?: string | null
@@ -1073,6 +1086,8 @@ export type Database = {
           manual_telefone?: string | null
           manual_whatsapp?: string | null
           motivo?: string | null
+          motivo_exclusao_categoria?: string | null
+          motivo_exclusao_detalhe?: string | null
           motivo_substituicao?: string | null
           observacao_processamento?: string | null
           observacoes?: string | null

@@ -12,6 +12,7 @@ import {
   resolveAusenciaIdentidade,
 } from "@/lib/ausencia-identidade";
 import {
+  Activity,
   ArrowUpDown,
   Check,
   CheckCircle2,
@@ -30,6 +31,8 @@ import {
   RefreshCcw,
   Trash2,
   AlertTriangle,
+  Ban,
+  ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { RetificarAusenciaDialog } from "@/components/ausencias/retificar-ausencia-dialog";
@@ -166,7 +169,11 @@ type Ausencia = {
   excluidora_papel_snapshot?: string | null;
   motivo_exclusao_categoria?: string | null;
   motivo_exclusao_detalhe?: string | null;
-  status_documental?: "ATIVO" | "EXCLUIDO" | null;
+  status_documental?: "ATIVO" | "EXCLUIDO" | "CONTESTADO" | "CANCELADO" | "RETIFICADO" | null;
+  autor_nome_snapshot?: string | null;
+  operacao_origem?: string | null;
+  processamento_iniciado_em?: string | null;
+  responsavel_processamento_nome?: string | null;
 };
 
 const PAGE_SIZE = 10;
@@ -1037,9 +1044,76 @@ function AusenciasPage() {
                 </dl>
               </section>
               
-              <section className="rounded-lg border bg-muted/30 p-4">
-                <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                  <RefreshCcw className="h-3.5 w-3.5" /> Processamento Administrativo
+              <section className="rounded-lg border bg-slate-50/50 dark:bg-slate-900/20 p-4">
+                <h4 className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                  <HistoryIcon className="h-3.5 w-3.5" /> Histórico Administrativo
+                </h4>
+                <div className="relative space-y-4 before:absolute before:left-[11px] before:top-2 before:h-[calc(100%-16px)] before:w-0.5 before:bg-muted">
+                  {/* Registro Inicial */}
+                  <div className="relative pl-8">
+                    <div className="absolute left-0 top-1 h-5 w-5 rounded-full border-2 border-background bg-emerald-100 flex items-center justify-center">
+                      <Plus className="h-2.5 w-2.5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold">Registro da Ausência</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {formatDateTime(viewing.registrado_em)} • {viewing.registrador?.nome || viewing.autor_nome_snapshot || "Sistema"} ({viewing.operacao_origem || "WEB"})
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Lançamento RH */}
+                  {viewing.lancado_em && (
+                    <div className="relative pl-8">
+                      <div className="absolute left-0 top-1 h-5 w-5 rounded-full border-2 border-background bg-blue-100 flex items-center justify-center">
+                        <Check className="h-2.5 w-2.5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold">Lançamento RH</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {formatDateTime(viewing.lancado_em)} • {viewing.lancador?.nome || "RH/Admin"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Processamento */}
+                  {(viewing.processamento_iniciado_em || viewing.processado_em) && (
+                    <div className="relative pl-8">
+                      <div className="absolute left-0 top-1 h-5 w-5 rounded-full border-2 border-background bg-amber-100 flex items-center justify-center">
+                        <Activity className="h-2.5 w-2.5 text-amber-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold">Processamento Central</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {formatDateTime(viewing.processamento_iniciado_em || viewing.processado_em)} • {viewing.responsavel_processamento_nome || viewing.processado_por || "Central"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Exclusão */}
+                  {viewing.status_documental === "EXCLUIDO" && (
+                    <div className="relative pl-8">
+                      <div className="absolute left-0 top-1 h-5 w-5 rounded-full border-2 border-background bg-red-100 flex items-center justify-center">
+                        <Trash2 className="h-2.5 w-2.5 text-red-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-red-700">Exclusão Efetivada</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {formatDateTime(viewing.excluida_em)} • {viewing.excluidora_nome_snapshot} ({viewing.excluidora_papel_snapshot})
+                        </p>
+                        <p className="text-[10px] mt-0.5 italic">Motivo: {viewing.motivo_exclusao_categoria}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {viewing.status_documental !== "EXCLUIDO" && (
+              <section>
+                <h4 className="mb-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+                  <Activity className="h-3.5 w-3.5" /> Métricas de Processamento
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
@@ -1048,11 +1122,11 @@ function AusenciasPage() {
                   </div>
                   <div className="space-y-1">
                     <p className="text-[10px] text-muted-foreground uppercase font-medium">Responsável</p>
-                    <p className="text-sm font-semibold">{viewing.processado_por || (viewing as any).responsavel_processamento_nome || "—"}</p>
+                    <p className="text-sm font-semibold">{viewing.processado_por || viewing.responsavel_processamento_nome || "—"}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-[10px] text-muted-foreground uppercase font-medium">Iniciado em</p>
-                    <p className="text-sm">{formatDateTime(viewing.processado_em || (viewing as any).processamento_iniciado_em)}</p>
+                    <p className="text-sm">{formatDateTime(viewing.processado_em || viewing.processamento_iniciado_em)}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-[10px] text-muted-foreground uppercase font-medium">Tempo aguardando</p>
@@ -1062,6 +1136,7 @@ function AusenciasPage() {
                   </div>
                 </div>
               </section>
+              )}
 
               <section>
                 <h4 className="mb-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
@@ -1121,6 +1196,20 @@ function AusenciasPage() {
                       </div>
                     </div>
                   )}
+                  <div className="relative">
+                    <div className="absolute -left-[23px] top-1.5 h-4 w-4 rounded-full border-2 border-background bg-slate-200 flex items-center justify-center">
+                      <div className="h-1.5 w-1.5 rounded-full bg-slate-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Relacionamento entre Eventos</p>
+                      <div className="mt-2 space-y-2">
+                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground p-2 rounded border bg-slate-50 dark:bg-slate-900/50">
+                          <Info className="h-3 w-3" />
+                          <span>Este registro é o evento base na cadeia de custódia.</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </section>
 
@@ -1155,6 +1244,55 @@ function AusenciasPage() {
                   )}
                 </dl>
               </section>
+
+              {viewing.status_documental === "EXCLUIDO" && (
+                <section className="rounded-lg border border-red-200 bg-red-50/50 p-4 dark:border-red-900/30 dark:bg-red-900/10">
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-full bg-red-100 p-2 dark:bg-red-900/40">
+                      <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-sm font-bold text-red-700 dark:text-red-400 uppercase tracking-tight">
+                        REGISTRO EXCLUÍDO
+                      </h4>
+                      <p className="text-xs text-red-600 dark:text-red-300 leading-relaxed">
+                        Este lançamento permanece preservado para auditoria, porém não possui efeitos operacionais.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 grid grid-cols-2 gap-4 border-t border-red-200 pt-4 dark:border-red-900/30">
+                    <div>
+                      <h5 className="text-[10px] font-bold uppercase text-red-800 dark:text-red-400 mb-2">Impacto da Exclusão</h5>
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 text-[10px] text-red-600 dark:text-red-300">
+                          <Ban className="h-3 w-3" /> Removido do Dashboard & KPIs
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] text-red-600 dark:text-red-300">
+                          <Ban className="h-3 w-3" /> Removido do BI Executivo
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] text-red-600 dark:text-red-300">
+                          <Ban className="h-3 w-3" /> Suspenso da Central de Proc.
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <h5 className="text-[10px] font-bold uppercase text-red-800 dark:text-red-400 mb-2">Preservação Forense</h5>
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 text-[10px] text-emerald-600 dark:text-emerald-400">
+                          <ShieldCheck className="h-3 w-3" /> Mantido em Auditoria
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] text-emerald-600 dark:text-emerald-400">
+                          <ShieldCheck className="h-3 w-3" /> Central de Investigações
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] text-emerald-600 dark:text-emerald-400">
+                          <ShieldCheck className="h-3 w-3" /> Histórico Administrativo
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              )}
               <section>
                 <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Anexo

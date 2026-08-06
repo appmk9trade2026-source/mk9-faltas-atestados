@@ -64,6 +64,7 @@ import { Route as AuthenticatedAdministracaoPendenciasSupervisorRouteImport } fr
 import { Route as AuthenticatedAdministracaoInvestigacoesRouteImport } from './routes/_authenticated/administracao.investigacoes'
 import { Route as AuthenticatedAdministracaoIntegridadeDadosRouteImport } from './routes/_authenticated/administracao.integridade-dados'
 import { Route as AuthenticatedAdministracaoHistoricoSenhasRouteImport } from './routes/_authenticated/administracao.historico-senhas'
+import { Route as AuthenticatedAdministracaoGovernancaExclusoesRouteImport } from './routes/_authenticated/administracao.governanca-exclusoes'
 import { Route as AuthenticatedAdministracaoCoordenacaoRouteImport } from './routes/_authenticated/administracao.coordenacao'
 import { Route as AuthenticatedAdministracaoAuditoriaForenseRouteImport } from './routes/_authenticated/administracao.auditoria-forense'
 import { Route as AuthenticatedAdminHardeningRouteImport } from './routes/_authenticated/admin.hardening'
@@ -391,6 +392,12 @@ const AuthenticatedAdministracaoHistoricoSenhasRoute =
     path: '/administracao/historico-senhas',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdministracaoGovernancaExclusoesRoute =
+  AuthenticatedAdministracaoGovernancaExclusoesRouteImport.update({
+    id: '/administracao/governanca-exclusoes',
+    path: '/administracao/governanca-exclusoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdministracaoCoordenacaoRoute =
   AuthenticatedAdministracaoCoordenacaoRouteImport.update({
     id: '/administracao/coordenacao',
@@ -530,6 +537,7 @@ export interface FileRoutesByFullPath {
   '/admin/hardening': typeof AuthenticatedAdminHardeningRoute
   '/administracao/auditoria-forense': typeof AuthenticatedAdministracaoAuditoriaForenseRoute
   '/administracao/coordenacao': typeof AuthenticatedAdministracaoCoordenacaoRoute
+  '/administracao/governanca-exclusoes': typeof AuthenticatedAdministracaoGovernancaExclusoesRoute
   '/administracao/historico-senhas': typeof AuthenticatedAdministracaoHistoricoSenhasRoute
   '/administracao/integridade-dados': typeof AuthenticatedAdministracaoIntegridadeDadosRoute
   '/administracao/investigacoes': typeof AuthenticatedAdministracaoInvestigacoesRoute
@@ -602,6 +610,7 @@ export interface FileRoutesByTo {
   '/admin/hardening': typeof AuthenticatedAdminHardeningRoute
   '/administracao/auditoria-forense': typeof AuthenticatedAdministracaoAuditoriaForenseRoute
   '/administracao/coordenacao': typeof AuthenticatedAdministracaoCoordenacaoRoute
+  '/administracao/governanca-exclusoes': typeof AuthenticatedAdministracaoGovernancaExclusoesRoute
   '/administracao/historico-senhas': typeof AuthenticatedAdministracaoHistoricoSenhasRoute
   '/administracao/integridade-dados': typeof AuthenticatedAdministracaoIntegridadeDadosRoute
   '/administracao/investigacoes': typeof AuthenticatedAdministracaoInvestigacoesRoute
@@ -676,6 +685,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/hardening': typeof AuthenticatedAdminHardeningRoute
   '/_authenticated/administracao/auditoria-forense': typeof AuthenticatedAdministracaoAuditoriaForenseRoute
   '/_authenticated/administracao/coordenacao': typeof AuthenticatedAdministracaoCoordenacaoRoute
+  '/_authenticated/administracao/governanca-exclusoes': typeof AuthenticatedAdministracaoGovernancaExclusoesRoute
   '/_authenticated/administracao/historico-senhas': typeof AuthenticatedAdministracaoHistoricoSenhasRoute
   '/_authenticated/administracao/integridade-dados': typeof AuthenticatedAdministracaoIntegridadeDadosRoute
   '/_authenticated/administracao/investigacoes': typeof AuthenticatedAdministracaoInvestigacoesRoute
@@ -751,6 +761,7 @@ export interface FileRouteTypes {
     | '/admin/hardening'
     | '/administracao/auditoria-forense'
     | '/administracao/coordenacao'
+    | '/administracao/governanca-exclusoes'
     | '/administracao/historico-senhas'
     | '/administracao/integridade-dados'
     | '/administracao/investigacoes'
@@ -823,6 +834,7 @@ export interface FileRouteTypes {
     | '/admin/hardening'
     | '/administracao/auditoria-forense'
     | '/administracao/coordenacao'
+    | '/administracao/governanca-exclusoes'
     | '/administracao/historico-senhas'
     | '/administracao/integridade-dados'
     | '/administracao/investigacoes'
@@ -896,6 +908,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/hardening'
     | '/_authenticated/administracao/auditoria-forense'
     | '/_authenticated/administracao/coordenacao'
+    | '/_authenticated/administracao/governanca-exclusoes'
     | '/_authenticated/administracao/historico-senhas'
     | '/_authenticated/administracao/integridade-dados'
     | '/_authenticated/administracao/investigacoes'
@@ -1331,6 +1344,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdministracaoHistoricoSenhasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/administracao/governanca-exclusoes': {
+      id: '/_authenticated/administracao/governanca-exclusoes'
+      path: '/administracao/governanca-exclusoes'
+      fullPath: '/administracao/governanca-exclusoes'
+      preLoaderRoute: typeof AuthenticatedAdministracaoGovernancaExclusoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/administracao/coordenacao': {
       id: '/_authenticated/administracao/coordenacao'
       path: '/administracao/coordenacao'
@@ -1615,6 +1635,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminHardeningRoute: typeof AuthenticatedAdminHardeningRoute
   AuthenticatedAdministracaoAuditoriaForenseRoute: typeof AuthenticatedAdministracaoAuditoriaForenseRoute
   AuthenticatedAdministracaoCoordenacaoRoute: typeof AuthenticatedAdministracaoCoordenacaoRoute
+  AuthenticatedAdministracaoGovernancaExclusoesRoute: typeof AuthenticatedAdministracaoGovernancaExclusoesRoute
   AuthenticatedAdministracaoHistoricoSenhasRoute: typeof AuthenticatedAdministracaoHistoricoSenhasRoute
   AuthenticatedAdministracaoIntegridadeDadosRoute: typeof AuthenticatedAdministracaoIntegridadeDadosRoute
   AuthenticatedAdministracaoInvestigacoesRoute: typeof AuthenticatedAdministracaoInvestigacoesRoute
@@ -1661,6 +1682,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedAdministracaoAuditoriaForenseRoute,
   AuthenticatedAdministracaoCoordenacaoRoute:
     AuthenticatedAdministracaoCoordenacaoRoute,
+  AuthenticatedAdministracaoGovernancaExclusoesRoute:
+    AuthenticatedAdministracaoGovernancaExclusoesRoute,
   AuthenticatedAdministracaoHistoricoSenhasRoute:
     AuthenticatedAdministracaoHistoricoSenhasRoute,
   AuthenticatedAdministracaoIntegridadeDadosRoute:

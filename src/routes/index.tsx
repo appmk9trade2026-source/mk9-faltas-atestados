@@ -1,8 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
-  loader: async ({ context }) => {
-    // Redireciona para o dashboard se estiver autenticado, ou para o auth se não
+  loader: async () => {
     throw redirect({
       to: "/dashboard",
     });
