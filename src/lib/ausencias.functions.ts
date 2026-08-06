@@ -685,7 +685,7 @@ export const processarAusenciaInterno = createServerFn({ method: "POST" })
     // Validação de Papel (RH, Compliance, Admin)
     const { data: roles } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
     const userRoles = roles?.map(r => r.role) ?? [];
-    const hasAccess = userRoles.some(r => ["admin", "rh", "compliance"].includes(r));
+    const hasAccess = userRoles.some(r => ["super_admin", "rh", "compliance"].includes(r));
 
     if (!hasAccess) {
       throw new Error("FORBIDDEN: Acesso negado. Somente RH, Compliance ou Admin podem alterar o processamento.");
