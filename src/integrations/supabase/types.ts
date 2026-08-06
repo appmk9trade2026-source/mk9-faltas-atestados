@@ -509,6 +509,9 @@ export type Database = {
       alertas_eventos: {
         Row: {
           alerta_id: string
+          classificacao:
+            | Database["public"]["Enums"]["alerta_evento_classificacao"]
+            | null
           created_at: string
           evento: string
           id: string
@@ -520,6 +523,9 @@ export type Database = {
         }
         Insert: {
           alerta_id: string
+          classificacao?:
+            | Database["public"]["Enums"]["alerta_evento_classificacao"]
+            | null
           created_at?: string
           evento: string
           id?: string
@@ -531,6 +537,9 @@ export type Database = {
         }
         Update: {
           alerta_id?: string
+          classificacao?:
+            | Database["public"]["Enums"]["alerta_evento_classificacao"]
+            | null
           created_at?: string
           evento?: string
           id?: string
@@ -5177,6 +5186,12 @@ export type Database = {
       operacoes_dashboard: { Args: never; Returns: Json }
       operacoes_health_check: { Args: never; Returns: Json }
       plataforma_health_score: { Args: never; Returns: Json }
+      pode_ver_alerta_evento: { Args: { _evento_id: string }; Returns: boolean }
+      pode_ver_contestacao: {
+        Args: { _contestacao_id: string }
+        Returns: boolean
+      }
+      pode_ver_field_audit: { Args: { _audit_id: string }; Returns: boolean }
       pode_ver_perfil_alvo: {
         Args: { _target_user_id: string }
         Returns: boolean
@@ -5660,6 +5675,11 @@ export type Database = {
     }
     Enums: {
       access_review_status: "PENDENTE" | "APROVADA" | "REVOGADA" | "PRORROGADA"
+      alerta_evento_classificacao:
+        | "OPERACIONAL"
+        | "INTERNO_RH"
+        | "COMPLIANCE"
+        | "SISTEMA"
       app_role:
         | "super_admin"
         | "rh"
@@ -6113,6 +6133,12 @@ export const Constants = {
   public: {
     Enums: {
       access_review_status: ["PENDENTE", "APROVADA", "REVOGADA", "PRORROGADA"],
+      alerta_evento_classificacao: [
+        "OPERACIONAL",
+        "INTERNO_RH",
+        "COMPLIANCE",
+        "SISTEMA",
+      ],
       app_role: [
         "super_admin",
         "rh",
