@@ -740,7 +740,7 @@ export const deleteAusencia = createServerFn({ method: "POST" })
     const correlationId = `EXC-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
     // Chamar RPC de exclusão segura
-    const { data: res, error: rpcErr } = await context.supabase.rpc("excluir_ausencia_segura", {
+    const { data: res, error: rpcErr } = await context.supabase.rpc("excluir_ausencia_segura" as any, {
       p_ausencia_id: data.id,
       p_categoria_motivo: data.categoria_motivo,
       p_motivo: data.motivo
