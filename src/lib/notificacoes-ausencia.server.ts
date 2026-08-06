@@ -135,6 +135,8 @@ export async function enfileirarNotificacoesAusencia({
       let templateCodigo = "";
       if (dest.tipo === "COLABORADOR") templateCodigo = "AUSENCIA_LANCADA_COLABORADOR_V1";
       else if (dest.tipo === "SUPERVISOR") templateCodigo = "AUSENCIA_LANCADA_SUPERVISOR_V1";
+      else if (dest.tipo === "RH") templateCodigo = "AUSENCIA_LANCADA_RH_V1";
+
 
       if (dest.whatsapp && templateCodigo) {
         // Buscar ID do template ativo
