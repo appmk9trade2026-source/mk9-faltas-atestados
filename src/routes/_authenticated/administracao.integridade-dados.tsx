@@ -134,14 +134,18 @@ function IntegridadePage() {
     enabled,
     queryFn: async () => {
       // Diagnóstico forense (Etapa 5)
-      const { data: forense, error: forenseErr } = await supabase.rpc("diagnosticar_integridade_ausencias");
+      const { data: forenseRes, error: forenseErr } = await supabase.rpc("diagnosticar_integridade_ausencias");
       const { data, error } = await supabase.rpc("admin_integridade_resumo" as never);
       if (error) throw error;
       
       const base = data as Resumo;
-      if (forense && !forenseErr) {
-        base.ausencias_sem_hash = Number(forense.total_sem_hash);
-        base.ausencias_hash_invalido = Number(forense.total_hash_invalido);
+      if (forenseRes && !forenseErr) {
+        // RPC RETURNS TABLE returns an array
+        const forense = (Array.isArray(forenseRes) ? forenseRes[0] : forenseRes) as any;
+        if (forense) {
+          base.ausencias_sem_hash = Number(forense.total_sem_hash || 0);
+          base.ausencias_hash_invalido = Number(forense.total_hash_invalido || 0);
+        }
       }
       
       return base;
