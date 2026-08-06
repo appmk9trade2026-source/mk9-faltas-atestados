@@ -2256,24 +2256,24 @@ function NovaAusenciaPage() {
                       )}
 
                       <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center w-full">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={handleCancelClick}
+                          disabled={salvarMut.isPending}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          type="submit"
+                          size="lg"
+                          disabled={
+                            salvarMut.isPending ||
+                            (!isEdit && (!confirmado || (!!colab && !colab.projeto?.codigo_protocolo)))
+                          }
+                          className="min-w-[220px] bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:from-blue-700 hover:to-indigo-800"
+                        >
 
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={handleCancelClick}
-                        disabled={salvarMut.isPending}
-                      >
-                        Cancelar
-                      </Button>
-                      <Button
-                        type="submit"
-                        size="lg"
-                        disabled={
-                          salvarMut.isPending ||
-                          (!isEdit && !!colab && !colab.projeto?.codigo_protocolo)
-                        }
-                        className="min-w-[220px] bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:from-blue-700 hover:to-indigo-800"
-                      >
                         {salvarMut.isPending ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
