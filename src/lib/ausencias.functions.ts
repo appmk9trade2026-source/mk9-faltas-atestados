@@ -254,7 +254,16 @@ async function audit(
 export const createAusencia = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => {
-    try { return basePayloadSchema.parse(data); } catch (e) { throw toInvalidPayload(e); }
+    try { 
+      const res = basePayloadSchema.safeParse(data);
+      console.log("DEBUG_LANCAMENTO_MANUAL_SF_VALIDATION:", {
+        data_received: data,
+        success: res.success,
+        error: res.success ? null : res.error.format()
+      });
+      if (!res.success) throw res.error;
+      return res.data;
+    } catch (e) { throw toInvalidPayload(e); }
   })
   .handler(async ({ data, context }) => {
     const isManual = data.origem_registro === "MANUAL";
