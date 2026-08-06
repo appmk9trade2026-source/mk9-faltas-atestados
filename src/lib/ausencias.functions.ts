@@ -938,3 +938,147 @@ export const getAusenciaConversoesKpis = createServerFn({ method: "GET" })
 
 
 
+
+/**
+ * ETAPA 6: Registrar Contestação de Ausência.
+ */
+export const contestarAusencia = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => {
+    return z.object({
+      ausencia_id: uuid,
+      motivo: z.string().trim().min(5).max(100),
+      descricao: z.string().trim().min(10).max(1000),
+    }).parse(data);
+  })
+  .handler(async ({ data, context }) => {
+    // Escopo: quem pode ver a ausência pode contestar? 
+    // O requisito diz: RH, Compliance, Super Admin, Supervisor e Coordenador responsável.
+    // Vamos usar o gate de leitura da ausência para validar se o usuário tem vínculo.
+    const { data: current } = await context.supabase
+      .from("ausencias")
+      .select("id, colaborador_id, projeto_id, empresa_id, status, protocolo")
+      .eq("id", data.ausencia_id)
+      .maybeSingle();
+      
+    if (!current) throw new Error("RESOURCE_NOT_FOUND: ausência não encontrada");
+
+    const gate = await requirePermission({
+      ctx: context,
+      permission: PERMISSION_MAP.viewAbsences, // Se pode ver, pode solicitar contestação
+      colaboradorId: (current.colaborador_id as string | null) ?? null,
+      projetoId: current.colaborador_id ? null : (current.projeto_id as string),
+    });
+
+    // 1. Criar a contestação
+    const { data: contestacao, error: contestErr } = await context.supabase
+      .from("ausencia_contestacoes")
+      .insert({
+        ausencia_id: data.ausencia_id,
+        solicitante_usuario_id: context.userId,
+        motivo: data.motivo,
+        descricao: data.descricao,
+        status: "ABERTA",
+      } as any)
+      .select("id")
+      .single();
+
+    if (contestErr) throw contestErr;
+
+    // 2. Marcar ausência como contestada
+    await context.supabase
+      .from("ausencias")
+      .update({ status_documental: "CONTESTADO" } as any)
+      .eq("id", data.ausencia_id);
+
+    // 3. Auditoria
+    await audit(context.supabase, "CONTESTACAO_ABERTA", data.ausencia_id, gate.correlationId,
+      null, { contestacao_id: contestacao.id, motivo: data.motivo },
+      `contestação aberta: ${data.motivo}`,
+      gate.empresaId, gate.projetoId,
+      context.userId,
+    );
+
+    return { success: true, id: contestacao.id };
+  });
+
+/**
+ * ETAPA 7: Resolver Contestação e Corrigir Lançamento.
+ */
+export const resolverContestacao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => {
+    return z.object({
+      contestacao_id: uuid,
+      status: z.enum(["PROCEDENTE", "IMPROCEDENTE"]),
+      acao: z.enum(["CANCELAR", "RETIFICAR", "MANTER"]),
+      justificativa: z.string().trim().min(10).max(1000),
+    }).parse(data);
+  })
+  .handler(async ({ data, context }) => {
+    // Apenas RH, Compliance ou Admin podem resolver
+    const { data: roles } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
+    const userRoles = roles?.map(r => r.role) ?? [];
+    const hasAccess = userRoles.some(r => ["super_admin", "rh", "compliance"].includes(r));
+
+    if (!hasAccess) {
+      throw new Error("FORBIDDEN: Apenas RH, Compliance ou Admin podem resolver contestações.");
+    }
+
+    const { data: contest, error: loadErr } = await context.supabase
+      .from("ausencia_contestacoes")
+      .select("*, ausencias(*)")
+      .eq("id", data.contestacao_id)
+      .maybeSingle();
+
+    if (loadErr || !contest) throw new Error("RESOURCE_NOT_FOUND: contestação não encontrada");
+
+    const aus = contest.ausencias as any;
+    
+    // 1. Atualizar a contestação
+    await context.supabase
+      .from("ausencia_contestacoes")
+      .update({
+        status: data.status === "PROCEDENTE" ? "CORRIGIDA" : "IMPROCEDENTE",
+        resolvido_em: new Date().toISOString(),
+        resolvido_por: context.userId,
+      } as any)
+      .eq("id", data.contestacao_id);
+
+    // 2. Aplicar ação na ausência
+    let novoStatusDoc = "ATIVO";
+    if (data.status === "PROCEDENTE") {
+      if (data.acao === "CANCELAR") novoStatusDoc = "CANCELADO";
+      else if (data.acao === "RETIFICAR") novoStatusDoc = "RETIFICADO";
+    }
+
+    await context.supabase
+      .from("ausencias")
+      .update({ 
+        status_documental: novoStatusDoc,
+        ...(data.acao === "CANCELAR" ? { status: "PENDENTE" } : {}) // Reset status if cancelled? Or maybe we need a dedicated CANCELADO status.
+      } as any)
+      .eq("id", aus.id);
+
+    // 3. Auditoria
+    await audit(context.supabase, "CONTESTACAO_RESOLVIDA", aus.id, crypto.randomUUID(),
+      { status_anterior: contest.status }, 
+      { status_novo: data.status, acao: data.acao, justificativa: data.justificativa },
+      `contestação resolvida: ${data.status} (${data.acao})`,
+      aus.empresa_id, aus.projeto_id,
+      context.userId,
+    );
+
+    // 4. Notificar (Etapa 8)
+    if (novoStatusDoc === "CANCELADO" || novoStatusDoc === "RETIFICADO") {
+       await enfileirarNotificacoesAusencia({
+        supabase: context.supabase,
+        ausenciaId: aus.id,
+        evento: "AUSENCIA_RETIFICADA",
+        correlationId: crypto.randomUUID(),
+        userId: context.userId,
+      });
+    }
+
+    return { success: true };
+  });
