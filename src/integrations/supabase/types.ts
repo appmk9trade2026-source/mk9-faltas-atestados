@@ -4846,6 +4846,14 @@ export type Database = {
           total_sem_hash: number
         }[]
       }
+      excluir_ausencia_segura: {
+        Args: {
+          p_ausencia_id: string
+          p_categoria_motivo: string
+          p_motivo: string
+        }
+        Returns: Json
+      }
       gen_projeto_codigo_protocolo: {
         Args: { _empresa_id: string; _exclude_id?: string; _nome: string }
         Returns: string
