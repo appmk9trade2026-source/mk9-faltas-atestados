@@ -49,7 +49,7 @@ export async function enfileirarNotificacoesAusencia({
         )
       `)
       .eq("id", ausenciaId)
-      .single();
+      .maybeSingle();
 
     if (ausErr || !aus) {
       console.error("[Notificações] Erro ao carregar ausência:", ausErr);
@@ -76,7 +76,7 @@ export async function enfileirarNotificacoesAusencia({
     if (colab.supervisor_usuario_id) {
       const { data: supProfile } = await supabase
         .from("profiles")
-        .select("id, nome_completo, whatsapp")
+        .select("id, nome, telefone_whatsapp")
         .eq("id", colab.supervisor_usuario_id)
         .maybeSingle();
       
@@ -84,8 +84,8 @@ export async function enfileirarNotificacoesAusencia({
         destinatarios.push({
           tipo: "SUPERVISOR",
           usuario_id: supProfile.id,
-          whatsapp: supProfile.whatsapp || undefined,
-          nome: supProfile.nome_completo || "Supervisor"
+          whatsapp: supProfile.telefone_whatsapp || undefined,
+          nome: supProfile.nome || "Supervisor"
         });
       }
     }
@@ -118,57 +118,58 @@ export async function enfileirarNotificacoesAusencia({
           .maybeSingle();
 
         if (template) {
-          promises.push(
-            supabase.from("whatsapp_outbox").insert({
-              ausencia_id: ausenciaId,
-              evento_tipo: evento,
-              evento_id: correlationId,
-              idempotency_key: `wa:${idempotencyBase}`,
-              destinatario_colaborador_id: dest.colaborador_id || null,
-              destinatario_usuario_id: dest.usuario_id || null,
-              template_id: template.id,
-              template_codigo: templateCodigo,
-              template_versao: template.versao,
-              publico: dest.tipo === "COLABORADOR" ? "COLABORADOR" : "INTERNO",
-              prioridade: "ALTA",
-              status: "PENDENTE",
-              telefone_hash: "hash_placeholder", // O trigger do banco deve cuidar ou uma lib de hash
-              telefone_mascarado: dest.whatsapp.replace(/(\d{2})(\d{5})(\d{4})/, "$1*****$3"),
-              payload: {
-                protocolo: aus.protocolo,
-                colaborador_nome: colab.nome_completo,
-                tipo_detalhe: aus.tipo_detalhe,
-                data_inicio: aus.data_inicio,
-                data_fim: aus.data_fim
-              }
-            } as any)
-          );
+          // Use .then() or just cast to any/Promise to satisfy the collector array
+          const insertWa = supabase.from("whatsapp_outbox").insert({
+            ausencia_id: ausenciaId,
+            evento_tipo: evento,
+            evento_id: correlationId,
+            idempotency_key: `wa:${idempotencyBase}`,
+            destinatario_colaborador_id: dest.colaborador_id || null,
+            destinatario_usuario_id: dest.usuario_id || null,
+            template_id: template.id,
+            template_codigo: templateCodigo,
+            template_versao: template.versao,
+            publico: dest.tipo === "COLABORADOR" ? "COLABORADOR" : "INTERNO",
+            prioridade: "ALTA",
+            status: "PENDENTE",
+            telefone_hash: "hash_placeholder",
+            telefone_mascarado: dest.whatsapp.replace(/(\d{2})(\d{5})(\d{4})/, "$1*****$3"),
+            payload: {
+              protocolo: aus.protocolo,
+              colaborador_nome: colab.nome_completo,
+              tipo_detalhe: aus.tipo_detalhe,
+              data_inicio: aus.data_inicio,
+              data_fim: aus.data_fim
+            }
+          } as any);
+          
+          promises.push(insertWa as any);
         }
       }
 
       // 2.2 Notificações Internas (Alertas) para Supervisor e Coordenador
       if (dest.usuario_id && (dest.tipo === "SUPERVISOR" || dest.tipo === "COORDENADOR")) {
-        promises.push(
-          supabase.from("alertas").insert({
-            ausencia_id: ausenciaId,
-            colaborador_id: colab.id,
-            empresa_id: aus.empresa_id,
-            projeto_id: aus.projeto_id,
-            categoria: "NOTIFICACAO",
-            regra_codigo: `NOTIF_${evento}`,
-            severidade: "INFORMATIVO",
-            status: "NOVO",
-            titulo: evento === "AUSENCIA_CRIADA" ? "Nova Ausência Registrada" : "Ausência Atualizada",
-            descricao: `O colaborador ${colab.nome_completo} possui um novo registro de ${aus.tipo_detalhe} (Protocolo: ${aus.protocolo}).`,
-            chave_idempotencia: `alerta:${idempotencyBase}`,
-            metadata: {
-              evento,
-              protocolo: aus.protocolo,
-              tipo_detalhe: aus.tipo_detalhe,
-              data_inicio: aus.data_inicio
-            }
-          } as any)
-        );
+        const insertAlerta = supabase.from("alertas").insert({
+          ausencia_id: ausenciaId,
+          colaborador_id: colab.id,
+          empresa_id: aus.empresa_id,
+          projeto_id: aus.projeto_id,
+          categoria: "NOTIFICACAO",
+          regra_codigo: `NOTIF_${evento}`,
+          severidade: "INFORMATIVO",
+          status: "NOVO",
+          titulo: evento === "AUSENCIA_CRIADA" ? "Nova Ausência Registrada" : "Ausência Atualizada",
+          descricao: `O colaborador ${colab.nome_completo} possui um novo registro de ${aus.tipo_detalhe} (Protocolo: ${aus.protocolo}).`,
+          chave_idempotencia: `alerta:${idempotencyBase}`,
+          metadata: {
+            evento,
+            protocolo: aus.protocolo,
+            tipo_detalhe: aus.tipo_detalhe,
+            data_inicio: aus.data_inicio
+          }
+        } as any);
+        
+        promises.push(insertAlerta as any);
       }
     }
 
@@ -182,7 +183,6 @@ export async function enfileirarNotificacoesAusencia({
     }
 
   } catch (err) {
-    // Falha nas notificações não deve impedir o sucesso da ausência (best effort persistido)
     console.error("[Notificações] Falha crítica no enfileiramento:", err);
   }
 }
