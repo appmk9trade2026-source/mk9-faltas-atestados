@@ -234,19 +234,19 @@ const schema = z
     if (!v.empresa_id) req("empresa_id", "Selecione a empresa.");
     if (!v.projeto_id) req("projeto_id", "Selecione o projeto.");
     const correlationId = (globalThis as any).__manualCorrelationId || "no-correlation-id";
-    const nomeManual = normalizeManualText(v.manual_nome);
+    const rawVal = v.manual_nome;
+    const nomeManual = normalizeManualText(rawVal);
+    
     if (v.modo_manual && nomeManual.length < 3) {
       console.error("ETAPA 4 — LOG DO SCHEMA DO FRONTEND", {
         correlation_id: correlationId,
         etapa: "frontend-schema",
-        keys: Object.keys(v),
-        manual_nome_type: typeof v.manual_nome,
-        manual_nome_length: (v.manual_nome ?? "").length,
-        manual_nome_present: v.manual_nome !== undefined,
+        raw_manual_nome: rawVal,
+        raw_manual_nome_type: typeof rawVal,
+        raw_manual_nome_length: (rawVal ?? "").length,
+        normalized_nome_length: nomeManual.length,
         modo_manual: v.modo_manual,
-        issue_path: ["manual_nome"],
-        issue_message: "Informe o nome completo do colaborador (mínimo 3 caracteres).",
-        valor_recebido_mascarado: (v.manual_nome ?? "").length > 2 ? (v.manual_nome?.[0] + "***" + v.manual_nome?.slice(-1)) : "***"
+        issue_message: "Informe o nome completo do colaborador (mínimo 3 caracteres)."
       });
       req("manual_nome", "Informe o nome completo do colaborador (mínimo 3 caracteres).");
     }
