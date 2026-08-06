@@ -32,6 +32,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { normalizeManualText } from "@/lib/normalize-manual";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
