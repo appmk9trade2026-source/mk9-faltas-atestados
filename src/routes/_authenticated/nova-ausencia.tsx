@@ -1450,7 +1450,8 @@ function NovaAusenciaPage() {
                       return;
                     }
                     salvarMut.mutate(v);
-                  })}
+                  })(e);
+                }}
                   className="space-y-6"
                 >
                   {/* ============= SEÇÃO 1: Dados do Colaborador ============= */}
