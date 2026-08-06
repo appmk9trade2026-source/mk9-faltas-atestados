@@ -90,6 +90,8 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
+import { usePermissions } from "@/lib/permissions";
+import { PERMISSION_MAP } from "@/lib/permissions-map";
 import { useSessionScope } from "@/hooks/use-session-scope";
 import { SupervisorEmptyState } from "@/components/supervisor-empty-state";
 import {
@@ -259,12 +261,13 @@ function ProcessamentoBadge({ status }: { status: StatusProcessamento }) {
 
 function AusenciasPage() {
   const { roles } = useSession();
+  const { has: hasPermission } = usePermissions();
   const scope = useSessionScope();
   const podeCadastrar =
     roles.includes("super_admin") || roles.includes("rh") || roles.includes("supervisor") || roles.includes("coordenador");
   const podeLancar = roles.includes("super_admin") || roles.includes("rh") || roles.includes("coordenador");
   const queryClient = useQueryClient();
-  const podeExcluir = roles.includes("super_admin") || roles.includes("rh");
+  const podeExcluir = hasPermission(PERMISSION_MAP.deleteAbsence) || roles.includes("super_admin") || roles.includes("rh");
 
   const [search, setSearch] = useState("");
   const [empresaFiltro, setEmpresaFiltro] = useState<string>("all");
