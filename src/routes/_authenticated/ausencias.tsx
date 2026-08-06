@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { alterarStatusAusencia, processarAusenciaInterno } from "@/lib/ausencias.functions";
+import { alterarStatusAusencia, processarAusenciaInterno, deleteAusencia } from "@/lib/ausencias.functions";
 
 import { friendlyRbacError } from "@/lib/rbac/errors";
 import {
@@ -28,6 +28,8 @@ import {
   Plus,
   Search,
   RefreshCcw,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { RetificarAusenciaDialog } from "@/components/ausencias/retificar-ausencia-dialog";
