@@ -1039,10 +1039,71 @@ function AusenciasPage() {
                 </dl>
               </section>
               
-              <section className="rounded-lg border bg-muted/30 p-4">
-                <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                  <RefreshCcw className="h-3.5 w-3.5" /> Processamento Administrativo
+              <section className="rounded-lg border bg-slate-50/50 dark:bg-slate-900/20 p-4">
+                <h4 className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                  <HistoryIcon className="h-3.5 w-3.5" /> Histórico Administrativo
                 </h4>
+                <div className="relative space-y-4 before:absolute before:left-[11px] before:top-2 before:h-[calc(100%-16px)] before:w-0.5 before:bg-muted">
+                  {/* Registro Inicial */}
+                  <div className="relative pl-8">
+                    <div className="absolute left-0 top-1 h-5 w-5 rounded-full border-2 border-background bg-emerald-100 flex items-center justify-center">
+                      <Plus className="h-2.5 w-2.5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold">Registro da Ausência</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {formatDateTime(viewing.registrado_em)} • {viewing.registrador?.nome || viewing.autor_nome_snapshot || "Sistema"} ({viewing.operacao_origem || "WEB"})
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Lançamento RH */}
+                  {viewing.lancado_em && (
+                    <div className="relative pl-8">
+                      <div className="absolute left-0 top-1 h-5 w-5 rounded-full border-2 border-background bg-blue-100 flex items-center justify-center">
+                        <Check className="h-2.5 w-2.5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold">Lançamento RH</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {formatDateTime(viewing.lancado_em)} • {viewing.lancador?.nome || "RH/Admin"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Processamento */}
+                  {(viewing.processamento_iniciado_em || viewing.processado_em) && (
+                    <div className="relative pl-8">
+                      <div className="absolute left-0 top-1 h-5 w-5 rounded-full border-2 border-background bg-amber-100 flex items-center justify-center">
+                        <Activity className="h-2.5 w-2.5 text-amber-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold">Processamento Central</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {formatDateTime(viewing.processamento_iniciado_em || viewing.processado_em)} • {viewing.responsavel_processamento_nome || viewing.processado_por || "Central"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Exclusão */}
+                  {viewing.status_documental === "EXCLUIDO" && (
+                    <div className="relative pl-8">
+                      <div className="absolute left-0 top-1 h-5 w-5 rounded-full border-2 border-background bg-red-100 flex items-center justify-center">
+                        <Trash2 className="h-2.5 w-2.5 text-red-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-red-700">Exclusão Efetivada</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {formatDateTime(viewing.excluida_em)} • {viewing.excluidora_nome_snapshot} ({viewing.excluidora_papel_snapshot})
+                        </p>
+                        <p className="text-[10px] mt-0.5 italic">Motivo: {viewing.motivo_exclusao_categoria}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </section>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <p className="text-[10px] text-muted-foreground uppercase font-medium">Status Atual</p>
