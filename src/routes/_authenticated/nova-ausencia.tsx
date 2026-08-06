@@ -1190,6 +1190,16 @@ function NovaAusenciaPage() {
 
       const inputElement = document.querySelector('input[name="manual_nome"]') as HTMLInputElement;
       const inputVal = inputElement?.value;
+      const getValuesVal = form.getValues("manual_nome");
+      const valuesVal = values.manual_nome;
+
+      console.error("DIAGNÓSTICO CRÍTICO — VALORES CAPTURADOS", {
+        correlation_id: correlationId,
+        input_dom_value: inputVal,
+        form_get_values: getValuesVal,
+        submit_values_object: valuesVal,
+        manual_mode: values.modo_manual
+      });
 
       console.log("ETAPA 3 — LOG DO FRONTEND ANTES DO HANDLE SUBMIT", {
         correlation_id: correlationId,
