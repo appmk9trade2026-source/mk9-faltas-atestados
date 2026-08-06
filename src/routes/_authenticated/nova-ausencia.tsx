@@ -32,6 +32,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { normalizeManualText } from "@/lib/normalize-manual";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
@@ -232,18 +233,18 @@ const schema = z
     }
     if (!v.empresa_id) req("empresa_id", "Selecione a empresa.");
     if (!v.projeto_id) req("projeto_id", "Selecione o projeto.");
-    const nomeManual = (v.manual_nome || "").trim();
+    const nomeManual = normalizeManualText(v.manual_nome);
     if (v.modo_manual && nomeManual.length < 3) {
       req("manual_nome", "Informe o nome completo do colaborador (mínimo 3 caracteres).");
     }
-    if (!(v.manual_matricula ?? "").trim()) req("manual_matricula", "Informe a matrícula.");
-    if (!(v.manual_telefone ?? "").trim()) {
+    if (normalizeManualText(v.manual_matricula).length === 0) req("manual_matricula", "Informe a matrícula.");
+    if (normalizeManualText(v.manual_telefone).length === 0) {
       req("manual_telefone", "Informe o telefone do colaborador.");
     }
-    if (!(v.manual_supervisor_nome ?? "").trim()) {
+    if (normalizeManualText(v.manual_supervisor_nome).length === 0) {
       req("manual_supervisor_nome", "Informe o supervisor(a).");
     }
-    if (!(v.manual_supervisor_telefone ?? "").trim()) {
+    if (normalizeManualText(v.manual_supervisor_telefone).length === 0) {
       req("manual_supervisor_telefone", "Informe o telefone do supervisor.");
     }
     const email = (v.manual_email ?? "").trim();
@@ -1179,13 +1180,13 @@ function NovaAusenciaPage() {
             // Motivo fixo — o operador não digita nem escolhe; a auditoria recebe a origem.
             manual_motivo: MANUAL_MOTIVO_PADRAO,
             manual_motivo_detalhe: "Colaborador não localizado pela matrícula informada.",
-            manual_nome: (values.manual_nome || "").trim(),
-            manual_matricula: (values.manual_matricula || matriculaInput || "").trim(),
-            manual_telefone: values.manual_telefone?.trim() || null,
-            manual_whatsapp: values.manual_whatsapp?.trim() || null,
-            manual_email: values.manual_email?.trim() || null,
-            manual_supervisor_nome: values.manual_supervisor_nome?.trim() || null,
-            manual_supervisor_telefone: values.manual_supervisor_telefone?.trim() || null,
+            manual_nome: normalizeManualText(values.manual_nome ?? form.getValues("manual_nome")),
+            manual_matricula: normalizeManualText(values.manual_matricula ?? form.getValues("manual_matricula") ?? matriculaInput),
+            manual_telefone: normalizeManualText(values.manual_telefone ?? form.getValues("manual_telefone")),
+            manual_whatsapp: normalizeManualText(values.manual_whatsapp ?? form.getValues("manual_whatsapp")),
+            manual_email: normalizeManualText(values.manual_email ?? form.getValues("manual_email")),
+            manual_supervisor_nome: normalizeManualText(values.manual_supervisor_nome ?? form.getValues("manual_supervisor_nome")),
+            manual_supervisor_telefone: normalizeManualText(values.manual_supervisor_telefone ?? form.getValues("manual_supervisor_telefone")),
             // Coordenador: supervisor canônico do vínculo. No modo Supervisor, 
             // a RPC ignora este campo e usa o auth.uid().
             manual_supervisor_usuario_id: values.manual_supervisor_usuario_id || null,
