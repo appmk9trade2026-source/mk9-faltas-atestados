@@ -72,7 +72,7 @@ function CentralProcessamentoPage() {
   const kpisQ = useQuery({ 
     queryKey: ["processamento", "kpis"], 
     queryFn: () => getKpisFn(),
-    refetchInterval: 60000
+    // refetchInterval: 60000
   });
 
   const ausenciasQ = useQuery({
@@ -148,6 +148,7 @@ function CentralProcessamentoPage() {
     onSuccess: () => {
       toast.success("Processamento iniciado.");
       queryClient.invalidateQueries({ queryKey: ["processamento"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
     },
     onError: (e: any) => toast.error(e.message)
   });
@@ -157,6 +158,7 @@ function CentralProcessamentoPage() {
     onSuccess: () => {
       toast.success("Processamento concluído.");
       queryClient.invalidateQueries({ queryKey: ["processamento"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
     },
     onError: (e: any) => toast.error(e.message)
   });
