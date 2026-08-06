@@ -10,6 +10,7 @@ import { requirePermission } from "@/lib/rbac/guards.server";
 import { PERMISSION_MAP } from "@/lib/permissions-map";
 import { Database } from "@/integrations/supabase/types";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { enfileirarNotificacoesAusencia } from "./notificacoes-ausencia.server";
 
 type StatusProcessamento = Database["public"]["Enums"]["ausencia_status_processamento"];
 
