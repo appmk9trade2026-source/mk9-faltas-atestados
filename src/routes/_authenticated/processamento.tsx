@@ -32,9 +32,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Painel360 } from "@/components/processamento/painel-360";
 
 export const Route = createFileRoute("/_authenticated/processamento")({
   head: () => ({ meta: [{ title: "Central de Processamento · CRM MK9" }] }),
@@ -166,18 +167,11 @@ function CentralProcessamentoPage() {
     else toast.info("Nenhum registro aguardando.");
   };
 
-  const timelineSteps = [
-    { id: "REGISTRO", label: "Registrado", icon: FileText, date: registroSelecionado?.registrado_em },
-    { id: "LANCADO", label: "Lançado RH", icon: CheckCircle2, date: registroSelecionado?.lancado_em },
-    { id: "AGUARDANDO", label: "Aguardando", icon: History, date: registroSelecionado?.status_processamento === "AGUARDANDO" ? new Date().toISOString() : null },
-    { id: "EM_PROCESSAMENTO", label: "Em Processamento", icon: TrendingUp, date: registroSelecionado?.processamento_iniciado_em },
-    { id: "PROCESSADO", label: "Processado", icon: Zap, date: registroSelecionado?.processamento_concluido_em },
-  ];
-
   const currentStepIndex = registroSelecionado?.status_processamento === "PROCESSADO" ? 4 
     : registroSelecionado?.status_processamento === "EM_PROCESSAMENTO" ? 3
     : registroSelecionado?.status_processamento === "AGUARDANDO" ? 2
     : registroSelecionado?.lancado_em ? 1 : 0;
+
 
   return (
     <AppShell title="Central de Processamento" breadcrumb={["Operações", "Central de Processamento"]}>
@@ -236,103 +230,17 @@ function CentralProcessamentoPage() {
         </div>
       </div>
 
-      {/* Etapa 9: Detalhe Sheet com Timeline */}
+      {/* Etapa 9: Painel 360º da Ausência */}
       <Sheet open={detalhesAbertos} onOpenChange={setDetalhesAbertos}>
-        <SheetContent className="sm:max-w-md md:max-w-xl w-full">
-          <SheetHeader className="pr-6">
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="outline" className="text-[10px] font-bold uppercase">PROTOCOL: {registroSelecionado?.protocolo || "—"}</Badge>
-              {registroSelecionado?.sla_status === "FORA" && <Badge variant="destructive" className="text-[10px] font-black animate-pulse">FORA DO SLA</Badge>}
-            </div>
-            <SheetTitle className="text-2xl font-black leading-none">{registroSelecionado?.colaborador_nome}</SheetTitle>
-            <SheetDescription className="text-sm font-medium">{registroSelecionado?.empresa_nome} • {registroSelecionado?.projeto_nome}</SheetDescription>
-          </SheetHeader>
-
-          <Separator className="my-6" />
-
+        <SheetContent className="p-0 sm:max-w-md md:max-w-xl w-full border-none">
           {registroSelecionado && (
-            <ScrollArea className="h-[calc(100vh-180px)] pr-4">
-              <div className="space-y-8">
-                {/* Timeline Visual */}
-                <div className="space-y-4">
-                  <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                    <History className="h-3 w-3" /> FLUXO OPERACIONAL
-                  </h4>
-                  <div className="relative pl-6 space-y-6 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-muted">
-                    {timelineSteps.map((step, idx) => {
-                      const isActive = idx <= currentStepIndex;
-                      const isLast = idx === currentStepIndex;
-                      return (
-                        <div key={step.id} className="relative">
-                          <div className={cn("absolute -left-[23px] top-0 h-4 w-4 rounded-full border-2 bg-background z-10", isActive ? "border-primary bg-primary" : "border-muted")}>
-                            {isActive && <CheckCircle2 className="h-3 w-3 text-white m-[1px]" />}
-                          </div>
-                          <div className={cn("space-y-0.5", isActive ? "text-foreground" : "text-muted-foreground")}>
-                            <p className={cn("text-xs font-bold uppercase tracking-tight", isLast && "text-primary")}>{step.label}</p>
-                            {step.date && <p className="text-[10px] opacity-70 font-medium">{new Date(step.date).toLocaleString("pt-BR")}</p>}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Detalhes Ricos */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1 p-3 bg-muted/30 rounded-lg border">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase">Matrícula</p>
-                    <p className="text-sm font-black">{registroSelecionado.colaborador_matricula}</p>
-                  </div>
-                  <div className="space-y-1 p-3 bg-muted/30 rounded-lg border">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase">Supervisor</p>
-                    <p className="text-sm font-black truncate">{registroSelecionado.supervisor_nome}</p>
-                  </div>
-                  <div className="space-y-1 p-3 bg-muted/30 rounded-lg border">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase">Status RH</p>
-                    <Badge variant="secondary" className="font-bold text-[11px]">{registroSelecionado.status_rh}</Badge>
-                  </div>
-                  <div className="space-y-1 p-3 bg-muted/30 rounded-lg border">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase">Prioridade</p>
-                    <Badge variant="outline" className={cn("font-bold text-[11px]", registroSelecionado.prioridade === 'CRITICO' ? 'text-red-600 border-red-200' : 'text-primary')}>{registroSelecionado.prioridade}</Badge>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                   <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                    <FileText className="h-3 w-3" /> DETALHES DA AUSÊNCIA
-                  </h4>
-                  <div className="p-4 bg-card border rounded-xl space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-[10px] text-muted-foreground uppercase font-bold">Tipo</p>
-                        <p className="text-sm font-bold">{registroSelecionado.tipo}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-muted-foreground uppercase font-bold">CID</p>
-                        <p className="text-sm font-black text-primary">{registroSelecionado.cid || "NÃO INFORMADO"}</p>
-                      </div>
-                    </div>
-                    {registroSelecionado.acidente_trabalho && (
-                      <Badge variant="destructive" className="w-full justify-center py-1 font-black">ACIDENTE DE TRABALHO</Badge>
-                    )}
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase font-bold">Motivo / Observações</p>
-                      <p className="text-sm text-foreground/80 italic bg-muted/50 p-3 rounded-lg mt-1">"{registroSelecionado.motivo || 'Nenhuma observação informada.'}"</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Ações no Detalhe */}
-                <div className="pt-6 flex gap-3">
-                  {registroSelecionado.status_processamento === "AGUARDANDO" && (
-                    <Button className="flex-1 bg-blue-600 font-bold" onClick={() => { iniciarMut.mutate(registroSelecionado.id); setDetalhesAbertos(false); }}>Assumir Processamento</Button>
-                  )}
-                  {registroSelecionado.status_processamento === "EM_PROCESSAMENTO" && (
-                    <Button className="flex-1 bg-emerald-600 font-bold" onClick={() => { concluirMut.mutate(registroSelecionado.id); setDetalhesAbertos(false); }}>Concluir Processamento</Button>
-                  )}
-                </div>
-              </div>
-            </ScrollArea>
+            <Painel360 
+              data={registroSelecionado}
+              onIniciar={(id) => { iniciarMut.mutate(id); setDetalhesAbertos(false); }}
+              onConcluir={(id) => { concluirMut.mutate(id); setDetalhesAbertos(false); }}
+              isProcessing={iniciarMut.isPending || concluirMut.isPending}
+              currentUserId={user?.id}
+            />
           )}
         </SheetContent>
       </Sheet>
