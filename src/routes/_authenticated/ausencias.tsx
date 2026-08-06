@@ -168,7 +168,11 @@ type Ausencia = {
   excluidora_papel_snapshot?: string | null;
   motivo_exclusao_categoria?: string | null;
   motivo_exclusao_detalhe?: string | null;
-  status_documental?: "ATIVO" | "EXCLUIDO" | null;
+  status_documental?: "ATIVO" | "EXCLUIDO" | "CONTESTADO" | "CANCELADO" | "RETIFICADO" | null;
+  autor_nome_snapshot?: string | null;
+  operacao_origem?: string | null;
+  processamento_iniciado_em?: string | null;
+  responsavel_processamento_nome?: string | null;
 };
 
 const PAGE_SIZE = 10;
