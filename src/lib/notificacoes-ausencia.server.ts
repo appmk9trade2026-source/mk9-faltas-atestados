@@ -194,7 +194,7 @@ export async function enfileirarNotificacoesAusencia({
             template_id: template.id,
             template_codigo: templateCodigo,
             template_versao: template.versao,
-            publico: dest.tipo === "COLABORADOR" ? "COLABORADOR" : "INTERNO",
+            publico: dest.tipo === "COLABORADOR" ? "COLABORADOR" : (dest.tipo === "RH" ? "RH" : "SUPERVISOR"),
             prioridade: "ALTA",
             status: "PENDENTE",
             telefone_hash: phoneHash,
