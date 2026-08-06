@@ -28,6 +28,7 @@ import {
   Bot,
   Trophy,
   Fingerprint,
+  Search,
 } from "lucide-react";
 import { APP_VERSION, APP_ENV, APP_ENV_LABEL } from "@/lib/app-meta";
 import {
@@ -88,6 +89,7 @@ const items: Item[] = [
   { title: "Pendências de Supervisor", url: "/administracao/pendencias-supervisor", icon: ShieldCheck, roles: ["super_admin", "rh"] },
   { title: "Integridade de Dados", url: "/administracao/integridade-dados", icon: ShieldCheck, roles: ["super_admin", "rh", "compliance"] },
   { title: "Auditoria Forense", url: "/administracao/auditoria-forense", icon: Fingerprint, roles: ["super_admin", "compliance"] },
+  { title: "Central de Investigações", url: "/administracao/investigacoes", icon: Search, roles: ["super_admin", "compliance"] },
   { title: "Vínculos de Lançamentos Manuais", url: "/administracao/vinculos-manuais", icon: ShieldCheck, roles: ["super_admin", "rh"] },
   { title: "Histórico de Redefinições", url: "/administracao/historico-senhas", icon: KeyRound, roles: ["super_admin", "compliance"] },
   { title: "BI Executivo", url: "/bi-executivo", icon: Sparkles, roles: ["super_admin", "compliance", "rh"] },
@@ -123,7 +125,7 @@ const SECTIONS: Section[] = [
   {
     id: "administracao",
     label: "Administração",
-    urls: ["/usuarios", "/configuracoes", "/operacoes", "/acessos", "/administracao/permissoes", "/administracao/coordenacao", "/administracao/pendencias-supervisor", "/administracao/integridade-dados", "/administracao/auditoria-forense", "/administracao/vinculos-manuais", "/administracao/historico-senhas"],
+    urls: ["/usuarios", "/configuracoes", "/operacoes", "/acessos", "/administracao/permissoes", "/administracao/coordenacao", "/administracao/pendencias-supervisor", "/administracao/integridade-dados", "/administracao/auditoria-forense", "/administracao/investigacoes", "/administracao/vinculos-manuais", "/administracao/historico-senhas"],
   },
   {
     id: "sistema",

@@ -61,6 +61,7 @@ import { Route as AuthenticatedColaboradoresImportacoesRouteImport } from './rou
 import { Route as AuthenticatedAdministracaoVinculosManuaisRouteImport } from './routes/_authenticated/administracao.vinculos-manuais'
 import { Route as AuthenticatedAdministracaoPermissoesRouteImport } from './routes/_authenticated/administracao.permissoes'
 import { Route as AuthenticatedAdministracaoPendenciasSupervisorRouteImport } from './routes/_authenticated/administracao.pendencias-supervisor'
+import { Route as AuthenticatedAdministracaoInvestigacoesRouteImport } from './routes/_authenticated/administracao.investigacoes'
 import { Route as AuthenticatedAdministracaoIntegridadeDadosRouteImport } from './routes/_authenticated/administracao.integridade-dados'
 import { Route as AuthenticatedAdministracaoHistoricoSenhasRouteImport } from './routes/_authenticated/administracao.historico-senhas'
 import { Route as AuthenticatedAdministracaoCoordenacaoRouteImport } from './routes/_authenticated/administracao.coordenacao'
@@ -372,6 +373,12 @@ const AuthenticatedAdministracaoPendenciasSupervisorRoute =
     path: '/administracao/pendencias-supervisor',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdministracaoInvestigacoesRoute =
+  AuthenticatedAdministracaoInvestigacoesRouteImport.update({
+    id: '/administracao/investigacoes',
+    path: '/administracao/investigacoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdministracaoIntegridadeDadosRoute =
   AuthenticatedAdministracaoIntegridadeDadosRouteImport.update({
     id: '/administracao/integridade-dados',
@@ -525,6 +532,7 @@ export interface FileRoutesByFullPath {
   '/administracao/coordenacao': typeof AuthenticatedAdministracaoCoordenacaoRoute
   '/administracao/historico-senhas': typeof AuthenticatedAdministracaoHistoricoSenhasRoute
   '/administracao/integridade-dados': typeof AuthenticatedAdministracaoIntegridadeDadosRoute
+  '/administracao/investigacoes': typeof AuthenticatedAdministracaoInvestigacoesRoute
   '/administracao/pendencias-supervisor': typeof AuthenticatedAdministracaoPendenciasSupervisorRoute
   '/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/administracao/vinculos-manuais': typeof AuthenticatedAdministracaoVinculosManuaisRoute
@@ -596,6 +604,7 @@ export interface FileRoutesByTo {
   '/administracao/coordenacao': typeof AuthenticatedAdministracaoCoordenacaoRoute
   '/administracao/historico-senhas': typeof AuthenticatedAdministracaoHistoricoSenhasRoute
   '/administracao/integridade-dados': typeof AuthenticatedAdministracaoIntegridadeDadosRoute
+  '/administracao/investigacoes': typeof AuthenticatedAdministracaoInvestigacoesRoute
   '/administracao/pendencias-supervisor': typeof AuthenticatedAdministracaoPendenciasSupervisorRoute
   '/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/administracao/vinculos-manuais': typeof AuthenticatedAdministracaoVinculosManuaisRoute
@@ -669,6 +678,7 @@ export interface FileRoutesById {
   '/_authenticated/administracao/coordenacao': typeof AuthenticatedAdministracaoCoordenacaoRoute
   '/_authenticated/administracao/historico-senhas': typeof AuthenticatedAdministracaoHistoricoSenhasRoute
   '/_authenticated/administracao/integridade-dados': typeof AuthenticatedAdministracaoIntegridadeDadosRoute
+  '/_authenticated/administracao/investigacoes': typeof AuthenticatedAdministracaoInvestigacoesRoute
   '/_authenticated/administracao/pendencias-supervisor': typeof AuthenticatedAdministracaoPendenciasSupervisorRoute
   '/_authenticated/administracao/permissoes': typeof AuthenticatedAdministracaoPermissoesRoute
   '/_authenticated/administracao/vinculos-manuais': typeof AuthenticatedAdministracaoVinculosManuaisRoute
@@ -743,6 +753,7 @@ export interface FileRouteTypes {
     | '/administracao/coordenacao'
     | '/administracao/historico-senhas'
     | '/administracao/integridade-dados'
+    | '/administracao/investigacoes'
     | '/administracao/pendencias-supervisor'
     | '/administracao/permissoes'
     | '/administracao/vinculos-manuais'
@@ -814,6 +825,7 @@ export interface FileRouteTypes {
     | '/administracao/coordenacao'
     | '/administracao/historico-senhas'
     | '/administracao/integridade-dados'
+    | '/administracao/investigacoes'
     | '/administracao/pendencias-supervisor'
     | '/administracao/permissoes'
     | '/administracao/vinculos-manuais'
@@ -886,6 +898,7 @@ export interface FileRouteTypes {
     | '/_authenticated/administracao/coordenacao'
     | '/_authenticated/administracao/historico-senhas'
     | '/_authenticated/administracao/integridade-dados'
+    | '/_authenticated/administracao/investigacoes'
     | '/_authenticated/administracao/pendencias-supervisor'
     | '/_authenticated/administracao/permissoes'
     | '/_authenticated/administracao/vinculos-manuais'
@@ -1297,6 +1310,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdministracaoPendenciasSupervisorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/administracao/investigacoes': {
+      id: '/_authenticated/administracao/investigacoes'
+      path: '/administracao/investigacoes'
+      fullPath: '/administracao/investigacoes'
+      preLoaderRoute: typeof AuthenticatedAdministracaoInvestigacoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/administracao/integridade-dados': {
       id: '/_authenticated/administracao/integridade-dados'
       path: '/administracao/integridade-dados'
@@ -1597,6 +1617,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdministracaoCoordenacaoRoute: typeof AuthenticatedAdministracaoCoordenacaoRoute
   AuthenticatedAdministracaoHistoricoSenhasRoute: typeof AuthenticatedAdministracaoHistoricoSenhasRoute
   AuthenticatedAdministracaoIntegridadeDadosRoute: typeof AuthenticatedAdministracaoIntegridadeDadosRoute
+  AuthenticatedAdministracaoInvestigacoesRoute: typeof AuthenticatedAdministracaoInvestigacoesRoute
   AuthenticatedAdministracaoPendenciasSupervisorRoute: typeof AuthenticatedAdministracaoPendenciasSupervisorRoute
   AuthenticatedAdministracaoPermissoesRoute: typeof AuthenticatedAdministracaoPermissoesRoute
   AuthenticatedAdministracaoVinculosManuaisRoute: typeof AuthenticatedAdministracaoVinculosManuaisRoute
@@ -1644,6 +1665,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedAdministracaoHistoricoSenhasRoute,
   AuthenticatedAdministracaoIntegridadeDadosRoute:
     AuthenticatedAdministracaoIntegridadeDadosRoute,
+  AuthenticatedAdministracaoInvestigacoesRoute:
+    AuthenticatedAdministracaoInvestigacoesRoute,
   AuthenticatedAdministracaoPendenciasSupervisorRoute:
     AuthenticatedAdministracaoPendenciasSupervisorRoute,
   AuthenticatedAdministracaoPermissoesRoute:
