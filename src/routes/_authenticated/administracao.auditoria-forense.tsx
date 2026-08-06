@@ -76,7 +76,7 @@ function AuditoriaForensePage() {
           id,
           tipo,
           data_inicio,
-          criado_em,
+          created_at,
           autor_nome_snapshot,
           operacao_origem,
           operacao_ip,
@@ -84,7 +84,7 @@ function AuditoriaForensePage() {
           hash_integridade,
           hash_anterior
         `)
-        .order("criado_em", { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(50);
       if (error) throw error;
       return data;
@@ -221,7 +221,7 @@ function AuditoriaForensePage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Último Evento</span>
-                    <span className="text-sm">{(eventosQuery.data && eventosQuery.data.length > 0) ? format(new Date(eventosQuery.data[0].criado_em), "dd/MM/yyyy HH:mm") : "—"}</span>
+                    <span className="text-sm">{(eventosQuery.data && eventosQuery.data.length > 0) ? format(new Date(eventosQuery.data[0].created_at), "dd/MM/yyyy HH:mm") : "—"}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -267,7 +267,7 @@ function AuditoriaForensePage() {
                       eventosQuery.data?.map((ev: any) => (
                         <TableRow key={ev.id}>
                           <TableCell className="text-xs">
-                            {format(new Date(ev.criado_em), "dd/MM HH:mm:ss")}
+                            {format(new Date(ev.created_at), "dd/MM HH:mm:ss")}
                           </TableCell>
                           <TableCell className="text-xs font-medium">{ev.autor_nome_snapshot || "Sistema"}</TableCell>
                           <TableCell><Badge variant="outline" className="text-[10px]">{ev.operacao_origem || "WEB"}</Badge></TableCell>
