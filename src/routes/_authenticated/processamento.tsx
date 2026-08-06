@@ -87,11 +87,7 @@ function CentralProcessamentoPage() {
           colaborador:colaboradores(
             nome_completo, 
             matricula,
-            supervisor:profiles!colaboradores_supervisor_usuario_id_fkey(
-              nome,
-              email,
-              telefone
-            )
+            supervisor_usuario_id
           )
         `)
         .neq("status_processamento", "PROCESSADO")
@@ -99,10 +95,26 @@ function CentralProcessamentoPage() {
       
       if (error) throw error;
 
-      return (data || []).map(row => {
+      return await Promise.all((data || []).map(async row => {
+        // Busca o supervisor separadamente se houver supervisor_usuario_id
+        let supervisorProfile = null;
+        const supervisorId = row.colaborador?.supervisor_usuario_id;
+        
+        if (supervisorId) {
+          const { data: sData } = await supabase
+            .from("profiles")
+            .select("nome, email, telefone")
+            .eq("id", supervisorId)
+            .single();
+          supervisorProfile = sData;
+        }
+
         const { nome, matricula, supervisor_nome } = resolveAusenciaIdentidade({ 
           ...row, 
-          colaborador: row.colaborador ? { ...row.colaborador, supervisor_nome: row.manual_supervisor_nome } : null 
+          colaborador: row.colaborador ? { 
+            ...row.colaborador, 
+            supervisor: supervisorProfile 
+          } : null 
         });
         return {
           id: row.id, 
@@ -134,7 +146,7 @@ function CentralProcessamentoPage() {
         } as AusenciaCardData;
       });
     }
-  });
+      }));
 
   const sortedAndFiltered = useMemo(() => {
     let list = (ausenciasQ.data || []).filter(a => 
