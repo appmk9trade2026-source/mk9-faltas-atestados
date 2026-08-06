@@ -4979,6 +4979,10 @@ export type Database = {
       operacoes_dashboard: { Args: never; Returns: Json }
       operacoes_health_check: { Args: never; Returns: Json }
       plataforma_health_score: { Args: never; Returns: Json }
+      pode_ver_perfil_alvo: {
+        Args: { _target_user_id: string }
+        Returns: boolean
+      }
       preferencia_notificacao_efetiva: {
         Args: {
           p_severidade?: Database["public"]["Enums"]["notif_severidade"]
