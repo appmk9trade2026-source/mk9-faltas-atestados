@@ -590,6 +590,19 @@ function AusenciasPage() {
                 <SelectItem value="PROCESSADO">Processado</SelectItem>
               </SelectContent>
             </Select>
+
+            {(roles.includes("super_admin") || roles.includes("rh")) && (
+              <Select value={docStatusFiltro} onValueChange={(v) => { setDocStatusFiltro(v); setPage(1); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Status Documental" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos (Ativos e Excluídos)</SelectItem>
+                  <SelectItem value="ATIVO">Ativos</SelectItem>
+                  <SelectItem value="EXCLUIDO">Excluídos</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
 
@@ -754,6 +767,14 @@ function AusenciasPage() {
                   <TableCell>
                     <div className="flex flex-wrap items-center gap-1">
                       <Badge variant="outline">{TIPO_LABEL[row.tipo]}</Badge>
+                      {row.status_documental === "EXCLUIDO" && (
+                        <Badge
+                          variant="destructive"
+                          className="bg-red-500/10 text-red-700 border-red-500/30"
+                        >
+                          EXCLUÍDO
+                        </Badge>
+                      )}
                       {row.retificada && (
                         <Badge
                           variant="secondary"
@@ -922,6 +943,34 @@ function AusenciasPage() {
                   <dd className="col-span-2">{viewing.projeto?.nome ?? "—"}</dd>
                 </dl>
               </section>
+
+              {viewing.status_documental === "EXCLUIDO" && (
+                <section className="rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                  <h4 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-red-700 dark:text-red-400">
+                    <Trash2 className="h-3 w-3" /> Exclusão Administrativa
+                  </h4>
+                  <dl className="grid grid-cols-3 gap-2 text-xs">
+                    <dt className="text-muted-foreground font-medium">Status:</dt>
+                    <dd className="col-span-2"><Badge variant="destructive" className="h-5 text-[10px] py-0">EXCLUÍDO</Badge></dd>
+                    
+                    <dt className="text-muted-foreground font-medium">Excluído por:</dt>
+                    <dd className="col-span-2">{viewing.excluidora_nome_snapshot ?? "—"}</dd>
+                    
+                    <dt className="text-muted-foreground font-medium">Papel:</dt>
+                    <dd className="col-span-2 uppercase">{viewing.excluidora_papel_snapshot ?? "—"}</dd>
+                    
+                    <dt className="text-muted-foreground font-medium">Data:</dt>
+                    <dd className="col-span-2">{formatDateTime(viewing.excluida_em)}</dd>
+                    
+                    <dt className="text-muted-foreground font-medium">Categoria:</dt>
+                    <dd className="col-span-2">{viewing.motivo_exclusao_categoria ?? "—"}</dd>
+                    
+                    <dt className="text-muted-foreground font-medium">Motivo:</dt>
+                    <dd className="col-span-2 italic text-muted-foreground">{viewing.motivo_exclusao_detalhe ?? "—"}</dd>
+                  </dl>
+                </section>
+              )}
+
               <section>
                 <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Ausência
@@ -1150,6 +1199,119 @@ function AusenciasPage() {
         nomeColaborador={retificando ? labelNomeColaborador(retificando) : "—"}
       />
 
+      <AlertDialog open={!!confirmExcluir} onOpenChange={(o) => !o && setConfirmExcluir(null)}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" /> Excluir lançamento?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                Este lançamento será retirado dos fluxos operacionais e dos indicadores, 
+                mas continuará preservado no histórico de auditoria.
+              </p>
+              
+              {confirmExcluir && (
+                <div className="rounded-md border bg-muted/50 p-3 text-xs space-y-1 text-foreground">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Colaborador:</span>
+                    <span className="font-medium">{labelNomeColaborador(confirmExcluir)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Matrícula:</span>
+                    <span className="font-mono">{labelMatriculaColaborador(confirmExcluir)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Empresa/Proj:</span>
+                    <span>{confirmExcluir.empresa?.nome} / {confirmExcluir.projeto?.nome}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Protocolo:</span>
+                    <span className="font-mono">{confirmExcluir.protocolo || "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Tipo/Período:</span>
+                    <span>{TIPO_LABEL[confirmExcluir.tipo]} ({formatBRDate(confirmExcluir.data_inicio)})</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Status RH/Proc:</span>
+                    <span>{confirmExcluir.status} / {confirmExcluir.status_processamento}</span>
+                  </div>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Categoria do motivo</label>
+              <Select value={excluirCategoria} onValueChange={setExcluirCategoria}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a categoria..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Colaborador incorreto">Colaborador incorreto</SelectItem>
+                  <SelectItem value="Matrícula incorreta">Matrícula incorreta</SelectItem>
+                  <SelectItem value="Tipo incorreto">Tipo incorreto</SelectItem>
+                  <SelectItem value="Período incorreto">Período incorreto</SelectItem>
+                  <SelectItem value="Registro duplicado">Registro duplicado</SelectItem>
+                  <SelectItem value="Teste indevido">Teste indevido</SelectItem>
+                  <SelectItem value="Lançamento sem fundamento">Lançamento sem fundamento</SelectItem>
+                  <SelectItem value="Outro">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Motivo detalhado {excluirCategoria === "Outro" && <span className="text-destructive">*</span>}
+              </label>
+              <Input 
+                value={excluirMotivo}
+                onChange={(e) => setExcluirMotivo(e.target.value)}
+                placeholder="Descreva a razão da exclusão..."
+              />
+            </div>
+
+            <div className="flex items-center space-x-2 rounded-md border p-3">
+              <input 
+                type="checkbox" 
+                id="confirm_exc"
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
+                checked={excluirConfirmado}
+                onChange={(e) => setExcluirConfirmado(e.target.checked)}
+              />
+              <label htmlFor="confirm_exc" className="text-xs text-muted-foreground cursor-pointer leading-tight">
+                Confirmo que esta exclusão é definitiva para fins operacionais e que os dados 
+                de autoria serão registrados para auditoria.
+              </label>
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setExcluirCategoria("");
+              setExcluirMotivo("");
+              setExcluirConfirmado(false);
+            }}>
+              Cancelar
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              disabled={
+                !excluirCategoria || 
+                (excluirCategoria === "Outro" && !excluirMotivo.trim()) || 
+                !excluirMotivo.trim() ||
+                !excluirConfirmado ||
+                excluirMut.isPending
+              }
+              onClick={() => confirmExcluir && excluirMut.mutate(confirmExcluir)}
+            >
+              {excluirMut.isPending ? "Excluindo..." : "Excluir lançamento"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppShell>
   );
 }
