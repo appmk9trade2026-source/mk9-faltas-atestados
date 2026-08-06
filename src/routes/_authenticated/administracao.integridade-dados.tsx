@@ -57,7 +57,9 @@ type Tipo =
   | "usuario_sem_projeto"
   | "matricula_duplicada"
   | "vinculo_orfao"
-  | "ausencias_sem_autoria";
+  | "ausencias_sem_autoria"
+  | "ausencias_sem_hash"
+  | "ausencias_hash_invalido";
 
 
 type Criticidade = "critica" | "alta" | "media" | "baixa";
@@ -93,6 +95,8 @@ const TIPO_META: Record<Tipo, { label: string; criticidade: Criticidade; acao: "
   matricula_duplicada: { label: "Matrículas duplicadas", criticidade: "alta", acao: "editar_usuario" },
   vinculo_orfao: { label: "Vínculos órfãos ou inválidos", criticidade: "critica", acao: "pendencias" },
   ausencias_sem_autoria: { label: "Ausências sem autoria", criticidade: "media", acao: "pendencias" },
+  ausencias_sem_hash: { label: "Ausências sem hash de integridade", criticidade: "critica", acao: "pendencias" },
+  ausencias_hash_invalido: { label: "Ausências com hash inválido", criticidade: "critica", acao: "pendencias" },
 };
 
 
@@ -129,9 +133,22 @@ function IntegridadePage() {
     queryKey: ["integridade-resumo", ...scope.keyParts],
     enabled,
     queryFn: async () => {
+      // Diagnóstico forense (Etapa 5)
+      const { data: forenseRes, error: forenseErr } = await supabase.rpc("diagnosticar_integridade_ausencias");
       const { data, error } = await supabase.rpc("admin_integridade_resumo" as never);
       if (error) throw error;
-      return data as Resumo;
+      
+      const base = data as Resumo;
+      if (forenseRes && !forenseErr) {
+        // RPC RETURNS TABLE returns an array
+        const forense = (Array.isArray(forenseRes) ? forenseRes[0] : forenseRes) as any;
+        if (forense) {
+          base.ausencias_sem_hash = Number(forense.total_sem_hash || 0);
+          base.ausencias_hash_invalido = Number(forense.total_hash_invalido || 0);
+        }
+      }
+      
+      return base;
     },
   });
 
