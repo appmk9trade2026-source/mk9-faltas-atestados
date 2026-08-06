@@ -32,6 +32,11 @@ export type ColaboradorVinculado = {
   supervisor_nome?: string | null;
   supervisor_telefone?: string | null;
   supervisor_email?: string | null;
+  supervisor?: {
+    nome?: string | null;
+    email?: string | null;
+    telefone?: string | null;
+  } | null;
 } | null;
 
 export type AusenciaIdentidadeSource = {
@@ -97,9 +102,9 @@ export function resolveAusenciaIdentidade(
     email: pick(c?.email, row?.manual_email),
     telefone: pick(c?.telefone, row?.manual_telefone),
     whatsapp: pick(c?.whatsapp, row?.manual_whatsapp),
-    supervisor_nome: pick(c?.supervisor_nome, row?.manual_supervisor_nome),
-    supervisor_telefone: pick(c?.supervisor_telefone, row?.manual_supervisor_telefone),
-    supervisor_email: pick(c?.supervisor_email, row?.manual_supervisor_email),
+    supervisor_nome: pick(c?.supervisor?.nome || c?.supervisor_nome, row?.manual_supervisor_nome),
+    supervisor_telefone: pick(c?.supervisor?.telefone || c?.supervisor_telefone, row?.manual_supervisor_telefone),
+    supervisor_email: pick(c?.supervisor?.email || c?.supervisor_email, row?.manual_supervisor_email),
   };
 
   if (temColaborador) {

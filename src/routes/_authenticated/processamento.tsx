@@ -80,7 +80,20 @@ function CentralProcessamentoPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ausencias")
-        .select("*, empresa:empresas(nome), projeto:projetos(nome), colaborador:colaboradores(nome_completo, matricula)")
+        .select(`
+          *, 
+          empresa:empresas(nome), 
+          projeto:projetos(nome), 
+          colaborador:colaboradores(
+            nome_completo, 
+            matricula,
+            supervisor:profiles!colaboradores_supervisor_usuario_id_fkey(
+              nome,
+              email,
+              telefone
+            )
+          )
+        `)
         .neq("status_processamento", "PROCESSADO")
         .order("registrado_em", { ascending: true });
       
