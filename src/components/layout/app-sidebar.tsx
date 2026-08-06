@@ -90,6 +90,7 @@ const items: Item[] = [
   { title: "Integridade de Dados", url: "/administracao/integridade-dados", icon: ShieldCheck, roles: ["super_admin", "rh", "compliance"] },
   { title: "Auditoria Forense", url: "/administracao/auditoria-forense", icon: Fingerprint, roles: ["super_admin", "compliance"] },
   { title: "Central de Investigações", url: "/administracao/investigacoes", icon: Search, roles: ["super_admin", "compliance"] },
+  { title: "Governança de Exclusões", url: "/administracao/governanca-exclusoes", icon: Gauge, roles: ["super_admin", "rh", "compliance"] },
   { title: "Vínculos de Lançamentos Manuais", url: "/administracao/vinculos-manuais", icon: ShieldCheck, roles: ["super_admin", "rh"] },
   { title: "Histórico de Redefinições", url: "/administracao/historico-senhas", icon: KeyRound, roles: ["super_admin", "compliance"] },
   { title: "BI Executivo", url: "/bi-executivo", icon: Sparkles, roles: ["super_admin", "compliance", "rh"] },
