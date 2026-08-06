@@ -1473,6 +1473,13 @@ export type Database = {
             referencedRelation: "projetos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "colaboradores_supervisor_profiles_fkey"
+            columns: ["supervisor_usuario_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       comunicacoes: {
