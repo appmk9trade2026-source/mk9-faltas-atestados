@@ -463,7 +463,9 @@ export const createAusencia = createServerFn({ method: "POST" })
         ? `criação (preenchimento manual — motivo: ${data.manual_motivo})`
         : "criação",
       gate.empresaId, gate.projetoId,
+      context.userId,
     );
+
 
     // 8. Notificações
     await enfileirarNotificacoesAusencia({
