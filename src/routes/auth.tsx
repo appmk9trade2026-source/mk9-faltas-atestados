@@ -119,27 +119,24 @@ function AuthPage() {
         console.log("3. profile.ativo:", profile?.ativo);
         console.log("4. Erro Banco:", profileErr || rolesErr);
         console.log("5. Papéis:", userRoles?.map(r => r.role));
-        console.log("6. Código Decisor: src/routes/auth.tsx L114-140 (Novo)");
+        console.log("6. Código Decisor: src/routes/auth.tsx L114-140 (Corrigido)");
         console.groupEnd();
       }
 
       if (profileErr) {
         await supabase.auth.signOut();
-        // CAUSA RAIZ: Erro de RLS ou permissão na tabela profiles
-        setError(`ERRO BANCO (code: ${profileErr.code}): ${profileErr.message}. Detalhes: ${profileErr.details || 'N/A'}. Hint: ${profileErr.hint || 'N/A'}`);
+        setError("Não foi possível carregar seu perfil. Tente novamente.");
         return;
       }
 
       if (!profile) {
         await supabase.auth.signOut();
-        // CAUSA RAIZ: O registro no auth.users não possui um correspondente na tabela public.profiles
-        setError("CAUSA RAIZ: Perfil não localizado (null) na tabela public.profiles para este UID.");
+        setError("Seu perfil de acesso não foi encontrado. Contate o suporte.");
         return;
       }
 
       if (profile.ativo === false) {
         await supabase.auth.signOut();
-        // CAUSA RAIZ: O campo 'ativo' está explicitamente FALSE no banco de dados.
         setError("Sua conta está inativa. Contate o Super Admin.");
         return;
       }
