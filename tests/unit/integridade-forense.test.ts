@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeAll } from "vitest";
-import { calculateIntegrityHash } from "./integridade-forense.server";
+import { describe, it, expect } from "vitest";
+import { calculateIntegrityHash } from "@/lib/integridade-forense.server";
 
 describe("Auditoria Forense - Integridade de Dados", () => {
   it("deve gerar hashes consistentes para o mesmo payload", () => {
