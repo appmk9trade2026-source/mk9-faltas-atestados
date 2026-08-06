@@ -10,6 +10,7 @@ import { requirePermission } from "@/lib/rbac/guards.server";
 import { PERMISSION_MAP } from "@/lib/permissions-map";
 import { Database } from "@/integrations/supabase/types";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { enfileirarNotificacoesAusencia } from "./notificacoes-ausencia.server";
 
 type StatusProcessamento = Database["public"]["Enums"]["ausencia_status_processamento"];
 
@@ -572,7 +573,24 @@ export const updateAusencia = createServerFn({ method: "POST" })
       gate.empresaId, gate.projetoId,
     );
 
+    // 8. Notificações (apenas se houver mudança relevante)
+    const mudancaRelevante = 
+      current.data_inicio !== updatePayload.data_inicio ||
+      current.data_fim !== updatePayload.data_fim ||
+      current.tipo_detalhe !== updatePayload.tipo_detalhe;
+
+    if (mudancaRelevante) {
+      await enfileirarNotificacoesAusencia({
+        supabase: context.supabase,
+        ausenciaId: data.id,
+        evento: "AUSENCIA_RETIFICADA",
+        correlationId: gate.correlationId,
+        userId: gate.userId,
+      });
+    }
+
     return { ok: true, correlation_id: gate.correlationId };
+
   });
 
 // ==================== DELETE (soft) ====================
