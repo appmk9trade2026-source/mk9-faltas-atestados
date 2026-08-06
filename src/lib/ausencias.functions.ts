@@ -246,12 +246,7 @@ async function audit(
   }
 }
 
-      _sucesso: true,
-      _observacoes: `[corr=${correlationId}] ${observacoes}`,
-      _origem: "server",
-    } as never);
-  } catch { /* auditoria não pode quebrar */ }
-}
+
 
 // ==================== CREATE ====================
 export const createAusencia = createServerFn({ method: "POST" })
