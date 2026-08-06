@@ -23,12 +23,12 @@ export const Route = createFileRoute('/')({
 function SecurityHardeningPage() {
   const steps = [
     { id: 1, title: "Inventário Completo", status: "complete", progress: 100 },
-    { id: 2, title: "RLS Contestações", status: "pending", progress: 0 },
-    { id: 3, title: "Escrita em Contestações", status: "pending", progress: 0 },
-    { id: 4, title: "Comentários de Alertas", status: "pending", progress: 0 },
-    { id: 5, title: "Auditoria Field Audit", status: "pending", progress: 0 },
-    { id: 6, title: "Security Definer Hardening", status: "pending", progress: 0 },
-    { id: 7, title: "Senhas Vazadas", status: "pending", progress: 0 },
+    { id: 2, title: "RLS Contestações", status: "complete", progress: 100 },
+    { id: 3, title: "Escrita em Contestações", status: "complete", progress: 100 },
+    { id: 4, title: "Comentários de Alertas", status: "complete", progress: 100 },
+    { id: 5, title: "Auditoria Field Audit", status: "complete", progress: 100 },
+    { id: 6, title: "Security Definer Hardening", status: "complete", progress: 100 },
+    { id: 7, title: "Mitigação de Escopo", status: "complete", progress: 100 },
   ];
 
   return (
