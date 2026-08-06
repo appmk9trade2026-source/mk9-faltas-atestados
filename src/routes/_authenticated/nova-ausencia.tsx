@@ -1221,6 +1221,13 @@ function NovaAusenciaPage() {
       };
 
 
+      console.log("DEBUG_LANCAMENTO_MANUAL:", {
+        input_visivel: values.manual_nome,
+        get_values: form.getValues("manual_nome"),
+        schema_result: schema.safeParse(values).success,
+        payload_enviado: payload.manual_nome
+      });
+
       if (isEdit && editId) {
         await updateFn({ data: { ...payload, id: editId } });
         return { manual: false, colaboradorCriado: false };
