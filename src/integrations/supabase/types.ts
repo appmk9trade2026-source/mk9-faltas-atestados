@@ -4435,6 +4435,10 @@ export type Database = {
           ultima_ocorrencia: string
         }[]
       }
+      check_projeto_empresa_match: {
+        Args: { _empresa_id: string; _projeto_id: string }
+        Returns: boolean
+      }
       check_projeto_equivalente: {
         Args: { _empresa_id: string; _exclude_id?: string; _nome: string }
         Returns: {

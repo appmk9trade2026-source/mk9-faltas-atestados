@@ -329,19 +329,10 @@ export const createAusencia = createServerFn({ method: "POST" })
     let colaboradorCriado = false;
 
     if (isManual) {
-      // Supervisor que lança assume a chave canônica do vínculo.
-      // Coordenador: usa o Supervisor escolhido na tela — a RPC revalida no
-      // servidor se ele pertence à coordenação (nunca confiar na lista suspensa).
-      let supervisorUsuarioId: string | null = null;
-      try {
-        const { data: isSup } = await context.supabase.rpc("has_role", {
-          _user_id: gate.userId, _role: "supervisor",
-        } as never);
-        if (isSup) supervisorUsuarioId = gate.userId;
-      } catch { /* best-effort */ }
-      if (!supervisorUsuarioId && data.manual_supervisor_usuario_id) {
-        supervisorUsuarioId = data.manual_supervisor_usuario_id;
-      }
+      // Determinar o supervisor responsável:
+      // - Supervisor logado: ele mesmo.
+      // - Coordenador: usa o ID selecionado na tela (que o servidor revalida na RPC).
+      const supervisorUsuarioId = data.manual_supervisor_usuario_id || null;
 
 
       const manualCols = manualColumns(data, gate.userId);
