@@ -452,6 +452,31 @@ function AusenciasPage() {
     },
   });
 
+  const deleteAusenciaFn = useServerFn(deleteAusencia);
+  const excluirMut = useMutation({
+    mutationFn: async (row: Ausencia) => {
+      await deleteAusenciaFn({ 
+        data: { 
+          id: row.id, 
+          categoria_motivo: excluirCategoria, 
+          motivo: excluirMotivo 
+        } 
+      });
+    },
+    onSuccess: () => {
+      toast.success("Lançamento excluído com sucesso.");
+      queryClient.invalidateQueries({ queryKey: ["ausencias"] });
+      setConfirmExcluir(null);
+      setExcluirCategoria("");
+      setExcluirMotivo("");
+      setExcluirConfirmado(false);
+    },
+    onError: (err: unknown) => {
+      const friendly = friendlyRbacError(err);
+      toast.error(friendly.title, { description: friendly.description });
+    },
+  });
+
 
   async function baixarAnexo(row: Ausencia) {
     if (!row.arquivo_url) return;
