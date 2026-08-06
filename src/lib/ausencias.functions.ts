@@ -4,6 +4,7 @@
 // supabase.from("ausencias").insert/update/delete direto do client.
 
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requirePermission } from "@/lib/rbac/guards.server";
@@ -257,7 +258,8 @@ export const createAusencia = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const isManual = data.origem_registro === "MANUAL";
-    const meta = resolveOperationMetadata(context.request);
+    const request = getRequest();
+    const meta = resolveOperationMetadata(request);
     // 1-4. auth + permissão + escopo:
     //  • AUTOMATICO → escopo do colaborador (deriva empresa/projeto)
     //  • MANUAL     → escopo do PROJETO informado (require_permission valida vínculo)
