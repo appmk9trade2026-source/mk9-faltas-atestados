@@ -705,9 +705,18 @@ export const alterarStatusAusencia = createServerFn({ method: "POST" })
     });
 
 
+    const isLancando = data.status === "LANCADO";
+    const updatePayload = {
+      status: data.status,
+      ...(isLancando ? {
+        lancado_por_usuario_id: context.userId,
+        lancado_em: new Date().toISOString(),
+      } : {})
+    };
+
     const { error } = await context.supabase
       .from("ausencias")
-      .update({ status: data.status } as never)
+      .update(updatePayload as never)
       .eq("id", data.id);
     if (error) {
       throw ausenciaDbError(error, "status_ausencia", gate.correlationId);
@@ -717,8 +726,9 @@ export const alterarStatusAusencia = createServerFn({ method: "POST" })
       { status: current.status }, { status: data.status },
       `status: ${current.status} → ${data.status}`,
       gate.empresaId ?? undefined, gate.projetoId ?? undefined,
-
+      context.userId,
     );
+
     return { ok: true, correlation_id: gate.correlationId };
   });
 
