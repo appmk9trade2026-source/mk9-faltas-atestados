@@ -965,7 +965,7 @@ export const contestarAusencia = createServerFn({ method: "POST" })
 
     const gate = await requirePermission({
       ctx: context,
-      permission: PERMISSION_MAP.viewAbsences, // Se pode ver, pode solicitar contestação
+      permission: PERMISSION_MAP.viewAbsence, // Se pode ver, pode solicitar contestação
       colaboradorId: (current.colaborador_id as string | null) ?? null,
       projetoId: current.colaborador_id ? null : (current.projeto_id as string),
     });
