@@ -233,12 +233,20 @@ const schema = z
     }
     if (!v.empresa_id) req("empresa_id", "Selecione a empresa.");
     if (!v.projeto_id) req("projeto_id", "Selecione o projeto.");
+    const correlationId = (globalThis as any).__manualCorrelationId || "no-correlation-id";
     const nomeManual = normalizeManualText(v.manual_nome);
     if (v.modo_manual && nomeManual.length < 3) {
-      console.error("VALIDAÇÃO RESPONSÁVEL: Frontend Schema (nova-ausencia.tsx)", {
-        valor_recebido: v.manual_nome,
-        normalizado: nomeManual,
-        modo_manual: v.modo_manual
+      console.error("ETAPA 4 — LOG DO SCHEMA DO FRONTEND", {
+        correlation_id: correlationId,
+        etapa: "frontend-schema",
+        keys: Object.keys(v),
+        manual_nome_type: typeof v.manual_nome,
+        manual_nome_length: (v.manual_nome ?? "").length,
+        manual_nome_present: v.manual_nome !== undefined,
+        modo_manual: v.modo_manual,
+        issue_path: ["manual_nome"],
+        issue_message: "Informe o nome completo do colaborador (mínimo 3 caracteres).",
+        valor_recebido_mascarado: (v.manual_nome ?? "").length > 2 ? (v.manual_nome?.[0] + "***" + v.manual_nome?.slice(-1)) : "***"
       });
       req("manual_nome", "Informe o nome completo do colaborador (mínimo 3 caracteres).");
     }
