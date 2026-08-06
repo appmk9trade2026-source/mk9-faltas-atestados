@@ -133,9 +133,18 @@ function IntegridadePage() {
     queryKey: ["integridade-resumo", ...scope.keyParts],
     enabled,
     queryFn: async () => {
+      // Diagnóstico forense (Etapa 5)
+      const { data: forense, error: forenseErr } = await supabase.rpc("diagnosticar_integridade_ausencias");
       const { data, error } = await supabase.rpc("admin_integridade_resumo" as never);
       if (error) throw error;
-      return data as Resumo;
+      
+      const base = data as Resumo;
+      if (forense && !forenseErr) {
+        base.ausencias_sem_hash = Number(forense.total_sem_hash);
+        base.ausencias_hash_invalido = Number(forense.total_hash_invalido);
+      }
+      
+      return base;
     },
   });
 
