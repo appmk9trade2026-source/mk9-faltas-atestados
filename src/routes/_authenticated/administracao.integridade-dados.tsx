@@ -92,7 +92,9 @@ const TIPO_META: Record<Tipo, { label: string; criticidade: Criticidade; acao: "
   usuario_sem_projeto: { label: "Usuários sem projeto", criticidade: "baixa", acao: "editar_usuario" },
   matricula_duplicada: { label: "Matrículas duplicadas", criticidade: "alta", acao: "editar_usuario" },
   vinculo_orfao: { label: "Vínculos órfãos ou inválidos", criticidade: "critica", acao: "pendencias" },
+  ausencias_sem_autoria: { label: "Ausências sem autoria", criticidade: "media", acao: "pendencias" },
 };
+
 
 const CRIT_STYLE: Record<Criticidade, { badge: string; ring: string; icon: React.ReactNode; label: string }> = {
   critica: { badge: "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30", ring: "ring-rose-500/20", icon: <AlertOctagon className="h-4 w-4" />, label: "Crítica" },
