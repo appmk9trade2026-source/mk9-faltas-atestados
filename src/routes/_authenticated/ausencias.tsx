@@ -1104,27 +1104,6 @@ function AusenciasPage() {
                   )}
                 </div>
               </section>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-muted-foreground uppercase font-medium">Status Atual</p>
-                    <ProcessamentoBadge status={viewing.status_processamento} />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-muted-foreground uppercase font-medium">Responsável</p>
-                    <p className="text-sm font-semibold">{viewing.processado_por || (viewing as any).responsavel_processamento_nome || "—"}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-muted-foreground uppercase font-medium">Iniciado em</p>
-                    <p className="text-sm">{formatDateTime(viewing.processado_em || (viewing as any).processamento_iniciado_em)}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-muted-foreground uppercase font-medium">Tempo aguardando</p>
-                    <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
-                      {Math.max(0, Math.floor((new Date().getTime() - new Date(viewing.registrado_em).getTime()) / (1000 * 60 * 60 * 24)))} dias
-                    </p>
-                  </div>
-                </div>
-              </section>
 
               <section>
                 <h4 className="mb-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
