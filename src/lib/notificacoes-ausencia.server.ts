@@ -184,7 +184,7 @@ export async function enfileirarNotificacoesAusencia({
           
           const phoneHash = createHash("sha256").update(cleanPhone).digest("hex");
 
-          promises.push(supabase.from("whatsapp_outbox").insert({
+          promises.push(Promise.resolve(supabase.from("whatsapp_outbox").insert({
             ausencia_id: ausenciaId,
             evento_tipo: evento,
             evento_id: correlationId,
@@ -206,13 +206,13 @@ export async function enfileirarNotificacoesAusencia({
               data_inicio: aus.data_inicio,
               data_fim: aus.data_fim
             }
-          } as any));
+          } as any)));
         }
       }
 
       // 2.2 Notificações Internas (Alertas) para Supervisor, Coordenador e RH
       if (dest.usuario_id && (dest.tipo === "SUPERVISOR" || dest.tipo === "COORDENADOR" || dest.tipo === "RH")) {
-        promises.push(supabase.from("alertas").insert({
+        promises.push(Promise.resolve(supabase.from("alertas").insert({
           ausencia_id: ausenciaId,
           colaborador_id: colab.id,
           empresa_id: aus.empresa_id,
@@ -230,7 +230,7 @@ export async function enfileirarNotificacoesAusencia({
             tipo_detalhe: aus.tipo_detalhe,
             data_inicio: aus.data_inicio
           }
-        } as any));
+        } as any)));
       }
     }
 
