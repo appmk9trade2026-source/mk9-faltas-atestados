@@ -2286,7 +2286,9 @@ function NovaAusenciaPage() {
                             : "Enviar Lançamento"}
                       </Button>
                     </div>
+                  </div>
                   )}
+
                 </form>
               </fieldset>
             </Form>
