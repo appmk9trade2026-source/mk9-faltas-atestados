@@ -105,10 +105,12 @@ export async function enfileirarNotificacoesAusencia({
     for (const dest of destinatarios) {
       const idempotencyBase = `${ausenciaId}:${evento}:${dest.tipo}:${dest.usuario_id || dest.colaborador_id}`;
 
-      // 2.1 WhatsApp Outbox (apenas se houver número)
-      if (dest.whatsapp && (dest.tipo === "COLABORADOR" || dest.tipo === "SUPERVISOR")) {
-        const templateCodigo = evento === "AUSENCIA_CRIADA" ? "ausencia_criada_v1" : "ausencia_notificacao_v1";
-        
+      // 2.1 WhatsApp Outbox
+      let templateCodigo = "";
+      if (dest.tipo === "COLABORADOR") templateCodigo = "AUSENCIA_LANCADA_COLABORADOR_V1";
+      else if (dest.tipo === "SUPERVISOR") templateCodigo = "AUSENCIA_LANCADA_SUPERVISOR_V1";
+
+      if (dest.whatsapp && templateCodigo) {
         // Buscar ID do template ativo
         const { data: template } = await supabase
           .from("whatsapp_templates")
@@ -118,7 +120,6 @@ export async function enfileirarNotificacoesAusencia({
           .maybeSingle();
 
         if (template) {
-          // Use .then() or just cast to any/Promise to satisfy the collector array
           const insertWa = supabase.from("whatsapp_outbox").insert({
             ausencia_id: ausenciaId,
             evento_tipo: evento,
@@ -146,6 +147,7 @@ export async function enfileirarNotificacoesAusencia({
           promises.push(insertWa as any);
         }
       }
+
 
       // 2.2 Notificações Internas (Alertas) para Supervisor e Coordenador
       if (dest.usuario_id && (dest.tipo === "SUPERVISOR" || dest.tipo === "COORDENADOR")) {
