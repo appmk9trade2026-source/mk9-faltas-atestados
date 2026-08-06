@@ -1196,6 +1196,20 @@ function AusenciasPage() {
                       </div>
                     </div>
                   )}
+                  <div className="relative">
+                    <div className="absolute -left-[23px] top-1.5 h-4 w-4 rounded-full border-2 border-background bg-slate-200 flex items-center justify-center">
+                      <div className="h-1.5 w-1.5 rounded-full bg-slate-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Relacionamento entre Eventos</p>
+                      <div className="mt-2 space-y-2">
+                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground p-2 rounded border bg-slate-50 dark:bg-slate-900/50">
+                          <Info className="h-3 w-3" />
+                          <span>Este registro é o evento base na cadeia de custódia.</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </section>
 
