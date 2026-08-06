@@ -8,7 +8,6 @@ import {
   AlertOctagon,
   CheckCircle2,
   FileText,
-  Clock,
   Fingerprint,
   Activity,
   History,
@@ -34,7 +33,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/hooks/use-session";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/administracao/auditoria-forense")({
   head: () => ({
@@ -48,7 +47,6 @@ export const Route = createFileRoute("/_authenticated/administracao/auditoria-fo
 
 function AuditoriaForensePage() {
   const { roles } = useSession();
-  const queryClient = useQueryClient();
   const permitido = roles.includes("super_admin") || roles.includes("compliance");
 
   const integridadeQuery = useQuery({
@@ -57,13 +55,13 @@ function AuditoriaForensePage() {
     queryFn: async () => {
       const { data, error } = await supabase.rpc("diagnosticar_integridade_ausencias");
       if (error) throw error;
-      const res = Array.isArray(data) ? data[0] : data;
-      return res as {
-        total_registros: number;
-        total_sem_hash: number;
-        total_hash_invalido: number;
-        total_cadeia_quebrada: number;
-        total_sem_autoria: number;
+      const res = (Array.isArray(data) ? data[0] : data) as any;
+      return {
+        total_registros: Number(res.total_registros || 0),
+        total_sem_hash: Number(res.total_sem_hash || 0),
+        total_hash_invalido: Number(res.total_hash_invalido || 0),
+        total_cadeia_quebrada: Number(res.total_cadeia_quebrada || 0),
+        total_sem_autoria: Number(res.total_sem_autoria || 0),
       };
     },
   });
@@ -76,11 +74,10 @@ function AuditoriaForensePage() {
         .from("ausencias")
         .select(`
           id,
-          colaborador_nome_snapshot,
           tipo,
           data_inicio,
           criado_em,
-          criado_por_nome_snapshot,
+          autor_nome_snapshot,
           operacao_origem,
           operacao_ip,
           operacao_user_agent,
@@ -120,7 +117,7 @@ function AuditoriaForensePage() {
   const hashInvalido = stats?.total_hash_invalido ?? 0;
   const cadeiaQuebrada = stats?.total_cadeia_quebrada ?? 0;
   const semAutoria = stats?.total_sem_autoria ?? 0;
-  const hashesValidos = totalAuditados - semHash - hashInvalido;
+  const hashesValidos = Math.max(0, totalAuditados - semHash - hashInvalido);
   const integridadeGeral = totalAuditados > 0 ? ((hashesValidos / totalAuditados) * 100).toFixed(1) : "100";
 
   return (
@@ -224,7 +221,7 @@ function AuditoriaForensePage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Último Evento</span>
-                    <span className="text-sm">{eventosQuery.data?.[0]?.criado_em ? format(new Date(eventosQuery.data[0].criado_em), "dd/MM/yyyy HH:mm") : "—"}</span>
+                    <span className="text-sm">{(eventosQuery.data && eventosQuery.data.length > 0) ? format(new Date(eventosQuery.data[0].criado_em), "dd/MM/yyyy HH:mm") : "—"}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -236,11 +233,11 @@ function AuditoriaForensePage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="p-3 bg-muted rounded-md font-mono text-[10px] break-all leading-relaxed">
-                    {eventosQuery.data?.[0]?.hash_integridade || "Nenhum hash disponível"}
+                    {(eventosQuery.data && eventosQuery.data.length > 0) ? (eventosQuery.data[0] as any).hash_integridade : "Nenhum hash disponível"}
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Fingerprint className="h-3 w-3" />
-                    ID: {eventosQuery.data?.[0]?.id || "—"}
+                    ID: {(eventosQuery.data && eventosQuery.data.length > 0) ? (eventosQuery.data[0] as any).id : "—"}
                   </div>
                 </CardContent>
               </Card>
@@ -264,15 +261,15 @@ function AuditoriaForensePage() {
                   <TableBody>
                     {eventosQuery.isLoading ? (
                       <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader2 className="mx-auto h-6 w-6 animate-spin" /></TableCell></TableRow>
-                    ) : eventosQuery.data?.length === 0 ? (
+                    ) : (eventosQuery.data?.length === 0) ? (
                       <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum evento auditado.</TableCell></TableRow>
                     ) : (
-                      eventosQuery.data?.map((ev) => (
+                      eventosQuery.data?.map((ev: any) => (
                         <TableRow key={ev.id}>
                           <TableCell className="text-xs">
                             {format(new Date(ev.criado_em), "dd/MM HH:mm:ss")}
                           </TableCell>
-                          <TableCell className="text-xs font-medium">{ev.criado_por_nome_snapshot || "Sistema"}</TableCell>
+                          <TableCell className="text-xs font-medium">{ev.autor_nome_snapshot || "Sistema"}</TableCell>
                           <TableCell><Badge variant="outline" className="text-[10px]">{ev.operacao_origem || "WEB"}</Badge></TableCell>
                           <TableCell className="text-[10px] font-mono">{ev.operacao_ip || "—"}</TableCell>
                           <TableCell className="text-[10px] max-w-[200px] truncate" title={ev.operacao_user_agent || ""}>

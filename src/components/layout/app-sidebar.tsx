@@ -27,6 +27,7 @@ import {
   Circle,
   Bot,
   Trophy,
+  Fingerprint,
 } from "lucide-react";
 import { APP_VERSION, APP_ENV, APP_ENV_LABEL } from "@/lib/app-meta";
 import {
