@@ -2263,9 +2263,9 @@ function NovaAusenciaPage() {
                         <div className="flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/50 p-4 max-w-2xl">
                           <ShieldCheck className="mt-1 h-5 w-5 text-amber-600 shrink-0" />
                           <div className="space-y-1">
-                            <Label className="text-sm font-semibold text-amber-900">Proteção contra Duplicidade</Label>
+                            <Label className="text-sm font-semibold text-amber-900">Proteção de Integridade</Label>
                             <p className="text-xs leading-relaxed text-amber-800">
-                              O sistema bloqueará automaticamente este lançamento se a matrícula informar já possuir um registro ativo para esta mesma data, garantindo a integridade da folha.
+                              O sistema validará a existência desta matrícula no banco de dados para evitar duplicidade e garantir que cada colaborador possua um registro único e consistente.
                             </p>
                           </div>
                         </div>
