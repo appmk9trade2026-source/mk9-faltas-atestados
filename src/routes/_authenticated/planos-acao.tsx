@@ -3,8 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { Plus, Filter, Loader2, Clock, CheckCircle2, AlertTriangle, User, Building2, Search } from "lucide-react";
+import { useForm, type SubmitHandler } from "react-hook-form";
+import { Plus, Filter, Loader2, Clock, CheckCircle2, AlertTriangle, Building2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/layout/app-shell";
@@ -86,6 +86,10 @@ function PlanosAcaoPage() {
     resolver: zodResolver(planoAcaoSchema),
     defaultValues: {
       tipo_alvo: "PROJETO",
+      titulo: "",
+      problema_identificado: "",
+      meta: "",
+      acao_proposta: "",
       status: "NAO_INICIADO",
       prioridade: "MEDIA",
       data_inicio: new Date().toISOString().split("T")[0],
@@ -106,7 +110,7 @@ function PlanosAcaoPage() {
     },
   });
 
-  const onSubmit = (data: PlanoAcaoInput) => {
+  const onSubmit: SubmitHandler<PlanoAcaoInput> = (data) => {
     mutation.mutate(data);
   };
 
@@ -116,7 +120,6 @@ function PlanosAcaoPage() {
     concluidos: planos?.filter(p => p.status === "CONCLUIDO").length || 0,
   };
 
-  // Projetos para o form
   const { data: projetos } = useProjetosAtivosPorEmpresa(user?.user_metadata?.empresa_id);
 
   return (
