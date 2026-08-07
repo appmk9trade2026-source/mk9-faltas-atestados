@@ -1,8 +1,8 @@
 # Project Memory
 
 ## Core
-- Home (/) is strictly a redirect point. It MUST NEVER be used for technical documentation, homologation dashboards, checklists, or reports.
-- Authenticated users are redirected to /dashboard.
-- Unauthenticated users are handled by the router/auth gate (redirected to /auth).
+- Home (`src/routes/index.tsx`) is a pure redirect. Never use for documentation/QA. (See mem://constraints/home-protection-guardrail)
 
 ## Memories
+- [Home Protection Guardrail](mem://constraints/home-protection-guardrail.md) — Permanent restriction on src/routes/index.tsx usage.
+
