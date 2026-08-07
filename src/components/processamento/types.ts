@@ -45,5 +45,7 @@ export interface AusenciaCardData {
   autor_papel_snapshot?: string | null;
   status_documental?: string | null;
   lancado_por_nome?: string | null;
+  horario_inicio?: string | null;
+  horario_fim?: string | null;
 }
 
