@@ -172,7 +172,7 @@ function ReportRunner({ report, usuarioNome, onRun }: { report: ReportDef; usuar
   async function run() {
     setExecuting(true);
     try {
-      const args: Record<string, unknown> = { _inicio: inicio, _fim: fim };
+      const args: Record<string, unknown> = { _inicio: inicio, _fim: fim, _is_export: false };
       if (usesEmpresa) args._empresa_id = empresaId || null;
       if (usesProjeto) args._projeto_id = projetoId || null;
       if (usesSupervisor) args._supervisor = supervisor || null;
