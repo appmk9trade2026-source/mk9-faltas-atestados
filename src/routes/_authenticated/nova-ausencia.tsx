@@ -222,6 +222,8 @@ const schema = z
     manual_supervisor_nome: z.string().trim().max(150).optional().or(z.literal("")),
     manual_supervisor_telefone: z.string().trim().max(20).optional().or(z.literal("")),
     manual_supervisor_usuario_id: z.string().uuid().optional().or(z.literal("")),
+    horario_inicio: z.string().optional().or(z.literal("")),
+    horario_fim: z.string().optional().or(z.literal("")),
   })
   .superRefine((v, ctx) => {
     const req = (path: keyof typeof v, message: string) =>
