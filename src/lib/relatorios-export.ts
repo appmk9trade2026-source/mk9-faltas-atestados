@@ -15,6 +15,7 @@ export type ReportPayload = {
   filtrosLabel: Record<string, string>;
   sections: ReportSection[];
   usuarioNome?: string | null;
+  rawResponse?: any;
 };
 
 function nowStamp() {
