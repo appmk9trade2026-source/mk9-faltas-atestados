@@ -94,6 +94,8 @@ function PlanosAcaoPage() {
       prioridade: "MEDIA",
       data_inicio: new Date().toISOString().split("T")[0],
       prazo: new Date().toISOString().split("T")[0],
+      projeto_id: "" as any,
+      responsavel_usuario_id: user?.id || "" as any,
     },
   });
 
