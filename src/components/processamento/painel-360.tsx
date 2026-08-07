@@ -219,6 +219,12 @@ export function Painel360({
                     <div className="p-3 bg-slate-100 rounded-xl space-y-1 border">
                       <p className="text-[9px] font-bold text-muted-foreground uppercase">CID Sugerido</p>
                       <p className="text-xl font-black text-primary leading-none">{data.cid || "—"}</p>
+                      {(data.horario_inicio || data.horario_fim) && (
+                        <div className="mt-1.5 flex items-center gap-1 text-[9px] font-black bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded border border-blue-500/20">
+                          <Clock className="h-2.5 w-2.5" />
+                          <span>{data.horario_inicio?.slice(0, 5) || "??:??"} - {data.horario_fim?.slice(0, 5) || "??:??"}</span>
+                        </div>
+                      )}
                       {data.acidente_trabalho && (
                         <Badge variant="destructive" className="text-[8px] h-4 font-black w-full justify-center px-0">ACIDENTE</Badge>
                       )}

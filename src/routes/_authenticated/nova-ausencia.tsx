@@ -222,6 +222,8 @@ const schema = z
     manual_supervisor_nome: z.string().trim().max(150).optional().or(z.literal("")),
     manual_supervisor_telefone: z.string().trim().max(20).optional().or(z.literal("")),
     manual_supervisor_usuario_id: z.string().uuid().optional().or(z.literal("")),
+    horario_inicio: z.string().optional().or(z.literal("")),
+    horario_fim: z.string().optional().or(z.literal("")),
   })
   .superRefine((v, ctx) => {
     const req = (path: keyof typeof v, message: string) =>
@@ -257,9 +259,10 @@ const schema = z
     }
     const email = (v.manual_email ?? "").trim();
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) req("manual_email", "E-mail inválido.");
+
+    // ETAPA 3 e 4: Validação de horários para Meio Período - movida para a UI 
+    // devido a dependências de hooks (tiposAusencia, opcoesPeriodo) no contexto do componente.
   });
-
-
 
 type FormData = z.infer<typeof schema>;
 
@@ -397,6 +400,8 @@ function NovaAusenciaPage() {
       manual_supervisor_nome: "",
       manual_supervisor_telefone: "",
       manual_supervisor_usuario_id: "",
+      horario_inicio: "",
+      horario_fim: "",
     },
   });
 
@@ -1220,6 +1225,8 @@ function NovaAusenciaPage() {
         arquivo_nome: arquivo_nome ?? null,
         arquivo_mime: arquivo_mime ?? null,
         arquivo_tamanho: arquivo_tamanho ?? null,
+        horario_inicio: values.horario_inicio || null,
+        horario_fim: values.horario_fim || null,
         ...(isAcidente ? {
           acidente_data: acidenteData,
           acidente_hora: acidenteHora.length === 5 ? `${acidenteHora}:00` : acidenteHora,
@@ -1830,6 +1837,41 @@ function NovaAusenciaPage() {
                           </FormItem>
                         )}
                       />
+
+                      {tipoSelecionado?.codigo === "ATESTADO_COMPARECIMENTO" && opcaoSelecionada?.tipo_periodo === "MEIO_PERIODO" && (
+                        <div className="grid grid-cols-2 gap-3 md:col-span-2 rounded-md border border-blue-200 bg-blue-50/50 p-3 dark:border-blue-900/50 dark:bg-blue-950/20">
+                          <FormField
+                            control={form.control}
+                            name="horario_inicio"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">Horário Inicial <span className="text-red-500">*</span></FormLabel>
+                                <FormControl>
+                                  <Input type="time" {...field} className="h-9" />
+                                </FormControl>
+                                <FormMessage className="text-[10px]" />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="horario_fim"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">Horário Final <span className="text-red-500">*</span></FormLabel>
+                                <FormControl>
+                                  <Input type="time" {...field} className="h-9" />
+                                </FormControl>
+                                <FormMessage className="text-[10px]" />
+                              </FormItem>
+                            )}
+                          />
+                          <p className="col-span-2 text-[10px] text-muted-foreground flex items-center gap-1">
+                            <Sparkles className="h-3 w-3 text-blue-500" />
+                            Informe o intervalo real do comparecimento para evitar bloqueio por duplicidade.
+                          </p>
+                        </div>
+                      )}
 
 
 
