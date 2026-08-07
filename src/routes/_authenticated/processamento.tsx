@@ -132,7 +132,11 @@ function CentralProcessamentoPage() {
           origem_registro: row.origem_registro,
           cid: row.cid, 
           acidente_trabalho: row.acidente_trabalho_trajeto, 
-          status_rh: row.status
+          status_rh: row.status,
+          possui_anexo: row.possui_anexo,
+          arquivo_url: row.arquivo_url,
+          arquivo_nome: row.arquivo_nome,
+          arquivo_mime: row.arquivo_mime
         } as AusenciaCardData;
       });
     }
