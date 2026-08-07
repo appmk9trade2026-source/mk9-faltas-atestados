@@ -2903,6 +2903,90 @@ export type Database = {
         }
         Relationships: []
       }
+      planos_acao: {
+        Row: {
+          acao_proposta: string
+          colaborador_id: string | null
+          concluido_em: string | null
+          created_at: string
+          criado_por_usuario_id: string
+          data_inicio: string
+          id: string
+          indicador_atual: string | null
+          meta: string
+          observacoes: string | null
+          prazo: string
+          prioridade: Database["public"]["Enums"]["prioridade_plano_acao"]
+          problema_identificado: string
+          projeto_id: string
+          responsavel_usuario_id: string
+          resultado: string | null
+          status: Database["public"]["Enums"]["status_plano_acao"]
+          tipo_alvo: Database["public"]["Enums"]["tipo_alvo_plano"]
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          acao_proposta: string
+          colaborador_id?: string | null
+          concluido_em?: string | null
+          created_at?: string
+          criado_por_usuario_id?: string
+          data_inicio?: string
+          id?: string
+          indicador_atual?: string | null
+          meta: string
+          observacoes?: string | null
+          prazo: string
+          prioridade?: Database["public"]["Enums"]["prioridade_plano_acao"]
+          problema_identificado: string
+          projeto_id: string
+          responsavel_usuario_id: string
+          resultado?: string | null
+          status?: Database["public"]["Enums"]["status_plano_acao"]
+          tipo_alvo: Database["public"]["Enums"]["tipo_alvo_plano"]
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          acao_proposta?: string
+          colaborador_id?: string | null
+          concluido_em?: string | null
+          created_at?: string
+          criado_por_usuario_id?: string
+          data_inicio?: string
+          id?: string
+          indicador_atual?: string | null
+          meta?: string
+          observacoes?: string | null
+          prazo?: string
+          prioridade?: Database["public"]["Enums"]["prioridade_plano_acao"]
+          problema_identificado?: string
+          projeto_id?: string
+          responsavel_usuario_id?: string
+          resultado?: string | null
+          status?: Database["public"]["Enums"]["status_plano_acao"]
+          tipo_alvo?: Database["public"]["Enums"]["tipo_alvo_plano"]
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planos_acao_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planos_acao_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       preferencias_notificacao: {
         Row: {
           canal: string
@@ -5985,6 +6069,7 @@ export type Database = {
       op_assist_prioridade: "BAIXA" | "MEDIA" | "ALTA" | "CRITICA"
       op_assist_status: "ABERTO" | "EM_ANDAMENTO" | "RESOLVIDO" | "CANCELADO"
       permission_effect: "allow" | "deny"
+      prioridade_plano_acao: "BAIXA" | "MEDIA" | "ALTA" | "CRITICA"
       release_status: "PLANEJADA" | "EM_EXECUCAO" | "PUBLICADA" | "CANCELADA"
       release_tipo: "HOTFIX" | "PATCH" | "MINOR" | "MAJOR"
       roadmap_categoria:
@@ -6023,6 +6108,13 @@ export type Database = {
       session_status: "ATIVA" | "ENCERRADA" | "EXPIRADA" | "REVOGADA"
       status_ausencia: "PENDENTE" | "LANCADO" | "SUBSTITUIDA" | "CANCELADO"
       status_comunicacao: "RASCUNHO" | "APROVADO" | "ENVIADO" | "ERRO"
+      status_plano_acao:
+        | "NAO_INICIADO"
+        | "EM_ANDAMENTO"
+        | "SUSPENSO"
+        | "CONCLUIDO"
+        | "CANCELADO"
+      tipo_alvo_plano: "PROJETO" | "COLABORADOR"
       tipo_ausencia:
         | "FALTA"
         | "ATESTADO"
@@ -6462,6 +6554,7 @@ export const Constants = {
       op_assist_prioridade: ["BAIXA", "MEDIA", "ALTA", "CRITICA"],
       op_assist_status: ["ABERTO", "EM_ANDAMENTO", "RESOLVIDO", "CANCELADO"],
       permission_effect: ["allow", "deny"],
+      prioridade_plano_acao: ["BAIXA", "MEDIA", "ALTA", "CRITICA"],
       release_status: ["PLANEJADA", "EM_EXECUCAO", "PUBLICADA", "CANCELADA"],
       release_tipo: ["HOTFIX", "PATCH", "MINOR", "MAJOR"],
       roadmap_categoria: [
@@ -6503,6 +6596,14 @@ export const Constants = {
       session_status: ["ATIVA", "ENCERRADA", "EXPIRADA", "REVOGADA"],
       status_ausencia: ["PENDENTE", "LANCADO", "SUBSTITUIDA", "CANCELADO"],
       status_comunicacao: ["RASCUNHO", "APROVADO", "ENVIADO", "ERRO"],
+      status_plano_acao: [
+        "NAO_INICIADO",
+        "EM_ANDAMENTO",
+        "SUSPENSO",
+        "CONCLUIDO",
+        "CANCELADO",
+      ],
+      tipo_alvo_plano: ["PROJETO", "COLABORADOR"],
       tipo_ausencia: ["FALTA", "ATESTADO", "DECLARACAO", "SUSPENSAO", "OUTROS"],
       tipo_periodo_ausencia: [
         "DIAS",
