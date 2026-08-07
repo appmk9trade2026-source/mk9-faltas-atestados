@@ -1185,6 +1185,7 @@ function NovaAusenciaPage() {
 
 
       const normalized_manual_nome = (values.manual_nome || "").trim();
+      const normalized_manual_matricula = (values.manual_matricula || "").trim();
 
       const origemFields = values.modo_manual
         ? {
@@ -1192,9 +1193,9 @@ function NovaAusenciaPage() {
             empresa_id: values.empresa_id!,
             projeto_id: values.projeto_id!,
             manual_motivo: MANUAL_MOTIVO_PADRAO,
-            manual_motivo_detalhe: "Colaborador não localizado pela matrícula informada.",
+            manual_motivo_detalhe: `Colaborador não localizado pela matrícula informada (${normalized_manual_matricula}).`,
             manual_nome: normalized_manual_nome,
-            manual_matricula: (values.manual_matricula || "").trim(),
+            manual_matricula: normalized_manual_matricula,
             manual_telefone: (values.manual_telefone || "").trim(),
             manual_whatsapp: (values.manual_whatsapp || "").trim(),
             manual_email: (values.manual_email || "").trim(),
