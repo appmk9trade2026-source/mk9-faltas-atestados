@@ -21,6 +21,8 @@ import {
   ChevronDown,
   ArrowRight
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -239,20 +241,50 @@ export function Painel360({
               </AccordionTrigger>
               <AccordionContent className="pt-2">
                 <div className="space-y-3">
-                  <div className="p-3 bg-background border rounded-xl flex items-center justify-between group hover:border-primary transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-lg bg-slate-50 flex items-center justify-center border group-hover:bg-primary/5 group-hover:border-primary/20 transition-colors">
-                        <FileCheck className="h-5 w-5 text-slate-400 group-hover:text-primary" />
+                  {data.possui_anexo && data.arquivo_url ? (
+                    <div className="p-3 bg-background border rounded-xl flex items-center justify-between group hover:border-primary transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-lg bg-slate-50 flex items-center justify-center border group-hover:bg-primary/5 group-hover:border-primary/20 transition-colors">
+                          <FileCheck className="h-5 w-5 text-slate-400 group-hover:text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-black uppercase tracking-tight truncate">
+                            {data.arquivo_nome || "Comprovante de Ausência"}
+                          </p>
+                          <p className="text-[9px] text-muted-foreground font-bold uppercase">
+                            {data.arquivo_mime?.split('/')[1]?.toUpperCase() || "DOCUMENTO"} • DIGITALIZADO
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-[11px] font-black uppercase tracking-tight">Comprovante de Ausência</p>
-                        <p className="text-[9px] text-muted-foreground font-bold uppercase">PDF/Imagem • Digitalizado</p>
-                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 rounded-full hover:bg-primary hover:text-white transition-all"
+                        onClick={async () => {
+                          try {
+                            const { data: signedData, error } = await supabase.storage
+                              .from("ausencias")
+                              .createSignedUrl(data.arquivo_url!, 3600);
+                            
+                            if (error) throw error;
+                            if (signedData?.signedUrl) {
+                              window.open(signedData.signedUrl, "_blank", "noopener,noreferrer");
+                            }
+                          } catch (err) {
+                            console.error("Erro ao abrir documento:", err);
+                            toast.error("Não foi possível abrir o comprovante. Verifique sua conexão ou se o arquivo ainda existe.");
+                          }
+                        }}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                      <ExternalLink className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  ) : (
+                    <div className="p-6 bg-muted/20 border rounded-xl border-dashed flex flex-col items-center justify-center text-center space-y-2">
+                      <FileText className="h-8 w-8 text-muted-foreground/20" />
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase">Nenhum documento anexado</p>
+                    </div>
+                  )}
                 </div>
               </AccordionContent>
             </AccordionItem>
