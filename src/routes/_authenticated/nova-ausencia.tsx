@@ -690,8 +690,8 @@ function NovaAusenciaPage() {
         }
         setNaoEncontrado(true);
         if (origem === "manual") {
-          toast.error("Matrícula não encontrada.", {
-            description: "Cadastre o colaborador ou use o preenchimento manual.",
+          toast.error("Matrícula não localizada no seu escopo.", {
+            description: "A matrícula pode pertencer a outro projeto ou não estar ativa. Utilize o Lançamento Manual caso necessário.",
           });
         }
       } else if (rows.length === 1) {
