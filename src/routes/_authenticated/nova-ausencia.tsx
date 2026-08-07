@@ -1224,6 +1224,8 @@ function NovaAusenciaPage() {
         arquivo_nome: arquivo_nome ?? null,
         arquivo_mime: arquivo_mime ?? null,
         arquivo_tamanho: arquivo_tamanho ?? null,
+        horario_inicio: values.horario_inicio || null,
+        horario_fim: values.horario_fim || null,
         ...(isAcidente ? {
           acidente_data: acidenteData,
           acidente_hora: acidenteHora.length === 5 ? `${acidenteHora}:00` : acidenteHora,
