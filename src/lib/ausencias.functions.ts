@@ -42,6 +42,9 @@ const commonPayloadSchema = z.object({
   arquivo_nome: z.string().trim().max(255).nullable().optional(),
   arquivo_mime: z.string().trim().max(120).nullable().optional(),
   arquivo_tamanho: z.number().int().nullable().optional(),
+  // Novos campos de horário para comparecimento parcial (Meio Período)
+  horario_inicio: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/).nullable().optional(),
+  horario_fim: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/).nullable().optional(),
   // Campos específicos de Acidente de Trabalho (opcionais no schema; obrigatoriedade
   // é revalidada no handler quando o tipo selecionado é ACIDENTE_TRABALHO).
   acidente_data: iso.nullable().optional(),
@@ -370,6 +373,10 @@ export const createAusencia = createServerFn({ method: "POST" })
       arquivo_criado_por: data.arquivo_url ? gate.userId : null,
       arquivo_criado_em: data.arquivo_url ? new Date().toISOString() : null,
       
+      // Novos campos de horário para comparecimento parcial
+      horario_inicio: data.horario_inicio ?? null,
+      horario_fim: data.horario_fim ?? null,
+
       // Novos campos de autoria imutável
       criado_por_usuario_id: context.userId,
       autor_nome_snapshot: userSnapshot?.nome,
