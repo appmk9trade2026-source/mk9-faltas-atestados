@@ -209,11 +209,12 @@ function ReportRunner({ report, usuarioNome, onRun }: { report: ReportDef; usuar
       // ETAPA 3 e 4: Alerta de truncamento
       const res = data as any;
       if (res.is_truncated) {
-        toast.warning(
-          `O relatório foi limitado a ${res.limit_max.toLocaleString("pt-BR")} registros. ` +
-          "Reduza o período ou aplique filtros para obter os dados completos.",
-          { duration: 8000 }
+        toast.error(
+          `Não foi possível gerar o relatório completo porque o resultado possui ${res.total_registros_disponiveis.toLocaleString("pt-BR")} registros e o limite por exportação é de ${res.limit_max.toLocaleString("pt-BR")}. Reduza o período ou aplique filtros de Empresa/Projeto e tente novamente.`,
+          { duration: 10000, position: "top-center" }
         );
+        // Regra de Segurança Gerencial: Impedir download truncado
+        return;
       } else if (res.total_registros_disponiveis > 0) {
         toast.success(`Exportando ${res.total_registros_exportados.toLocaleString("pt-BR")} registros.`);
       }
