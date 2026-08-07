@@ -328,11 +328,73 @@ function buildSections(id: ReportId, d: any): { title: string; rows: Record<stri
   switch (id) {
     case "absenteismo":
       return [
-        { title: "Resumo", rows: [{ Total: d.total ?? 0, "Total de dias": d.total_dias ?? 0 }] },
-        { title: "Por categoria", rows: (d.por_categoria ?? []).map((r: any) => ({ Categoria: r.nome ?? "(sem)", Total: r.total, Dias: r.dias, "%": pct(r.total, d.total) })) },
-        { title: "Por tipo oficial", rows: (d.por_tipo_oficial ?? []).map((r: any) => ({ Tipo: r.nome, Código: r.codigo, Total: r.total, Dias: r.dias, "%": pct(r.total, d.total) })) },
-        { title: "Evolução diária", rows: (d.evolucao_diaria ?? []).map((r: any) => ({ Dia: r.dia, Total: r.total, Dias: r.dias })) },
-        { title: "Evolução mensal", rows: (d.evolucao_mensal ?? []).map((r: any) => ({ Mês: r.mes, Total: r.total, Dias: r.dias })) },
+        {
+          title: "Resumo Executivo",
+          rows: [
+            {
+              "Total de Faltas": d.kpis?.total_faltas ?? 0,
+              "Total de Atestados": d.kpis?.total_atestados ?? 0,
+              "Total de Ocorrências": d.kpis?.total_ocorrencias ?? 0,
+              "Total de Dias": d.kpis?.total_dias ?? 0,
+              "Taxa de Absenteísmo": "Taxa indisponível para este conjunto de dados.",
+            },
+          ],
+        },
+        {
+          title: "Por Projeto",
+          rows: (d.ranking_projetos ?? []).map((r: any) => ({
+            Projeto: r.projeto,
+            Empresa: r.empresa,
+            Colaboradores: r.colaboradores,
+            Faltas: r.faltas,
+            Atestados: r.atestados,
+            "Dias Ausência": r.dias_ausencia,
+            "Total Ocorrências": r.total_ocorrencias,
+          })),
+        },
+        {
+          title: "Por Colaborador",
+          rows: (d.ranking_colaboradores ?? []).map((r: any) => ({
+            Matrícula: r.matricula,
+            Nome: r.nome,
+            Projeto: r.projeto,
+            Supervisor: r.supervisor,
+            Faltas: r.faltas,
+            Atestados: r.atestados,
+            "Dias Ausência": r.dias_ausencia,
+            "Total Ocorrências": r.total_ocorrencias,
+            "Última Ocorrência": r.ultima_ocorrencia,
+          })),
+        },
+        {
+          title: "Plano de Ação",
+          rows: [
+            {
+              Projeto: "",
+              "Colaborador/Grupo": "",
+              "Problema Identificado": "",
+              "Indicador Atual": "",
+              Meta: "",
+              "Ação Proposta": "",
+              Responsável: "",
+              Prazo: "",
+              Status: "NÃO INICIADO",
+              Resultado: "",
+              "Observações Gerenciais": "",
+            },
+          ],
+        },
+        {
+          title: "Metodologia",
+          rows: [
+            { Item: "Fonte", Valor: "public.rel_absenteismo (Fase 1)" },
+            { Item: "Regra", Valor: "Somente registros com status_documental = 'ATIVO'" },
+            { Item: "Falta", Valor: "Lançamentos tipificados como FALTA" },
+            { Item: "Atestado", Valor: "Lançamentos tipificados como ATESTADO" },
+            { Item: "Privacidade", Valor: "Dados médicos sensíveis (CID, Imagens, Diagnóstico) omitidos por governança." },
+            { Item: "Geração", Valor: new Date().toLocaleString("pt-BR") },
+          ],
+        },
       ];
     case "atestados":
       return [
