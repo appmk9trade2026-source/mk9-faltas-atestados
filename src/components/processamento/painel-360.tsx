@@ -262,9 +262,11 @@ export function Painel360({
                         className="h-8 w-8 rounded-full hover:bg-primary hover:text-white transition-all"
                         onClick={async () => {
                           try {
+                            const bucket = "atestados";
                             const { data: signedData, error } = await supabase.storage
-                              .from("ausencias")
+                              .from(bucket)
                               .createSignedUrl(data.arquivo_url!, 3600);
+
                             
                             if (error) throw error;
                             if (signedData?.signedUrl) {
