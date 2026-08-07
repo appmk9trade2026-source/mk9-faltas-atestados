@@ -40,7 +40,7 @@ type ReportDef = {
 };
 
 const REPORTS: ReportDef[] = [
-  { id: "absenteismo", nome: "Absenteísmo Geral", descricao: "Visão consolidada com categorias, tipos oficiais e evolução diária/mensal.", icon: BarChart3 },
+  { id: "absenteismo", nome: "Indicadores de Absenteísmo", descricao: "Relatório gerencial com KPIs, ranking de projetos e colaboradores (Fase 1).", icon: BarChart3 },
   { id: "atestados", nome: "Atestados", descricao: "Quantidade, dias afastados, distribuição por tipo e ranking de projetos.", icon: Stethoscope },
   { id: "faltas", nome: "Faltas", descricao: "Faltas justificadas e injustificadas com ranking de projetos/colaboradores.", icon: FileBarChart2 },
   { id: "licencas", nome: "Licenças", descricao: "Nojo, Gala, Paternidade e Maternidade.", icon: FileText },
