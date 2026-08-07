@@ -466,7 +466,7 @@ function AusenciasPage() {
   const deleteAusenciaFn = useServerFn(deleteAusencia);
   const excluirMut = useMutation({
     mutationFn: async (row: Ausencia) => {
-      await deleteAusenciaFn({ 
+      return await deleteAusenciaFn({ 
         data: { 
           id: row.id, 
           categoria_motivo: excluirCategoria, 
@@ -484,7 +484,9 @@ function AusenciasPage() {
     },
     onError: (err: unknown) => {
       const friendly = friendlyRbacError(err);
-      toast.error(friendly.title, { description: friendly.description });
+      toast.error(friendly.title, { 
+        description: friendly.description || "Erro técnico na exclusão segura."
+      });
     },
   });
 
@@ -1466,6 +1468,7 @@ function AusenciasPage() {
             </AlertDialogCancel>
             <Button
               variant="destructive"
+              type="button"
               disabled={
                 !excluirCategoria || 
                 (excluirCategoria === "Outro" && !excluirMotivo.trim()) || 
@@ -1473,7 +1476,13 @@ function AusenciasPage() {
                 !excluirConfirmado ||
                 excluirMut.isPending
               }
-              onClick={() => confirmExcluir && excluirMut.mutate(confirmExcluir)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (confirmExcluir && !excluirMut.isPending) {
+                  excluirMut.mutate(confirmExcluir);
+                }
+              }}
             >
               {excluirMut.isPending ? "Excluindo..." : "Excluir lançamento"}
             </Button>
