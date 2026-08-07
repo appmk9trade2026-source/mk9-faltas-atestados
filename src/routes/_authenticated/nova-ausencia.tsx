@@ -1835,6 +1835,41 @@ function NovaAusenciaPage() {
                         )}
                       />
 
+                      {tipoSelecionado?.codigo === "ATESTADO_COMPARECIMENTO" && opcaoSelecionada?.tipo_periodo === "MEIO_PERIODO" && (
+                        <div className="grid grid-cols-2 gap-3 md:col-span-2 rounded-md border border-blue-200 bg-blue-50/50 p-3 dark:border-blue-900/50 dark:bg-blue-950/20">
+                          <FormField
+                            control={form.control}
+                            name="horario_inicio"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">Horário Inicial <span className="text-red-500">*</span></FormLabel>
+                                <FormControl>
+                                  <Input type="time" {...field} className="h-9" />
+                                </FormControl>
+                                <FormMessage className="text-[10px]" />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="horario_fim"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">Horário Final <span className="text-red-500">*</span></FormLabel>
+                                <FormControl>
+                                  <Input type="time" {...field} className="h-9" />
+                                </FormControl>
+                                <FormMessage className="text-[10px]" />
+                              </FormItem>
+                            )}
+                          />
+                          <p className="col-span-2 text-[10px] text-muted-foreground flex items-center gap-1">
+                            <Sparkles className="h-3 w-3 text-blue-500" />
+                            Informe o intervalo real do comparecimento para evitar bloqueio por duplicidade.
+                          </p>
+                        </div>
+                      )}
+
 
 
                       <div className="space-y-1.5">
