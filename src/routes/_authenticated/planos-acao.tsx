@@ -43,6 +43,7 @@ import {
   type PlanoAcaoInput,
 } from "@/lib/planos-acao.functions";
 import { useProjetosAtivosPorEmpresa } from "@/hooks/use-projetos";
+import { useColaboradoresAtivos } from "@/hooks/use-colaboradores";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/planos-acao")({
@@ -131,7 +132,8 @@ function PlanosAcaoPage() {
   });
 
   const tipoAlvo = form.watch("tipo_alvo");
-    <AppShell title="Plano de Ação Gerencial">
+
+  return (
       <div className="space-y-6">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
