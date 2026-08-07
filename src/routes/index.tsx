@@ -53,7 +53,7 @@ export const Route = createFileRoute("/")({
 
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-xs text-amber-700 dark:text-amber-400 text-left">
           <strong>DIRETRIZ TÉCNICA:</strong> A exclusão lógica foi testada em nível de schema e permissões. 
-          O registro da Hellen Rocha (Matrícula 98) está mapeado. O fluxo completo (Input -> Schema -> RPC -> Alerta) 
+          O registro da Hellen Rocha (Matrícula 98) está mapeado. O fluxo completo (Input -{"-"} {"\u003E"} Schema -{"-"} {"\u003E"} RPC -{"-"} {"\u003E"} Alerta) 
           está endurecido e sem regressões identificadas nos fluxos de Lançamento Manual.
         </div>
       </div>
