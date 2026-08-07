@@ -399,6 +399,8 @@ function NovaAusenciaPage() {
       manual_supervisor_nome: "",
       manual_supervisor_telefone: "",
       manual_supervisor_usuario_id: "",
+      horario_inicio: "",
+      horario_fim: "",
     },
   });
 
