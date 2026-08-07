@@ -82,7 +82,7 @@ function PlanosAcaoPage() {
     }),
   });
 
-  const form = useForm<PlanoAcaoInput>({
+  const form = useForm<z.infer<typeof planoAcaoSchema>>({
     resolver: zodResolver(planoAcaoSchema),
     defaultValues: {
       tipo_alvo: "PROJETO",
