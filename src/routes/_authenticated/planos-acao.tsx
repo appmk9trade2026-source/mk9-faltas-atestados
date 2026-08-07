@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Plus, Filter, Loader2, AlertCircle, Clock, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
+import { Plus, Filter, Loader2, Clock, CheckCircle2, AlertTriangle, User, Building2, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/layout/app-shell";
@@ -31,6 +31,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
 import { useSession } from "@/hooks/use-session";
 import { 
@@ -38,11 +40,9 @@ import {
   criarPlanoAcao, 
   planoAcaoSchema, 
   type PlanoAcaoInput,
-  prioridadePlanoSchema,
-  statusPlanoSchema,
-  tipoAlvoSchema
 } from "@/lib/planos-acao.functions";
 import { useProjetosAtivosPorEmpresa } from "@/hooks/use-projetos";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/planos-acao")({
   head: () => ({ meta: [{ title: "Planos de Ação · CRM MK9" }] }),
@@ -78,7 +78,7 @@ function PlanosAcaoPage() {
   const { data: planos, isLoading } = useQuery({
     queryKey: ["planos-acao", statusFilter],
     queryFn: () => listPlanosFn({ 
-      status: statusFilter === "all" ? undefined : statusFilter as any 
+      data: { status: statusFilter === "all" ? undefined : statusFilter as any }
     }),
   });
 
@@ -94,7 +94,7 @@ function PlanosAcaoPage() {
   });
 
   const mutation = useMutation({
-    mutationFn: createPlanoFn,
+    mutationFn: (data: PlanoAcaoInput) => createPlanoFn({ data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["planos-acao"] });
       setIsNewDialogOpen(false);
@@ -110,12 +110,14 @@ function PlanosAcaoPage() {
     mutation.mutate(data);
   };
 
-  // Mock de KPIs (serão calculados no servidor na etapa 2)
   const kpis = {
     ativos: planos?.filter(p => ["NAO_INICIADO", "EM_ANDAMENTO"].includes(p.status)).length || 0,
     vencidos: planos?.filter(p => new Date(p.prazo) < new Date() && p.status !== "CONCLUIDO").length || 0,
     concluidos: planos?.filter(p => p.status === "CONCLUIDO").length || 0,
   };
+
+  // Projetos para o form
+  const { data: projetos } = useProjetosAtivosPorEmpresa(user?.user_metadata?.empresa_id);
 
   return (
     <AppShell title="Plano de Ação Gerencial">
@@ -279,21 +281,75 @@ function PlanosAcaoPage() {
                   )}
                 />
                 
-                {/* Nota: Aqui em um sistema real teríamos busca de projetos e colaboradores */}
                 <FormField
                   control={form.control}
-                  name="titulo"
+                  name="projeto_id"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Título do Plano</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: Redução de faltas Projeto X" {...field} />
-                      </FormControl>
+                    <FormItem className="flex flex-col mt-2.5">
+                      <FormLabel>Projeto</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                "justify-between",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value
+                                ? projetos?.find((p) => p.id === field.value)?.nome
+                                : "Selecione o projeto"}
+                              <Building2 className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-0">
+                          <Command>
+                            <CommandInput placeholder="Buscar projeto..." />
+                            <CommandList>
+                              <CommandEmpty>Projeto não encontrado.</CommandEmpty>
+                              <CommandGroup>
+                                {projetos?.map((p) => (
+                                  <CommandItem
+                                    value={p.nome}
+                                    key={p.id}
+                                    onSelect={() => form.setValue("projeto_id", p.id)}
+                                  >
+                                    <CheckCircle2
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        p.id === field.value ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {p.nome}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
+
+              <FormField
+                control={form.control}
+                name="titulo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Título do Plano</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: Redução de faltas Projeto X" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
@@ -410,8 +466,4 @@ function PlanosAcaoPage() {
       </Dialog>
     </AppShell>
   );
-}
-
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(" ");
 }
