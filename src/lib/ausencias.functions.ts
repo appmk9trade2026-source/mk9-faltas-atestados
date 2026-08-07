@@ -198,6 +198,10 @@ function ausenciaDbError(
   // Duplicidade (trigger trg_ausencias_bloqueia_duplicidade — SQLSTATE 23505)
   if (sqlstate === "23505" || /DUPLICIDADE_AUSENCIA/i.test(msg)) {
     const limpa = msg.replace(/^.*DUPLICIDADE_AUSENCIA:\s*/s, "").trim();
+    // REGRA CRÍTICA: Se for duplicidade em modo manual, a mensagem deve ser clara sobre o bloqueio seguro.
+    if (etapa === "rpc_manual") {
+      return new Error(`CONFLICT: BLOQUEIO DE SEGURANÇA — Esta matrícula já possui um registro ativo no sistema. Para evitar duplicidade e inconsistência na folha, o lançamento manual foi interceptado. Verifique o histórico ou utilize a busca automática.`);
+    }
     return new Error(
       `CONFLICT: ${limpa || "Já existe uma ausência registrada para este colaborador neste período. Retifique o lançamento existente."}`,
     );

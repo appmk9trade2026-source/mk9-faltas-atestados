@@ -241,7 +241,8 @@ const schema = z
       req("manual_nome", "Informe o nome completo do colaborador (mínimo 3 caracteres).");
     }
     
-    if (v.modo_manual && (v.manual_matricula || "").trim().length === 0) {
+    const matriculaManual = (v.manual_matricula || "").trim();
+    if (v.modo_manual && matriculaManual.length === 0) {
       req("manual_matricula", "Informe a matrícula.");
     }
 
