@@ -172,7 +172,7 @@ function ReportRunner({ report, usuarioNome, onRun }: { report: ReportDef; usuar
   async function run() {
     setExecuting(true);
     try {
-      const args: Record<string, unknown> = { _inicio: inicio, _fim: fim };
+      const args: Record<string, unknown> = { _inicio: inicio, _fim: fim, _is_export: false };
       if (usesEmpresa) args._empresa_id = empresaId || null;
       if (usesProjeto) args._projeto_id = projetoId || null;
       if (usesSupervisor) args._supervisor = supervisor || null;
@@ -194,15 +194,32 @@ function ReportRunner({ report, usuarioNome, onRun }: { report: ReportDef; usuar
       toast.info("Gere o relatório primeiro.");
       return;
     }
-    const payload: ReportPayload = {
-      id: report.id,
-      nome: report.nome,
-      filtrosLabel,
-      usuarioNome,
-      sections: buildSections(report.id, result),
-    };
-    await exportReport(payload, formato);
-    toast.success(`Arquivo ${formato.toUpperCase()} gerado.`);
+    
+    setExecuting(true);
+    try {
+      // Re-fetch full data for export to bypass preview limits
+      const args: Record<string, unknown> = { _inicio: inicio, _fim: fim, _is_export: true };
+      if (usesEmpresa) args._empresa_id = empresaId || null;
+      if (usesProjeto) args._projeto_id = projetoId || null;
+      if (usesSupervisor) args._supervisor = supervisor || null;
+      
+      const { data, error } = await supabase.rpc("rel_absenteismo" as never, args as never);
+      if (error) throw error;
+
+      const payload: ReportPayload = {
+        id: report.id,
+        nome: report.nome,
+        filtrosLabel,
+        usuarioNome,
+        sections: buildSections(report.id, data),
+      };
+      await exportReport(payload, formato);
+      toast.success(`Arquivo ${formato.toUpperCase()} gerado.`);
+    } catch (e: any) {
+      toast.error("Erro ao gerar exportação completa.");
+    } finally {
+      setExecuting(false);
+    }
   }
 
   return (

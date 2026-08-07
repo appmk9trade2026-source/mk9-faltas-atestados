@@ -5293,16 +5293,28 @@ export type Database = {
         Args: { _observacoes?: string }
         Returns: string
       }
-      rel_absenteismo: {
-        Args: {
-          _empresa_id?: string
-          _fim: string
-          _inicio: string
-          _projeto_id?: string
-          _supervisor?: string
-        }
-        Returns: Json
-      }
+      rel_absenteismo:
+        | {
+            Args: {
+              _empresa_id?: string
+              _fim: string
+              _inicio: string
+              _projeto_id?: string
+              _supervisor?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _empresa_id?: string
+              _fim: string
+              _inicio: string
+              _is_export?: boolean
+              _projeto_id?: string
+              _supervisor?: string
+            }
+            Returns: Json
+          }
       rel_afastamentos_inss: {
         Args: {
           _empresa_id?: string
