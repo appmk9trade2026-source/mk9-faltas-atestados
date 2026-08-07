@@ -852,6 +852,7 @@ export type Database = {
           dias_label: string | null
           empresa_id: string
           excluida_em: string | null
+          excluida_por_usuario_id: string | null
           excluidora_nome_snapshot: string | null
           excluidora_papel_snapshot: string | null
           hash_anterior: string | null
@@ -960,6 +961,7 @@ export type Database = {
           dias_label?: string | null
           empresa_id: string
           excluida_em?: string | null
+          excluida_por_usuario_id?: string | null
           excluidora_nome_snapshot?: string | null
           excluidora_papel_snapshot?: string | null
           hash_anterior?: string | null
@@ -1068,6 +1070,7 @@ export type Database = {
           dias_label?: string | null
           empresa_id?: string
           excluida_em?: string | null
+          excluida_por_usuario_id?: string | null
           excluidora_nome_snapshot?: string | null
           excluidora_papel_snapshot?: string | null
           hash_anterior?: string | null
