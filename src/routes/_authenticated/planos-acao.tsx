@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
-import { Plus, Filter, Loader2, Clock, CheckCircle2, AlertTriangle, Building2 } from "lucide-react";
+import { Plus, Filter, Loader2, Clock, CheckCircle2, AlertTriangle, Building2, User } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/layout/app-shell";
@@ -124,8 +124,13 @@ function PlanosAcaoPage() {
   };
 
   const { data: projetos } = useProjetosAtivosPorEmpresa(user?.user_metadata?.empresa_id);
+  const [buscaColab, setBuscaColab] = useState("");
+  const { data: colaboradores } = useColaboradoresAtivos({
+    projetoId: form.watch("projeto_id") || undefined,
+    busca: buscaColab,
+  });
 
-  return (
+  const tipoAlvo = form.watch("tipo_alvo");
     <AppShell title="Plano de Ação Gerencial">
       <div className="space-y-6">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -271,7 +276,10 @@ function PlanosAcaoPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Tipo de Alvo</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={(val) => {
+                        field.onChange(val);
+                        if (val === "PROJETO") form.setValue("colaborador_id", null);
+                      }} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione o alvo" />
@@ -311,7 +319,7 @@ function PlanosAcaoPage() {
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
-                        <PopoverContent className="p-0">
+                        <PopoverContent className="p-0" align="start">
                           <Command>
                             <CommandInput placeholder="Buscar projeto..." />
                             <CommandList>
@@ -321,7 +329,10 @@ function PlanosAcaoPage() {
                                   <CommandItem
                                     value={p.nome}
                                     key={p.id}
-                                    onSelect={() => form.setValue("projeto_id", p.id)}
+                                    onSelect={() => {
+                                      form.setValue("projeto_id", p.id);
+                                      form.setValue("colaborador_id", null);
+                                    }}
                                   >
                                     <CheckCircle2
                                       className={cn(
@@ -342,6 +353,70 @@ function PlanosAcaoPage() {
                   )}
                 />
               </div>
+
+              {tipoAlvo === "COLABORADOR" && (
+                <FormField
+                  control={form.control}
+                  name="colaborador_id"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Colaborador</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              disabled={!form.watch("projeto_id")}
+                              className={cn(
+                                "justify-between",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value
+                                ? colaboradores?.find((c) => c.id === field.value)?.nome_completo || "Colaborador selecionado"
+                                : form.watch("projeto_id") ? "Selecione o colaborador" : "Selecione um projeto primeiro"}
+                              <User className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-0" align="start">
+                          <Command shouldFilter={false}>
+                            <CommandInput 
+                              placeholder="Buscar por nome ou matrícula..." 
+                              onValueChange={setBuscaColab}
+                            />
+                            <CommandList>
+                              <CommandEmpty>Nenhum colaborador encontrado.</CommandEmpty>
+                              <CommandGroup>
+                                {colaboradores?.map((c) => (
+                                  <CommandItem
+                                    value={c.id}
+                                    key={c.id}
+                                    onSelect={() => form.setValue("colaborador_id", c.id)}
+                                  >
+                                    <CheckCircle2
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        c.id === field.value ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    <div className="flex flex-col">
+                                      <span>{c.nome_completo}</span>
+                                      <span className="text-xs text-muted-foreground">Matrícula: {c.matricula}</span>
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <FormField
                 control={form.control}
