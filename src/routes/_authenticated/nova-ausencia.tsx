@@ -259,6 +259,21 @@ const schema = z
     }
     const email = (v.manual_email ?? "").trim();
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) req("manual_email", "E-mail inválido.");
+
+    // ETAPA 3 e 4: Validação de horários para Meio Período
+    const tipoComp = v.tipo_ausencia_id && tiposQ.data?.find(t => t.id === v.tipo_ausencia_id)?.codigo === "ATESTADO_COMPARECIMENTO";
+    const periodoMeio = v.opcao_periodo_id && opcoesPorTipoQ.data?.find(o => o.id === v.opcao_periodo_id)?.tipo_periodo === "MEIO_PERIODO";
+
+    if (tipoComp && periodoMeio) {
+      if (!v.horario_inicio) req("horario_inicio", "Horário inicial é obrigatório.");
+      if (!v.horario_fim) req("horario_fim", "Horário final é obrigatório.");
+      
+      if (v.horario_inicio && v.horario_fim) {
+        if (v.horario_fim <= v.horario_inicio) {
+          req("horario_fim", "O horário final deve ser posterior ao horário inicial.");
+        }
+      }
+    }
   });
 
 
