@@ -48,14 +48,28 @@ function exportXLSX(p: ReportPayload) {
     { Campo: "Emissor", Valor: p.usuarioNome ?? "" },
     ...Object.entries(p.filtrosLabel).map(([k, v]) => ({ Campo: k, Valor: v })),
   ];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(meta), "Cabeçalho");
+  const capa = XLSX.utils.json_to_sheet(meta);
+  XLSX.utils.book_append_sheet(wb, capa, "Cabeçalho");
+
   for (const s of p.sections) {
     const rows = s.rows.length ? s.rows : [{ Info: "Sem dados" }];
     const sheet = XLSX.utils.json_to_sheet(rows);
+    
+    // Qualidade Visual e Funcional do Excel
+    sheet["!autofilter"] = { ref: sheet["!ref"] ?? "A1" };
+    // Congelamento da primeira linha (cabeçalho)
+    sheet["!freeze"] = { xSplit: 0, ySplit: 1 } as any;
+    
+    // Ajuste básico de largura (heurística simples)
+    if (rows.length > 0 && typeof rows[0] === 'object') {
+      const cols = Object.keys(rows[0]).map(k => ({ wch: Math.max(k.length, 12) }));
+      sheet["!cols"] = cols;
+    }
+
     const name = s.title.slice(0, 28).replace(/[\\/*?[\]:]/g, "_");
     XLSX.utils.book_append_sheet(wb, sheet, name || "Dados");
   }
-  XLSX.writeFile(wb, `${p.id}-${todayISO()}.xlsx`);
+  XLSX.writeFile(wb, `absenteismo_${todayISO()}.xlsx`);
 }
 
 function exportCSV(p: ReportPayload) {
