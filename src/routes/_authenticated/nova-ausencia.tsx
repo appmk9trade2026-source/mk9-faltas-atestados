@@ -260,7 +260,14 @@ const schema = z
     const email = (v.manual_email ?? "").trim();
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) req("manual_email", "E-mail inválido.");
 
-    // ETAPA 3 e 4: Validação de horários para Meio Período (validada pela UI antes da submissão para evitar dependências de hooks no schema)
+    // ETAPA 3 e 4: Validação de horários para Meio Período
+    if (v.tipo_ausencia_id && v.opcao_periodo_id && tipoSelecionado?.codigo === "ATESTADO_COMPARECIMENTO" && opcaoSelecionada?.tipo_periodo === "MEIO_PERIODO") {
+      if (!v.horario_inicio) req("horario_inicio", "Informe o horário inicial.");
+      if (!v.horario_fim) req("horario_fim", "Informe o horário final.");
+      if (v.horario_inicio && v.horario_fim && v.horario_inicio >= v.horario_fim) {
+        req("horario_fim", "Horário final deve ser após o inicial.");
+      }
+    }
   });
 
 type FormData = z.infer<typeof schema>;
