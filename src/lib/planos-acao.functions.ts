@@ -2,7 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requirePermission } from "@/lib/rbac/guards.server";
-import { PERMISSION_MAP } from "@/lib/permissions-map";
 
 const uuid = z.string().uuid();
 
@@ -30,15 +29,15 @@ export const planoAcaoSchema = z.object({
 export type PlanoAcaoInput = z.infer<typeof planoAcaoSchema>;
 
 export const criarPlanoAcao = createServerFn({ method: "POST" })
+  .validator((data: unknown) => planoAcaoSchema.parse(data))
   .middleware([requireSupabaseAuth])
-  .input(planoAcaoSchema)
-  .handler(async ({ input, context }) => {
+  .handler(async ({ data: input, context }) => {
     const { supabase, userId } = context;
 
     // Gate RBAC: Somente coordenadores, RH ou Super Admin
     await requirePermission({
       ctx: { supabase, userId },
-      permission: "relatorio.visualizar", // Usando permissão existente como gate inicial até ter uma específica
+      permission: "relatorio.visualizar",
       route: "/planos-acao",
     });
 
@@ -65,7 +64,6 @@ export const criarPlanoAcao = createServerFn({ method: "POST" })
         .single();
       
       if (respProfile && respProfile.coordenador_usuario_id !== userId && input.responsavel_usuario_id !== userId) {
-         // Se não for o próprio coordenador e o responsável não for seu subordinado
          throw new Error("SCOPE_DENIED: O responsável deve pertencer à sua coordenação.");
       }
     }
@@ -87,13 +85,15 @@ export const criarPlanoAcao = createServerFn({ method: "POST" })
     return data;
   });
 
+const listInputSchema = z.object({
+  status: statusPlanoSchema.optional(),
+  projeto_id: uuid.optional(),
+}).optional();
+
 export const listarPlanosAcao = createServerFn({ method: "GET" })
+  .validator((data: unknown) => listInputSchema.parse(data))
   .middleware([requireSupabaseAuth])
-  .input(z.object({
-    status: statusPlanoSchema.optional(),
-    projeto_id: uuid.optional(),
-  }).optional())
-  .handler(async ({ input, context }) => {
+  .handler(async ({ data: input, context }) => {
     const { supabase } = context;
 
     let query = supabase
@@ -119,10 +119,12 @@ export const listarPlanosAcao = createServerFn({ method: "GET" })
     return data;
   });
 
+const idInputSchema = z.object({ id: uuid });
+
 export const obterPlanoAcao = createServerFn({ method: "GET" })
+  .validator((data: unknown) => idInputSchema.parse(data))
   .middleware([requireSupabaseAuth])
-  .input(z.object({ id: uuid }))
-  .handler(async ({ input, context }) => {
+  .handler(async ({ data: input, context }) => {
     const { supabase } = context;
 
     const { data, error } = await supabase
