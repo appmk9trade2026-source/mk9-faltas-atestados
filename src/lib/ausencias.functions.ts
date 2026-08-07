@@ -648,12 +648,15 @@ export const updateAusencia = createServerFn({ method: "POST" })
       loja_codigo_nome: data.loja_codigo_nome,
       cid: data.cid && data.cid.trim() ? data.cid.trim().toUpperCase() : null,
       acidente_trabalho_trajeto: data.acidente_trabalho_trajeto,
+      horario_inicio: data.horario_inicio ?? null,
+      horario_fim: data.horario_fim ?? null,
       arquivo_url: data.arquivo_url ?? current.arquivo_url,
       arquivo_nome: data.arquivo_nome ?? current.arquivo_nome,
       arquivo_mime: data.arquivo_mime ?? current.arquivo_mime,
       arquivo_tamanho: data.arquivo_tamanho ?? current.arquivo_tamanho,
       // Novos campos de autoria
       atualizado_por_usuario_id: context.userId,
+      atualizado_em: new Date().toISOString(),
 
       // Auditoria Forense - Etapa 1, 2 e 3
       operacao_origem: "WEB",
