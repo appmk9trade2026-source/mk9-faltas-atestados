@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShieldAlert, Info, ListChecks, Database, UserCheck, Search, Send, Fingerprint, Bell, Users, AlertCircle } from "lucide-react";
+import { ShieldAlert, Info, ListChecks, Database, UserCheck, Search, Send, Fingerprint, Bell, Users, AlertCircle, Rocket } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
