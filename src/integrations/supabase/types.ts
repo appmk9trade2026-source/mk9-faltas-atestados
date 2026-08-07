@@ -858,6 +858,8 @@ export type Database = {
           hash_anterior: string | null
           hash_atual: string | null
           hash_integridade: string | null
+          horario_fim: string | null
+          horario_inicio: string | null
           id: string
           lancado_em: string | null
           lancado_por: string | null
@@ -967,6 +969,8 @@ export type Database = {
           hash_anterior?: string | null
           hash_atual?: string | null
           hash_integridade?: string | null
+          horario_fim?: string | null
+          horario_inicio?: string | null
           id?: string
           lancado_em?: string | null
           lancado_por?: string | null
@@ -1076,6 +1080,8 @@ export type Database = {
           hash_anterior?: string | null
           hash_atual?: string | null
           hash_integridade?: string | null
+          horario_fim?: string | null
+          horario_inicio?: string | null
           id?: string
           lancado_em?: string | null
           lancado_por?: string | null
@@ -4494,25 +4500,47 @@ export type Database = {
         Returns: Json
       }
       audit_kpis: { Args: { _inicio?: string }; Returns: Json }
-      ausencia_duplicada_existente: {
-        Args: {
-          _colaborador_id: string
-          _data_fim: string
-          _data_inicio: string
-          _ignorar_id?: string
-          _manual_matricula?: string
-          _opcao_periodo_id: string
-          _projeto_id: string
-        }
-        Returns: {
-          created_at: string
-          data_fim: string
-          data_inicio: string
-          id: string
-          protocolo: string
-          tipo_ausencia_nome: string
-        }[]
-      }
+      ausencia_duplicada_existente:
+        | {
+            Args: {
+              _colaborador_id: string
+              _data_fim: string
+              _data_inicio: string
+              _ignorar_id?: string
+              _manual_matricula?: string
+              _opcao_periodo_id: string
+              _projeto_id: string
+            }
+            Returns: {
+              created_at: string
+              data_fim: string
+              data_inicio: string
+              id: string
+              protocolo: string
+              tipo_ausencia_nome: string
+            }[]
+          }
+        | {
+            Args: {
+              _colaborador_id: string
+              _data_fim: string
+              _data_inicio: string
+              _horario_fim?: string
+              _horario_inicio?: string
+              _ignorar_id?: string
+              _manual_matricula?: string
+              _opcao_periodo_id: string
+              _projeto_id: string
+            }
+            Returns: {
+              created_at: string
+              data_fim: string
+              data_inicio: string
+              id: string
+              protocolo: string
+              tipo_ausencia_nome: string
+            }[]
+          }
       ausencias_manuais_orfas_sugestoes: {
         Args: never
         Returns: {
