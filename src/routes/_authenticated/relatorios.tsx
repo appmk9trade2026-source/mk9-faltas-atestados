@@ -203,8 +203,20 @@ function ReportRunner({ report, usuarioNome, onRun }: { report: ReportDef; usuar
       if (usesProjeto) args._projeto_id = projetoId || null;
       if (usesSupervisor) args._supervisor = supervisor || null;
       
-      const { data, error } = await supabase.rpc("rel_absenteismo" as never, args as never);
+      const { data, error } = await supabase.rpc(report.id === "absenteismo" ? "rel_absenteismo" : `rel_${report.id}` as any, args as any);
       if (error) throw error;
+
+      // ETAPA 3 e 4: Alerta de truncamento
+      const res = data as any;
+      if (res.is_truncated) {
+        toast.warning(
+          `O relatório foi limitado a ${res.limit_max.toLocaleString("pt-BR")} registros. ` +
+          "Reduza o período ou aplique filtros para obter os dados completos.",
+          { duration: 8000 }
+        );
+      } else if (res.total_registros_disponiveis > 0) {
+        toast.success(`Exportando ${res.total_registros_exportados.toLocaleString("pt-BR")} registros.`);
+      }
 
       const payload: ReportPayload = {
         id: report.id,
@@ -212,10 +224,12 @@ function ReportRunner({ report, usuarioNome, onRun }: { report: ReportDef; usuar
         filtrosLabel,
         usuarioNome,
         sections: buildSections(report.id, data),
+        rawResponse: data,
       };
       await exportReport(payload, formato);
       toast.success(`Arquivo ${formato.toUpperCase()} gerado.`);
     } catch (e: any) {
+      console.error("[export error]", e);
       toast.error("Erro ao gerar exportação completa.");
     } finally {
       setExecuting(false);

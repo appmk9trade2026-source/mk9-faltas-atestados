@@ -15,6 +15,7 @@ export type ReportPayload = {
   filtrosLabel: Record<string, string>;
   sections: ReportSection[];
   usuarioNome?: string | null;
+  rawResponse?: any;
 };
 
 function nowStamp() {
@@ -25,13 +26,22 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export async function auditExport(reportId: string, formato: ExportFormat, filtros: Record<string, string>) {
+export async function auditExport(payload: ReportPayload, formato: ExportFormat) {
   try {
+    const res = (payload as any).rawResponse;
+    const observacoes = [
+      `Formato=${formato}`,
+      `Filtros=${JSON.stringify(payload.filtrosLabel)}`,
+      res ? `Disponível=${res.total_registros_disponiveis || 0}` : null,
+      res ? `Exportado=${res.total_registros_exportados || 0}` : null,
+      res?.is_truncated ? "Status=TRUNCADO" : "Status=COMPLETO"
+    ].filter(Boolean).join(" · ");
+
     await supabase.from("audit_logs" as never).insert({
       modulo: "relatorios",
-      entidade: reportId,
+      entidade: payload.id,
       acao: "EXPORTACAO" as never,
-      observacoes: `Formato=${formato} · Filtros=${JSON.stringify(filtros)}`,
+      observacoes,
       origem: "relatorios",
       sucesso: true,
     } as never);
@@ -217,5 +227,5 @@ export async function exportReport(payload: ReportPayload, formato: ExportFormat
   if (formato === "xlsx") exportXLSX(payload);
   else if (formato === "csv") exportCSV(payload);
   else exportPDF(payload);
-  await auditExport(payload.id, formato, payload.filtrosLabel);
+  await auditExport(payload, formato);
 }
