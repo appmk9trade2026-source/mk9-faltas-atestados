@@ -69,6 +69,7 @@ const items: Item[] = [
   { title: "Meus Supervisores", url: "/coordenacao/supervisores", icon: UserCog, roles: ["coordenador"] },
   { title: "Importações", url: "/colaboradores/importacoes", icon: History, roles: ["super_admin", "rh", "compliance"] },
   { title: "Comunicações", url: "/comunicacoes", icon: MessageSquare, roles: ["super_admin", "rh", "compliance"] },
+  { title: "Plano de Ação", url: "/planos-acao", icon: ClipboardList, roles: ["super_admin", "rh", "coordenador", "supervisor"] },
   { title: "WhatsApp Admin", url: "/comunicacoes/whatsapp", icon: MessageSquare, roles: WHATSAPP_ADMIN_ROLES },
   { title: "Alertas", url: "/alertas", icon: Bell, roles: ["super_admin", "rh", "coordenador", "supervisor", "compliance"] },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: ["super_admin", "rh", "coordenador", "compliance"] },
@@ -111,7 +112,7 @@ const SECTIONS: Section[] = [
   {
     id: "operacao",
     label: "Operação",
-    urls: ["/nova-ausencia", "/ausencias", "/processamento", "/painel-rh", "/colaboradores", "/coordenacao/supervisores", "/colaboradores/importacoes"],
+    urls: ["/nova-ausencia", "/ausencias", "/planos-acao", "/processamento", "/painel-rh", "/colaboradores", "/coordenacao/supervisores", "/colaboradores/importacoes"],
   },
   {
     id: "comunicacao",

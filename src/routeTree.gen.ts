@@ -19,6 +19,7 @@ import { Route as AuthenticatedSaudeRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedRoadmapRouteImport } from './routes/_authenticated/roadmap'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedProcessamentoRouteImport } from './routes/_authenticated/processamento'
+import { Route as AuthenticatedPlanosAcaoRouteImport } from './routes/_authenticated/planos-acao'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedPainelRhRouteImport } from './routes/_authenticated/painel-rh'
 import { Route as AuthenticatedOperacoesRouteImport } from './routes/_authenticated/operacoes'
@@ -133,6 +134,11 @@ const AuthenticatedProcessamentoRoute =
     path: '/processamento',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPlanosAcaoRoute = AuthenticatedPlanosAcaoRouteImport.update({
+  id: '/planos-acao',
+  path: '/planos-acao',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
@@ -528,6 +534,7 @@ export interface FileRoutesByFullPath {
   '/operacoes': typeof AuthenticatedOperacoesRoute
   '/painel-rh': typeof AuthenticatedPainelRhRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/planos-acao': typeof AuthenticatedPlanosAcaoRoute
   '/processamento': typeof AuthenticatedProcessamentoRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/roadmap': typeof AuthenticatedRoadmapRoute
@@ -601,6 +608,7 @@ export interface FileRoutesByTo {
   '/operacoes': typeof AuthenticatedOperacoesRoute
   '/painel-rh': typeof AuthenticatedPainelRhRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/planos-acao': typeof AuthenticatedPlanosAcaoRoute
   '/processamento': typeof AuthenticatedProcessamentoRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/roadmap': typeof AuthenticatedRoadmapRoute
@@ -676,6 +684,7 @@ export interface FileRoutesById {
   '/_authenticated/operacoes': typeof AuthenticatedOperacoesRoute
   '/_authenticated/painel-rh': typeof AuthenticatedPainelRhRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/_authenticated/planos-acao': typeof AuthenticatedPlanosAcaoRoute
   '/_authenticated/processamento': typeof AuthenticatedProcessamentoRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/roadmap': typeof AuthenticatedRoadmapRoute
@@ -752,6 +761,7 @@ export interface FileRouteTypes {
     | '/operacoes'
     | '/painel-rh'
     | '/perfil'
+    | '/planos-acao'
     | '/processamento'
     | '/relatorios'
     | '/roadmap'
@@ -825,6 +835,7 @@ export interface FileRouteTypes {
     | '/operacoes'
     | '/painel-rh'
     | '/perfil'
+    | '/planos-acao'
     | '/processamento'
     | '/relatorios'
     | '/roadmap'
@@ -899,6 +910,7 @@ export interface FileRouteTypes {
     | '/_authenticated/operacoes'
     | '/_authenticated/painel-rh'
     | '/_authenticated/perfil'
+    | '/_authenticated/planos-acao'
     | '/_authenticated/processamento'
     | '/_authenticated/relatorios'
     | '/_authenticated/roadmap'
@@ -1027,6 +1039,13 @@ declare module '@tanstack/react-router' {
       path: '/processamento'
       fullPath: '/processamento'
       preLoaderRoute: typeof AuthenticatedProcessamentoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/planos-acao': {
+      id: '/_authenticated/planos-acao'
+      path: '/planos-acao'
+      fullPath: '/planos-acao'
+      preLoaderRoute: typeof AuthenticatedPlanosAcaoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/perfil': {
@@ -1627,6 +1646,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOperacoesRoute: typeof AuthenticatedOperacoesRoute
   AuthenticatedPainelRhRoute: typeof AuthenticatedPainelRhRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
+  AuthenticatedPlanosAcaoRoute: typeof AuthenticatedPlanosAcaoRoute
   AuthenticatedProcessamentoRoute: typeof AuthenticatedProcessamentoRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedRoadmapRoute: typeof AuthenticatedRoadmapRoute
@@ -1672,6 +1692,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOperacoesRoute: AuthenticatedOperacoesRoute,
   AuthenticatedPainelRhRoute: AuthenticatedPainelRhRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
+  AuthenticatedPlanosAcaoRoute: AuthenticatedPlanosAcaoRoute,
   AuthenticatedProcessamentoRoute: AuthenticatedProcessamentoRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedRoadmapRoute: AuthenticatedRoadmapRoute,
