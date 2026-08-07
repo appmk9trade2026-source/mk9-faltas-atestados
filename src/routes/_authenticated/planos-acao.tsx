@@ -113,7 +113,7 @@ function PlanosAcaoPage() {
     },
   });
 
-  const onSubmit: SubmitHandler<PlanoAcaoInput> = (data) => {
+  const onSubmit: SubmitHandler<z.infer<typeof planoAcaoSchema>> = (data) => {
     mutation.mutate(data);
   };
 
