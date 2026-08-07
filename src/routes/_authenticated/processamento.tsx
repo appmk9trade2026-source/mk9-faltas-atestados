@@ -136,7 +136,9 @@ function CentralProcessamentoPage() {
           possui_anexo: row.possui_anexo,
           arquivo_url: row.arquivo_url,
           arquivo_nome: row.arquivo_nome,
-          arquivo_mime: row.arquivo_mime
+          arquivo_mime: row.arquivo_mime,
+          horario_inicio: row.horario_inicio,
+          horario_fim: row.horario_fim
         } as AusenciaCardData;
       });
     }
