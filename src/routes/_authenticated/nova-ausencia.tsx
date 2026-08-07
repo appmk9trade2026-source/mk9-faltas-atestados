@@ -235,23 +235,23 @@ const schema = z
     if (!v.projeto_id) req("projeto_id", "Selecione o projeto.");
     const correlationId = (globalThis as any).__manualCorrelationId || "no-correlation-id";
     
-    const nomeManual = normalizeManualText(v.manual_nome || "");
+    const nomeManual = (v.manual_nome || "").trim();
     
     if (v.modo_manual && nomeManual.length < 3) {
       req("manual_nome", "Informe o nome completo do colaborador (mínimo 3 caracteres).");
     }
     
-    if (v.modo_manual && normalizeManualText(v.manual_matricula || "").length === 0) {
+    if (v.modo_manual && (v.manual_matricula || "").trim().length === 0) {
       req("manual_matricula", "Informe a matrícula.");
     }
 
-    if (normalizeManualText(v.manual_telefone).length === 0) {
+    if ((v.manual_telefone || "").trim().length === 0) {
       req("manual_telefone", "Informe o telefone do colaborador.");
     }
-    if (normalizeManualText(v.manual_supervisor_nome).length === 0) {
+    if ((v.manual_supervisor_nome || "").trim().length === 0) {
       req("manual_supervisor_nome", "Informe o supervisor(a).");
     }
-    if (normalizeManualText(v.manual_supervisor_telefone).length === 0) {
+    if ((v.manual_supervisor_telefone || "").trim().length === 0) {
       req("manual_supervisor_telefone", "Informe o telefone do supervisor.");
     }
     const email = (v.manual_email ?? "").trim();
@@ -1183,7 +1183,7 @@ function NovaAusenciaPage() {
       (globalThis as any).__manualCorrelationId = correlationId;
 
 
-      const normalized_manual_nome = normalizeManualText(values.manual_nome || "");
+      const normalized_manual_nome = (values.manual_nome || "").trim();
 
       const origemFields = values.modo_manual
         ? {
@@ -1193,12 +1193,12 @@ function NovaAusenciaPage() {
             manual_motivo: MANUAL_MOTIVO_PADRAO,
             manual_motivo_detalhe: "Colaborador não localizado pela matrícula informada.",
             manual_nome: normalized_manual_nome,
-            manual_matricula: normalizeManualText(values.manual_matricula || ""),
-            manual_telefone: normalizeManualText(values.manual_telefone || ""),
-            manual_whatsapp: normalizeManualText(values.manual_whatsapp || ""),
-            manual_email: normalizeManualText(values.manual_email || ""),
-            manual_supervisor_nome: normalizeManualText(values.manual_supervisor_nome || ""),
-            manual_supervisor_telefone: normalizeManualText(values.manual_supervisor_telefone || ""),
+            manual_matricula: (values.manual_matricula || "").trim(),
+            manual_telefone: (values.manual_telefone || "").trim(),
+            manual_whatsapp: (values.manual_whatsapp || "").trim(),
+            manual_email: (values.manual_email || "").trim(),
+            manual_supervisor_nome: (values.manual_supervisor_nome || "").trim(),
+            manual_supervisor_telefone: (values.manual_supervisor_telefone || "").trim(),
             manual_supervisor_usuario_id: values.manual_supervisor_usuario_id || null,
           }
         : { origem_registro: "AUTOMATICO" as const, colaborador_id: values.colaborador_id! };
