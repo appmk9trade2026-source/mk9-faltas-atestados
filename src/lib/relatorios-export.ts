@@ -40,7 +40,7 @@ export async function auditExport(payload: ReportPayload, formato: ExportFormat)
     await supabase.from("audit_logs" as never).insert({
       modulo: "relatorios",
       entidade: payload.id,
-      acao: "EXPORTACAO" as never,
+      acao: (res?.is_truncated ? "EXPORTACAO_LIMITE_EXCEDIDO" : "EXPORTACAO") as never,
       observacoes,
       origem: "relatorios",
       sucesso: true,
