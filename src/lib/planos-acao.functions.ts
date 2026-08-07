@@ -37,7 +37,7 @@ export const criarPlanoAcao = createServerFn({ method: "POST" })
     // Gate RBAC: Somente coordenadores, RH ou Super Admin
     await requirePermission({
       ctx: { supabase, userId },
-      permission: "relatorio.visualizar",
+      permission: "relatorio.visualizar", // Usando permissão existente compatível com gestão operacional
       route: "/planos-acao",
     });
 

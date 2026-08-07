@@ -119,9 +119,9 @@ function PlanosAcaoPage() {
   };
 
   const kpis = {
-    ativos: planos?.filter(p => ["NAO_INICIADO", "EM_ANDAMENTO"].includes(p.status)).length || 0,
-    vencidos: planos?.filter(p => new Date(p.prazo) < new Date() && p.status !== "CONCLUIDO").length || 0,
-    concluidos: planos?.filter(p => p.status === "CONCLUIDO").length || 0,
+    ativos: planos?.filter((p: any) => ["NAO_INICIADO", "EM_ANDAMENTO"].includes(p.status)).length || 0,
+    vencidos: planos?.filter((p: any) => new Date(p.prazo) < new Date() && p.status !== "CONCLUIDO").length || 0,
+    concluidos: planos?.filter((p: any) => p.status === "CONCLUIDO").length || 0,
   };
 
   const { data: projetos } = useProjetosAtivosPorEmpresa(user?.user_metadata?.empresa_id);
@@ -494,7 +494,7 @@ function PlanosAcaoPage() {
                   <FormItem>
                     <FormLabel>Ação Proposta</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Quais passos serão tomados?" {...field} />
+                      <Textarea placeholder="Descreva a ação proposta..." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
