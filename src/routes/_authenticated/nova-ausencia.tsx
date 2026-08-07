@@ -241,7 +241,8 @@ const schema = z
       req("manual_nome", "Informe o nome completo do colaborador (mínimo 3 caracteres).");
     }
     
-    if (v.modo_manual && (v.manual_matricula || "").trim().length === 0) {
+    const matriculaManual = (v.manual_matricula || "").trim();
+    if (v.modo_manual && matriculaManual.length === 0) {
       req("manual_matricula", "Informe a matrícula.");
     }
 
@@ -689,8 +690,8 @@ function NovaAusenciaPage() {
         }
         setNaoEncontrado(true);
         if (origem === "manual") {
-          toast.error("Matrícula não encontrada.", {
-            description: "Cadastre o colaborador ou use o preenchimento manual.",
+          toast.error("Matrícula não localizada no seu escopo.", {
+            description: "A matrícula pode pertencer a outro projeto ou não estar ativa. Utilize o Lançamento Manual caso necessário.",
           });
         }
       } else if (rows.length === 1) {
@@ -1184,6 +1185,7 @@ function NovaAusenciaPage() {
 
 
       const normalized_manual_nome = (values.manual_nome || "").trim();
+      const normalized_manual_matricula = (values.manual_matricula || "").trim();
 
       const origemFields = values.modo_manual
         ? {
@@ -1191,9 +1193,9 @@ function NovaAusenciaPage() {
             empresa_id: values.empresa_id!,
             projeto_id: values.projeto_id!,
             manual_motivo: MANUAL_MOTIVO_PADRAO,
-            manual_motivo_detalhe: "Colaborador não localizado pela matrícula informada.",
+            manual_motivo_detalhe: `Colaborador não localizado pela matrícula informada (${normalized_manual_matricula}).`,
             manual_nome: normalized_manual_nome,
-            manual_matricula: (values.manual_matricula || "").trim(),
+            manual_matricula: normalized_manual_matricula,
             manual_telefone: (values.manual_telefone || "").trim(),
             manual_whatsapp: (values.manual_whatsapp || "").trim(),
             manual_email: (values.manual_email || "").trim(),
@@ -2257,6 +2259,18 @@ function NovaAusenciaPage() {
                   {/* Botão de envio */}
                   {!bloqueado && (
                     <div className="flex flex-col items-center gap-6 border-t pt-6">
+                      {modoManual && (
+                        <div className="flex items-start gap-3 rounded-lg border border-amber-100 bg-amber-50/50 p-4 max-w-2xl">
+                          <ShieldCheck className="mt-1 h-5 w-5 text-amber-600 shrink-0" />
+                          <div className="space-y-1">
+                            <Label className="text-sm font-semibold text-amber-900">Proteção contra Duplicidade</Label>
+                            <p className="text-xs leading-relaxed text-amber-800">
+                              O sistema bloqueará automaticamente este lançamento se a matrícula informar já possuir um registro ativo para esta mesma data, garantindo a integridade da folha.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
                       {!isEdit && (
                         <div className="flex items-start gap-3 rounded-lg border border-blue-100 bg-blue-50/50 p-4 max-w-2xl">
                           <input
