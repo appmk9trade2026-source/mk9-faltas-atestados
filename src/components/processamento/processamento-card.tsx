@@ -11,7 +11,8 @@ import {
   Briefcase, 
   Calendar,
   AlertTriangle,
-  Zap
+  Zap,
+  ArrowRight
 } from "lucide-react";
 import { AusenciaCardData } from "./types";
 import { getPrioridadeLabel, getSlaColor } from "./utils";
@@ -27,7 +28,9 @@ interface ProcessamentoCardProps {
   data: AusenciaCardData;
   onIniciar: (id: string) => void;
   onConcluir: (id: string) => void;
+  onReatribuir?: (id: string, responsavelAnteriorId: string) => void;
   onVerDetalhes: (data: AusenciaCardData) => void;
+
   isProcessing: boolean;
   currentUserId: string | undefined;
   isNextInLine?: boolean;
@@ -37,7 +40,9 @@ export function ProcessamentoCard({
   data, 
   onIniciar, 
   onConcluir, 
+  onReatribuir,
   onVerDetalhes,
+
   isProcessing,
   currentUserId,
   isNextInLine
@@ -169,17 +174,28 @@ export function ProcessamentoCard({
               )}
 
               {isInProgress && (
-                <Button 
-                  size="sm" 
-                  className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-[11px] font-bold shadow-sm" 
-                  onClick={() => onConcluir(data.id)}
-                  disabled={isProcessing || !isOwner}
-                  title={!isOwner ? "Apenas o responsável pode concluir" : ""}
-                >
-                  <Check className="h-3.5 w-3.5" />
-                  Continuar
-                </Button>
+                <div className="flex gap-1.5 items-center">
+                  <Button 
+                    size="sm" 
+                    className={cn(
+                      "h-8 gap-1.5 text-[11px] font-bold shadow-sm",
+                      isOwner ? "bg-emerald-600 hover:bg-emerald-700" : "bg-amber-500 hover:bg-amber-600"
+                    )}
+                    onClick={() => {
+                      if (isOwner) onConcluir(data.id);
+                      else if (onReatribuir && window.confirm("Assumir este processamento?")) {
+                        onReatribuir(data.id, data.responsavel_processamento_id!);
+                      }
+                    }}
+                    disabled={isProcessing}
+                    title={!isOwner ? `Em processamento por ${data.responsavel_processamento_nome}. Clique para assumir.` : "Concluir operação"}
+                  >
+                    {isOwner ? <Check className="h-3.5 w-3.5" /> : <ArrowRight className="h-3.5 w-3.5" />}
+                    {isOwner ? "Continuar" : "Assumir"}
+                  </Button>
+                </div>
               )}
+
 
               {isProcessed && (
                 <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200">
