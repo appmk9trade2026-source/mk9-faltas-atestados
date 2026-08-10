@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getCentralProcessamentoKpis, iniciarProcessamentoAdm, concluirProcessamentoAdm } from "@/lib/ausencias.functions";
+import { getCentralProcessamentoKpis, iniciarProcessamentoAdm, concluirProcessamentoAdm, reatribuirProcessamentoAdm } from "@/lib/ausencias.functions";
 import { resolveAusenciaIdentidade } from "@/lib/ausencia-identidade";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/layout/app-shell";
@@ -68,6 +68,7 @@ function CentralProcessamentoPage() {
   const getKpisFn = useServerFn(getCentralProcessamentoKpis);
   const iniciarFn = useServerFn(iniciarProcessamentoAdm);
   const concluirFn = useServerFn(concluirProcessamentoAdm);
+  const reatribuirFn = useServerFn(reatribuirProcessamentoAdm);
 
   const kpisQ = useQuery({ 
     queryKey: ["processamento", "kpis"], 
@@ -183,6 +184,17 @@ function CentralProcessamentoPage() {
     },
     onError: (e: any) => toast.error(e.message)
   });
+
+  const reatribuirMut = useMutation({
+    mutationFn: (payload: { id: string, responsavel_anterior_id: string }) => 
+      reatribuirFn({ data: { ausencia_id: payload.id, responsavel_anterior_id: payload.responsavel_anterior_id } }),
+    onSuccess: () => {
+      toast.success("Processamento reatribuído com sucesso.");
+      queryClient.invalidateQueries({ queryKey: ["processamento"] });
+    },
+    onError: (e: any) => toast.error(e.message)
+  });
+
 
   const assumirProximo = () => {
     const proximo = sortedAndFiltered.find(a => a.status_processamento === "AGUARDANDO");

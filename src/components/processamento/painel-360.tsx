@@ -44,6 +44,7 @@ interface Painel360Props {
   data: AusenciaCardData;
   onIniciar: (id: string) => void;
   onConcluir: (id: string) => void;
+  onReatribuir: (id: string, responsavelAnteriorId: string) => void;
   isProcessing: boolean;
   currentUserId: string | undefined;
 }
@@ -52,6 +53,7 @@ export function Painel360({
   data, 
   onIniciar, 
   onConcluir, 
+  onReatribuir,
   isProcessing,
   currentUserId 
 }: Painel360Props) {
@@ -389,11 +391,26 @@ export function Painel360({
             </Button>
           </div>
         )}
-        {!isOwner && isInProgress && (
-          <p className="text-[9px] text-center font-bold text-red-500 uppercase">
-            Apenas {data.responsavel_processamento_nome} pode concluir este registro.
-          </p>
+        {!isOwner && isInProgress && data.responsavel_processamento_id && (
+          <div className="space-y-3">
+             <p className="text-[10px] text-center font-bold text-amber-600 uppercase bg-amber-50 p-2 rounded-lg border border-amber-200">
+              Este registro está em processamento por {data.responsavel_processamento_nome}.
+              Assuma a responsabilidade para realizar a conclusão manual.
+            </p>
+            <Button 
+              className="w-full bg-amber-500 hover:bg-amber-600 h-12 text-sm font-black shadow-lg" 
+              onClick={() => {
+                if (window.confirm("Assumir este processamento?\n\nVocê passará a ser o responsável por este registro. A reatribuição ficará registrada no histórico de auditoria.")) {
+                  onReatribuir(data.id, data.responsavel_processamento_id!);
+                }
+              }}
+              disabled={isProcessing}
+            >
+              <ArrowRight className="h-4 w-4 mr-2" /> ASSUMIR PARA MIM
+            </Button>
+          </div>
         )}
+
         {data.status_processamento === "PROCESSADO" && (
           <Button variant="outline" className="w-full h-12 border-emerald-200 text-emerald-600 font-black cursor-default hover:bg-emerald-50">
             <Shield className="h-4 w-4 mr-2" /> REGISTRO PROCESSADO E AUDITADO
