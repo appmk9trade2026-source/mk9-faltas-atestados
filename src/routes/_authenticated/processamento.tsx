@@ -258,8 +258,10 @@ function CentralProcessamentoPage() {
               isNextInLine={i === 0 && a.status_processamento === "AGUARDANDO"} 
               onIniciar={(id) => iniciarMut.mutate(id)} 
               onConcluir={(id) => concluirMut.mutate(id)} 
+              onReatribuir={(id, antId) => reatribuirMut.mutate({ id, responsavel_anterior_id: antId })}
               onVerDetalhes={(d) => { setRegistroSelecionado(d); setDetalhesAbertos(true); }} 
-              isProcessing={iniciarMut.isPending || concluirMut.isPending} 
+              isProcessing={iniciarMut.isPending || concluirMut.isPending || reatribuirMut.isPending} 
+
             />
           ))}
         </div>
@@ -273,7 +275,9 @@ function CentralProcessamentoPage() {
               data={registroSelecionado}
               onIniciar={(id) => { iniciarMut.mutate(id); setDetalhesAbertos(false); }}
               onConcluir={(id) => { concluirMut.mutate(id); setDetalhesAbertos(false); }}
-              isProcessing={iniciarMut.isPending || concluirMut.isPending}
+              onReatribuir={(id, antId) => { reatribuirMut.mutate({ id, responsavel_anterior_id: antId }); setDetalhesAbertos(false); }}
+              isProcessing={iniciarMut.isPending || concluirMut.isPending || reatribuirMut.isPending}
+
               currentUserId={user?.id}
             />
           )}
