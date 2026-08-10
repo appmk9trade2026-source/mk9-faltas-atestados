@@ -5352,6 +5352,10 @@ export type Database = {
       }
       rbac_matrix: { Args: never; Returns: Json }
       rbac_user_summary: { Args: { _user_id: string }; Returns: Json }
+      reatribuir_processamento_ausencia: {
+        Args: { _ausencia_id: string; _responsavel_anterior_id: string }
+        Returns: Json
+      }
       reenfileirar_acidente_para_tst: {
         Args: { p_ausencia_id: string }
         Returns: Json
