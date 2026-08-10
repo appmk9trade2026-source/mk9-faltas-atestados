@@ -557,7 +557,28 @@ const updatePayloadSchema = z.discriminatedUnion("origem_registro", [
   manualPayloadSchema.extend({ id: uuid }),
 ]);
 
+/**
+ * Reatribui o processamento de uma ausência para o usuário logado.
+ */
+export const reatribuirProcessamentoAdm = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => {
+    return z.object({
+      ausencia_id: uuid,
+      responsavel_anterior_id: uuid,
+    }).parse(data);
+  })
+  .handler(async ({ data, context }) => {
+    const { data: res, error } = await context.supabase.rpc("reatribuir_processamento_ausencia", {
+      _ausencia_id: data.ausencia_id,
+      _responsavel_anterior_id: data.responsavel_anterior_id,
+    });
+    if (error) throw error;
+    return res as { success: boolean; novo_responsavel_nome: string };
+  });
+
 export const updateAusencia = createServerFn({ method: "POST" })
+
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => {
     try { return updatePayloadSchema.parse(data); } catch (e) { throw toInvalidPayload(e); }
