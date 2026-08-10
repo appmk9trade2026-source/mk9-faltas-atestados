@@ -11,7 +11,8 @@ import {
   Briefcase, 
   Calendar,
   AlertTriangle,
-  Zap
+  Zap,
+  ArrowRight
 } from "lucide-react";
 import { AusenciaCardData } from "./types";
 import { getPrioridadeLabel, getSlaColor } from "./utils";
