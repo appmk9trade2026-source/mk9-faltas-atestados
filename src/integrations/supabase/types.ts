@@ -861,6 +861,7 @@ export type Database = {
           horario_fim: string | null
           horario_inicio: string | null
           id: string
+          justificada_por_ocorrencia_id: string | null
           lancado_em: string | null
           lancado_por: string | null
           lancado_por_usuario_id: string | null
@@ -918,6 +919,7 @@ export type Database = {
           retificado_por_usuario_id: string | null
           status: Database["public"]["Enums"]["status_ausencia"]
           status_documental: string | null
+          status_justificativa: string | null
           status_processamento: Database["public"]["Enums"]["ausencia_status_processamento"]
           substituida_em: string | null
           substituida_por_ausencia_id: string | null
@@ -972,6 +974,7 @@ export type Database = {
           horario_fim?: string | null
           horario_inicio?: string | null
           id?: string
+          justificada_por_ocorrencia_id?: string | null
           lancado_em?: string | null
           lancado_por?: string | null
           lancado_por_usuario_id?: string | null
@@ -1029,6 +1032,7 @@ export type Database = {
           retificado_por_usuario_id?: string | null
           status?: Database["public"]["Enums"]["status_ausencia"]
           status_documental?: string | null
+          status_justificativa?: string | null
           status_processamento?: Database["public"]["Enums"]["ausencia_status_processamento"]
           substituida_em?: string | null
           substituida_por_ausencia_id?: string | null
@@ -1083,6 +1087,7 @@ export type Database = {
           horario_fim?: string | null
           horario_inicio?: string | null
           id?: string
+          justificada_por_ocorrencia_id?: string | null
           lancado_em?: string | null
           lancado_por?: string | null
           lancado_por_usuario_id?: string | null
@@ -1140,6 +1145,7 @@ export type Database = {
           retificado_por_usuario_id?: string | null
           status?: Database["public"]["Enums"]["status_ausencia"]
           status_documental?: string | null
+          status_justificativa?: string | null
           status_processamento?: Database["public"]["Enums"]["ausencia_status_processamento"]
           substituida_em?: string | null
           substituida_por_ausencia_id?: string | null
@@ -1172,6 +1178,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "whatsapp_tst_saude"
             referencedColumns: ["empresa_id"]
+          },
+          {
+            foreignKeyName: "ausencias_justificada_por_ocorrencia_id_fkey"
+            columns: ["justificada_por_ocorrencia_id"]
+            isOneToOne: false
+            referencedRelation: "ocorrencias_ponto"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "ausencias_opcao_periodo_id_fkey"

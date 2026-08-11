@@ -14,6 +14,7 @@ import {
   Clock, 
   CheckCircle2, 
   AlertTriangle, 
+  ShieldCheck, 
   Building2, 
   User, 
   FileText,
@@ -50,6 +51,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { 
@@ -119,7 +121,11 @@ function OcorrenciasPontoPage() {
     queryFn: () => listOcorrenciasFn({ 
       data: { status: statusFilter === "all" ? undefined : statusFilter as any }
     }),
-    refetchInterval: 30000, // Refresh every 30s for RH analysis
+    refetchInterval: 30000,
+    select: (data) => data.map(oc => ({
+      ...oc,
+      ausencia: oc.ausencia_id ? (oc as any).ausencia : null
+    }))
   });
 
   const form = useForm<z.infer<typeof ocorrenciaPontoSchema>>({
@@ -345,31 +351,38 @@ function OcorrenciasPontoPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => window.open(oc.arquivo_url, '_blank')}>
-                              <FileText className="mr-2 h-4 w-4" />
-                              Visualizar Evidência
-                            </DropdownMenuItem>
-                            {canProcess && oc.status === "PENDENTE" && (
-                              <DropdownMenuItem 
-                                className="text-primary font-medium"
-                                onClick={() => {
-                                  setSelectedOcorrencia(oc);
-                                  setIsProcessDialogOpen(true);
-                                }}
-                              >
-                                <CheckCircle2 className="mr-2 h-4 w-4" />
-                                Analisar Ocorrência
+                        <div className="flex items-center gap-1 justify-end">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => window.open(oc.arquivo_url, '_blank')}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                Visualizar Evidência
                               </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                              {canProcess && oc.status === "PENDENTE" && (
+                                <DropdownMenuItem 
+                                  className="text-primary font-medium"
+                                  onClick={() => {
+                                    setSelectedOcorrencia(oc);
+                                    setIsProcessDialogOpen(true);
+                                  }}
+                                >
+                                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                                  Analisar Ocorrência
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          {oc.ausencia_id && (
+                            <Badge variant="outline" className="h-5 px-1 bg-blue-50 text-blue-600 border-blue-200">
+                              VINCULADA
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -731,6 +744,19 @@ function OcorrenciasPontoPage() {
                 <div className="flex flex-col">
                   <span className="font-medium text-xs">{selectedOcorrencia?.projeto?.nome}</span>
                   <span className="text-muted-foreground text-[11px]">{selectedOcorrencia && format(new Date(selectedOcorrencia.data_ocorrencia), "dd/MM/yyyy")}</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-muted-foreground font-medium uppercase text-[10px] tracking-wider mb-1">Status de Vínculo</p>
+                <div className="flex flex-col">
+                  {selectedOcorrencia?.ausencia_id ? (
+                    <span className="text-blue-600 font-semibold text-xs flex items-center gap-1">
+                      <ShieldCheck className="h-3 w-3" />
+                      JUSTIFICADA (Vínculo Ativo)
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground text-xs italic">Aguardando Aprovação para Vínculo</span>
+                  )}
                 </div>
               </div>
             </div>
