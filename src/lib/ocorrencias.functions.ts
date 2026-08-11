@@ -22,8 +22,6 @@ export const ocorrenciaPontoSchema = z.object({
   justificativa: z.string().trim().min(10).max(2000),
   arquivo_url: z.string().trim().url("URL de anexo inválida"),
   arquivo_nome: z.string().trim().max(255).optional(),
-  arquivo_mime: z.string().trim().max(120).optional(),
-  arquivo_tamanho: z.number().int().optional(),
   ausencia_id: uuid.nullable().optional(),
 });
 
