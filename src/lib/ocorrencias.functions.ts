@@ -17,6 +17,7 @@ export const ocorrenciaPontoSchema = z.object({
   empresa_id: uuid,
   projeto_id: uuid,
   colaborador_id: uuid, 
+  supervisor_usuario_id: uuid,
   data_ocorrencia: iso,
   motivo: z.string().trim().min(5).max(200),
   justificativa: z.string().trim().min(10).max(2000),
@@ -40,7 +41,8 @@ export const listarOcorrencias = createServerFn({ method: "GET" })
       .select(`
         *,
         projeto:projeto_id (nome),
-        colaborador:colaborador_id (nome_completo, matricula)
+        colaborador:colaborador_id (nome_completo, matricula),
+        supervisor:supervisor_usuario_id (full_name)
       `)
       .order("created_at", { ascending: false });
 
@@ -84,6 +86,7 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
         empresa_id: data.empresa_id,
         projeto_id: data.projeto_id,
         colaborador_id: data.colaborador_id,
+        supervisor_usuario_id: data.supervisor_usuario_id,
         data_ocorrencia: data.data_ocorrencia,
         motivo: data.motivo,
         justificativa: data.justificativa,
@@ -170,4 +173,18 @@ export const processarOcorrencia = createServerFn({ method: "POST" })
     } as any);
 
     return updated;
+  });
+
+/** Busca supervisores vinculados a um projeto */
+export const getSupervisoresProjeto = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: any) => z.object({
+    projeto_id: uuid
+  }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: supervisores, error } = await context.supabase.rpc("get_supervisores_projeto", {
+      _projeto_id: data.projeto_id
+    });
+    if (error) throw new Error(`Erro ao buscar supervisores: ${error.message}`);
+    return (supervisores || []) as { id: string; nome: string }[];
   });
