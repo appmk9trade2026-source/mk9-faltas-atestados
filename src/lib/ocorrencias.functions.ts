@@ -88,9 +88,17 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
   .inputValidator((data: any) => {
     // Normalizar colaborador_id vazio para null antes da validação
     const normalizedData = { ...data };
+    
+    // Normalizar colaborador_id
     if (normalizedData.colaborador_id === "" || normalizedData.colaborador_id === undefined) {
       normalizedData.colaborador_id = null;
     }
+    
+    // Garantir que supervisor_usuario_id não seja string vazia se vier da UI
+    if (normalizedData.supervisor_usuario_id === "" || normalizedData.supervisor_usuario_id === undefined) {
+      throw new Error("Supervisor é obrigatório.");
+    }
+
     return ocorrenciaPontoSchema.parse(normalizedData);
   })
   .handler(async ({ data, context }) => {
