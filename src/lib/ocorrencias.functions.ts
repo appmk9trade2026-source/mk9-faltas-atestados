@@ -118,9 +118,10 @@ export const processarOcorrencia = createServerFn({ method: "POST" })
   }).parse(data))
   .handler(async ({ data, context }) => {
     // 1. Validar permissão (RH ou Coordenador)
-    const roles = context.claims?.roles || [];
-    const canProcess = roles.some(r => ["rh", "coordenador", "super_admin"].includes(r));
+    const roles = (context.claims?.roles as string[]) || [];
+    const canProcess = roles.some((r: string) => ["rh", "coordenador", "super_admin"].includes(r));
     if (!canProcess) throw new Error("Apenas RH ou Coordenadores podem processar ocorrências.");
+
 
     // 2. Buscar ocorrência para conferir escopo
     const { data: ocorrencia } = await context.supabase
