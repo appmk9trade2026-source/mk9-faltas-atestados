@@ -479,13 +479,13 @@ function PlanosAcaoPage() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <FormLabel>Problema Identificado *</FormLabel>
+                  <label className="text-sm font-medium">Problema Identificado *</label>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     className="h-8 text-xs text-primary hover:text-primary/80"
-                    disabled={isGeneratingAI || !form.watch("projeto_id") || form.watch("problema_identificado").length < 5}
+                    disabled={isGeneratingAI || !form.watch("projeto_id") || (form.watch("problema_identificado") ?? "").length < 5}
                     onClick={handleGenerateAI}
                   >
                     {isGeneratingAI ? (
