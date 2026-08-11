@@ -16,7 +16,10 @@ const iso = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "data inválida");
 export const ocorrenciaPontoSchema = z.object({
   empresa_id: uuid,
   projeto_id: uuid,
-  colaborador_id: uuid, 
+  colaborador_id: uuid.nullable().optional(), 
+  colaborador_manual: z.boolean().default(false),
+  manual_matricula: z.string().trim().max(50).optional().nullable(),
+  manual_nome: z.string().trim().max(255).optional().nullable(),
   supervisor_usuario_id: uuid,
   data_ocorrencia: iso,
   motivo: z.string().trim().min(5).max(200),
@@ -62,23 +65,12 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
     // 1. Validar permissão (Supervisor, Coordenador, RH)
     await requirePermission({
       ctx: context,
-      permission: PERMISSION_MAP.createAbsence, // Reutilizando permissão de lançamento
+      permission: PERMISSION_MAP.createAbsence, 
       projetoId: data.projeto_id,
       empresaId: data.empresa_id,
     });
 
-    // 2. Validar vínculo Colaborador -> Supervisor -> Projeto
-    const { data: colab } = await context.supabase
-      .from("colaboradores")
-      .select("projeto_id, supervisor_usuario_id, ativo")
-      .eq("id", data.colaborador_id)
-      .single();
-
-    if (!colab || !colab.ativo) throw new Error("Colaborador não encontrado ou inativo.");
-    if (colab.projeto_id !== data.projeto_id) throw new Error("Colaborador não pertence ao projeto selecionado.");
-    if (colab.supervisor_usuario_id !== data.supervisor_usuario_id) throw new Error("Colaborador não pertence ao supervisor selecionado.");
-
-    // 3. Validar se o projeto é AMBEV
+    // 2. Validar se o projeto é AMBEV (Obrigatório para manual)
     const { data: projeto } = await context.supabase
       .from("projetos")
       .select("nome, empresa_id")
@@ -86,17 +78,62 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
       .single();
 
     const isAmbev = projeto?.empresa_id === '0a6c2ac6-2872-47a0-b818-b4660ef81244' || projeto?.nome.toUpperCase().includes('AMBEV');
-    if (!isAmbev) {
-      throw new Error("Ocorrência de Ponto é um fluxo exclusivo para projetos AMBEV.");
+    
+    if (data.colaborador_manual && !isAmbev) {
+      throw new Error("Lançamento manual é exclusivo para projetos AMBEV.");
     }
 
-    // 3. Persistir
+    if (!isAmbev && !data.colaborador_manual) {
+       throw new Error("Ocorrência de Ponto é um fluxo exclusivo para projetos AMBEV.");
+    }
+
+    // 3. Validação do Colaborador
+    if (data.colaborador_manual) {
+      if (!data.manual_matricula || !data.manual_nome) {
+        throw new Error("Matrícula e Nome são obrigatórios para lançamento manual.");
+      }
+
+      // Verificar se matrícula já existe na base mestre
+      const { data: colabExistente } = await context.supabase
+        .from("colaboradores")
+        .select("id, nome_completo, projeto_id, supervisor_usuario_id")
+        .eq("matricula", data.manual_matricula)
+        .eq("ativo", true)
+        .maybeSingle();
+
+      if (colabExistente) {
+        const mesmoContexto = colabExistente.projeto_id === data.projeto_id && 
+                             colabExistente.supervisor_usuario_id === data.supervisor_usuario_id;
+        
+        if (mesmoContexto) {
+          throw new Error(`O colaborador "${colabExistente.nome_completo}" já está cadastrado neste projeto/supervisor. Por favor, use a busca automática.`);
+        }
+        // Caso exista em outro projeto/supervisor, permitimos o manual para manter a evidência sem alterar o mestre
+      }
+    } else {
+      if (!data.colaborador_id) throw new Error("Colaborador não selecionado.");
+
+      const { data: colab } = await context.supabase
+        .from("colaboradores")
+        .select("projeto_id, supervisor_usuario_id, ativo")
+        .eq("id", data.colaborador_id)
+        .single();
+
+      if (!colab || !colab.ativo) throw new Error("Colaborador não encontrado ou inativo.");
+      if (colab.projeto_id !== data.projeto_id) throw new Error("Colaborador não pertence ao projeto selecionado.");
+      if (colab.supervisor_usuario_id !== data.supervisor_usuario_id) throw new Error("Colaborador não pertence ao supervisor selecionado.");
+    }
+
+    // 4. Persistir
     const { data: newOcorrencia, error } = await context.supabase
       .from("ocorrencias_ponto")
       .insert({
         empresa_id: data.empresa_id,
         projeto_id: data.projeto_id,
-        colaborador_id: data.colaborador_id,
+        colaborador_id: data.colaborador_id || null,
+        colaborador_manual: data.colaborador_manual,
+        manual_matricula: data.manual_matricula || null,
+        manual_nome: data.manual_nome || null,
         supervisor_usuario_id: data.supervisor_usuario_id,
         data_ocorrencia: data.data_ocorrencia,
         motivo: data.motivo,
@@ -112,17 +149,22 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
 
     if (error) throw new Error(`Erro ao criar ocorrência: ${error.message}`);
 
-    // 4. Log de auditoria (usando supabaseAdmin para garantir privilégios)
+    // 5. Log de auditoria
+    const acaoAuditoria = data.colaborador_manual ? "OCORRENCIA_PONTO_MANUAL_CRIADA" : "CRIAR";
+    const obsAuditoria = data.colaborador_manual 
+      ? `Lançamento manual para matrícula ${data.manual_matricula}: ${newOcorrencia.protocolo}`
+      : `Nova ocorrência de ponto protocolada: ${newOcorrencia.protocolo}`;
+
     await supabaseAdmin.rpc("log_audit_event", {
       _modulo: "ocorrencias",
-      _acao: "CRIAR",
+      _acao: acaoAuditoria,
       _entidade: "Ocorrência Ponto",
       _registro_id: newOcorrencia.id,
       _empresa_id: data.empresa_id,
       _projeto_id: data.projeto_id,
       _usuario_id: context.userId,
       _sucesso: true,
-      _observacoes: `Nova ocorrência de ponto protocolada: ${newOcorrencia.protocolo}`,
+      _observacoes: obsAuditoria,
       _origem: "server"
     } as any);
 

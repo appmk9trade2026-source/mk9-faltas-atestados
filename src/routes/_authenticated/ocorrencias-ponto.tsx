@@ -104,6 +104,7 @@ function OcorrenciasPontoPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [manualMode, setManualMode] = useState(false);
   
   const canProcess = roles.some(r => ["rh", "coordenador", "super_admin"].includes(r));
   const canCreate = roles.some(r => ["supervisor", "coordenador", "rh", "super_admin"].includes(r));
@@ -127,6 +128,9 @@ function OcorrenciasPontoPage() {
       projeto_id: "",
       supervisor_usuario_id: roles.includes("supervisor") ? user?.id : "",
       colaborador_id: "",
+      colaborador_manual: false,
+      manual_matricula: "",
+      manual_nome: "",
       motivo: "",
       justificativa: "",
       arquivo_url: "https://placeholder.url", // Placeholder para o resolver do Zod
@@ -146,6 +150,8 @@ function OcorrenciasPontoPage() {
       queryClient.invalidateQueries({ queryKey: ["ocorrencias-ponto"] });
       setIsNewDialogOpen(false);
       form.reset();
+      setManualMode(false);
+      setSelectedFile(null);
       toast.success("Ocorrência protocolada com sucesso!");
     },
     onError: (error: any) => {
@@ -304,8 +310,20 @@ function OcorrenciasPontoPage() {
                       <TableCell>{format(new Date(oc.data_ocorrencia), "dd/MM/yyyy")}</TableCell>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span>{oc.colaborador?.nome_completo || "Manual"}</span>
-                          <span className="text-xs text-muted-foreground">{oc.colaborador?.matricula || "-"}</span>
+                          {oc.colaborador_manual ? (
+                            <>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-medium">{oc.manual_nome}</span>
+                                <Badge variant="secondary" className="text-[10px] h-4 px-1 leading-none bg-blue-500/10 text-blue-500 border-blue-500/20">MANUAL</Badge>
+                              </div>
+                              <span className="text-xs text-muted-foreground">{oc.manual_matricula}</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>{oc.colaborador?.nome_completo || "Indisponível"}</span>
+                              <span className="text-xs text-muted-foreground">{oc.colaborador?.matricula || "-"}</span>
+                            </>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-sm">
