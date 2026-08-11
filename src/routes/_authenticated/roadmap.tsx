@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, Download, Rocket, FileText, Kanban as KanbanIcon } from "lucide-react";
+import { Plus, Download, Rocket, FileText, Kanban as KanbanIcon, CheckCircle2, Clock } from "lucide-react";
 import { exportReport, type ExportFormat } from "@/lib/relatorios-export";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { MK9_CHART_EXTENDED } from "@/lib/mk9-palette";
