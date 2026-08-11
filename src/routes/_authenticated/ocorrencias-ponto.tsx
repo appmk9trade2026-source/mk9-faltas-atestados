@@ -125,7 +125,7 @@ function OcorrenciasPontoPage() {
       motivo: "",
       justificativa: "",
       arquivo_url: "https://placeholder.url", // Placeholder para o resolver do Zod
-      empresa_id: user?.user_metadata?.empresa_id || "",
+      empresa_id: AMBEV_EMPRESA_ID,
     },
   });
 
