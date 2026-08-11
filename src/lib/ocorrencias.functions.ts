@@ -22,6 +22,8 @@ export const ocorrenciaPontoSchema = z.object({
   justificativa: z.string().trim().min(10).max(2000),
   arquivo_url: z.string().trim().url("URL de anexo inválida"),
   arquivo_nome: z.string().trim().max(255).optional(),
+  arquivo_mime: z.string().trim().max(120).optional(),
+  arquivo_tamanho: z.number().int().optional(),
   ausencia_id: uuid.nullable().optional(),
 });
 
@@ -82,7 +84,15 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
     const { data: newOcorrencia, error } = await context.supabase
       .from("ocorrencias_ponto")
       .insert({
-        ...data,
+        empresa_id: data.empresa_id,
+        projeto_id: data.projeto_id,
+        colaborador_id: data.colaborador_id,
+        data_ocorrencia: data.data_ocorrencia,
+        motivo: data.motivo,
+        justificativa: data.justificativa,
+        arquivo_url: data.arquivo_url,
+        arquivo_nome: data.arquivo_nome,
+        ausencia_id: data.ausencia_id,
         registrado_por: context.userId,
         status: "PENDENTE",
       })
