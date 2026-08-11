@@ -16,14 +16,12 @@ const iso = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "data inválida");
 export const ocorrenciaPontoSchema = z.object({
   empresa_id: uuid,
   projeto_id: uuid,
-  colaborador_id: uuid, // Tornando obrigatório para garantir integridade
+  colaborador_id: uuid, 
   data_ocorrencia: iso,
   motivo: z.string().trim().min(5).max(200),
   justificativa: z.string().trim().min(10).max(2000),
   arquivo_url: z.string().trim().url("URL de anexo inválida"),
   arquivo_nome: z.string().trim().max(255).optional(),
-  arquivo_mime: z.string().trim().max(120).optional(),
-  arquivo_tamanho: z.number().int().optional(),
   ausencia_id: uuid.nullable().optional(),
 });
 
