@@ -97,8 +97,10 @@ const items: Item[] = [
   { title: "BI Executivo", url: "/bi-executivo", icon: Sparkles, roles: ["super_admin", "compliance", "rh"] },
   { title: "Observabilidade", url: "/observabilidade", icon: Gauge, roles: ["super_admin", "compliance"] },
   { title: "Inteligência Analítica", url: "/inteligencia", icon: Sparkles, roles: ["super_admin", "compliance", "rh", "coordenador", "supervisor"] },
+  { title: "Ocorrência Ponto", url: "/ocorrencias-ponto", icon: Fingerprint, roles: ["super_admin", "rh", "coordenador", "supervisor"] },
 
   { title: "Hardening & Produção", url: "/admin/hardening", icon: Gauge, roles: ["super_admin"] },
+
 ];
 
 
@@ -112,7 +114,7 @@ const SECTIONS: Section[] = [
   {
     id: "operacao",
     label: "Operação",
-    urls: ["/nova-ausencia", "/ausencias", "/planos-acao", "/processamento", "/painel-rh", "/colaboradores", "/coordenacao/supervisores", "/colaboradores/importacoes"],
+    urls: ["/nova-ausencia", "/ausencias", "/ocorrencias-ponto", "/planos-acao", "/processamento", "/painel-rh", "/colaboradores", "/coordenacao/supervisores", "/colaboradores/importacoes"],
   },
   {
     id: "comunicacao",

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessionScope } from "@/hooks/use-session-scope";
 
-export type ProjetoOption = { id: string; nome: string; codigo_protocolo: string | null };
+export type ProjetoOption = { id: string; nome: string; codigo_protocolo: string | null; empresa_id?: string };
 
 /**
  * Hook reutilizável para dropdown dependente de Projeto x Empresa.
@@ -21,7 +21,7 @@ export function useProjetosAtivosPorEmpresa(empresaId: string | null | undefined
       // + acessos de rh/compliance/super_admin). Evita o critério mais restrito da RPC.
       const { data, error } = await supabase
         .from("projetos")
-        .select("id, nome, codigo_protocolo")
+        .select("id, nome, codigo_protocolo, empresa_id")
         .eq("empresa_id", empresaId)
         .eq("ativo", true)
         .order("nome", { ascending: true });

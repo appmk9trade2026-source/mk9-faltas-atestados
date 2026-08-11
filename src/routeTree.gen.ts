@@ -24,6 +24,7 @@ import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedPainelRhRouteImport } from './routes/_authenticated/painel-rh'
 import { Route as AuthenticatedOperacoesRouteImport } from './routes/_authenticated/operacoes'
 import { Route as AuthenticatedOperacaoAssistidaRouteImport } from './routes/_authenticated/operacao-assistida'
+import { Route as AuthenticatedOcorrenciasPontoRouteImport } from './routes/_authenticated/ocorrencias-ponto'
 import { Route as AuthenticatedObservabilidadeRouteImport } from './routes/_authenticated/observabilidade'
 import { Route as AuthenticatedNovaAusenciaRouteImport } from './routes/_authenticated/nova-ausencia'
 import { Route as AuthenticatedNotificacoesRouteImport } from './routes/_authenticated/notificacoes'
@@ -158,6 +159,12 @@ const AuthenticatedOperacaoAssistidaRoute =
   AuthenticatedOperacaoAssistidaRouteImport.update({
     id: '/operacao-assistida',
     path: '/operacao-assistida',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedOcorrenciasPontoRoute =
+  AuthenticatedOcorrenciasPontoRouteImport.update({
+    id: '/ocorrencias-ponto',
+    path: '/ocorrencias-ponto',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedObservabilidadeRoute =
@@ -530,6 +537,7 @@ export interface FileRoutesByFullPath {
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/nova-ausencia': typeof AuthenticatedNovaAusenciaRoute
   '/observabilidade': typeof AuthenticatedObservabilidadeRoute
+  '/ocorrencias-ponto': typeof AuthenticatedOcorrenciasPontoRoute
   '/operacao-assistida': typeof AuthenticatedOperacaoAssistidaRoute
   '/operacoes': typeof AuthenticatedOperacoesRoute
   '/painel-rh': typeof AuthenticatedPainelRhRoute
@@ -604,6 +612,7 @@ export interface FileRoutesByTo {
   '/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/nova-ausencia': typeof AuthenticatedNovaAusenciaRoute
   '/observabilidade': typeof AuthenticatedObservabilidadeRoute
+  '/ocorrencias-ponto': typeof AuthenticatedOcorrenciasPontoRoute
   '/operacao-assistida': typeof AuthenticatedOperacaoAssistidaRoute
   '/operacoes': typeof AuthenticatedOperacoesRoute
   '/painel-rh': typeof AuthenticatedPainelRhRoute
@@ -680,6 +689,7 @@ export interface FileRoutesById {
   '/_authenticated/notificacoes': typeof AuthenticatedNotificacoesRoute
   '/_authenticated/nova-ausencia': typeof AuthenticatedNovaAusenciaRoute
   '/_authenticated/observabilidade': typeof AuthenticatedObservabilidadeRoute
+  '/_authenticated/ocorrencias-ponto': typeof AuthenticatedOcorrenciasPontoRoute
   '/_authenticated/operacao-assistida': typeof AuthenticatedOperacaoAssistidaRoute
   '/_authenticated/operacoes': typeof AuthenticatedOperacoesRoute
   '/_authenticated/painel-rh': typeof AuthenticatedPainelRhRoute
@@ -757,6 +767,7 @@ export interface FileRouteTypes {
     | '/notificacoes'
     | '/nova-ausencia'
     | '/observabilidade'
+    | '/ocorrencias-ponto'
     | '/operacao-assistida'
     | '/operacoes'
     | '/painel-rh'
@@ -831,6 +842,7 @@ export interface FileRouteTypes {
     | '/notificacoes'
     | '/nova-ausencia'
     | '/observabilidade'
+    | '/ocorrencias-ponto'
     | '/operacao-assistida'
     | '/operacoes'
     | '/painel-rh'
@@ -906,6 +918,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notificacoes'
     | '/_authenticated/nova-ausencia'
     | '/_authenticated/observabilidade'
+    | '/_authenticated/ocorrencias-ponto'
     | '/_authenticated/operacao-assistida'
     | '/_authenticated/operacoes'
     | '/_authenticated/painel-rh'
@@ -1074,6 +1087,13 @@ declare module '@tanstack/react-router' {
       path: '/operacao-assistida'
       fullPath: '/operacao-assistida'
       preLoaderRoute: typeof AuthenticatedOperacaoAssistidaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ocorrencias-ponto': {
+      id: '/_authenticated/ocorrencias-ponto'
+      path: '/ocorrencias-ponto'
+      fullPath: '/ocorrencias-ponto'
+      preLoaderRoute: typeof AuthenticatedOcorrenciasPontoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/observabilidade': {
@@ -1642,6 +1662,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNotificacoesRoute: typeof AuthenticatedNotificacoesRoute
   AuthenticatedNovaAusenciaRoute: typeof AuthenticatedNovaAusenciaRoute
   AuthenticatedObservabilidadeRoute: typeof AuthenticatedObservabilidadeRoute
+  AuthenticatedOcorrenciasPontoRoute: typeof AuthenticatedOcorrenciasPontoRoute
   AuthenticatedOperacaoAssistidaRoute: typeof AuthenticatedOperacaoAssistidaRoute
   AuthenticatedOperacoesRoute: typeof AuthenticatedOperacoesRoute
   AuthenticatedPainelRhRoute: typeof AuthenticatedPainelRhRoute
@@ -1688,6 +1709,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNotificacoesRoute: AuthenticatedNotificacoesRoute,
   AuthenticatedNovaAusenciaRoute: AuthenticatedNovaAusenciaRoute,
   AuthenticatedObservabilidadeRoute: AuthenticatedObservabilidadeRoute,
+  AuthenticatedOcorrenciasPontoRoute: AuthenticatedOcorrenciasPontoRoute,
   AuthenticatedOperacaoAssistidaRoute: AuthenticatedOperacaoAssistidaRoute,
   AuthenticatedOperacoesRoute: AuthenticatedOperacoesRoute,
   AuthenticatedPainelRhRoute: AuthenticatedPainelRhRoute,
@@ -1744,13 +1766,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
