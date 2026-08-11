@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -133,7 +133,7 @@ function OcorrenciasPontoPage() {
     defaultValues: {
       data_ocorrencia: format(new Date(), "yyyy-MM-dd"),
       projeto_id: "",
-      supervisor_usuario_id: roles.includes("supervisor") ? user?.id : "",
+      supervisor_usuario_id: roles.includes("supervisor") ? (user?.id || "") : "",
       colaborador_id: "",
       colaborador_manual: false,
       manual_matricula: "",
@@ -233,6 +233,13 @@ function OcorrenciasPontoPage() {
   
   const selectedProjetoId = form.watch("projeto_id");
   const selectedSupervisorId = form.watch("supervisor_usuario_id");
+
+  // Efeito para preencher automaticamente o supervisor se o usuário logado tiver a role supervisor
+  useEffect(() => {
+    if (roles.includes("supervisor") && user?.id && !form.getValues("supervisor_usuario_id")) {
+      form.setValue("supervisor_usuario_id", user.id);
+    }
+  }, [roles, user?.id, form]);
 
   const { data: supervisores } = useQuery({
     queryKey: ["supervisores", selectedProjetoId],
@@ -441,7 +448,7 @@ function OcorrenciasPontoPage() {
                                       onSelect={() => {
                                         form.setValue("projeto_id", p.id);
                                         form.setValue("empresa_id", p.empresa_id || "");
-                                        form.setValue("supervisor_usuario_id", "");
+                                        form.setValue("supervisor_usuario_id", roles.includes("supervisor") ? (user?.id || "") : "");
                                         form.setValue("colaborador_id", "");
                                       }}
                                   >
@@ -486,7 +493,7 @@ function OcorrenciasPontoPage() {
                           <Button
                             variant="outline"
                             role="combobox"
-                            disabled={!selectedProjetoId}
+                            disabled={!selectedProjetoId || roles.includes("supervisor")}
                             className={cn("justify-between", !field.value && "text-muted-foreground")}
                           >
                             {field.value
