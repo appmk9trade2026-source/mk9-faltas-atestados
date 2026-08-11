@@ -124,6 +124,9 @@ function OcorrenciasPontoPage() {
     resolver: zodResolver(ocorrenciaPontoSchema),
     defaultValues: {
       data_ocorrencia: format(new Date(), "yyyy-MM-dd"),
+      projeto_id: "",
+      supervisor_usuario_id: roles.includes("supervisor") ? user?.id : "",
+      colaborador_id: "",
       motivo: "",
       justificativa: "",
       arquivo_url: "https://placeholder.url", // Placeholder para o resolver do Zod
@@ -227,9 +230,11 @@ function OcorrenciasPontoPage() {
   const { data: colaboradores } = useColaboradoresAtivos({
     projetoId: selectedProjetoId || undefined,
     busca: buscaColab,
-    // @ts-ignore - a RPC agora aceita _supervisor_id, mas o hook useColaboradoresAtivos precisa ser ajustado ou o parâmetro passado via RPC internamente
+    // @ts-ignore
     supervisorId: selectedSupervisorId || undefined, 
   });
+
+  const numColaboradores = colaboradores?.length || 0;
 
   return (
     <AppShell title="Ocorrências de Ponto AMBEV">
