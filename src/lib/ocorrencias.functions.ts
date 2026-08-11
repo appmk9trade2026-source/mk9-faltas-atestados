@@ -17,6 +17,7 @@ export const ocorrenciaPontoSchema = z.object({
   empresa_id: uuid,
   projeto_id: uuid,
   colaborador_id: uuid, 
+  supervisor_usuario_id: uuid,
   data_ocorrencia: iso,
   motivo: z.string().trim().min(5).max(200),
   justificativa: z.string().trim().min(10).max(2000),
@@ -40,7 +41,8 @@ export const listarOcorrencias = createServerFn({ method: "GET" })
       .select(`
         *,
         projeto:projeto_id (nome),
-        colaborador:colaborador_id (nome_completo, matricula)
+        colaborador:colaborador_id (nome_completo, matricula),
+        supervisor:supervisor_usuario_id (id)
       `)
       .order("created_at", { ascending: false });
 
@@ -65,7 +67,18 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
       empresaId: data.empresa_id,
     });
 
-    // 2. Validar se o projeto é AMBEV (ID 0a6c2ac6-2872-47a0-b818-b4660ef81244 ou prefixo)
+    // 2. Validar vínculo Colaborador -> Supervisor -> Projeto
+    const { data: colab } = await context.supabase
+      .from("colaboradores")
+      .select("projeto_id, supervisor_usuario_id, ativo")
+      .eq("id", data.colaborador_id)
+      .single();
+
+    if (!colab || !colab.ativo) throw new Error("Colaborador não encontrado ou inativo.");
+    if (colab.projeto_id !== data.projeto_id) throw new Error("Colaborador não pertence ao projeto selecionado.");
+    if (colab.supervisor_usuario_id !== data.supervisor_usuario_id) throw new Error("Colaborador não pertence ao supervisor selecionado.");
+
+    // 3. Validar se o projeto é AMBEV
     const { data: projeto } = await context.supabase
       .from("projetos")
       .select("nome, empresa_id")
@@ -84,6 +97,7 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
         empresa_id: data.empresa_id,
         projeto_id: data.projeto_id,
         colaborador_id: data.colaborador_id,
+        supervisor_usuario_id: data.supervisor_usuario_id,
         data_ocorrencia: data.data_ocorrencia,
         motivo: data.motivo,
         justificativa: data.justificativa,
@@ -170,4 +184,18 @@ export const processarOcorrencia = createServerFn({ method: "POST" })
     } as any);
 
     return updated;
+  });
+
+/** Busca supervisores vinculados a um projeto */
+export const getSupervisoresProjeto = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: any) => z.object({
+    projeto_id: uuid
+  }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: supervisores, error } = await context.supabase.rpc("get_supervisores_projeto", {
+      _projeto_id: data.projeto_id
+    });
+    if (error) throw new Error(`Erro ao buscar supervisores: ${error.message}`);
+    return (supervisores || []) as { id: string; nome: string }[];
   });

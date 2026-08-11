@@ -66,6 +66,7 @@ import {
   listarOcorrencias, 
   criarOcorrencia, 
   processarOcorrencia,
+  getSupervisoresProjeto,
   ocorrenciaPontoSchema, 
   type OcorrenciaPontoInput 
 } from "@/lib/ocorrencias.functions";
@@ -110,6 +111,7 @@ function OcorrenciasPontoPage() {
   const listOcorrenciasFn = useServerFn(listarOcorrencias);
   const createOcorrenciaFn = useServerFn(criarOcorrencia);
   const processOcorrenciaFn = useServerFn(processarOcorrencia);
+  const getSupervisoresFn = useServerFn(getSupervisoresProjeto);
 
   const { data: ocorrencias, isLoading } = useQuery({
     queryKey: ["ocorrencias-ponto", statusFilter],
@@ -122,6 +124,9 @@ function OcorrenciasPontoPage() {
     resolver: zodResolver(ocorrenciaPontoSchema),
     defaultValues: {
       data_ocorrencia: format(new Date(), "yyyy-MM-dd"),
+      projeto_id: "",
+      supervisor_usuario_id: roles.includes("supervisor") ? user?.id : "",
+      colaborador_id: "",
       motivo: "",
       justificativa: "",
       arquivo_url: "https://placeholder.url", // Placeholder para o resolver do Zod
@@ -211,11 +216,25 @@ function OcorrenciasPontoPage() {
   };
 
   const { data: projetos } = useProjetosAtivosPorEmpresa(AMBEV_EMPRESA_ID);
+  
+  const selectedProjetoId = form.watch("projeto_id");
+  const selectedSupervisorId = form.watch("supervisor_usuario_id");
+
+  const { data: supervisores } = useQuery({
+    queryKey: ["supervisores", selectedProjetoId],
+    queryFn: () => getSupervisoresFn({ data: { projeto_id: selectedProjetoId } }),
+    enabled: !!selectedProjetoId,
+  });
+
   const [buscaColab, setBuscaColab] = useState("");
   const { data: colaboradores } = useColaboradoresAtivos({
-    projetoId: form.watch("projeto_id") || undefined,
+    projetoId: selectedProjetoId || undefined,
     busca: buscaColab,
+    // @ts-ignore
+    supervisorId: selectedSupervisorId || undefined, 
   });
+
+  const numColaboradores = colaboradores?.length || 0;
 
   return (
     <AppShell title="Ocorrências de Ponto AMBEV">
@@ -258,6 +277,7 @@ function OcorrenciasPontoPage() {
                   <TableHead>Protocolo</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Colaborador</TableHead>
+                  <TableHead>Supervisor</TableHead>
                   <TableHead>Projeto</TableHead>
                   <TableHead>Motivo</TableHead>
                   <TableHead>Status</TableHead>
@@ -287,6 +307,9 @@ function OcorrenciasPontoPage() {
                           <span>{oc.colaborador?.nome_completo || "Manual"}</span>
                           <span className="text-xs text-muted-foreground">{oc.colaborador?.matricula || "-"}</span>
                         </div>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {oc.supervisor_usuario_id || "-"}
                       </TableCell>
                       <TableCell>{oc.projeto?.nome || "-"}</TableCell>
                       <TableCell className="max-w-[200px] truncate">{oc.motivo}</TableCell>
@@ -372,10 +395,12 @@ function OcorrenciasPontoPage() {
                                   <CommandItem
                                     value={p.nome}
                                     key={p.id}
-                                    onSelect={() => {
-                                      form.setValue("projeto_id", p.id);
-                                      form.setValue("empresa_id", p.empresa_id || "");
-                                    }}
+                                      onSelect={() => {
+                                        form.setValue("projeto_id", p.id);
+                                        form.setValue("empresa_id", p.empresa_id || "");
+                                        form.setValue("supervisor_usuario_id", "");
+                                        form.setValue("colaborador_id", "");
+                                      }}
                                   >
                                     <Check className={cn("mr-2 h-4 w-4", p.id === field.value ? "opacity-100" : "opacity-0")} />
                                     {p.nome}
@@ -408,17 +433,75 @@ function OcorrenciasPontoPage() {
 
               <FormField
                 control={form.control}
-                name="colaborador_id"
+                name="supervisor_usuario_id"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Colaborador</FormLabel>
+                    <FormLabel>Supervisor</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
                             variant="outline"
                             role="combobox"
-                            disabled={!form.watch("projeto_id")}
+                            disabled={!selectedProjetoId}
+                            className={cn("justify-between", !field.value && "text-muted-foreground")}
+                          >
+                            {field.value
+                              ? supervisores?.find((s) => s.id === field.value)?.nome
+                              : "Selecione o supervisor"}
+                            <User className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar supervisor..." />
+                          <CommandList>
+                            <CommandEmpty>Nenhum supervisor encontrado.</CommandEmpty>
+                            <CommandGroup>
+                              {supervisores?.map((s) => (
+                                <CommandItem
+                                  value={s.id}
+                                  key={s.id}
+                                  onSelect={() => {
+                                    form.setValue("supervisor_usuario_id", s.id);
+                                    form.setValue("colaborador_id", "");
+                                  }}
+                                >
+                                  <Check className={cn("mr-2 h-4 w-4", s.id === field.value ? "opacity-100" : "opacity-0")} />
+                                  {s.nome}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="colaborador_id"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel className="flex justify-between items-center">
+                      Colaborador
+                      {selectedSupervisorId && numColaboradores > 0 && (
+                        <span className="text-[10px] font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                          {numColaboradores} ativos
+                        </span>
+                      )}
+                    </FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            disabled={!selectedProjetoId || !selectedSupervisorId}
                             className={cn("justify-between", !field.value && "text-muted-foreground")}
                           >
                             {field.value
