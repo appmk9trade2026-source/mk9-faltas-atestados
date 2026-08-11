@@ -205,6 +205,7 @@ function OcorrenciasPontoPage() {
 
       createMutation.mutate({
         ...data,
+        colaborador_id: data.colaborador_manual ? null : (data.colaborador_id || null),
         arquivo_url: publicUrl,
         arquivo_nome: selectedFile.name,
       });
