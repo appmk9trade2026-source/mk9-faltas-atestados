@@ -350,31 +350,38 @@ function OcorrenciasPontoPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => window.open(oc.arquivo_url, '_blank')}>
-                              <FileText className="mr-2 h-4 w-4" />
-                              Visualizar Evidência
-                            </DropdownMenuItem>
-                            {canProcess && oc.status === "PENDENTE" && (
-                              <DropdownMenuItem 
-                                className="text-primary font-medium"
-                                onClick={() => {
-                                  setSelectedOcorrencia(oc);
-                                  setIsProcessDialogOpen(true);
-                                }}
-                              >
-                                <CheckCircle2 className="mr-2 h-4 w-4" />
-                                Analisar Ocorrência
+                        <div className="flex items-center gap-1 justify-end">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => window.open(oc.arquivo_url, '_blank')}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                Visualizar Evidência
                               </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                              {canProcess && oc.status === "PENDENTE" && (
+                                <DropdownMenuItem 
+                                  className="text-primary font-medium"
+                                  onClick={() => {
+                                    setSelectedOcorrencia(oc);
+                                    setIsProcessDialogOpen(true);
+                                  }}
+                                >
+                                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                                  Analisar Ocorrência
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          {oc.ausencia_id && (
+                            <Badge variant="outline" className="h-5 px-1 bg-blue-50 text-blue-600 border-blue-200">
+                              VINCULADA
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
