@@ -334,7 +334,7 @@ function OcorrenciasPontoPage() {
                                     key={p.id}
                                     onSelect={() => {
                                       form.setValue("projeto_id", p.id);
-                                      form.setValue("empresa_id", p.empresa_id);
+                                      form.setValue("empresa_id", p.empresa_id || "");
                                     }}
                                   >
                                     <Check className={cn("mr-2 h-4 w-4", p.id === field.value ? "opacity-100" : "opacity-0")} />
