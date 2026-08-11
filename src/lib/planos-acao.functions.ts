@@ -101,8 +101,7 @@ export const listarPlanosAcao = createServerFn({ method: "GET" })
       .select(`
         *,
         projeto:projetos(nome),
-        colaborador:colaboradores(nome_completo, matricula),
-        responsavel:profiles!planos_acao_responsavel_usuario_id_fkey(nome)
+        colaborador:colaboradores(nome_completo, matricula)
       `)
       .order("created_at", { ascending: false });
 
@@ -116,7 +115,33 @@ export const listarPlanosAcao = createServerFn({ method: "GET" })
       throw new Error(`DATABASE_ERROR: ${error.message}`);
     }
 
-    return data;
+    const rows = data ?? [];
+    const ids = Array.from(
+      new Set(
+        rows.flatMap((r: any) =>
+          [r.responsavel_usuario_id, r.criado_por_usuario_id].filter(Boolean),
+        ),
+      ),
+    );
+
+    let nomes = new Map<string, string>();
+    if (ids.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, nome")
+        .in("id", ids);
+      nomes = new Map((profs ?? []).map((p: any) => [p.id, p.nome]));
+    }
+
+    return rows.map((r: any) => ({
+      ...r,
+      responsavel: r.responsavel_usuario_id
+        ? { nome: nomes.get(r.responsavel_usuario_id) ?? null }
+        : null,
+      criador: r.criado_por_usuario_id
+        ? { nome: nomes.get(r.criado_por_usuario_id) ?? null }
+        : null,
+    }));
   });
 
 const idInputSchema = z.object({ id: uuid });
@@ -132,9 +157,7 @@ export const obterPlanoAcao = createServerFn({ method: "GET" })
       .select(`
         *,
         projeto:projetos(nome),
-        colaborador:colaboradores(nome_completo, matricula),
-        responsavel:profiles!planos_acao_responsavel_usuario_id_fkey(nome),
-        criador:profiles!planos_acao_criado_por_usuario_id_fkey(nome)
+        colaborador:colaboradores(nome_completo, matricula)
       `)
       .eq("id", input.id)
       .single();
@@ -144,5 +167,26 @@ export const obterPlanoAcao = createServerFn({ method: "GET" })
       throw new Error(`DATABASE_ERROR: ${error.message}`);
     }
 
-    return data;
+    const ids = [data.responsavel_usuario_id, data.criado_por_usuario_id].filter(
+      Boolean,
+    ) as string[];
+    let nomes = new Map<string, string>();
+    if (ids.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, nome")
+        .in("id", ids);
+      nomes = new Map((profs ?? []).map((p: any) => [p.id, p.nome]));
+    }
+
+    return {
+      ...data,
+      responsavel: data.responsavel_usuario_id
+        ? { nome: nomes.get(data.responsavel_usuario_id) ?? null }
+        : null,
+      criador: data.criado_por_usuario_id
+        ? { nome: nomes.get(data.criado_por_usuario_id) ?? null }
+        : null,
+    };
   });
+
