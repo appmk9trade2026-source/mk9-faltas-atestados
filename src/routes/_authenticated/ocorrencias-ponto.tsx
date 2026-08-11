@@ -309,7 +309,7 @@ function OcorrenciasPontoPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-sm">
-                        {oc.supervisor?.full_name || "-"}
+                        {oc.supervisor?.full_name || oc.supervisor_usuario_id || "-"}
                       </TableCell>
                       <TableCell>{oc.projeto?.nome || "-"}</TableCell>
                       <TableCell className="max-w-[200px] truncate">{oc.motivo}</TableCell>
