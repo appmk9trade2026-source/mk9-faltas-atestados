@@ -5114,6 +5114,7 @@ export type Database = {
           matricula: string
           nome_completo: string
           projeto_id: string
+          supervisor_usuario_id: string
         }[]
       }
       get_opcoes_periodo_por_tipo: {
