@@ -14,6 +14,7 @@ export type ColaboradorAtivo = {
 export type ColaboradoresFiltros = {
   empresaId?: string | null;
   projetoId?: string | null;
+  supervisorId?: string | null;
   busca?: string | null;
 };
 
@@ -24,7 +25,7 @@ export type ColaboradoresFiltros = {
  * O escopo da sessão entra na queryKey para evitar reuso de cache entre usuários.
  */
 export function useColaboradoresAtivos(filtros: ColaboradoresFiltros = {}) {
-  const { empresaId, projetoId, busca } = filtros;
+  const { empresaId, projetoId, supervisorId, busca } = filtros;
   const scope = useSessionScope();
   return useQuery({
     queryKey: [
@@ -33,6 +34,7 @@ export function useColaboradoresAtivos(filtros: ColaboradoresFiltros = {}) {
       ...scope.keyParts,
       empresaId ?? null,
       projetoId ?? null,
+      supervisorId ?? null,
       busca ?? "",
     ],
     enabled: scope.ready,
@@ -40,6 +42,7 @@ export function useColaboradoresAtivos(filtros: ColaboradoresFiltros = {}) {
       const { data, error } = await supabase.rpc("get_colaboradores_ativos", {
         _empresa_id: empresaId ?? undefined,
         _projeto_id: projetoId ?? undefined,
+        _supervisor_id: supervisorId ?? undefined,
         _busca: busca ?? undefined,
       });
       if (error) throw error;

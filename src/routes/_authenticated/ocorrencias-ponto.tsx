@@ -66,6 +66,7 @@ import {
   listarOcorrencias, 
   criarOcorrencia, 
   processarOcorrencia,
+  getSupervisoresProjeto,
   ocorrenciaPontoSchema, 
   type OcorrenciaPontoInput 
 } from "@/lib/ocorrencias.functions";
@@ -110,6 +111,7 @@ function OcorrenciasPontoPage() {
   const listOcorrenciasFn = useServerFn(listarOcorrencias);
   const createOcorrenciaFn = useServerFn(criarOcorrencia);
   const processOcorrenciaFn = useServerFn(processarOcorrencia);
+  const getSupervisoresFn = useServerFn(getSupervisoresProjeto);
 
   const { data: ocorrencias, isLoading } = useQuery({
     queryKey: ["ocorrencias-ponto", statusFilter],
@@ -211,10 +213,22 @@ function OcorrenciasPontoPage() {
   };
 
   const { data: projetos } = useProjetosAtivosPorEmpresa(AMBEV_EMPRESA_ID);
+  
+  const selectedProjetoId = form.watch("projeto_id");
+  const selectedSupervisorId = form.watch("supervisor_usuario_id");
+
+  const { data: supervisores } = useQuery({
+    queryKey: ["supervisores", selectedProjetoId],
+    queryFn: () => getSupervisoresFn({ data: { projeto_id: selectedProjetoId } }),
+    enabled: !!selectedProjetoId,
+  });
+
   const [buscaColab, setBuscaColab] = useState("");
   const { data: colaboradores } = useColaboradoresAtivos({
-    projetoId: form.watch("projeto_id") || undefined,
+    projetoId: selectedProjetoId || undefined,
     busca: buscaColab,
+    // @ts-ignore - a RPC agora aceita _supervisor_id, mas o hook useColaboradoresAtivos precisa ser ajustado ou o parâmetro passado via RPC internamente
+    supervisorId: selectedSupervisorId || undefined, 
   });
 
   return (

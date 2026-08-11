@@ -67,7 +67,18 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
       empresaId: data.empresa_id,
     });
 
-    // 2. Validar se o projeto é AMBEV (ID 0a6c2ac6-2872-47a0-b818-b4660ef81244 ou prefixo)
+    // 2. Validar vínculo Colaborador -> Supervisor -> Projeto
+    const { data: colab } = await context.supabase
+      .from("colaboradores")
+      .select("projeto_id, supervisor_usuario_id, ativo")
+      .eq("id", data.colaborador_id)
+      .single();
+
+    if (!colab || !colab.ativo) throw new Error("Colaborador não encontrado ou inativo.");
+    if (colab.projeto_id !== data.projeto_id) throw new Error("Colaborador não pertence ao projeto selecionado.");
+    if (colab.supervisor_usuario_id !== data.supervisor_usuario_id) throw new Error("Colaborador não pertence ao supervisor selecionado.");
+
+    // 3. Validar se o projeto é AMBEV
     const { data: projeto } = await context.supabase
       .from("projetos")
       .select("nome, empresa_id")
