@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, Download, Rocket, FileText, Kanban as KanbanIcon, ShieldCheck } from "lucide-react";
+import { Plus, Download, Rocket, FileText, Kanban as KanbanIcon, ShieldCheck, ListTodo } from "lucide-react";
 import { exportReport, type ExportFormat } from "@/lib/relatorios-export";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { MK9_CHART_EXTENDED } from "@/lib/mk9-palette";
@@ -111,6 +111,7 @@ function RoadmapPage() {
           <TabsTrigger value="changelog">Changelog</TabsTrigger>
           <TabsTrigger value="versoes"><FileText className="h-3.5 w-3.5 mr-1" />Versões</TabsTrigger>
           <TabsTrigger value="homologacao_ambev"><ShieldCheck className="h-3.5 w-3.5 mr-1" />Homologação AMBEV</TabsTrigger>
+          <TabsTrigger value="fila_rh_ambev"><ListTodo className="h-3.5 w-3.5 mr-1" />Fila RH AMBEV</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard">
@@ -139,6 +140,10 @@ function RoadmapPage() {
 
         <TabsContent value="homologacao_ambev">
           <HomologacaoAmbevTab />
+        </TabsContent>
+
+        <TabsContent value="fila_rh_ambev">
+          <FilaRhAmbevTab />
         </TabsContent>
       </Tabs>
     </AppShell>
