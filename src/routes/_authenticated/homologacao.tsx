@@ -108,7 +108,7 @@ function HomologPage() {
   return (
     <AppShell title="Centro de Homologação" breadcrumb={["Sistema", "Homologação"]}>
       <p className="-mt-4 text-sm text-muted-foreground">
-        Homologação (UAT), critérios de Go-Live e Operação Assistida do CRM MK9.
+        Homologação (UAT), critérios de Go-Live e Operação Assistida do CRM MK9. Para o fluxo Ocorrência de Ponto AMBEV, utilize a guia Roadmap.
       </p>
 
       <Tabs defaultValue="cenarios" className="space-y-4">
