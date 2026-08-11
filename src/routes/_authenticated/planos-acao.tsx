@@ -479,7 +479,7 @@ function PlanosAcaoPage() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <FormLabel>Problema Identificado *</FormLabel>
+                  <label className="text-sm font-medium">Problema Identificado *</label>
                   <Button
                     type="button"
                     variant="ghost"
