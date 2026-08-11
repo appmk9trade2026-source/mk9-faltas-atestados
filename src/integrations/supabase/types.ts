@@ -2428,6 +2428,7 @@ export type Database = {
           registrado_em: string
           registrado_por: string | null
           status: Database["public"]["Enums"]["status_ocorrencia"]
+          supervisor_usuario_id: string | null
           updated_at: string
         }
         Insert: {
@@ -2449,6 +2450,7 @@ export type Database = {
           registrado_em?: string
           registrado_por?: string | null
           status?: Database["public"]["Enums"]["status_ocorrencia"]
+          supervisor_usuario_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -2470,6 +2472,7 @@ export type Database = {
           registrado_em?: string
           registrado_por?: string | null
           status?: Database["public"]["Enums"]["status_ocorrencia"]
+          supervisor_usuario_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -5105,18 +5108,40 @@ export type Database = {
           total_conversoes: number
         }[]
       }
-      get_colaboradores_ativos: {
-        Args: { _busca?: string; _empresa_id?: string; _projeto_id?: string }
-        Returns: {
-          cargo: string
-          empresa_id: string
-          id: string
-          matricula: string
-          nome_completo: string
-          projeto_id: string
-          supervisor_usuario_id: string
-        }[]
-      }
+      get_colaboradores_ativos:
+        | {
+            Args: {
+              _busca?: string
+              _empresa_id?: string
+              _projeto_id?: string
+            }
+            Returns: {
+              cargo: string
+              empresa_id: string
+              id: string
+              matricula: string
+              nome_completo: string
+              projeto_id: string
+              supervisor_usuario_id: string
+            }[]
+          }
+        | {
+            Args: {
+              _busca?: string
+              _empresa_id?: string
+              _projeto_id?: string
+              _supervisor_id?: string
+            }
+            Returns: {
+              cargo: string
+              empresa_id: string
+              id: string
+              matricula: string
+              nome_completo: string
+              projeto_id: string
+              supervisor_usuario_id: string
+            }[]
+          }
       get_opcoes_periodo_por_tipo: {
         Args: { _tipo_id: string }
         Returns: {
@@ -5138,6 +5163,13 @@ export type Database = {
         }[]
       }
       get_supervisor_ids_visiveis: { Args: never; Returns: string[] }
+      get_supervisores_projeto: {
+        Args: { _projeto_id: string }
+        Returns: {
+          id: string
+          nome: string
+        }[]
+      }
       get_supervisores_visiveis: {
         Args: never
         Returns: {
