@@ -21,7 +21,7 @@ export function useProjetosAtivosPorEmpresa(empresaId: string | null | undefined
       // + acessos de rh/compliance/super_admin). Evita o critério mais restrito da RPC.
       const { data, error } = await supabase
         .from("projetos")
-        .select("id, nome, codigo_protocolo")
+        .select("id, nome, codigo_protocolo, empresa_id")
         .eq("empresa_id", empresaId)
         .eq("ativo", true)
         .order("nome", { ascending: true });
