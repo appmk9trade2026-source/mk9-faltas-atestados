@@ -421,7 +421,7 @@ function buildSections(id: ReportId, d: any): { title: string; rows: Record<stri
           rows: [
             { Item: "Fonte", Valor: "public.rel_absenteismo (Fase 1)" },
             { Item: "Regra", Valor: "Somente registros com status_documental = 'ATIVO'" },
-            { Item: "Falta", Valor: "Lançamentos tipificados como FALTA" },
+            { Item: "Falta Operacional", Valor: "Lançamentos 'FALTA' com status_documental = 'ATIVO' e sem justificativa AMBEV" },
             { Item: "Atestado", Valor: "Lançamentos tipificados como ATESTADO" },
             { Item: "Privacidade", Valor: "Dados médicos sensíveis (CID, Imagens, Diagnóstico) omitidos por governança." },
             { Item: "Geração", Valor: new Date().toLocaleString("pt-BR") },
@@ -436,10 +436,11 @@ function buildSections(id: ReportId, d: any): { title: string; rows: Record<stri
       ];
     case "faltas":
       return [
-        { title: "Justificadas", rows: [{ Quantidade: d.justificadas?.quantidade ?? 0, Dias: d.justificadas?.dias ?? 0 }] },
-        { title: "Injustificadas", rows: [{ Quantidade: d.injustificadas?.quantidade ?? 0, Dias: d.injustificadas?.dias ?? 0 }] },
-        { title: "Ranking de projetos", rows: (d.ranking_projetos ?? []).map((r: any) => ({ Projeto: r.nome, Total: r.total, Dias: r.dias })) },
-        { title: "Ranking de colaboradores", rows: (d.ranking_colaboradores ?? []).map((r: any) => ({ Colaborador: r.nome, Total: r.total, Dias: r.dias })) },
+        { title: "Justificadas (Legado)", rows: [{ Quantidade: d.justificadas?.quantidade ?? 0, Dias: d.justificadas?.dias ?? 0 }] },
+        { title: "Justificadas (Ocorrência Ponto AMBEV)", rows: [{ Quantidade: d.justificadas_ambev?.quantidade ?? 0, Dias: d.justificadas_ambev?.dias ?? 0 }] },
+        { title: "Injustificadas (Faltas Operacionais)", rows: [{ Quantidade: d.injustificadas?.quantidade ?? 0, Dias: d.injustificadas?.dias ?? 0 }] },
+        { title: "Ranking de projetos (Faltas Operacionais)", rows: (d.ranking_projetos ?? []).map((r: any) => ({ Projeto: r.nome, Total: r.total, Dias: r.dias })) },
+        { title: "Ranking de colaboradores (Faltas Operacionais)", rows: (d.ranking_colaboradores ?? []).map((r: any) => ({ Colaborador: r.nome, Total: r.total, Dias: r.dias })) },
       ];
     case "licencas":
       return [
