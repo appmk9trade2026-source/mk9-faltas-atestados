@@ -185,16 +185,20 @@ function OcorrenciasPontoPage() {
     
     try {
       // Extrair o path do bucket 'atestados'
-      // A URL é algo como: .../storage/v1/object/public/atestados/ocorrencias-ponto/...
+      // A URL persistida é: .../storage/v1/object/public/atestados/ocorrencias-ponto/...
       // Precisamos da parte após 'atestados/'
       const parts = url.split('/atestados/');
-      if (parts.length < 2) {
-        window.open(url, '_blank');
-        return;
+      let path = parts.length >= 2 ? parts[1] : url;
+
+      // Limpar possíveis prefixos de URL caso o split não tenha sido perfeito ou a URL seja diferente
+      if (path.includes('storage/v1/object/')) {
+        path = path.split('storage/v1/object/').pop() || path;
+        // Se ainda tiver o nome do bucket no início do path resultante (ex: atestados/path/to/file)
+        if (path.startsWith(BUCKET_ATESTADOS + '/')) {
+          path = path.replace(BUCKET_ATESTADOS + '/', '');
+        }
       }
-      
-      const path = parts[1];
-      
+
       const { data, error } = await supabase.storage
         .from(BUCKET_ATESTADOS)
         .createSignedUrl(path, 60);
@@ -206,8 +210,6 @@ function OcorrenciasPontoPage() {
     } catch (error: any) {
       console.error("Erro ao gerar URL assinada:", error);
       toast.error("Não foi possível abrir a evidência com segurança.");
-      // Fallback para a URL original caso falhe
-      window.open(url, '_blank');
     }
   };
 
