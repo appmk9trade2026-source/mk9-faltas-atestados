@@ -745,6 +745,19 @@ function OcorrenciasPontoPage() {
                   <span className="text-muted-foreground text-[11px]">{selectedOcorrencia && format(new Date(selectedOcorrencia.data_ocorrencia), "dd/MM/yyyy")}</span>
                 </div>
               </div>
+              <div>
+                <p className="text-muted-foreground font-medium uppercase text-[10px] tracking-wider mb-1">Status de Vínculo</p>
+                <div className="flex flex-col">
+                  {selectedOcorrencia?.ausencia_id ? (
+                    <span className="text-blue-600 font-semibold text-xs flex items-center gap-1">
+                      <ShieldCheck className="h-3 w-3" />
+                      JUSTIFICADA (Vínculo Ativo)
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground text-xs italic">Aguardando Aprovação para Vínculo</span>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="bg-muted/30 p-4 rounded-lg border border-dashed text-sm">
