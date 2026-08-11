@@ -42,9 +42,11 @@ import {
   planoAcaoSchema, 
   type PlanoAcaoInput,
 } from "@/lib/planos-acao.functions";
+import { gerarSugestaoPlanoAcao } from "@/lib/planos-acao-ia.functions";
 import { useProjetosAtivosPorEmpresa } from "@/hooks/use-projetos";
 import { useColaboradoresAtivos } from "@/hooks/use-colaboradores";
 import { cn } from "@/lib/utils";
+import { Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/planos-acao")({
   head: () => ({ meta: [{ title: "Planos de Ação · CRM MK9" }] }),
@@ -100,6 +102,46 @@ function PlanosAcaoPage() {
       responsavel_usuario_id: user?.id || "" as any,
     },
   });
+
+  const generateAIFn = useServerFn(gerarSugestaoPlanoAcao);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+
+  const handleGenerateAI = async () => {
+    const tipoAlvo = form.getValues("tipo_alvo");
+    const projetoId = form.getValues("projeto_id");
+    const problema = form.getValues("problema_identificado");
+    
+    if (!projetoId || problema.length < 5) {
+      toast.error("Selecione um projeto e descreva o problema (mín. 5 caracteres) para usar a IA.");
+      return;
+    }
+
+    setIsGeneratingAI(true);
+    try {
+      const projeto = projetos?.find(p => p.id === projetoId);
+      const colaboradorId = form.getValues("colaborador_id");
+      const colaborador = colaboradores?.find(c => c.id === colaboradorId);
+
+      const res = await generateAIFn({
+        data: {
+          tipo_alvo: tipoAlvo,
+          projeto_nome: projeto?.nome,
+          colaborador_nome: colaborador?.nome_completo,
+          problema_identificado: problema
+        }
+      });
+
+      if (res.problema_revisado) form.setValue("problema_identificado", res.problema_revisado);
+      if (res.meta) form.setValue("meta", res.meta);
+      if (res.acao_proposta) form.setValue("acao_proposta", res.acao_proposta);
+      
+      toast.success("Sugestão da IA aplicada com sucesso!");
+    } catch (e: any) {
+      toast.error(`Erro ao gerar sugestão: ${e.message}`);
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
 
   const mutation = useMutation({
     mutationFn: (data: PlanoAcaoInput) => createPlanoFn({ data }),
@@ -302,8 +344,8 @@ function PlanosAcaoPage() {
                   control={form.control}
                   name="projeto_id"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col mt-2.5">
-                      <FormLabel>Projeto</FormLabel>
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Projeto *</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -324,9 +366,9 @@ function PlanosAcaoPage() {
                         </PopoverTrigger>
                         <PopoverContent className="p-0" align="start">
                           <Command>
-                            <CommandInput placeholder="Buscar projeto..." />
+                            <CommandInput placeholder="Buscar projeto por nome..." />
                             <CommandList>
-                              <CommandEmpty>Projeto não encontrado.</CommandEmpty>
+                              <CommandEmpty>Nenhum projeto disponível no seu escopo.</CommandEmpty>
                               <CommandGroup>
                                 {projetos?.map((p) => (
                                   <CommandItem
@@ -426,28 +468,54 @@ function PlanosAcaoPage() {
                 name="titulo"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Título do Plano</FormLabel>
+                    <FormLabel>Título do Plano *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ex: Redução de faltas Projeto X" {...field} />
+                      <Input placeholder="Ex: Redução de Faltas - Projeto X" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="problema_identificado"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Problema Identificado</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Descreva o problema observado..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <FormLabel>Problema Identificado *</FormLabel>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-xs text-primary hover:text-primary/80"
+                    disabled={isGeneratingAI || !form.watch("projeto_id") || form.watch("problema_identificado").length < 5}
+                    onClick={handleGenerateAI}
+                  >
+                    {isGeneratingAI ? (
+                      <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="mr-2 h-3 w-3" />
+                    )}
+                    ✨ Gerar plano com IA
+                  </Button>
+                </div>
+                <FormField
+                  control={form.control}
+                  name="problema_identificado"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Descreva o problema ou comportamento observado..." 
+                          className="min-h-[100px]"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <p className="text-[10px] text-muted-foreground italic">
+                  ✨ Sugestão gerada por IA — revise antes de criar o plano.
+                </p>
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <FormField
@@ -455,29 +523,69 @@ function PlanosAcaoPage() {
                   name="meta"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Meta a Alcançar</FormLabel>
+                      <FormLabel>Meta a Alcançar *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Ex: Reduzir em 15% as faltas" {...field} />
+                        <Textarea placeholder="Qual o resultado esperado?" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="acao_proposta"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Ação Proposta *</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="O que será feito?" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="prioridade"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Prioridade</FormLabel>
+                      <FormLabel>Prioridade *</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecione" />
+                            <SelectValue placeholder="Prioridade" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {Object.entries(PRIORIDADE_LABELS).map(([v, l]) => (
-                            <SelectItem key={v} value={v}>{l}</SelectItem>
+                          {Object.entries(PRIORIDADE_LABELS).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>{label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>{label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -487,27 +595,13 @@ function PlanosAcaoPage() {
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="acao_proposta"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ação Proposta</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Descreva a ação proposta..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="data_inicio"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Data de Início</FormLabel>
+                      <FormLabel>Data de Início *</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} />
                       </FormControl>
@@ -515,12 +609,13 @@ function PlanosAcaoPage() {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="prazo"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Prazo Final</FormLabel>
+                      <FormLabel>Prazo Final *</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} />
                       </FormControl>
@@ -531,12 +626,7 @@ function PlanosAcaoPage() {
               </div>
 
               <DialogFooter>
-                <Button 
-                  variant="outline" 
-                  type="button" 
-                  onClick={() => setIsNewDialogOpen(false)}
-                  disabled={mutation.isPending}
-                >
+                <Button variant="outline" type="button" onClick={() => setIsNewDialogOpen(false)}>
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={mutation.isPending}>
