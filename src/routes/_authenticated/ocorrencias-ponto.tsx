@@ -210,7 +210,7 @@ function OcorrenciasPontoPage() {
     });
   };
 
-  const { data: projetos } = useProjetosAtivosPorEmpresa(user?.user_metadata?.empresa_id);
+  const { data: projetos } = useProjetosAtivosPorEmpresa(AMBEV_EMPRESA_ID);
   const [buscaColab, setBuscaColab] = useState("");
   const { data: colaboradores } = useColaboradoresAtivos({
     projetoId: form.watch("projeto_id") || undefined,
