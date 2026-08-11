@@ -277,6 +277,7 @@ function OcorrenciasPontoPage() {
                   <TableHead>Protocolo</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Colaborador</TableHead>
+                  <TableHead>Supervisor</TableHead>
                   <TableHead>Projeto</TableHead>
                   <TableHead>Motivo</TableHead>
                   <TableHead>Status</TableHead>
@@ -306,6 +307,9 @@ function OcorrenciasPontoPage() {
                           <span>{oc.colaborador?.nome_completo || "Manual"}</span>
                           <span className="text-xs text-muted-foreground">{oc.colaborador?.matricula || "-"}</span>
                         </div>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {oc.supervisor?.full_name || "-"}
                       </TableCell>
                       <TableCell>{oc.projeto?.nome || "-"}</TableCell>
                       <TableCell className="max-w-[200px] truncate">{oc.motivo}</TableCell>
