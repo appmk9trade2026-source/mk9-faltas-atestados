@@ -41,7 +41,7 @@ export const listarOcorrencias = createServerFn({ method: "GET" })
         *,
         projeto:projeto_id (nome),
         colaborador:colaborador_id (nome_completo, matricula),
-        registrado_por_user:registrado_por (email)
+        registrado_por_user:registrado_por (id)
       `)
       .order("created_at", { ascending: false });
 
