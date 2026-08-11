@@ -185,18 +185,59 @@ export const processarOcorrencia = createServerFn({ method: "POST" })
     const canProcess = roles.some((r: string) => ["rh", "coordenador", "super_admin"].includes(r));
     if (!canProcess) throw new Error("Apenas RH ou Coordenadores podem processar ocorrências.");
 
-
-    // 2. Buscar ocorrência para conferir escopo
+    // 2. Buscar ocorrência para conferir escopo e dados para vínculo
     const { data: ocorrencia } = await context.supabase
       .from("ocorrencias_ponto")
-      .select("projeto_id, empresa_id, status")
+      .select("*, projeto:projeto_id (nome, empresa_id)")
       .eq("id", data.id)
       .single();
 
     if (!ocorrencia) throw new Error("Ocorrência não encontrada.");
     if (ocorrencia.status !== "PENDENTE") throw new Error("Esta ocorrência já foi processada.");
 
-    // 3. Atualizar
+    let vinculadoAusenciaId: string | null = null;
+
+    // 3. Lógica de Vínculo AMBEV (Fase 3) - Somente na Aprovação
+    if (data.status === "APROVADA") {
+      // Localizar falta compatível
+      const query = context.supabase
+        .from("ausencias")
+        .select("id, protocolo")
+        .eq("projeto_id", ocorrencia.projeto_id)
+        .eq("data_inicio", ocorrencia.data_ocorrencia)
+        .eq("tipo", "FALTA")
+        .eq("status_documental", "ATIVO");
+
+      if (ocorrencia.colaborador_id) {
+        query.eq("colaborador_id", ocorrencia.colaborador_id);
+      } else if (ocorrencia.manual_matricula) {
+        query.eq("manual_matricula", ocorrencia.manual_matricula);
+      }
+
+      const { data: faltas } = await query;
+
+      // Só vincula automaticamente se houver exatamente uma
+      if (faltas && faltas.length === 1) {
+        vinculadoAusenciaId = faltas[0].id;
+        
+        // Marcar falta como justificada
+        const { error: errorJustificativa } = await context.supabase
+          .from("ausencias")
+          .update({
+            status_justificativa: "JUSTIFICADA_OCORRENCIA_PONTO",
+            justificada_por_ocorrencia_id: ocorrencia.id,
+            observacao_processamento: `Justificada via Ocorrência AMBEV: ${ocorrencia.protocolo}`
+          })
+          .eq("id", vinculadoAusenciaId);
+          
+        if (errorJustificativa) {
+          console.error("[Fase 3] Erro ao marcar justificativa na ausência:", errorJustificativa);
+          // O fluxo continua, o vínculo na ocorrência é o principal
+        }
+      }
+    }
+
+    // 4. Atualizar Ocorrência
     const { data: updated, error } = await context.supabase
       .from("ocorrencias_ponto")
       .update({
@@ -204,6 +245,7 @@ export const processarOcorrencia = createServerFn({ method: "POST" })
         parecer_processamento: data.parecer,
         processado_por: context.userId,
         processado_em: new Date().toISOString(),
+        ausencia_id: vinculadoAusenciaId || ocorrencia.ausencia_id,
       })
       .eq("id", data.id)
       .select()
@@ -211,7 +253,7 @@ export const processarOcorrencia = createServerFn({ method: "POST" })
 
     if (error) throw new Error(`Erro ao processar ocorrência: ${error.message}`);
 
-    // 4. Auditoria
+    // 5. Auditoria
     await supabaseAdmin.rpc("log_audit_event", {
       _modulo: "ocorrencias",
       _acao: "MUDANCA_STATUS",
@@ -221,9 +263,24 @@ export const processarOcorrencia = createServerFn({ method: "POST" })
       _projeto_id: ocorrencia.projeto_id,
       _usuario_id: context.userId,
       _sucesso: true,
-      _observacoes: `Ocorrência ${data.status}: ${data.parecer}`,
+      _observacoes: `Ocorrência ${data.status} ${vinculadoAusenciaId ? '(Vinculada a Falta)' : ''}: ${data.parecer}`,
       _origem: "server"
     } as any);
+
+    if (vinculadoAusenciaId) {
+      await supabaseAdmin.rpc("log_audit_event", {
+        _modulo: "ausencias",
+        _acao: "LANCAMENTO", // Usando fallback por falta de enum custom
+        _entidade: "Ausência",
+        _registro_id: vinculadoAusenciaId,
+        _empresa_id: ocorrencia.empresa_id,
+        _projeto_id: ocorrencia.projeto_id,
+        _usuario_id: context.userId,
+        _sucesso: true,
+        _observacoes: `FALTA_JUSTIFICADA_POR_OCORRENCIA: ${ocorrencia.protocolo}`,
+        _origem: "server"
+      } as any);
+    }
 
     return updated;
   });
