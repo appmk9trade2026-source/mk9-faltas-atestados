@@ -14,6 +14,7 @@ import {
   Clock, 
   CheckCircle2, 
   AlertTriangle, 
+  ShieldCheck, 
   Building2, 
   User, 
   FileText,
