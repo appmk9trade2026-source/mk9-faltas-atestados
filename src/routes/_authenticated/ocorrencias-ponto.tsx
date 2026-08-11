@@ -51,7 +51,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { 
@@ -777,7 +777,7 @@ function OcorrenciasPontoPage() {
             </div>
 
             <div className="space-y-2 pt-2">
-              <Label htmlFor="parecer" className="text-sm font-bold">Parecer da Análise (RH/Coordenação) *</Label>
+              <label htmlFor="parecer" className="text-sm font-bold leading-none">Parecer da Análise (RH/Coordenação) *</label>
               <Textarea 
                 id="parecer"
                 placeholder="Descreva o motivo da aprovação ou reprovação..."
