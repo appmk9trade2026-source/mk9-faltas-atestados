@@ -180,6 +180,37 @@ function OcorrenciasPontoPage() {
     },
   });
 
+  const handleViewEvidence = async (url: string) => {
+    if (!url) return;
+    
+    try {
+      // Extrair o path do bucket 'atestados'
+      // A URL é algo como: .../storage/v1/object/public/atestados/ocorrencias-ponto/...
+      // Precisamos da parte após 'atestados/'
+      const parts = url.split('/atestados/');
+      if (parts.length < 2) {
+        window.open(url, '_blank');
+        return;
+      }
+      
+      const path = parts[1];
+      
+      const { data, error } = await supabase.storage
+        .from(BUCKET_ATESTADOS)
+        .createSignedUrl(path, 60);
+
+      if (error) throw error;
+      if (data?.signedUrl) {
+        window.open(data.signedUrl, '_blank');
+      }
+    } catch (error: any) {
+      console.error("Erro ao gerar URL assinada:", error);
+      toast.error("Não foi possível abrir a evidência com segurança.");
+      // Fallback para a URL original caso falhe
+      window.open(url, '_blank');
+    }
+  };
+
   const onSubmit: SubmitHandler<z.infer<typeof ocorrenciaPontoSchema>> = async (data) => {
     if (!selectedFile) {
       toast.error("Anexe uma evidência obrigatória.");
@@ -199,6 +230,8 @@ function OcorrenciasPontoPage() {
 
       if (uploadError) throw uploadError;
 
+      // Mesmo que o bucket seja privado, o getPublicUrl retorna a estrutura da URL
+      // que usamos como referência para extrair o path depois.
       const { data: { publicUrl } } = supabase.storage
         .from(BUCKET_ATESTADOS)
         .getPublicUrl(filePath);
@@ -349,7 +382,7 @@ function OcorrenciasPontoPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-sm">
-                        {oc.supervisor_usuario_id || "-"}
+                        {oc.supervisor?.nome || oc.supervisor_usuario_id || "-"}
                       </TableCell>
                       <TableCell>{oc.projeto?.nome || "-"}</TableCell>
                       <TableCell className="max-w-[200px] truncate">{oc.motivo}</TableCell>
@@ -367,7 +400,7 @@ function OcorrenciasPontoPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => window.open(oc.arquivo_url, '_blank')}>
+                              <DropdownMenuItem onClick={() => handleViewEvidence(oc.arquivo_url)}>
                                 <FileText className="mr-2 h-4 w-4" />
                                 Visualizar Evidência
                               </DropdownMenuItem>

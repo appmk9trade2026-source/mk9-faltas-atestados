@@ -70,7 +70,7 @@ export const listarOcorrencias = createServerFn({ method: "GET" })
         *,
         projeto:projeto_id (nome),
         colaborador:colaborador_id (nome_completo, matricula),
-        supervisor:supervisor_usuario_id (id)
+        supervisor:supervisor_usuario_id (nome)
       `)
       .order("created_at", { ascending: false });
 
