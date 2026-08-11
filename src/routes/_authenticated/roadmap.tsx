@@ -712,9 +712,3 @@ function VersoesTab({ releases, items }: { releases: ReleaseRow[]; items: Roadma
     </CardContent></Card>
   );
 }
-
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
