@@ -421,7 +421,7 @@ function buildSections(id: ReportId, d: any): { title: string; rows: Record<stri
           rows: [
             { Item: "Fonte", Valor: "public.rel_absenteismo (Fase 1)" },
             { Item: "Regra", Valor: "Somente registros com status_documental = 'ATIVO'" },
-            { Item: "Falta", Valor: "Lançamentos tipificados como FALTA" },
+            { Item: "Falta Operacional", Valor: "Lançamentos 'FALTA' com status_documental = 'ATIVO' e sem justificativa AMBEV" },
             { Item: "Atestado", Valor: "Lançamentos tipificados como ATESTADO" },
             { Item: "Privacidade", Valor: "Dados médicos sensíveis (CID, Imagens, Diagnóstico) omitidos por governança." },
             { Item: "Geração", Valor: new Date().toLocaleString("pt-BR") },
