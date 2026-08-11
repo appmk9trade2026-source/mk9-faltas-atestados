@@ -110,7 +110,6 @@ function RoadmapPage() {
           <TabsTrigger value="releases"><Rocket className="h-3.5 w-3.5 mr-1" />Releases</TabsTrigger>
           <TabsTrigger value="changelog">Changelog</TabsTrigger>
           <TabsTrigger value="versoes"><FileText className="h-3.5 w-3.5 mr-1" />Versões</TabsTrigger>
-          <TabsTrigger value="roadmap_ambev"><Plus className="h-3.5 w-3.5 mr-1" />Roadmap AMBEV</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard">
@@ -133,52 +132,6 @@ function RoadmapPage() {
           <ChangelogTab entries={changelogQ.data ?? []} releases={releasesQ.data ?? []} canEdit={canEdit} onChanged={() => qc.invalidateQueries({ queryKey: ["release_changelog"] })} />
         </TabsContent>
 
-        <TabsContent value="roadmap_ambev">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Roadmap Ocorrências AMBEV — Lançamento Manual</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6 max-w-4xl">
-                <section className="space-y-3">
-                  <h4 className="text-sm font-bold text-muted-foreground uppercase">Objetivo</h4>
-                  <p className="text-sm leading-relaxed">
-                    Permitir registrar uma Ocorrência de Ponto AMBEV quando o colaborador não for encontrado na base do Supervisor, garantindo a continuidade operacional sem corromper o cadastro mestre.
-                  </p>
-                </section>
-
-                <section className="space-y-3">
-                  <h4 className="text-sm font-bold text-muted-foreground uppercase">Fases Implementadas</h4>
-                  <div className="grid gap-4">
-                    <div className="flex gap-4 p-4 rounded-lg border bg-emerald-500/5 border-emerald-500/20">
-                      <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
-                      <div>
-                        <div className="text-sm font-bold">Fase 1: Fallback Manual (Baseline)</div>
-                        <div className="text-xs text-muted-foreground mt-1">Interface de exceção, validação de duplicidade server-side e snapshot de matrícula/nome.</div>
-                      </div>
-                    </div>
-                    <div className="flex gap-4 p-4 rounded-lg border bg-muted/50">
-                      <Clock className="h-5 w-5 text-muted-foreground shrink-0" />
-                      <div>
-                        <div className="text-sm font-bold text-muted-foreground">Fase 2: Fila de Análise RH (Próxima Etapa)</div>
-                        <div className="text-xs text-muted-foreground mt-1">Tratamento de exceções manuais pela equipe de RH para regularização de cadastros.</div>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-
-                <div className="p-4 rounded-lg border bg-amber-500/5 border-amber-500/20">
-                  <div className="text-xs font-bold text-amber-800">Diretriz de Preservação</div>
-                  <ul className="mt-2 space-y-1 text-[11px] text-amber-700">
-                    <li>• Manter isolamento estrito: Projeto → Supervisor → Colaborador</li>
-                    <li>• Não realizar updates automáticos em <code>public.colaboradores</code></li>
-                    <li>• Upload direto de evidência obrigatório para todos os lançamentos</li>
-                  </ul>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="versoes">
           <VersoesTab releases={releasesQ.data ?? []} items={itemsQ.data ?? []} />
