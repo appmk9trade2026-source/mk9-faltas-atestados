@@ -5436,6 +5436,7 @@ export type Database = {
           _empresa_id?: string
           _fim: string
           _inicio: string
+          _is_export?: boolean
           _projeto_id?: string
         }
         Returns: Json
