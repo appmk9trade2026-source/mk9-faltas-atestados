@@ -2511,6 +2511,13 @@ export type Database = {
             referencedRelation: "projetos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ocorrencias_ponto_supervisor_usuario_id_fkey"
+            columns: ["supervisor_usuario_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       opcoes_periodo_ausencia: {
