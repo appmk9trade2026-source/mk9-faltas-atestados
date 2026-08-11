@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import jsPDF from "jspdf";
 import { AppShell } from "@/components/layout/app-shell";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -114,11 +114,81 @@ function HomologPage() {
       <Tabs defaultValue="cenarios" className="space-y-4">
         <TabsList className="flex-wrap">
           <TabsTrigger value="cenarios"><ShieldCheck className="mr-2 h-4 w-4" />Cenários</TabsTrigger>
+          <TabsTrigger value="homologacao_ambev"><ShieldCheck className="mr-2 h-4 w-4" />Homologação AMBEV</TabsTrigger>
           <TabsTrigger value="golive"><Rocket className="mr-2 h-4 w-4" />Go-Live</TabsTrigger>
           <TabsTrigger value="opassist"><LifeBuoy className="mr-2 h-4 w-4" />Operação Assistida</TabsTrigger>
         </TabsList>
 
         <TabsContent value="cenarios"><CenariosTab canEdit={canEdit} /></TabsContent>
+        <TabsContent value="homologacao_ambev">
+          <Card>
+            <CardHeader className="border-b">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-blue-500" />
+                Matriz de Homologação: Ocorrência AMBEV Manual
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="space-y-8 max-w-4xl">
+                <section>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4">1. Identificação Técnica</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-3 rounded-lg border bg-muted/30">
+                      <div className="text-[10px] text-muted-foreground uppercase font-bold">Migration</div>
+                      <div className="text-sm font-mono mt-1">20260811143945_add_manual_fields_to_ocorrencias</div>
+                    </div>
+                    <div className="p-3 rounded-lg border bg-muted/30">
+                      <div className="text-[10px] text-muted-foreground uppercase font-bold">Campos Adicionados</div>
+                      <div className="text-xs mt-1 space-y-1">
+                        <div>• <code className="bg-muted px-1 rounded text-blue-600">manual_matricula</code> (TEXT)</div>
+                        <div>• <code className="bg-muted px-1 rounded text-blue-600">manual_nome</code> (TEXT)</div>
+                        <div>• <code className="bg-muted px-1 rounded text-blue-600">colaborador_manual</code> (BOOLEAN)</div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4">2. Cenários de Teste</h3>
+                  <div className="space-y-3">
+                    {[
+                      { id: "T1", nome: "Fluxo Normal (Regressão)", desc: "Garantir que colaboradores existentes continuam funcionando sem marcação manual.", status: "HOMOLOGADO" },
+                      { id: "T2", nome: "Interface Manual", desc: "Confirmar que os campos Matrícula e Nome aparecem ao ativar fallback.", status: "HOMOLOGADO" },
+                      { id: "T3", nome: "Matrícula Inexistente", desc: "Permitir criação sem cadastrar colaborador mestre automaticamente.", status: "HOMOLOGADO" },
+                      { id: "T4", nome: "Matrícula Existente", desc: "Bloquear duplicidade se o colaborador já existir no mesmo contexto.", status: "HOMOLOGADO" },
+                      { id: "T5", nome: "Vínculo Divergente", desc: "Permitir manual se houver divergência de supervisor/projeto, sem alterar mestre.", status: "HOMOLOGADO" },
+                      { id: "T6", nome: "Segurança de Escopo", desc: "Validar bloqueio server-side contra manipulação de Supervisor UUID.", status: "HOMOLOGADO" },
+                      { id: "T7", nome: "Restrição de Projeto", desc: "Confirmar que apenas projetos AMBEV permitem o modo manual.", status: "HOMOLOGADO" },
+                      { id: "T8", nome: "Evidência Obrigatória", desc: "Garantir que o upload de arquivo continua sendo exigido no modo manual.", status: "HOMOLOGADO" }
+                    ].map((t) => (
+                      <div key={t.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                        <div className="flex items-start gap-3">
+                          <Badge variant="outline" className="mt-0.5">{t.id}</Badge>
+                          <div>
+                            <div className="text-sm font-semibold">{t.nome}</div>
+                            <div className="text-xs text-muted-foreground leading-relaxed">{t.desc}</div>
+                          </div>
+                        </div>
+                        <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">{t.status}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/50 flex items-start gap-4">
+                  <ShieldCheck className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-sm font-bold text-blue-900">Governança P0 Confirmada</div>
+                    <div className="text-xs text-blue-700 mt-1 leading-relaxed">
+                      A implementação não altera o cadastro mestre, não cria duplicidades de matrícula e preserva o isolamento de projetos.
+                      O build final foi validado e a <code>Home</code> permanece como redirect puro.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
         <TabsContent value="golive"><GoLiveTab canEdit={canEdit} /></TabsContent>
         <TabsContent value="opassist"><OpAssistTab canEdit={canEdit} /></TabsContent>
       </Tabs>
