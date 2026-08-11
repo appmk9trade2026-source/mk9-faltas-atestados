@@ -119,6 +119,7 @@ function OcorrenciasPontoPage() {
     queryFn: () => listOcorrenciasFn({ 
       data: { status: statusFilter === "all" ? undefined : statusFilter as any }
     }),
+    refetchInterval: 30000, // Refresh every 30s for RH analysis
   });
 
   const form = useForm<z.infer<typeof ocorrenciaPontoSchema>>({
@@ -248,7 +249,14 @@ function OcorrenciasPontoPage() {
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Ocorrências de Ponto AMBEV</h1>
-            <p className="text-muted-foreground">Justificativas operacionais para marcações de ponto ausentes.</p>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <p>Justificativas operacionais para marcações de ponto ausentes.</p>
+              {ocorrencias && ocorrencias.filter(o => o.status === 'PENDENTE').length > 0 && (
+                <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">
+                  {ocorrencias.filter(o => o.status === 'PENDENTE').length} Pendentes
+                </Badge>
+              )}
+            </div>
           </div>
           {canCreate && (
             <Button onClick={() => setIsNewDialogOpen(true)}>
