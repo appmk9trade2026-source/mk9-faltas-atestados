@@ -17,7 +17,7 @@ export const ocorrenciaPontoSchema = z.object({
   empresa_id: uuid,
   projeto_id: uuid,
   colaborador_id: uuid.nullable().optional(), 
-  colaborador_manual: z.boolean().default(false),
+  colaborador_manual: z.boolean(),
   manual_matricula: z.string().trim().max(50).optional().nullable(),
   manual_nome: z.string().trim().max(255).optional().nullable(),
   supervisor_usuario_id: uuid,
