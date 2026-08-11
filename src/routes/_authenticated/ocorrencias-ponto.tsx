@@ -386,10 +386,12 @@ function OcorrenciasPontoPage() {
                                   <CommandItem
                                     value={p.nome}
                                     key={p.id}
-                                    onSelect={() => {
-                                      form.setValue("projeto_id", p.id);
-                                      form.setValue("empresa_id", p.empresa_id || "");
-                                    }}
+                                      onSelect={() => {
+                                        form.setValue("projeto_id", p.id);
+                                        form.setValue("empresa_id", p.empresa_id || "");
+                                        form.setValue("supervisor_usuario_id", "");
+                                        form.setValue("colaborador_id", "");
+                                      }}
                                   >
                                     <Check className={cn("mr-2 h-4 w-4", p.id === field.value ? "opacity-100" : "opacity-0")} />
                                     {p.nome}
@@ -422,17 +424,75 @@ function OcorrenciasPontoPage() {
 
               <FormField
                 control={form.control}
-                name="colaborador_id"
+                name="supervisor_usuario_id"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Colaborador</FormLabel>
+                    <FormLabel>Supervisor</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
                             variant="outline"
                             role="combobox"
-                            disabled={!form.watch("projeto_id")}
+                            disabled={!selectedProjetoId}
+                            className={cn("justify-between", !field.value && "text-muted-foreground")}
+                          >
+                            {field.value
+                              ? supervisores?.find((s) => s.id === field.value)?.nome
+                              : "Selecione o supervisor"}
+                            <User className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Buscar supervisor..." />
+                          <CommandList>
+                            <CommandEmpty>Nenhum supervisor encontrado.</CommandEmpty>
+                            <CommandGroup>
+                              {supervisores?.map((s) => (
+                                <CommandItem
+                                  value={s.id}
+                                  key={s.id}
+                                  onSelect={() => {
+                                    form.setValue("supervisor_usuario_id", s.id);
+                                    form.setValue("colaborador_id", "");
+                                  }}
+                                >
+                                  <Check className={cn("mr-2 h-4 w-4", s.id === field.value ? "opacity-100" : "opacity-0")} />
+                                  {s.nome}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="colaborador_id"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel className="flex justify-between items-center">
+                      Colaborador
+                      {selectedSupervisorId && numColaboradores > 0 && (
+                        <span className="text-[10px] font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                          {numColaboradores} ativos
+                        </span>
+                      )}
+                    </FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            disabled={!selectedProjetoId || !selectedSupervisorId}
                             className={cn("justify-between", !field.value && "text-muted-foreground")}
                           >
                             {field.value
