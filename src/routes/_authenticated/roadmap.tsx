@@ -136,6 +136,10 @@ function RoadmapPage() {
         <TabsContent value="versoes">
           <VersoesTab releases={releasesQ.data ?? []} items={itemsQ.data ?? []} />
         </TabsContent>
+
+        <TabsContent value="homologacao_ambev">
+          <HomologacaoAmbevTab />
+        </TabsContent>
       </Tabs>
     </AppShell>
   );
