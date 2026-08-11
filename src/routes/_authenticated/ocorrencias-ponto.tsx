@@ -120,7 +120,11 @@ function OcorrenciasPontoPage() {
     queryFn: () => listOcorrenciasFn({ 
       data: { status: statusFilter === "all" ? undefined : statusFilter as any }
     }),
-    refetchInterval: 30000, // Refresh every 30s for RH analysis
+    refetchInterval: 30000,
+    select: (data) => data.map(oc => ({
+      ...oc,
+      ausencia: oc.ausencia_id ? (oc as any).ausencia : null
+    }))
   });
 
   const form = useForm<z.infer<typeof ocorrenciaPontoSchema>>({
