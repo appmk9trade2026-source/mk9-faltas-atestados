@@ -16,7 +16,7 @@ const iso = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "data inválida");
 export const ocorrenciaPontoSchema = z.object({
   empresa_id: uuid,
   projeto_id: uuid,
-  colaborador_id: uuid.nullable().optional(), 
+  colaborador_id: uuid.nullable().optional().or(z.literal("")), 
   colaborador_manual: z.boolean(),
   manual_matricula: z.string().trim().max(50).optional().nullable(),
   manual_nome: z.string().trim().max(255).optional().nullable(),
@@ -27,6 +27,31 @@ export const ocorrenciaPontoSchema = z.object({
   arquivo_url: z.string().trim().url("URL de anexo inválida"),
   arquivo_nome: z.string().trim().max(255).optional(),
   ausencia_id: uuid.nullable().optional(),
+}).superRefine((data, ctx) => {
+  if (data.colaborador_manual) {
+    if (!data.manual_matricula) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Matrícula é obrigatória no modo manual",
+        path: ["manual_matricula"],
+      });
+    }
+    if (!data.manual_nome) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Nome é obrigatório no modo manual",
+        path: ["manual_nome"],
+      });
+    }
+  } else {
+    if (!data.colaborador_id || data.colaborador_id === "") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Colaborador é obrigatório",
+        path: ["colaborador_id"],
+      });
+    }
+  }
 });
 
 export type OcorrenciaPontoInput = z.infer<typeof ocorrenciaPontoSchema>;
@@ -60,7 +85,14 @@ export const listarOcorrencias = createServerFn({ method: "GET" })
 /** Cria uma nova ocorrência de ponto */
 export const criarOcorrencia = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: any) => ocorrenciaPontoSchema.parse(data))
+  .inputValidator((data: any) => {
+    // Normalizar colaborador_id vazio para null antes da validação
+    const normalizedData = { ...data };
+    if (normalizedData.colaborador_id === "" || normalizedData.colaborador_id === undefined) {
+      normalizedData.colaborador_id = null;
+    }
+    return ocorrenciaPontoSchema.parse(normalizedData);
+  })
   .handler(async ({ data, context }) => {
     // 1. Validar permissão (Supervisor, Coordenador, RH)
     await requirePermission({
