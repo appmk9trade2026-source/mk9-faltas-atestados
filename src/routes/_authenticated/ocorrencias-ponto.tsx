@@ -500,59 +500,125 @@ function OcorrenciasPontoPage() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="colaborador_id"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel className="flex justify-between items-center">
-                      Colaborador
-                      {selectedSupervisorId && numColaboradores > 0 && (
-                        <span className="text-[10px] font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                          {numColaboradores} ativos
-                        </span>
+              {!manualMode ? (
+                <FormField
+                  control={form.control}
+                  name="colaborador_id"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel className="flex justify-between items-center">
+                        Colaborador
+                        {selectedSupervisorId && numColaboradores > 0 && (
+                          <span className="text-[10px] font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                            {numColaboradores} ativos
+                          </span>
+                        )}
+                      </FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              disabled={!selectedProjetoId || !selectedSupervisorId}
+                              className={cn("justify-between", !field.value && "text-muted-foreground")}
+                            >
+                              {field.value
+                                ? colaboradores?.find((c) => c.id === field.value)?.nome_completo
+                                : "Selecione o colaborador"}
+                              <User className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-0" align="start">
+                          <Command shouldFilter={false}>
+                            <CommandInput placeholder="Buscar por nome ou matrícula..." onValueChange={setBuscaColab} />
+                            <CommandList>
+                              <CommandEmpty>Nenhum colaborador encontrado.</CommandEmpty>
+                              <CommandGroup>
+                                {colaboradores?.map((c) => (
+                                  <CommandItem value={c.id} key={c.id} onSelect={() => form.setValue("colaborador_id", c.id)}>
+                                    <Check className={cn("mr-2 h-4 w-4", c.id === field.value ? "opacity-100" : "opacity-0")} />
+                                    <div className="flex flex-col">
+                                      <span>{c.nome_completo}</span>
+                                      <span className="text-xs text-muted-foreground">Matrícula: {c.matricula}</span>
+                                    </div>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                      {selectedProjetoId && (
+                        <Button 
+                          type="button" 
+                          variant="link" 
+                          className="h-auto p-0 text-xs text-blue-500 self-start"
+                          onClick={() => {
+                            setManualMode(true);
+                            form.setValue("colaborador_manual", true);
+                            form.setValue("colaborador_id", "");
+                          }}
+                        >
+                          Não encontrou o colaborador? Lançar manualmente
+                        </Button>
                       )}
-                    </FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            disabled={!selectedProjetoId || !selectedSupervisorId}
-                            className={cn("justify-between", !field.value && "text-muted-foreground")}
-                          >
-                            {field.value
-                              ? colaboradores?.find((c) => c.id === field.value)?.nome_completo
-                              : "Selecione o colaborador"}
-                            <User className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="p-0" align="start">
-                        <Command shouldFilter={false}>
-                          <CommandInput placeholder="Buscar por nome ou matrícula..." onValueChange={setBuscaColab} />
-                          <CommandList>
-                            <CommandEmpty>Nenhum colaborador encontrado.</CommandEmpty>
-                            <CommandGroup>
-                              {colaboradores?.map((c) => (
-                                <CommandItem value={c.id} key={c.id} onSelect={() => form.setValue("colaborador_id", c.id)}>
-                                  <Check className={cn("mr-2 h-4 w-4", c.id === field.value ? "opacity-100" : "opacity-0")} />
-                                  <div className="flex flex-col">
-                                    <span>{c.nome_completo}</span>
-                                    <span className="text-xs text-muted-foreground">Matrícula: {c.matricula}</span>
-                                  </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    </FormItem>
+                  )}
+                />
+              ) : (
+                <div className="space-y-4 p-4 border rounded-lg bg-blue-50/50 border-blue-200">
+                  <div className="flex justify-between items-center">
+                    <Badge className="bg-blue-500">MODO MANUAL</Badge>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-7 text-xs"
+                      onClick={() => {
+                        setManualMode(false);
+                        form.setValue("colaborador_manual", false);
+                        form.setValue("manual_matricula", "");
+                        form.setValue("manual_nome", "");
+                      }}
+                    >
+                      <X className="mr-1 h-3 w-3" />
+                      Voltar para busca
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="manual_matricula"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Matrícula *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="000000" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="manual_nome"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nome Completo *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Nome do colaborador" {...field} value={field.value || ""} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              )}
 
               <FormField
                 control={form.control}
