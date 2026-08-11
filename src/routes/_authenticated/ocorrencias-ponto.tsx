@@ -92,6 +92,8 @@ const STATUS_COLORS: Record<string, string> = {
   CANCELADA: "bg-gray-500/10 text-gray-500 border-gray-500/20",
 };
 
+const AMBEV_EMPRESA_ID = "0a6c2ac6-2872-47a0-b818-b4660ef81244";
+
 function OcorrenciasPontoPage() {
   const { user, roles } = useSession();
   const queryClient = useQueryClient();
