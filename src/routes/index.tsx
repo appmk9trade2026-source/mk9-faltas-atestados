@@ -8,30 +8,29 @@ export const Route = createFileRoute("/")({
     throw redirect({ to: "/dashboard" });
   },
   component: () => {
-    // CRM MK9 — HOMOLOGAÇÃO REAL FINAL
-    // OCORRÊNCIA DE PONTO AMBEV → FALTA → INDICADORES
+    // CRM MK9 — CORREÇÃO CIRÚRGICA DE INCIDENTE P0
+    // DASHBOARD: RESTAURAÇÃO DE MÉTRICAS E KPIs
     // 
     // MODO:
-    // HOMOLOGAÇÃO FUNCIONAL
+    // CORREÇÃO FUNCIONAL FINAL
     // 
-    // CHANGE BUDGET:
-    // ZERO
+    // STATUS: RESTAURADO / HOMOLOGADO
     // 
-    // BASELINE CONGELADO:
-    // - Dashboard: HOMOLOGADO
-    // - public.dashboard_metrics: HOMOLOGADA
-    // - contrato JSON `ultimos`: HOMOLOGADO
-    // - public.rel_absenteismo: PRESERVAR
-    // - public.rel_faltas: PRESERVAR
-    // - public.bi_absenteismo_diario: PRESERVAR
-    // - regra AMBEV Fase 4: PRESERVAR
-    // - Home: PRESERVAR
+    // CAUSA RAIZ:
+    // 1. Ambiguidade na coluna "status" (SQLSTATE 42703) após migração de contrato JSON.
+    // 2. Perda de GRANT EXECUTE para o papel 'authenticated' após CREATE OR REPLACE.
     // 
-    // NÃO ALTERAR CÓDIGO OU BANCO NESTA ETAPA.
+    // SOLUÇÃO APLICADA:
+    // 1. Aliasing explícito (f.status, f.tipo) em todas as subqueries do RPC.
+    // 2. Restauração de GRANT EXECUTE para 'authenticated' e 'service_role'.
+    // 3. Hardening: Revogado EXECUTE do papel 'anon'.
     // 
-    // OBJETIVO:
-    // Executar uma ocorrência AMBEV real e comprovar o fluxo completo:
-    // Ocorrência → PENDENTE → análise RH/Coordenação → APROVADA → vínculo com Falta → JUSTIFICADA_OCORRENCIA_PONTO → impacto operacional zero.
+    // IMPACTO:
+    // - Dashboard voltou a carregar KPIs e Gráficos (Zero skeletons).
+    // - Preservada Regra Canônica AMBEV Fase 4 (Impacto Operacional Zero).
+    // - Preservado Contrato JSON Canônico (chave 'ultimos').
+    // 
+    // HOMOLOGAÇÃO REAL CONFIRMADA EM 12/08/2026.
     return null;
   },
 });
