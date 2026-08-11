@@ -119,6 +119,7 @@ function OcorrenciasPontoPage() {
     queryFn: () => listOcorrenciasFn({ 
       data: { status: statusFilter === "all" ? undefined : statusFilter as any }
     }),
+    refetchInterval: 30000, // Refresh every 30s for RH analysis
   });
 
   const form = useForm<z.infer<typeof ocorrenciaPontoSchema>>({
@@ -248,7 +249,14 @@ function OcorrenciasPontoPage() {
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Ocorrências de Ponto AMBEV</h1>
-            <p className="text-muted-foreground">Justificativas operacionais para marcações de ponto ausentes.</p>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <p>Justificativas operacionais para marcações de ponto ausentes.</p>
+              {ocorrencias && ocorrencias.filter(o => o.status === 'PENDENTE').length > 0 && (
+                <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">
+                  {ocorrencias.filter(o => o.status === 'PENDENTE').length} Pendentes
+                </Badge>
+              )}
+            </div>
           </div>
           {canCreate && (
             <Button onClick={() => setIsNewDialogOpen(true)}>
@@ -346,15 +354,18 @@ function OcorrenciasPontoPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => window.open(oc.arquivo_url, '_blank')}>
                               <FileText className="mr-2 h-4 w-4" />
-                              Ver Anexo
+                              Visualizar Evidência
                             </DropdownMenuItem>
                             {canProcess && oc.status === "PENDENTE" && (
-                              <DropdownMenuItem onClick={() => {
-                                setSelectedOcorrencia(oc);
-                                setIsProcessDialogOpen(true);
-                              }}>
+                              <DropdownMenuItem 
+                                className="text-primary font-medium"
+                                onClick={() => {
+                                  setSelectedOcorrencia(oc);
+                                  setIsProcessDialogOpen(true);
+                                }}
+                              >
                                 <CheckCircle2 className="mr-2 h-4 w-4" />
-                                Processar
+                                Analisar Ocorrência
                               </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>
@@ -688,47 +699,88 @@ function OcorrenciasPontoPage() {
 
       {/* Modal Processar Ocorrência */}
       <Dialog open={isProcessDialogOpen} onOpenChange={setIsProcessDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>Processar Ocorrência</DialogTitle>
+            <DialogTitle>Análise de Ocorrência de Ponto AMBEV</DialogTitle>
             <DialogDescription>
-              Protocolo: {selectedOcorrencia?.protocolo}
+              Protocolo: <code className="bg-muted px-1 rounded text-foreground font-mono">{selectedOcorrencia?.protocolo}</code>
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="rounded-lg border p-3 bg-muted/50 text-sm">
-              <p><strong>Motivo:</strong> {selectedOcorrencia?.motivo}</p>
-              <p className="mt-2"><strong>Justificativa:</strong> {selectedOcorrencia?.justificativa}</p>
+            <div className="grid grid-cols-2 gap-4 text-sm border-b pb-4">
+              <div>
+                <p className="text-muted-foreground font-medium uppercase text-[10px] tracking-wider mb-1">Colaborador</p>
+                {selectedOcorrencia?.colaborador_manual ? (
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-blue-600 flex items-center gap-1">
+                      {selectedOcorrencia.manual_nome}
+                      <Badge variant="secondary" className="text-[9px] h-3.5 px-1 bg-blue-50 border-blue-100 text-blue-600">MANUAL</Badge>
+                    </span>
+                    <span className="text-muted-foreground text-xs">Matrícula: {selectedOcorrencia.manual_matricula}</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col">
+                    <span className="font-semibold">{selectedOcorrencia?.colaborador?.nome_completo}</span>
+                    <span className="text-muted-foreground text-xs">Matrícula: {selectedOcorrencia?.colaborador?.matricula}</span>
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="text-muted-foreground font-medium uppercase text-[10px] tracking-wider mb-1">Contexto</p>
+                <div className="flex flex-col">
+                  <span className="font-medium text-xs">{selectedOcorrencia?.projeto?.nome}</span>
+                  <span className="text-muted-foreground text-[11px]">{selectedOcorrencia && format(new Date(selectedOcorrencia.data_ocorrencia), "dd/MM/yyyy")}</span>
+                </div>
+              </div>
             </div>
 
-            <Form {...processForm}>
-              <form className="space-y-4">
-                <FormField
-                  control={processForm.control}
-                  name="parecer"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Parecer RH / Coordenação</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder="Justifique a aprovação ou reprovação..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </form>
-            </Form>
+            <div className="bg-muted/30 p-4 rounded-lg border border-dashed text-sm">
+              <p className="font-semibold text-xs uppercase mb-2 text-muted-foreground">Justificativa do Supervisor</p>
+              <p className="italic">"{selectedOcorrencia?.justificativa}"</p>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-primary/5 rounded-md border border-primary/10">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Documento de Evidência</span>
+              </div>
+              <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => window.open(selectedOcorrencia?.arquivo_url, '_blank')}>
+                Abrir Anexo
+              </Button>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <Label htmlFor="parecer" className="text-sm font-bold">Parecer da Análise (RH/Coordenação) *</Label>
+              <Textarea 
+                id="parecer"
+                placeholder="Descreva o motivo da aprovação ou reprovação..."
+                {...processForm.register("parecer")}
+                className="min-h-[100px] text-sm"
+              />
+              <p className="text-[10px] text-muted-foreground italic">
+                * Confirma que a evidência apresentada justifica a ausência de marcação de ponto?
+              </p>
+            </div>
           </div>
 
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => handleProcess("REPROVADA")} disabled={processMutation.isPending} className="border-red-500 text-red-500 hover:bg-red-50">
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setIsProcessDialogOpen(false)}>Cancelar</Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => handleProcess("REPROVADA")}
+              disabled={processMutation.isPending}
+            >
               <X className="mr-2 h-4 w-4" />
               Reprovar
             </Button>
-            <Button onClick={() => handleProcess("APROVADA")} disabled={processMutation.isPending}>
+            <Button 
+              className="bg-green-600 hover:bg-green-700" 
+              onClick={() => handleProcess("APROVADA")}
+              disabled={processMutation.isPending}
+            >
               {processMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-              Aprovar
+              Aprovar Ocorrência
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -150,7 +150,7 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
     if (error) throw new Error(`Erro ao criar ocorrência: ${error.message}`);
 
     // 5. Log de auditoria
-    const acaoAuditoria = data.colaborador_manual ? "OCORRENCIA_PONTO_MANUAL_CRIADA" : "CRIAR";
+    const acaoAuditoria = data.colaborador_manual ? "LANCAMENTO" : "LANCAMENTO";
     const obsAuditoria = data.colaborador_manual 
       ? `Lançamento manual para matrícula ${data.manual_matricula}: ${newOcorrencia.protocolo}`
       : `Nova ocorrência de ponto protocolada: ${newOcorrencia.protocolo}`;
@@ -214,7 +214,7 @@ export const processarOcorrencia = createServerFn({ method: "POST" })
     // 4. Auditoria
     await supabaseAdmin.rpc("log_audit_event", {
       _modulo: "ocorrencias",
-      _acao: "PROCESSAR",
+      _acao: "MUDANCA_STATUS",
       _entidade: "Ocorrência Ponto",
       _registro_id: data.id,
       _empresa_id: ocorrencia.empresa_id,
