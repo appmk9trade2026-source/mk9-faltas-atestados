@@ -70,24 +70,26 @@ export function RankList({
     return <p className="py-8 text-center text-sm text-muted-foreground">{emptyLabel}</p>;
   }
 
-  const soma = rows.reduce((a, r) => a + r.total, 0) || 1;
-  const max = Math.max(...visiveis.map((r) => r.total), 1);
+  const soma = rows.reduce((a, r) => a + (r?.total ?? 0), 0) || 1;
+  const max = Math.max(...visiveis.map((r) => r?.total ?? 0), 1);
 
   return (
     <ol className="space-y-1">
       {visiveis.map((r, i) => {
-        const share = Math.round((r.total / soma) * 100);
-        const width = Math.max(2, (r.total / max) * 100);
+        const nome = r?.nome ?? "Não informado";
+        const total = r?.total ?? 0;
+        const share = Math.round((total / soma) * 100);
+        const width = Math.max(2, (total / max) * 100);
         const primeiro = i === 0;
         const Row = onSelect ? "button" : "div";
         return (
-          <li key={`${r.nome}-${i}`}>
+          <li key={`${nome}-${i}`}>
             <Row
               {...(onSelect
                 ? {
                     type: "button" as const,
                     onClick: () => onSelect(r),
-                    "aria-label": `${r.nome}: ${r.total} ${unidade} (${share}% do total). Filtrar por este item.`,
+                    "aria-label": `${nome}: ${total} ${unidade} (${share}% do total). Filtrar por este item.`,
                   }
                 : {})}
               className={cn(
@@ -110,14 +112,14 @@ export function RankList({
                 className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-foreground/5 text-[10px] font-semibold text-muted-foreground"
                 aria-hidden
               >
-                {iniciais(r.nome)}
+                {iniciais(nome)}
               </span>
 
               <span className="min-w-0 flex-1">
                 <span className="flex items-baseline justify-between gap-2">
-                  <span className={cn("truncate text-sm", primeiro && "font-semibold")}>{r.nome}</span>
+                  <span className={cn("truncate text-sm", primeiro && "font-semibold")}>{nome}</span>
                   <span className="shrink-0 text-sm font-semibold tabular-nums">
-                    {r.total}
+                    {total}
                     <span className="ml-1 text-[11px] font-normal text-muted-foreground">({share}%)</span>
                   </span>
                 </span>
