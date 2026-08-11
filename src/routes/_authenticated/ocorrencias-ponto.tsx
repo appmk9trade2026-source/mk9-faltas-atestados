@@ -346,15 +346,18 @@ function OcorrenciasPontoPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => window.open(oc.arquivo_url, '_blank')}>
                               <FileText className="mr-2 h-4 w-4" />
-                              Ver Anexo
+                              Visualizar Evidência
                             </DropdownMenuItem>
                             {canProcess && oc.status === "PENDENTE" && (
-                              <DropdownMenuItem onClick={() => {
-                                setSelectedOcorrencia(oc);
-                                setIsProcessDialogOpen(true);
-                              }}>
+                              <DropdownMenuItem 
+                                className="text-primary font-medium"
+                                onClick={() => {
+                                  setSelectedOcorrencia(oc);
+                                  setIsProcessDialogOpen(true);
+                                }}
+                              >
                                 <CheckCircle2 className="mr-2 h-4 w-4" />
-                                Processar
+                                Analisar Ocorrência
                               </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>
