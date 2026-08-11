@@ -22,8 +22,9 @@ const TONE: Record<RankTone, { bar: string; badge: string; card: string; title: 
   },
 };
 
-export function iniciais(nome: string) {
-  const limpo = nome.trim();
+export function iniciais(nome?: string | null) {
+  const limpo = (nome ?? "").trim();
+  if (!limpo) return "--";
   const parts = limpo.split(/\s+/).filter((p) => p.length > 1);
   if (parts.length === 0) return limpo.slice(0, 2).toUpperCase() || "--";
 
