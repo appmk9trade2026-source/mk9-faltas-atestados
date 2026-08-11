@@ -526,7 +526,7 @@ function OcorrenciasPontoPage() {
 }
 
 // Helper types since original import was incomplete
-type SubmitHandler<T> = (data: T) => void;
+
 function FormDescription({ children }: { children: React.ReactNode }) {
   return <p className="text-[0.8rem] text-muted-foreground">{children}</p>;
 }
