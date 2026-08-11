@@ -16,7 +16,7 @@ const iso = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "data inválida");
 export const ocorrenciaPontoSchema = z.object({
   empresa_id: uuid,
   projeto_id: uuid,
-  colaborador_id: uuid.nullable().optional(),
+  colaborador_id: uuid, 
   data_ocorrencia: iso,
   motivo: z.string().trim().min(5).max(200),
   justificativa: z.string().trim().min(10).max(2000),
@@ -82,7 +82,15 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
     const { data: newOcorrencia, error } = await context.supabase
       .from("ocorrencias_ponto")
       .insert({
-        ...data,
+        empresa_id: data.empresa_id,
+        projeto_id: data.projeto_id,
+        colaborador_id: data.colaborador_id,
+        data_ocorrencia: data.data_ocorrencia,
+        motivo: data.motivo,
+        justificativa: data.justificativa,
+        arquivo_url: data.arquivo_url,
+        arquivo_nome: data.arquivo_nome,
+        ausencia_id: data.ausencia_id,
         registrado_por: context.userId,
         status: "PENDENTE",
       })

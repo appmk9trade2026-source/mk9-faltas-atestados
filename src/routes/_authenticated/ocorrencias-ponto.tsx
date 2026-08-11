@@ -5,8 +5,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   Plus, 
+
   Filter, 
   Loader2, 
   Clock, 
@@ -18,7 +20,8 @@ import {
   Calendar,
   MoreVertical,
   Check,
-  X
+  X,
+  UploadCloud
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -55,6 +58,8 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { FileUpload } from "@/components/ui/file-upload";
+import { BUCKET_ATESTADOS } from "@/lib/ausencias";
 
 import { useSession } from "@/hooks/use-session";
 import { 
@@ -94,6 +99,8 @@ function OcorrenciasPontoPage() {
   const [isProcessDialogOpen, setIsProcessDialogOpen] = useState(false);
   const [selectedOcorrencia, setSelectedOcorrencia] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [isUploading, setIsUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
   const canProcess = roles.some(r => ["rh", "coordenador", "super_admin"].includes(r));
   const canCreate = roles.some(r => ["supervisor", "coordenador", "rh", "super_admin"].includes(r));
@@ -115,7 +122,7 @@ function OcorrenciasPontoPage() {
       data_ocorrencia: format(new Date(), "yyyy-MM-dd"),
       motivo: "",
       justificativa: "",
-      arquivo_url: "",
+      arquivo_url: "https://placeholder.url", // Placeholder para o resolver do Zod
       empresa_id: user?.user_metadata?.empresa_id || "",
     },
   });
@@ -153,8 +160,39 @@ function OcorrenciasPontoPage() {
     },
   });
 
-  const onSubmit: SubmitHandler<z.infer<typeof ocorrenciaPontoSchema>> = (data) => {
-    createMutation.mutate(data);
+  const onSubmit: SubmitHandler<z.infer<typeof ocorrenciaPontoSchema>> = async (data) => {
+    if (!selectedFile) {
+      toast.error("Anexe uma evidência obrigatória.");
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `ocorrencias-ponto/${data.projeto_id}/${data.data_ocorrencia}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from(BUCKET_ATESTADOS)
+        .upload(filePath, selectedFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from(BUCKET_ATESTADOS)
+        .getPublicUrl(filePath);
+
+      createMutation.mutate({
+        ...data,
+        arquivo_url: publicUrl,
+        arquivo_nome: selectedFile.name,
+      });
+    } catch (error: any) {
+      toast.error(`Erro no upload: ${error.message}`);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleProcess = (status: "APROVADA" | "REPROVADA") => {
@@ -328,7 +366,7 @@ function OcorrenciasPontoPage() {
                             <CommandList>
                               <CommandEmpty>Projeto não encontrado.</CommandEmpty>
                               <CommandGroup>
-                                {projetos?.filter(p => p.nome.toUpperCase().includes('AMBEV')).map((p) => (
+                                {projetos?.filter(p => p.empresa_id === '0a6c2ac6-2872-47a0-b818-b4660ef81244').map((p) => (
                                   <CommandItem
                                     value={p.nome}
                                     key={p.id}
@@ -448,14 +486,19 @@ function OcorrenciasPontoPage() {
               <FormField
                 control={form.control}
                 name="arquivo_url"
-                render={({ field }) => (
+                render={() => (
                   <FormItem>
-                    <FormLabel>URL da Evidência (Link do Anexo)</FormLabel>
+                    <FormLabel>Evidência *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Cole o link do anexo aqui..." {...field} />
+                      <FileUpload
+                        onFileSelect={setSelectedFile}
+                        loading={isUploading}
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        maxSizeMB={10}
+                      />
                     </FormControl>
                     <FormDescription>
-                      Por enquanto, faça o upload no módulo de Ausências e cole o link gerado aqui.
+                      Anexe um comprovante de presença ou da falha de marcação (PDF, JPG ou PNG).
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -464,8 +507,8 @@ function OcorrenciasPontoPage() {
 
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsNewDialogOpen(false)}>Cancelar</Button>
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Button type="submit" disabled={createMutation.isPending || isUploading}>
+                  {(createMutation.isPending || isUploading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Protocolar Ocorrência
                 </Button>
               </DialogFooter>
