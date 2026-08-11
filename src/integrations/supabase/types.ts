@@ -2414,11 +2414,14 @@ export type Database = {
           arquivo_url: string
           ausencia_id: string | null
           colaborador_id: string | null
+          colaborador_manual: boolean | null
           created_at: string
           data_ocorrencia: string
           empresa_id: string
           id: string
           justificativa: string
+          manual_matricula: string | null
+          manual_nome: string | null
           motivo: string
           parecer_processamento: string | null
           processado_em: string | null
@@ -2436,11 +2439,14 @@ export type Database = {
           arquivo_url: string
           ausencia_id?: string | null
           colaborador_id?: string | null
+          colaborador_manual?: boolean | null
           created_at?: string
           data_ocorrencia: string
           empresa_id: string
           id?: string
           justificativa: string
+          manual_matricula?: string | null
+          manual_nome?: string | null
           motivo: string
           parecer_processamento?: string | null
           processado_em?: string | null
@@ -2458,11 +2464,14 @@ export type Database = {
           arquivo_url?: string
           ausencia_id?: string | null
           colaborador_id?: string | null
+          colaborador_manual?: boolean | null
           created_at?: string
           data_ocorrencia?: string
           empresa_id?: string
           id?: string
           justificativa?: string
+          manual_matricula?: string | null
+          manual_nome?: string | null
           motivo?: string
           parecer_processamento?: string | null
           processado_em?: string | null
