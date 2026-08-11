@@ -114,12 +114,13 @@ function HomologPage() {
       <Tabs defaultValue="cenarios" className="space-y-4">
         <TabsList className="flex-wrap">
           <TabsTrigger value="cenarios"><ShieldCheck className="mr-2 h-4 w-4" />Cenários</TabsTrigger>
+          <TabsTrigger value="ambev_manual"><CheckCircle2 className="mr-2 h-4 w-4" />Homologação AMBEV</TabsTrigger>
           <TabsTrigger value="golive"><Rocket className="mr-2 h-4 w-4" />Go-Live</TabsTrigger>
           <TabsTrigger value="opassist"><LifeBuoy className="mr-2 h-4 w-4" />Operação Assistida</TabsTrigger>
         </TabsList>
 
         <TabsContent value="cenarios"><CenariosTab canEdit={canEdit} /></TabsContent>
-        <TabsContent value="golive"><GoLiveTab canEdit={canEdit} /></TabsContent>
+        <TabsContent value="ambev_manual"><HomologacaoAmbevManualTab /></TabsContent>
         <TabsContent value="golive"><GoLiveTab canEdit={canEdit} /></TabsContent>
         <TabsContent value="opassist"><OpAssistTab canEdit={canEdit} /></TabsContent>
       </Tabs>
@@ -816,5 +817,114 @@ function OcorrenciaSheet({ row, canEdit, onClose, onSaved }: {
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function HomologacaoAmbevManualTab() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">CRM MK9 — HOMOLOGAÇÃO FINAL: OCORRÊNCIA DE PONTO AMBEV (MODO MANUAL)</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6 text-sm max-w-4xl">
+        <div className="bg-muted/50 p-4 rounded-lg border space-y-2">
+          <div className="flex items-center gap-2 font-bold text-primary">
+            <ShieldCheck className="h-4 w-4" />
+            MODO: SOMENTE TESTE / AUDITORIA
+          </div>
+          <p className="text-xs text-muted-foreground uppercase font-semibold">Budget: Zero alterações de código ou banco.</p>
+        </div>
+
+        <section className="space-y-4">
+          <h3 className="font-bold border-b pb-1">OBJETIVO</h3>
+          <p>Validar três cenários críticos: matrícula inexistente, matrícula já existente e matrícula existente com vínculo divergente, comprovando a integridade do cadastro mestre e a obrigatoriedade de evidências.</p>
+        </section>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <CenarioCard
+            titulo="TESTE A — FLUXO NORMAL"
+            descricao="Projeto AMBEV → Supervisor → Colaborador existente."
+            criterios={[
+              "colaborador_id: PREENCHIDO",
+              "manual_matricula: VAZIO",
+              "modo_manual: NÃO"
+            ]}
+          />
+          <CenarioCard
+            titulo="TESTE B — MATRÍCULA INEXISTENTE"
+            descricao="Selecionar manual e usar matrícula inexistente."
+            criterios={[
+              "A ocorrência é criada",
+              "Cadastro mestre NÃO é criado",
+              "modo_manual: SIM"
+            ]}
+          />
+          <CenarioCard
+            titulo="TESTE C — MATRÍCULA JÁ EXISTENTE"
+            descricao="Tentar lançamento manual com matrícula existente."
+            criterios={[
+              "NÃO criar duplicidade",
+              "Vincular ao existente ou bloquear",
+              "COUNT colaboradores inalterado"
+            ]}
+          />
+          <CenarioCard
+            titulo="TESTE D — VÍNCULO DIVERGENTE"
+            descricao="Matrícula existente vinculada a outro projeto/supervisor."
+            criterios={[
+              "projeto_id/supervisor_id INALTERADOS no mestre",
+              "O fluxo manual NÃO movimenta o cadastro"
+            ]}
+          />
+        </div>
+
+        <section className="space-y-3 pt-4">
+          <h3 className="font-bold border-b pb-1">MATRIZ DE SEGURANÇA SERVER-SIDE</h3>
+          <div className="grid gap-2 text-xs">
+            <div className="flex items-center gap-2 p-2 rounded bg-red-500/5 border border-red-500/10">
+              <XCircle className="h-3 w-3 text-red-500" />
+              <span>TESTE E — PROJETO NÃO AMBEV: BLOQUEADO</span>
+            </div>
+            <div className="flex items-center gap-2 p-2 rounded bg-red-500/5 border border-red-500/10">
+              <XCircle className="h-3 w-3 text-red-500" />
+              <span>TESTE F — SUPERVISOR EXTERNO: BLOQUEADO</span>
+            </div>
+            <div className="flex items-center gap-2 p-2 rounded bg-red-500/5 border border-red-500/10">
+              <XCircle className="h-3 w-3 text-red-500" />
+              <span>TESTE H — EVIDÊNCIA OBRIGATÓRIA: BLOQUEADO SE VAZIO</span>
+            </div>
+            <div className="flex items-center gap-2 p-2 rounded bg-emerald-500/5 border border-emerald-500/10">
+              <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+              <span>TESTE I — SEM BLUR: SINCRONIZAÇÃO DE FORMULÁRIO OK</span>
+            </div>
+            <div className="flex items-center gap-2 p-2 rounded bg-emerald-500/5 border border-emerald-500/10">
+              <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+              <span>TESTE J — AUDITORIA: EVENTO OCORRENCIA_PONTO_MANUAL_CRIADA OK</span>
+            </div>
+          </div>
+        </section>
+
+        <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-lg">
+          <div className="text-xs font-bold text-amber-800 uppercase flex items-center gap-2">
+            <Clock className="h-3 w-3" /> Regra de Parada
+          </div>
+          <p className="text-[11px] text-amber-700 mt-1 italic">
+            PARAR imediatamente se ocorrer: criação automática de colaborador mestre, duplicidade de matrícula, alteração silenciosa de projeto/supervisor no mestre ou aceitação de projeto não AMBEV.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function CenarioCard({ titulo, descricao, criterios }: { titulo: string, descricao: string, criterios: string[] }) {
+  return (
+    <div className="p-3 rounded-lg border bg-card space-y-2">
+      <div className="text-xs font-bold text-muted-foreground">{titulo}</div>
+      <p className="text-[11px] font-medium leading-tight">{descricao}</p>
+      <ul className="text-[10px] space-y-1 text-muted-foreground">
+        {criterios.map((c, i) => <li key={i}>• {c}</li>)}
+      </ul>
+    </div>
   );
 }

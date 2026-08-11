@@ -110,6 +110,7 @@ function RoadmapPage() {
           <TabsTrigger value="releases"><Rocket className="h-3.5 w-3.5 mr-1" />Releases</TabsTrigger>
           <TabsTrigger value="changelog">Changelog</TabsTrigger>
           <TabsTrigger value="versoes"><FileText className="h-3.5 w-3.5 mr-1" />Versões</TabsTrigger>
+          <TabsTrigger value="roadmap_ambev"><Plus className="h-3.5 w-3.5 mr-1" />Roadmap AMBEV</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard">
