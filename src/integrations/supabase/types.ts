@@ -2408,6 +2408,108 @@ export type Database = {
         }
         Relationships: []
       }
+      ocorrencias_ponto: {
+        Row: {
+          arquivo_nome: string | null
+          arquivo_url: string
+          ausencia_id: string | null
+          colaborador_id: string | null
+          created_at: string
+          data_ocorrencia: string
+          empresa_id: string
+          id: string
+          justificativa: string
+          motivo: string
+          parecer_processamento: string | null
+          processado_em: string | null
+          processado_por: string | null
+          projeto_id: string
+          protocolo: string | null
+          registrado_em: string
+          registrado_por: string | null
+          status: Database["public"]["Enums"]["status_ocorrencia"]
+          updated_at: string
+        }
+        Insert: {
+          arquivo_nome?: string | null
+          arquivo_url: string
+          ausencia_id?: string | null
+          colaborador_id?: string | null
+          created_at?: string
+          data_ocorrencia: string
+          empresa_id: string
+          id?: string
+          justificativa: string
+          motivo: string
+          parecer_processamento?: string | null
+          processado_em?: string | null
+          processado_por?: string | null
+          projeto_id: string
+          protocolo?: string | null
+          registrado_em?: string
+          registrado_por?: string | null
+          status?: Database["public"]["Enums"]["status_ocorrencia"]
+          updated_at?: string
+        }
+        Update: {
+          arquivo_nome?: string | null
+          arquivo_url?: string
+          ausencia_id?: string | null
+          colaborador_id?: string | null
+          created_at?: string
+          data_ocorrencia?: string
+          empresa_id?: string
+          id?: string
+          justificativa?: string
+          motivo?: string
+          parecer_processamento?: string | null
+          processado_em?: string | null
+          processado_por?: string | null
+          projeto_id?: string
+          protocolo?: string | null
+          registrado_em?: string
+          registrado_por?: string | null
+          status?: Database["public"]["Enums"]["status_ocorrencia"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ocorrencias_ponto_ausencia_id_fkey"
+            columns: ["ausencia_id"]
+            isOneToOne: false
+            referencedRelation: "ausencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_ponto_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_ponto_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_ponto_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_tst_saude"
+            referencedColumns: ["empresa_id"]
+          },
+          {
+            foreignKeyName: "ocorrencias_ponto_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       opcoes_periodo_ausencia: {
         Row: {
           ativo: boolean
@@ -6113,6 +6215,7 @@ export type Database = {
       session_status: "ATIVA" | "ENCERRADA" | "EXPIRADA" | "REVOGADA"
       status_ausencia: "PENDENTE" | "LANCADO" | "SUBSTITUIDA" | "CANCELADO"
       status_comunicacao: "RASCUNHO" | "APROVADO" | "ENVIADO" | "ERRO"
+      status_ocorrencia: "PENDENTE" | "APROVADA" | "REPROVADA" | "CANCELADA"
       status_plano_acao:
         | "NAO_INICIADO"
         | "EM_ANDAMENTO"
@@ -6601,6 +6704,7 @@ export const Constants = {
       session_status: ["ATIVA", "ENCERRADA", "EXPIRADA", "REVOGADA"],
       status_ausencia: ["PENDENTE", "LANCADO", "SUBSTITUIDA", "CANCELADO"],
       status_comunicacao: ["RASCUNHO", "APROVADO", "ENVIADO", "ERRO"],
+      status_ocorrencia: ["PENDENTE", "APROVADA", "REPROVADA", "CANCELADA"],
       status_plano_acao: [
         "NAO_INICIADO",
         "EM_ANDAMENTO",
