@@ -109,7 +109,6 @@ function RoadmapPage() {
           <TabsTrigger value="lista">Trabalho</TabsTrigger>
           <TabsTrigger value="releases"><Rocket className="h-3.5 w-3.5 mr-1" />Releases</TabsTrigger>
           <TabsTrigger value="changelog">Changelog</TabsTrigger>
-          <TabsTrigger value="roadmap_ambev"><KanbanIcon className="h-3.5 w-3.5 mr-1" />Roadmap AMBEV</TabsTrigger>
           <TabsTrigger value="versoes"><FileText className="h-3.5 w-3.5 mr-1" />Versões</TabsTrigger>
         </TabsList>
 
