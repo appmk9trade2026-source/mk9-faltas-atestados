@@ -245,7 +245,7 @@ function OcorrenciasPontoPage() {
                       <TableCell>
                         <div className="flex flex-col">
                           <span>{oc.colaborador?.nome_completo || "Manual"}</span>
-                          <span className="text-xs text-muted-foreground">{oc.colaborador?.matricula || oc.manual_matricula || "-"}</span>
+                          <span className="text-xs text-muted-foreground">{oc.colaborador?.matricula || "-"}</span>
                         </div>
                       </TableCell>
                       <TableCell>{oc.projeto?.nome || "-"}</TableCell>
