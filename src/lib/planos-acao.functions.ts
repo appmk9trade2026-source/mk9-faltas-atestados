@@ -374,7 +374,70 @@ export const listarAcompanhamentos = createServerFn({ method: "GET" })
 
     return data.map((r: any) => ({
       ...r,
-      criador: { nome: nomes.get(r.criado_por_usuario_id) ?? null }
+      criador: { nome: nomes.get(r.criado_por_usuario_id) ?? "Usuário" }
     }));
+  });
+
+export const analisarAndamentoIA = createServerFn({ method: "POST" })
+  .validator((data: unknown) => z.object({ plano_id: uuid }).parse(data))
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data: input, context }) => {
+    const { supabase } = context;
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) throw new Error("LOVABLE_API_KEY não configurada.");
+
+    // Buscar dados do plano
+    const { data: plano } = await supabase
+      .from("planos_acao")
+      .select(`
+        *,
+        projeto:projetos(nome),
+        acompanhamentos:plano_acao_acompanhamentos(progresso, observacao, created_at)
+      `)
+      .eq("id", input.plano_id)
+      .single();
+
+    if (!plano) throw new Error("Plano não encontrado.");
+
+    const prompt = `Você é um gestor de RH especialista em análise de andamento de planos de ação.
+Analise o progresso atual e forneça recomendações.
+
+Plano: ${plano.titulo}
+Meta: ${plano.meta}
+Problema: ${plano.problema_identificado}
+Prazo: ${plano.prazo}
+Progresso Atual: ${plano.progresso}%
+
+Check-ins recentes:
+${plano.acompanhamentos?.slice(0, 5).map((a: any) => `- ${new Date(a.created_at).toLocaleDateString()}: [${a.progresso}%] ${a.observacao}`).join('\n') || "Nenhum check-in registrado."}
+
+REGRAS:
+1. Retorne EXCLUSIVAMENTE um JSON com: "avaliacao" (string curta), "risco" (string: Baixo/Médio/Alto), "proximo_passo" (string), "recomendacao" (string).
+2. Seja objetivo e profissional.
+3. NÃO sugira alterações automáticas de status.
+
+JSON:`;
+
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.0-flash",
+        messages: [
+          { role: "system", content: "Você responde apenas em JSON válido." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.3,
+        response_format: { type: "json_object" }
+      }),
+    });
+
+    if (!response.ok) throw new Error("Falha ao consultar IA.");
+
+    const result = await response.json();
+    return JSON.parse(result.choices?.[0]?.message?.content || "{}");
   });
 

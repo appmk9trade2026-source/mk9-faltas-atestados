@@ -330,8 +330,8 @@ function PlanosAcaoPage() {
                         <Badge variant="outline">{STATUS_LABELS[plano.status]}</Badge>
                       </TableCell>
                       <TableCell>
-                         <Button variant="ghost" size="icon" onClick={() => setSelectedPlanoId(plano.id)}>
-                            <MoreVertical className="h-4 w-4" />
+                         <Button variant="ghost" size="sm" onClick={() => setSelectedPlanoId(plano.id)}>
+                            Ver detalhes
                          </Button>
                       </TableCell>
                     </TableRow>
@@ -366,10 +366,273 @@ function PlanosAcaoPage() {
                  <SheetTitle>Detalhes do Plano</SheetTitle>
              </SheetHeader>
              <div className="mt-6">
-                <p>Implementação da Fase 2 em curso. Detalhes de ID {selectedPlanoId} aparecerão aqui.</p>
+                {selectedPlanoId && <PlanoDetalhe planoId={selectedPlanoId} onClose={() => setSelectedPlanoId(null)} />}
              </div>
          </SheetContent>
       </Sheet>
     </AppShell>
   );
 }
+
+function PlanoDetalhe({ planoId, onClose }: { planoId: string; onClose: () => void }) {
+  const queryClient = useQueryClient();
+  const getPlanoFn = useServerFn(obterPlanoAcao);
+  const listCheckinsFn = useServerFn(listarAcompanhamentos);
+  const addCheckinFn = useServerFn(registrarAcompanhamento);
+  const concluirFn = useServerFn(concluirPlano);
+  const analisarIAFn = useServerFn(analisarAndamentoIA);
+
+  const { data: plano, isLoading } = useQuery({
+    queryKey: ["plano-acao", planoId],
+    queryFn: () => getPlanoFn({ data: { id: planoId } }),
+  });
+
+  const { data: checkins, isLoading: isLoadingCheckins } = useQuery({
+    queryKey: ["plano-acao-acompanhamentos", planoId],
+    queryFn: () => listCheckinsFn({ data: { plano_id: planoId } }),
+  });
+
+  const [isCheckinDialogOpen, setIsCheckinDialogOpen] = useState(false);
+  const [isConcluirDialogOpen, setIsConcluirDialogOpen] = useState(false);
+  const [isAnalysingIA, setIsAnalysingIA] = useState(false);
+  const [iaAnalysis, setIaAnalysis] = useState<any>(null);
+
+  const checkinForm = useForm({
+    defaultValues: {
+      progresso: plano?.progresso ?? 0,
+      observacao: "",
+    },
+  });
+
+  const concluirForm = useForm({
+    defaultValues: {
+      resultado_alcancado: "SIM" as "SIM" | "PARCIAL" | "NAO",
+      parecer_final: "",
+    },
+  });
+
+  const checkinMutation = useMutation({
+    mutationFn: (data: { progresso: number; observacao: string }) => 
+      addCheckinFn({ data: { plano_id: planoId, ...data } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["plano-acao", planoId] });
+      queryClient.invalidateQueries({ queryKey: ["plano-acao-acompanhamentos", planoId] });
+      queryClient.invalidateQueries({ queryKey: ["planos-acao"] });
+      setIsCheckinDialogOpen(false);
+      checkinForm.reset();
+      toast.success("Acompanhamento registrado!");
+    },
+  });
+
+  const concluirMutation = useMutation({
+    mutationFn: (data: any) => concluirFn({ data: { id: planoId, ...data } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["plano-acao", planoId] });
+      queryClient.invalidateQueries({ queryKey: ["planos-acao"] });
+      setIsConcluirDialogOpen(false);
+      toast.success("Plano concluído com sucesso!");
+    },
+  });
+
+  const handleAnalyseIA = async () => {
+    setIsAnalysingIA(true);
+    try {
+      const res = await analisarIAFn({ data: { plano_id: planoId } });
+      setIaAnalysis(res);
+    } catch (e: any) {
+      toast.error("Erro na análise IA");
+    } finally {
+      setIsAnalysingIA(false);
+    }
+  };
+
+  if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>;
+  if (!plano) return <div>Plano não encontrado.</div>;
+
+  const situacaoPrazo = () => {
+    if (plano.status === "CONCLUIDO") return { label: "CONCLUIDO", color: "bg-green-500" };
+    const hoje = new Date();
+    const prazo = new Date(plano.prazo);
+    const diff = prazo.getTime() - hoje.getTime();
+    const dias = diff / (1000 * 60 * 60 * 24);
+    
+    if (diff < 0) return { label: "ATRASADO", color: "bg-red-500" };
+    if (dias <= 7) return { label: "ATENÇÃO", color: "bg-amber-500" };
+    return { label: "NO PRAZO", color: "bg-green-500" };
+  };
+
+  const situacao = situacaoPrazo();
+
+  return (
+    <div className="space-y-6 pb-20">
+      <div className="flex items-center justify-between">
+        <Badge className={situacao.color}>{situacao.label}</Badge>
+        <Badge variant="outline">{PRIORIDADE_LABELS[plano.prioridade]}</Badge>
+      </div>
+
+      <div>
+        <h2 className="text-xl font-bold">{plano.titulo}</h2>
+        <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+          <Building2 className="h-4 w-4" /> {plano.projeto?.nome}
+          {plano.supervisor?.nome && <><ChevronRight className="h-3 w-3" /> <Users className="h-4 w-4" /> {plano.supervisor.nome}</>}
+          {plano.colaborador?.nome_completo && <><ChevronRight className="h-3 w-3" /> <User className="h-4 w-4" /> {plano.colaborador.nome_completo}</>}
+        </div>
+      </div>
+
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium">Progresso Atual</span>
+            <span className="text-lg font-bold">{plano.progresso}%</span>
+          </div>
+          <Progress value={plano.progresso} className="h-3" />
+          <div className="mt-4 flex justify-between text-xs text-muted-foreground">
+            <span>Início: {format(new Date(plano.data_inicio), 'dd/MM/yyyy')}</span>
+            <span>Prazo: {format(new Date(plano.prazo), 'dd/MM/yyyy')}</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 gap-4">
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Objetivo</h3>
+          <p className="text-sm"><strong>Problema:</strong> {plano.problema_identificado}</p>
+          <p className="text-sm"><strong>Meta:</strong> {plano.meta}</p>
+          <p className="text-sm"><strong>Indicador:</strong> {plano.indicador_sucesso}</p>
+          <p className="text-sm"><strong>Ação:</strong> {plano.acao_proposta}</p>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" onClick={() => {
+          checkinForm.setValue("progresso", plano.progresso ?? 0);
+          setIsCheckinDialogOpen(true);
+        }}>
+          Registrar Acompanhamento
+        </Button>
+        {plano.status !== "CONCLUIDO" && (
+          <Button size="sm" variant="outline" onClick={() => setIsConcluirDialogOpen(true)}>
+            Concluir Plano
+          </Button>
+        )}
+        <Button size="sm" variant="secondary" onClick={handleAnalyseIA} disabled={isAnalysingIA}>
+          {isAnalysingIA ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+          Analisar com IA
+        </Button>
+      </div>
+
+      {iaAnalysis && (
+        <Card className="bg-primary/5 border-primary/20">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" /> Análise da IA
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm space-y-2">
+            <p><strong>Avaliação:</strong> {iaAnalysis.avaliacao}</p>
+            <p><strong>Risco:</strong> <Badge variant="outline">{iaAnalysis.risco}</Badge></p>
+            <p><strong>Próximo Passo:</strong> {iaAnalysis.proximo_passo}</p>
+            <p><strong>Recomendação:</strong> {iaAnalysis.recomendacao}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="space-y-4">
+        <h3 className="font-bold flex items-center gap-2">
+          <Clock className="h-5 w-5" /> Histórico de Acompanhamento
+        </h3>
+        <div className="space-y-4 border-l-2 border-muted ml-3 pl-6 relative">
+          <div className="absolute -left-[9px] top-0 h-4 w-4 rounded-full bg-primary border-4 border-background" />
+          <div>
+            <p className="text-xs text-muted-foreground">{format(new Date(plano.created_at), 'dd/MM/yyyy HH:mm')}</p>
+            <p className="text-sm font-semibold">PLANO CRIADO</p>
+            <p className="text-xs">Autor: {plano.criador?.nome}</p>
+          </div>
+          
+          {checkins?.map((c: any) => (
+            <div key={c.id} className="relative">
+              <div className="absolute -left-[33px] top-1 h-4 w-4 rounded-full bg-primary border-4 border-background" />
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">{format(new Date(c.created_at), 'dd/MM/yyyy HH:mm')}</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold">PROGRESSO {c.progresso}%</span>
+                </div>
+                <p className="text-sm italic text-muted-foreground">"{c.observacao}"</p>
+                <p className="text-[10px]">Autor: {c.criador?.nome}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Dialog Checkin */}
+      <Dialog open={isCheckinDialogOpen} onOpenChange={setIsCheckinDialogOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Registrar Acompanhamento</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Progresso (%)</label>
+              <Input 
+                type="number" 
+                min="0" max="100" 
+                value={checkinForm.watch("progresso")}
+                onChange={(e) => checkinForm.setValue("progresso", parseInt(e.target.value))}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Observação</label>
+              <Textarea 
+                placeholder="O que foi feito?"
+                value={checkinForm.watch("observacao")}
+                onChange={(e) => checkinForm.setValue("observacao", e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => checkinMutation.mutate(checkinForm.getValues())} disabled={checkinMutation.isPending}>
+              Salvar Check-in
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Concluir */}
+      <Dialog open={isConcluirDialogOpen} onOpenChange={setIsConcluirDialogOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Concluir Plano de Ação</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Resultado Alcançado?</label>
+              <Select 
+                value={concluirForm.watch("resultado_alcancado")}
+                onValueChange={(v: any) => concluirForm.setValue("resultado_alcancado", v)}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="SIM">Sim</SelectItem>
+                  <SelectItem value="PARCIAL">Parcialmente</SelectItem>
+                  <SelectItem value="NAO">Não</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Parecer Final</label>
+              <Textarea 
+                placeholder="Descreva o resultado final e aprendizados..."
+                value={concluirForm.watch("parecer_final")}
+                onChange={(e) => concluirForm.setValue("parecer_final", e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => concluirMutation.mutate(concluirForm.getValues())} disabled={concluirMutation.isPending}>
+              Finalizar Plano
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+import { analisarAndamentoIA } from "@/lib/planos-acao.functions";
