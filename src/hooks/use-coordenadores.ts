@@ -7,17 +7,27 @@ export function useCoordenadoresPorProjeto(projetoId?: string) {
     queryFn: async () => {
       if (!projetoId) return [];
 
-      // Coordenadores são usuários com role 'coordenador' que estão vinculados ao projeto
-      // via RPC coordenador_has_projeto_via_equipe ou simplificado via profiles
+      // Como o campo 'papel' não existe na tabela profiles (está na user_roles), 
+      // e queremos buscar coordenadores vinculados ao projeto:
+      // A tabela user_roles armazena os papéis.
+      
+      const { data: rolesData, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "coordenador");
+
+      if (rolesError) throw rolesError;
+      if (!rolesData || rolesData.length === 0) return [];
+
+      const userIds = rolesData.map(r => r.user_id);
+
       const { data, error } = await supabase
         .from("profiles")
         .select("id, nome")
-        .eq("papel", "coordenador");
+        .in("id", userIds);
 
       if (error) throw error;
       
-      // Filtro manual se necessário ou via RPC para precisão AMBEV
-      // Para o MVP da Fase 1, listamos os coordenadores ativos
       return data || [];
     },
     enabled: !!projetoId,
