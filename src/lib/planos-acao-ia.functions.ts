@@ -92,6 +92,7 @@ export const gerarSugestaoPlanoAcao = createServerFn({ method: "POST" })
       .select("titulo, status, resultado_alcancado, progresso")
       .eq("projeto_id", projeto_id)
       .eq("tipo_alvo", tipo_alvo)
+      .order('created_at', { ascending: false })
       .limit(3);
 
     // 2. Sanitização do input do usuário
