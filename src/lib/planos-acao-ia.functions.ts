@@ -36,10 +36,6 @@ export const gerarSugestaoPlanoAcao = createServerFn({ method: "POST" })
     sessentaDiasAtras.setDate(sessentaDiasAtras.getDate() - 60);
     const sessentaDiasAtrasIso = sessentaDiasAtras.toISOString().split('T')[0];
 
-    // Consulta básica
-    // Nota: tipo_ausencia_id linka com tipos_ausencia
-    // Usamos select("*, ...") mas o TS vai reclamar se a coluna não estiver no schema gerado.
-    // Vamos usar select count e aggregations via filter se possível ou consultas separadas.
     let query = supabase
       .from("ausencias")
       .select("id, data_inicio, tipo_ausencia_nome, colaborador_id, projeto_id")
@@ -48,8 +44,6 @@ export const gerarSugestaoPlanoAcao = createServerFn({ method: "POST" })
     if (tipo_alvo === "PROJETO") {
       query = query.eq("projeto_id", projeto_id);
     } else if (tipo_alvo === "SUPERVISOR" && supervisor_usuario_id) {
-      // Como ausencias não tem supervisor_usuario_id direto, precisamos filtrar via colaboradores
-      // Ou usar uma subquery/RPC. Vamos tentar filtrar os colaboradores do supervisor primeiro.
       const { data: colabs } = await supabase
         .from("colaboradores")
         .select("id")
@@ -59,7 +53,6 @@ export const gerarSugestaoPlanoAcao = createServerFn({ method: "POST" })
       if (colabIds.length > 0) {
         query = query.in("colaborador_id", colabIds);
       } else {
-        // Se o supervisor não tem colaboradores, força vazio
         query = query.eq("colaborador_id", "00000000-0000-0000-0000-000000000000");
       }
     } else if (tipo_alvo === "COLABORADOR" && colaborador_id) {
@@ -125,37 +118,54 @@ REGRAS ESTRITAS:
 
 JSON:`;
 
-    const response = await fetch(API_GATEWAY_URL, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.0-flash",
-        messages: [
-          { role: "system", content: "Você responde apenas em JSON válido." },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.3,
-        response_format: { type: "json_object" }
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[gerarSugestaoPlanoAcao] AI Gateway error:", errorText);
-      throw new Error("Falha ao consultar assistente de IA.");
-    }
-
-    const result = await response.json();
-    const content = result.choices?.[0]?.message?.content;
+    console.log("[gerarSugestaoPlanoAcao] Calling AI Gateway...");
     
     try {
-      return JSON.parse(content);
-    } catch (e) {
-      console.error("[gerarSugestaoPlanoAcao] Failed to parse AI response:", content);
-      throw new Error("Resposta da IA em formato inválido.");
+      const response = await fetch(API_GATEWAY_URL, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "x-lovable-trace": "gerarSugestaoPlanoAcao"
+        },
+        body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+          messages: [
+            { role: "system", content: "Você é um assistente que responde exclusivamente em JSON." },
+            { role: "user", content: prompt }
+          ],
+          temperature: 0.2,
+          response_format: { type: "json_object" }
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("[gerarSugestaoPlanoAcao] AI Gateway error:", response.status, errorText);
+        
+        if (response.status === 401) throw new Error("Erro de autenticação no gateway de IA.");
+        if (response.status === 429) throw new Error("Limite de requisições da IA atingido. Tente em breve.");
+        
+        throw new Error("Falha ao consultar assistente de IA.");
+      }
+
+      const result = await response.json();
+      const content = result.choices?.[0]?.message?.content;
+      
+      if (!content) {
+        console.error("[gerarSugestaoPlanoAcao] Empty AI response content");
+        throw new Error("A IA retornou uma resposta vazia.");
+      }
+
+      try {
+        return JSON.parse(content);
+      } catch (e) {
+        console.error("[gerarSugestaoPlanoAcao] Failed to parse AI response content:", content);
+        throw new Error("Resposta da IA em formato inválido.");
+      }
+    } catch (error: any) {
+      console.error("[gerarSugestaoPlanoAcao] Unexpected error:", error.message);
+      throw error;
     }
   });
 
@@ -201,7 +211,7 @@ Retorne apenas o texto do resumo.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.0-flash",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "user", content: prompt }
         ],
@@ -211,7 +221,7 @@ Retorne apenas o texto do resumo.`;
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[gerarResumoGerencialIA] Error:", errorText);
+      console.error("[gerarResumoGerencialIA] Error:", response.status, errorText);
       throw new Error("Falha ao consultar IA para resumo.");
     }
 
