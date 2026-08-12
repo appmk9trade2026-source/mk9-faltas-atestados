@@ -166,26 +166,15 @@ function PlanosAcaoPage() {
     concluidos: planos?.filter((p: any) => p.status === "CONCLUIDO").length || 0,
   };
 
-  const AMBEV_EMPRESA_ID = "0a6c2ac6-2872-47a0-b818-b4660ef81244";
   const empresaId = user?.user_metadata?.empresa_id || AMBEV_EMPRESA_ID; // Fallback para AMBEV se metadata sumir
   
-  // Debug logs
-  console.log("[PlanosAcao] Scope:", { userId: user?.id, empresaId, roles });
-
-  const { data: projetos, isLoading: isLoadingProjs, error: errorProjs } = useProjetosAtivosPorEmpresa(empresaId);
+  const { data: projetos } = useProjetosAtivosPorEmpresa(empresaId);
   const [buscaColab, setBuscaColab] = useState("");
   const selectedProjetoId = form.watch("projeto_id");
-  const { data: colaboradores, isLoading: isLoadingColabs, error: errorColabs } = useColaboradoresAtivos({
+  const { data: colaboradores } = useColaboradoresAtivos({
     empresaId,
     projetoId: selectedProjetoId || undefined,
     busca: buscaColab,
-  });
-
-  console.log("[PlanosAcao] Data:", { 
-    projs: projetos?.length, 
-    colabs: colaboradores?.length,
-    loading: { p: isLoadingProjs, c: isLoadingColabs },
-    errors: { p: errorProjs, c: errorColabs }
   });
 
   const tipoAlvo = form.watch("tipo_alvo");
