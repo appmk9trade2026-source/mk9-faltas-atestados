@@ -166,7 +166,7 @@ function PlanosAcaoPage() {
     concluidos: planos?.filter((p: any) => p.status === "CONCLUIDO").length || 0,
   };
 
-  const empresaId = user?.user_metadata?.empresa_id;
+  const empresaId = user?.user_metadata?.empresa_id || "73ab53cf-f09b-4718-aa24-48f5396afed8"; // Fallback para AMBEV se metadata sumir
   
   // Debug logs
   console.log("[PlanosAcao] Scope:", { userId: user?.id, empresaId, roles });
