@@ -366,7 +366,7 @@ function PlanosAcaoPage() {
                  <SheetTitle>Detalhes do Plano</SheetTitle>
              </SheetHeader>
              <div className="mt-6">
-                <p>Implementação da Fase 2 em curso. Detalhes de ID {selectedPlanoId} aparecerão aqui.</p>
+                {selectedPlanoId && <PlanoDetalhe planoId={selectedPlanoId} onClose={() => setSelectedPlanoId(null)} />}
              </div>
          </SheetContent>
       </Sheet>
