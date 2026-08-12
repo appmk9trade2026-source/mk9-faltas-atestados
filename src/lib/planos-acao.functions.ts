@@ -105,7 +105,6 @@ export const criarPlanoAcao = createServerFn({ method: "POST" })
            throw new Error("SCOPE_DENIED: O responsável deve pertencer à sua coordenação.");
         }
       } else if (isSupervisor === true) {
-        // Se for supervisor, ele só pode criar para si mesmo ou seus subordinados
         if (input.responsavel_usuario_id !== userId) {
           const { data: respProfile } = await supabase
             .from("profiles")
@@ -116,34 +115,16 @@ export const criarPlanoAcao = createServerFn({ method: "POST" })
           if (!respProfile) {
             throw new Error("SCOPE_DENIED: Responsável não encontrado.");
           }
-
-
-        if (!respProfile) {
-          throw new Error("SCOPE_DENIED: Responsável não encontrado.");
         }
-
-        const { data: isSubordinado } = await supabase
-          .from("colaboradores")
-          .select("id")
-          .eq("supervisor_usuario_id", userId)
-          .single();
-          
-        // Esta verificação simplificada assume que se o supervisor está tentando atribuir a alguém 
-        // que não é ele mesmo, precisamos validar o vínculo.
-        // Como o erro anterior foi na tentativa de acessar usuario_id em colaboradores, 
-        // vamos usar o filtro supervisor_usuario_id que existe na tabela.
-        
-        const { data: countSub } = await supabase
-          .from("colaboradores")
-          .select("id", { count: 'exact', head: true })
-          .eq("supervisor_usuario_id", userId);
-
-        // Se o supervisor não tem subordinados e não é ele mesmo o responsável, negamos.
-        // A lógica ideal seria join com profiles, mas para correção cirúrgica do build:
-        if (input.responsavel_usuario_id !== userId) {
-           // Verificação básica: o supervisor deve ter acesso ao colaborador se ele for o supervisor_usuario_id
-           // O RLS já cuida disso, mas o guardrail server-side reforça.
-        }
+      }
+    } else if (input.responsavel_tipo === "COORDENACAO" && input.responsavel_coordenacao_id) {
+      // Validar se coordenação está no projeto (neste caso, se o coordenador tem vinculo com o projeto)
+      const { data: hasProj } = await supabase.rpc("coordenador_has_projeto_via_equipe", {
+        _user_id: input.responsavel_coordenacao_id,
+        _projeto_id: input.projeto_id
+      });
+      if (!hasProj) {
+        throw new Error("SCOPE_DENIED: Esta coordenação não possui vínculo com o projeto selecionado.");
       }
     }
 
@@ -153,6 +134,7 @@ export const criarPlanoAcao = createServerFn({ method: "POST" })
         ...input,
         criado_por_usuario_id: userId,
       })
+
       .select()
       .single();
 
