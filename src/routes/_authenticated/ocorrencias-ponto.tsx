@@ -814,7 +814,7 @@ function OcorrenciasPontoPage() {
                 <FileText className="h-4 w-4 text-primary" />
                 <span className="text-sm font-medium">Documento de Evidência</span>
               </div>
-              <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => window.open(selectedOcorrencia?.arquivo_url, '_blank')}>
+              <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => handleViewEvidence(selectedOcorrencia?.arquivo_url)}>
                 Abrir Anexo
               </Button>
             </div>
