@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
-import { Plus, Filter, Loader2, Clock, CheckCircle2, AlertTriangle, Building2, User, Users, ChevronRight, MoreVertical } from "lucide-react";
+import { Plus, Filter, Loader2, Clock, CheckCircle2, AlertTriangle, Building2, User, Users, ChevronRight, MoreVertical, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -46,14 +46,17 @@ import {
   obterPlanoAcao,
   listarAcompanhamentos,
   registrarAcompanhamento,
-  concluirPlano
+  concluirPlano,
+  analisarAndamentoIA
 } from "@/lib/planos-acao.functions";
-import { gerarSugestaoPlanoAcao } from "@/lib/planos-acao-ia.functions";
+
+import { gerarSugestaoPlanoAcao, gerarResumoGerencialIA } from "@/lib/planos-acao-ia.functions";
+
 import { useProjetosAtivosPorEmpresa } from "@/hooks/use-projetos";
 import { useSupervisoresPorProjeto } from "@/hooks/use-supervisores";
 import { useColaboradoresAtivos } from "@/hooks/use-colaboradores";
 import { cn } from "@/lib/utils";
-import { Sparkles } from "lucide-react";
+
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/_authenticated/planos-acao")({
@@ -117,7 +120,25 @@ function PlanosAcaoPage() {
   });
 
   const generateAIFn = useServerFn(gerarSugestaoPlanoAcao);
+  const summarizeAIFn = useServerFn(gerarResumoGerencialIA);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [isSummarizingAI, setIsSummarizingAI] = useState(false);
+  const [resumoGerencial, setResumoGerencial] = useState<string | null>(null);
+
+  const handleSummarizeAI = async () => {
+    if (!planos || planos.length === 0) return;
+    setIsSummarizingAI(true);
+    try {
+      const res = await summarizeAIFn({ data: { planos } });
+      setResumoGerencial(res);
+      toast.success("Resumo gerencial gerado!");
+    } catch (e: any) {
+      toast.error("Erro ao gerar resumo");
+    } finally {
+      setIsSummarizingAI(false);
+    }
+  };
+
 
   const handleGenerateAI = async () => {
     const tipoAlvo = form.getValues("tipo_alvo");
@@ -184,9 +205,12 @@ function PlanosAcaoPage() {
 
   const kpis = {
     ativos: planos?.filter((p: any) => ["NAO_INICIADO", "EM_ANDAMENTO"].includes(p.status)).length || 0,
-    vencidos: planos?.filter((p: any) => new Date(p.prazo) < new Date() && p.status !== "CONCLUIDO").length || 0,
+    atrasados: planos?.filter((p: any) => p.situacao === "ATRASADO").length || 0,
+    atencao: planos?.filter((p: any) => p.situacao === "ATENCAO").length || 0,
+    sem_acompanhamento: planos?.filter((p: any) => p.situacao === "SEM_ACOMPANHAMENTO").length || 0,
     concluidos: planos?.filter((p: any) => p.status === "CONCLUIDO").length || 0,
   };
+
 
   const empresaId = user?.user_metadata?.empresa_id || "0a6c2ac6-2872-47a0-b818-b4660ef81244"; 
   
@@ -217,41 +241,71 @@ function PlanosAcaoPage() {
   return (
     <AppShell title="Plano de Ação Gerencial">
       <div className="space-y-6">
+
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Plano de Ação Gerencial</h1>
             <p className="text-muted-foreground">Acompanhe ações para melhoria dos indicadores operacionais.</p>
           </div>
-          {isCoordenador && (
-            <Button onClick={() => setIsNewDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Plano de Ação
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleSummarizeAI} disabled={isSummarizingAI || !planos?.length}>
+              {isSummarizingAI ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+              Gerar Resumo IA
             </Button>
-          )}
+            {isCoordenador && (
+              <Button onClick={() => {
+                form.reset();
+                setIsNewDialogOpen(true);
+              }}>
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Plano de Ação
+              </Button>
+            )}
+
+          </div>
+
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-5">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Planos Ativos</CardTitle>
+              <CardTitle className="text-xs font-medium uppercase text-muted-foreground">Ativos</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{kpis.ativos}</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-red-200 bg-red-50/30">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Vencidos</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-destructive" />
+              <CardTitle className="text-xs font-medium uppercase text-red-600">Atrasados</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-red-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{kpis.vencidos}</div>
+              <div className="text-2xl font-bold text-red-700">{kpis.atrasados}</div>
+            </CardContent>
+          </Card>
+          <Card className="border-amber-200 bg-amber-50/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs font-medium uppercase text-amber-600">Em Atenção</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-amber-700">{kpis.atencao}</div>
+            </CardContent>
+          </Card>
+          <Card className="border-yellow-200 bg-yellow-50/30">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-xs font-medium uppercase text-yellow-600">Sem Acomp.</CardTitle>
+              <Clock className="h-4 w-4 text-yellow-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-yellow-700">{kpis.sem_acompanhamento}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Concluídos</CardTitle>
+              <CardTitle className="text-xs font-medium uppercase text-muted-foreground">Concluídos</CardTitle>
               <CheckCircle2 className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
@@ -260,25 +314,53 @@ function PlanosAcaoPage() {
           </Card>
         </div>
 
+
+        {resumoGerencial && (
+          <Card className="bg-primary/5 border-primary/20 animate-in fade-in slide-in-from-top-2 duration-300 relative">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="absolute top-2 right-2 h-6 w-6" 
+              onClick={() => setResumoGerencial(null)}
+            >
+              <Plus className="h-4 w-4 rotate-45" />
+            </Button>
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <Sparkles className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-primary">Resumo Gerencial da Equipe</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{resumoGerencial}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+        )}
+
         <Card>
+
           <CardHeader>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <CardTitle>Listagem de Planos</CardTitle>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <Filter className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Filtrar por Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os Status</SelectItem>
-                  {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex flex-wrap items-center gap-2">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <Filter className="mr-2 h-4 w-4" />
+                    <SelectValue placeholder="Filtrar por Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Status</SelectItem>
+                    {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
+
             <Table>
               <TableHeader>
                 <TableRow>
@@ -306,7 +388,20 @@ function PlanosAcaoPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  planos.map((plano) => (
+                  [...planos].sort((a: any, b: any) => {
+                    const order: Record<string, number> = { 
+                      "ATRASADO": 1, 
+                      "ATENCAO": 2, 
+                      "SEM_ACOMPANHAMENTO": 3, 
+                      "NO_PRAZO": 4, 
+                      "CONCLUIDO_SUCESSO": 5, 
+                      "CONCLUIDO_PARCIAL": 6, 
+                      "CONCLUIDO_ERRO": 7, 
+                      "CANCELADO": 8 
+                    };
+                    return (order[a.situacao] || 9) - (order[b.situacao] || 9);
+                  }).map((plano) => (
+
                     <TableRow key={plano.id}>
                       <TableCell className="font-medium">{plano.titulo}</TableCell>
                       <TableCell>
@@ -327,7 +422,17 @@ function PlanosAcaoPage() {
                           </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{STATUS_LABELS[plano.status]}</Badge>
+                        <Badge variant="outline" className={
+                          plano.situacao === "ATRASADO" ? "bg-red-100 text-red-800" :
+                          plano.situacao === "ATENCAO" ? "bg-amber-100 text-amber-800" :
+                          plano.situacao === "SEM_ACOMPANHAMENTO" ? "bg-yellow-100 text-yellow-800" :
+                          plano.situacao === "CANCELADO" ? "bg-gray-100 text-gray-800" :
+                          "bg-green-100 text-green-800"
+                        }>
+                          {plano.situacao?.replace("_", " ") || "NO PRAZO"}
+                        </Badge>
+
+
                       </TableCell>
                       <TableCell>
                          <Button variant="ghost" size="sm" onClick={() => setSelectedPlanoId(plano.id)}>
@@ -341,7 +446,6 @@ function PlanosAcaoPage() {
             </Table>
           </CardContent>
         </Card>
-      </div>
 
       <Dialog open={isNewDialogOpen} onOpenChange={setIsNewDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -358,6 +462,8 @@ function PlanosAcaoPage() {
           </Form>
         </DialogContent>
       </Dialog>
+
+
       
       {/* Detalhe Sheet Placeholder */}
       <Sheet open={!!selectedPlanoId} onOpenChange={() => setSelectedPlanoId(null)}>
@@ -368,8 +474,10 @@ function PlanosAcaoPage() {
              <div className="mt-6">
                 {selectedPlanoId && <PlanoDetalhe planoId={selectedPlanoId} onClose={() => setSelectedPlanoId(null)} />}
              </div>
-         </SheetContent>
-      </Sheet>
+          </SheetContent>
+        </Sheet>
+      </div>
+
     </AppShell>
   );
 }
@@ -446,22 +554,29 @@ function PlanoDetalhe({ planoId, onClose }: { planoId: string; onClose: () => vo
     }
   };
 
+
   if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>;
   if (!plano) return <div>Plano não encontrado.</div>;
 
-  const situacaoPrazo = () => {
-    if (plano.status === "CONCLUIDO") return { label: "CONCLUIDO", color: "bg-green-500" };
-    const hoje = new Date();
-    const prazo = new Date(plano.prazo);
-    const diff = prazo.getTime() - hoje.getTime();
-    const dias = diff / (1000 * 60 * 60 * 24);
-    
-    if (diff < 0) return { label: "ATRASADO", color: "bg-red-500" };
-    if (dias <= 7) return { label: "ATENÇÃO", color: "bg-amber-500" };
-    return { label: "NO PRAZO", color: "bg-green-500" };
+
+  const getSituacaoColor = (situacao: string) => {
+    switch (situacao) {
+      case "ATRASADO": return "bg-red-500";
+      case "ATENCAO": return "bg-amber-500";
+      case "SEM_ACOMPANHAMENTO": return "bg-yellow-500";
+      case "CONCLUIDO_SUCESSO": return "bg-green-600";
+      case "CONCLUIDO_PARCIAL": return "bg-blue-500";
+      case "CONCLUIDO_ERRO": return "bg-red-400";
+      case "CANCELADO": return "bg-gray-500";
+      default: return "bg-green-500";
+    }
   };
 
-  const situacao = situacaoPrazo();
+  const situacao = { 
+    label: plano.situacao?.replace("_", " ") || "NO PRAZO", 
+    color: getSituacaoColor(plano.situacao) 
+  };
+
 
   return (
     <div className="space-y-6 pb-20">
@@ -496,25 +611,42 @@ function PlanoDetalhe({ planoId, onClose }: { planoId: string; onClose: () => vo
       <div className="grid grid-cols-1 gap-4">
         <div className="space-y-2">
           <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Objetivo</h3>
-          <p className="text-sm"><strong>Problema:</strong> {plano.problema_identificado}</p>
-          <p className="text-sm"><strong>Meta:</strong> {plano.meta}</p>
-          <p className="text-sm"><strong>Indicador:</strong> {plano.indicador_sucesso}</p>
-          <p className="text-sm"><strong>Ação:</strong> {plano.acao_proposta}</p>
+          <div className="bg-muted/30 p-4 rounded-lg space-y-3">
+             <p className="text-sm"><strong>Problema:</strong> {plano.problema_identificado}</p>
+             <p className="text-sm"><strong>Meta:</strong> {plano.meta}</p>
+             <p className="text-sm"><strong>Indicador de Sucesso:</strong> {plano.indicador_sucesso}</p>
+             <p className="text-sm"><strong>Ação Proposta:</strong> {plano.acao_proposta}</p>
+          </div>
         </div>
       </div>
 
+      {plano.status === "CONCLUIDO" && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Fechamento</h3>
+          <div className="bg-green-50 border border-green-100 p-4 rounded-lg space-y-2">
+            <p className="text-sm"><strong>Resultado:</strong> {plano.resultado_alcancado}</p>
+            <p className="text-sm"><strong>Parecer Final:</strong> {plano.parecer_final}</p>
+          </div>
+        </div>
+      )}
+
+
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" onClick={() => {
-          checkinForm.setValue("progresso", plano.progresso ?? 0);
-          setIsCheckinDialogOpen(true);
-        }}>
-          Registrar Acompanhamento
-        </Button>
-        {plano.status !== "CONCLUIDO" && (
+        {plano.status !== "CONCLUIDO" && plano.status !== "CANCELADO" && (
+          <Button size="sm" onClick={() => {
+            checkinForm.setValue("progresso", plano.progresso ?? 0);
+            setIsCheckinDialogOpen(true);
+          }}>
+            Registrar Acompanhamento
+          </Button>
+        )}
+
+        {plano.status !== "CONCLUIDO" && plano.status !== "CANCELADO" && (
           <Button size="sm" variant="outline" onClick={() => setIsConcluirDialogOpen(true)}>
             Concluir Plano
           </Button>
         )}
+
         <Button size="sm" variant="secondary" onClick={handleAnalyseIA} disabled={isAnalysingIA}>
           {isAnalysingIA ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
           Analisar com IA
@@ -635,4 +767,4 @@ function PlanoDetalhe({ planoId, onClose }: { planoId: string; onClose: () => vo
   );
 }
 
-import { analisarAndamentoIA } from "@/lib/planos-acao.functions";
+

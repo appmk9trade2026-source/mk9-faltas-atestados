@@ -2,8 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requirePermission } from "@/lib/rbac/guards.server";
+import { differenceInDays, parseISO } from "date-fns";
 
 const uuid = z.string().uuid();
+
+export type SituacaoGerencial = "ATRASADO" | "ATENCAO" | "SEM_ACOMPANHAMENTO" | "NO_PRAZO" | "CONCLUIDO_SUCESSO" | "CONCLUIDO_PARCIAL" | "CONCLUIDO_ERRO" | "CANCELADO";
+
 
 export const tipoAlvoSchema = z.enum(["PROJETO", "SUPERVISOR", "COLABORADOR"]);
 export const statusPlanoSchema = z.enum(["NAO_INICIADO", "EM_ANDAMENTO", "SUSPENSO", "CONCLUIDO", "CANCELADO"]);
@@ -169,9 +173,11 @@ export const listarPlanosAcao = createServerFn({ method: "GET" })
         *,
         projeto:projetos(nome),
         supervisor:profiles!planos_acao_supervisor_usuario_id_fkey(nome),
-        colaborador:colaboradores(nome_completo, matricula)
+        colaborador:colaboradores(nome_completo, matricula),
+        acompanhamentos:plano_acao_acompanhamentos(created_at)
       `)
       .order("created_at", { ascending: false });
+
 
     if (input?.status) query = query.eq("status", input.status);
     if (input?.projeto_id) query = query.eq("projeto_id", input.projeto_id);
@@ -201,15 +207,22 @@ export const listarPlanosAcao = createServerFn({ method: "GET" })
       nomes = new Map((profs ?? []).map((p: any) => [p.id, p.nome]));
     }
 
-    return rows.map((r: any) => ({
-      ...r,
-      responsavel: r.responsavel_usuario_id
-        ? { nome: nomes.get(r.responsavel_usuario_id) ?? null }
-        : null,
-      criador: r.criado_por_usuario_id
-        ? { nome: nomes.get(r.criado_por_usuario_id) ?? null }
-        : null,
-    }));
+    return rows.map((r: any) => {
+      const planoComNomes = {
+        ...r,
+        responsavel: r.responsavel_usuario_id
+          ? { nome: nomes.get(r.responsavel_usuario_id) ?? null }
+          : null,
+        criador: r.criado_por_usuario_id
+          ? { nome: nomes.get(r.criado_por_usuario_id) ?? null }
+          : null,
+      };
+      return {
+        ...planoComNomes,
+        situacao: calcularSituacao(planoComNomes)
+      };
+    });
+
   });
 
 const idInputSchema = z.object({ id: uuid });
@@ -226,10 +239,12 @@ export const obterPlanoAcao = createServerFn({ method: "GET" })
         *,
         projeto:projetos(nome),
         supervisor:profiles!planos_acao_supervisor_usuario_id_fkey(nome),
-        colaborador:colaboradores(nome_completo, matricula)
+        colaborador:colaboradores(nome_completo, matricula),
+        acompanhamentos:plano_acao_acompanhamentos(created_at)
       `)
       .eq("id", input.id)
       .single();
+
 
     if (error) {
       console.error("[obterPlanoAcao]", error);
@@ -248,7 +263,7 @@ export const obterPlanoAcao = createServerFn({ method: "GET" })
       nomes = new Map((profs ?? []).map((p: any) => [p.id, p.nome]));
     }
 
-    return {
+    const planoComNomes = {
       ...data,
       responsavel: data.responsavel_usuario_id
         ? { nome: nomes.get(data.responsavel_usuario_id) ?? null }
@@ -257,6 +272,12 @@ export const obterPlanoAcao = createServerFn({ method: "GET" })
         ? { nome: nomes.get(data.criado_por_usuario_id) ?? null }
         : null,
     };
+
+    return {
+      ...planoComNomes,
+      situacao: calcularSituacao(planoComNomes)
+    };
+
   });
 
 export const registrarAcompanhamento = createServerFn({ method: "POST" })
@@ -345,7 +366,36 @@ export const cancelarPlano = createServerFn({ method: "POST" })
     return data;
   });
 
+export const calcularSituacao = (plano: any): SituacaoGerencial => {
+  if (plano.status === "CANCELADO") return "CANCELADO";
+  if (plano.status === "CONCLUIDO") {
+    if (plano.resultado_alcancado === "SIM") return "CONCLUIDO_SUCESSO";
+    if (plano.resultado_alcancado === "PARCIAL") return "CONCLUIDO_PARCIAL";
+    return "CONCLUIDO_ERRO";
+  }
+
+  const hoje = new Date();
+  const prazo = parseISO(plano.prazo);
+  
+  if (hoje > prazo) return "ATRASADO";
+  
+  const diasParaVencer = differenceInDays(prazo, hoje);
+  if (diasParaVencer <= 3) return "ATENCAO";
+
+  if (plano.acompanhamentos && plano.acompanhamentos.length > 0) {
+    const ultimoCheckin = parseISO(plano.acompanhamentos[0].created_at);
+    if (differenceInDays(hoje, ultimoCheckin) > 7) return "SEM_ACOMPANHAMENTO";
+  } else {
+    // Se não tem nenhum check-in e foi criado há mais de 7 dias
+    const criadoEm = parseISO(plano.created_at);
+    if (differenceInDays(hoje, criadoEm) > 7) return "SEM_ACOMPANHAMENTO";
+  }
+
+  return "NO_PRAZO";
+};
+
 export const listarAcompanhamentos = createServerFn({ method: "GET" })
+
   .validator((data: unknown) => z.object({ plano_id: uuid }).parse(data))
   .middleware([requireSupabaseAuth])
   .handler(async ({ data: input, context }) => {
