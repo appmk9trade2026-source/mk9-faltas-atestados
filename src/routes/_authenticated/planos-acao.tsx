@@ -114,7 +114,7 @@ function PlanosAcaoPage() {
       prioridade: "MEDIA",
       data_inicio: new Date().toISOString().split("T")[0],
       prazo: new Date().toISOString().split("T")[0],
-      projeto_id: "" as any,
+      projeto_id: undefined,
       supervisor_usuario_id: null,
       colaborador_id: null,
       responsavel_tipo: "USUARIO",
@@ -152,10 +152,34 @@ function PlanosAcaoPage() {
     const projetoId = form.getValues("projeto_id");
     const supervisorId = form.getValues("supervisor_usuario_id");
     const colaboradorId = form.getValues("colaborador_id");
-    const problema = form.getValues("problema_identificado");
+    const problema = form.getValues("problema_identificado") || "";
     
-    if (!projetoId || problema.length < 5) {
-      toast.error("Selecione um projeto e descreva o problema (mín. 5 caracteres) para usar a IA.");
+    // Validação A: Projeto
+    if (!projetoId || (typeof projetoId === "string" && projetoId.trim() === "")) {
+      toast.error("Selecione um projeto para gerar sugestões com IA.");
+      return;
+    }
+
+    // Validação de Hierarquia baseada no Tipo de Alvo
+    if (tipoAlvo === "SUPERVISOR" && !supervisorId) {
+      toast.error("Selecione um supervisor para gerar a análise contextual.");
+      return;
+    }
+
+    if (tipoAlvo === "COLABORADOR") {
+      if (!supervisorId) {
+        toast.error("Selecione um supervisor para gerar a análise contextual.");
+        return;
+      }
+      if (!colaboradorId) {
+        toast.error("Selecione um colaborador para gerar a análise contextual.");
+        return;
+      }
+    }
+
+    // Validação B: Problema
+    if (problema.trim().length < 5) {
+      toast.error("Descreva o problema com pelo menos 5 caracteres para gerar sugestões com IA.");
       return;
     }
 
@@ -491,10 +515,10 @@ function PlanosAcaoPage() {
                            <SelectItem value="COLABORADOR">Colaborador</SelectItem>
                          </SelectContent>
                        </Select>
-                       <FormMessage />
-                     </FormItem>
-                   )}
-                 />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                  <FormField
                    control={form.control}
@@ -508,7 +532,7 @@ function PlanosAcaoPage() {
                            form.setValue("supervisor_usuario_id", null);
                            form.setValue("colaborador_id", null);
                          }} 
-                         value={field.value}
+                          value={field.value || ""}
                        >
                          <FormControl>
                            <SelectTrigger>
