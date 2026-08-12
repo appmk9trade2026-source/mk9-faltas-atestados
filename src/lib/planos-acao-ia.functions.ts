@@ -4,6 +4,117 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { scrubString } from "./assistente/sanitize.server";
 
 const API_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const PRIMARY_MODEL = "google/gemini-2.5-flash";
+const FALLBACK_MODEL = "google/gemini-2.0-flash-001";
+
+interface AiCallParams {
+  messages: any[];
+  temperature: number;
+  jsonMode?: boolean;
+  traceName?: string;
+}
+
+async function callAiWithFallback(params: AiCallParams) {
+  const lovableKey = process.env.LOVABLE_API_KEY;
+  const openRouterKey = process.env.OPENROUTER_API_KEY;
+
+  if (!lovableKey) {
+    throw new Error("LOVABLE_API_KEY não configurada.");
+  }
+
+  const started = Date.now();
+  let usedFallback = false;
+  let lastError: any = null;
+
+  // 1. Tentativa com Lovable AI Gateway
+  try {
+    console.log(`[AI] Calling Lovable Gateway (${params.traceName})...`);
+    const response = await fetch(API_GATEWAY_URL, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${lovableKey}`,
+        "Content-Type": "application/json",
+        ...(params.traceName ? { "x-lovable-trace": params.traceName } : {})
+      },
+      body: JSON.stringify({
+        model: PRIMARY_MODEL,
+        messages: params.messages,
+        temperature: params.temperature,
+        ...(params.jsonMode ? { response_format: { type: "json_object" } } : {})
+      }),
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      return {
+        content: result.choices?.[0]?.message?.content,
+        provider: "lovable",
+        model: PRIMARY_MODEL,
+        latencyMs: Date.now() - started,
+        fallback_used: false
+      };
+    }
+
+    lastError = { status: response.status, text: await response.text() };
+    console.warn(`[AI] Lovable Gateway error: ${lastError.status}`, lastError.text);
+  } catch (err: any) {
+    lastError = err;
+    console.warn("[AI] Lovable Gateway fetch failure:", err.message);
+  }
+
+  // 2. Fallback elegível para OpenRouter
+  const isEligibleForFallback = 
+    !lastError || 
+    lastError.status === 429 || 
+    (lastError.status >= 500 && lastError.status <= 599) ||
+    lastError.name === "AbortError" ||
+    lastError.message?.includes("fetch");
+
+  if (isEligibleForFallback && openRouterKey) {
+    console.log("[AI] Starting OpenRouter Fallback...");
+    usedFallback = true;
+    try {
+      const response = await fetch(OPENROUTER_URL, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${openRouterKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://mk9-faltas-atestados.lovable.app",
+          "X-Title": "CRM MK9"
+        },
+        body: JSON.stringify({
+          model: FALLBACK_MODEL,
+          messages: params.messages,
+          temperature: params.temperature,
+          ...(params.jsonMode ? { response_format: { type: "json_object" } } : {})
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        return {
+          content: result.choices?.[0]?.message?.content,
+          provider: "openrouter",
+          model: FALLBACK_MODEL,
+          latencyMs: Date.now() - started,
+          fallback_used: true
+        };
+      }
+      const frText = await response.text();
+      console.error("[AI] OpenRouter Fallback failed:", response.status, frText);
+    } catch (err: any) {
+      console.error("[AI] OpenRouter Fallback fetch failure:", err.message);
+    }
+  }
+
+  // Se chegou aqui, ambos falharam ou não era elegível
+  if (lastError?.status === 401) throw new Error("Erro de autenticação no provedor de IA.");
+  if (lastError?.status === 429) throw new Error("Limite de requisições da IA atingido. Tente em breve.");
+  
+  throw new Error("Não foi possível gerar a sugestão com IA agora. Você pode continuar preenchendo o plano manualmente.");
+}
+
 
 const suggestionInputSchema = z.object({
   tipo_alvo: z.enum(["PROJETO", "SUPERVISOR", "COLABORADOR"]),
@@ -118,55 +229,30 @@ REGRAS ESTRITAS:
 
 JSON:`;
 
-    console.log("[gerarSugestaoPlanoAcao] Calling AI Gateway...");
+    const aiResult = await callAiWithFallback({
+      messages: [
+        { role: "system", content: "Você é um assistente que responde exclusivamente em JSON." },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.2,
+      jsonMode: true,
+      traceName: "gerarSugestaoPlanoAcao"
+    });
+
+    const content = aiResult.content;
     
-    try {
-      const response = await fetch(API_GATEWAY_URL, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          "x-lovable-trace": "gerarSugestaoPlanoAcao"
-        },
-        body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-          messages: [
-            { role: "system", content: "Você é um assistente que responde exclusivamente em JSON." },
-            { role: "user", content: prompt }
-          ],
-          temperature: 0.2,
-          response_format: { type: "json_object" }
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("[gerarSugestaoPlanoAcao] AI Gateway error:", response.status, errorText);
-        
-        if (response.status === 401) throw new Error("Erro de autenticação no gateway de IA.");
-        if (response.status === 429) throw new Error("Limite de requisições da IA atingido. Tente em breve.");
-        
-        throw new Error("Falha ao consultar assistente de IA.");
-      }
-
-      const result = await response.json();
-      const content = result.choices?.[0]?.message?.content;
-      
-      if (!content) {
-        console.error("[gerarSugestaoPlanoAcao] Empty AI response content");
-        throw new Error("A IA retornou uma resposta vazia.");
-      }
-
-      try {
-        return JSON.parse(content);
-      } catch (e) {
-        console.error("[gerarSugestaoPlanoAcao] Failed to parse AI response content:", content);
-        throw new Error("Resposta da IA em formato inválido.");
-      }
-    } catch (error: any) {
-      console.error("[gerarSugestaoPlanoAcao] Unexpected error:", error.message);
-      throw error;
+    if (!content) {
+      console.error("[gerarSugestaoPlanoAcao] Empty AI response content");
+      throw new Error("A IA retornou uma resposta vazia.");
     }
+
+    try {
+      return JSON.parse(content);
+    } catch (e) {
+      console.error("[gerarSugestaoPlanoAcao] Failed to parse AI response content:", content);
+      throw new Error("Resposta da IA em formato inválido.");
+    }
+
   });
 
 export const gerarResumoGerencialIA = createServerFn({ method: "POST" })
@@ -204,27 +290,14 @@ Regras de Tom:
 
 Retorne apenas o texto do resumo.`;
 
-    const response = await fetch(API_GATEWAY_URL, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.3,
-      }),
+    const aiResult = await callAiWithFallback({
+      messages: [
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.3,
+      traceName: "gerarResumoGerencialIA"
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[gerarResumoGerencialIA] Error:", response.status, errorText);
-      throw new Error("Falha ao consultar IA para resumo.");
-    }
+    return aiResult.content || "Sem resumo disponível no momento.";
 
-    const result = await response.json();
-    return result.choices?.[0]?.message?.content || "Sem resumo disponível no momento.";
   });
