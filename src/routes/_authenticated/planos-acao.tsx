@@ -399,7 +399,7 @@ function PlanoDetalhe({ planoId, onClose }: { planoId: string; onClose: () => vo
 
   const checkinForm = useForm({
     defaultValues: {
-      progresso: plano?.progresso || 0,
+      progresso: plano?.progresso ?? 0,
       observacao: "",
     },
   });
