@@ -162,17 +162,17 @@ function PlanosAcaoPage() {
 
     // Validação de Hierarquia baseada no Tipo de Alvo
     if (tipoAlvo === "SUPERVISOR" && !supervisorId) {
-      toast.error("Selecione um supervisor para gerar a análise contextual.");
+      toast.error("Selecione um supervisor para gerar sugestões com IA.");
       return;
     }
 
     if (tipoAlvo === "COLABORADOR") {
       if (!supervisorId) {
-        toast.error("Selecione um supervisor para gerar a análise contextual.");
+        toast.error("Selecione um supervisor para gerar sugestões com IA.");
         return;
       }
       if (!colaboradorId) {
-        toast.error("Selecione um colaborador para gerar a análise contextual.");
+        toast.error("Selecione um colaborador para gerar sugestões com IA.");
         return;
       }
     }
@@ -660,8 +660,13 @@ function PlanosAcaoPage() {
                        <FormControl>
                          <Textarea placeholder="Descreva o problema observado..." {...field} />
                        </FormControl>
-                       <FormMessage />
-                     </FormItem>
+                        <FormMessage />
+                        {field.value && field.value.trim().length > 0 && field.value.trim().length < 5 && (
+                          <p className="text-[0.8rem] font-medium text-destructive mt-1">
+                            Informe pelo menos 5 caracteres.
+                          </p>
+                        )}
+                      </FormItem>
                    )}
                  />
 
