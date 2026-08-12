@@ -100,15 +100,15 @@ CONTEXTO OPERACIONAL (Últimos 30 dias):
 - Total de Ausências: ${totalAtuais}
 - Período anterior (30-60 dias): ${totalAnteriores}
 - Variação: ${variacao.toFixed(1)}%
-- Tipos recorrentes: ${Object.entries(tiposContagem).map(([n, c]) => \`\${n} (\${c})\`).join(", ")}
-\${planosAnteriores && planosAnteriores.length > 0 ? \`- Planos Anteriores: \${planosAnteriores.map(p => \`\${p.titulo} (\${p.status})\`).join("; ")}\` : ""}
+- Tipos recorrentes: ${Object.entries(tiposContagem).map(([n, c]) => `${n} (${c})`).join(", ")}
+${planosAnteriores && planosAnteriores.length > 0 ? `- Planos Anteriores: ${planosAnteriores.map(p => `${p.titulo} (${p.status})`).join("; ")}` : ""}
 
 PROBLEMA IDENTIFICADO PELO USUÁRIO:
-"\${problemaLimpo}"
+"${problemaLimpo}"
 
 REGRAS ESTRITAS:
 1. Retorne EXCLUSIVAMENTE um JSON com: "titulo", "meta", "indicador_sucesso", "acao_proposta", "prazo_sugerido_dias", "justificativa".
-2. "meta": Deve ser SMART (Específica, Mensurável, Atingível, Relevante e Temporal). Ex: "Reduzir ausências de \${totalAtuais} para no máximo \${Math.max(1, Math.round(totalAtuais * 0.7))} nos próximos 30 dias".
+2. "meta": Deve ser SMART (Específica, Mensurável, Atingível, Relevante e Temporal). Ex: "Reduzir ausências de ${totalAtuais} para no máximo ${Math.max(1, Math.round(totalAtuais * 0.7))} nos próximos 30 dias".
 3. "indicador_sucesso": Como medir? Ex: "Taxa semanal de ausências do projeto".
 4. "acao_proposta": Liste 3 a 4 ações práticas e proporcionais ao problema.
 5. "prazo_sugerido_dias": Número (ex: 30, 45, 60).
@@ -142,7 +142,6 @@ JSON:`;
         const errorText = await response.text();
         console.error("[gerarSugestaoPlanoAcao] AI Gateway error:", response.status, errorText);
         
-        // Detailed error for internal logging
         if (response.status === 401) throw new Error("Erro de autenticação no gateway de IA.");
         if (response.status === 429) throw new Error("Limite de requisições da IA atingido. Tente em breve.");
         
@@ -195,7 +194,7 @@ Foque em:
 2. Tendências gerais de progresso (estão avançando ou estagnados?).
 3. Recomendações diretas de prioridade para o gestor.
 
-Dados dos Planos: \${JSON.stringify(resumoDados)}
+Dados dos Planos: ${JSON.stringify(resumoDados)}
 
 Regras de Tom:
 - Profissional, direto e acionável.
