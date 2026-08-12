@@ -10,6 +10,7 @@ export type SituacaoGerencial = "ATRASADO" | "ATENCAO" | "SEM_ACOMPANHAMENTO" | 
 
 
 export const tipoAlvoSchema = z.enum(["PROJETO", "SUPERVISOR", "COLABORADOR"]);
+export const responsavelTipoSchema = z.enum(["USUARIO", "COORDENACAO"]);
 export const statusPlanoSchema = z.enum(["NAO_INICIADO", "EM_ANDAMENTO", "SUSPENSO", "CONCLUIDO", "CANCELADO"]);
 export const prioridadePlanoSchema = z.enum(["BAIXA", "MEDIA", "ALTA", "CRITICA"]);
 
@@ -24,7 +25,9 @@ export const planoAcaoSchema = z.object({
   indicador_sucesso: z.string().min(1),
   meta: z.string().min(1),
   acao_proposta: z.string().min(1),
-  responsavel_usuario_id: uuid,
+  responsavel_tipo: responsavelTipoSchema,
+  responsavel_usuario_id: uuid.nullable().optional(),
+  responsavel_coordenacao_id: uuid.nullable().optional(),
   status: statusPlanoSchema,
   prioridade: prioridadePlanoSchema,
   data_inicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -34,7 +37,21 @@ export const planoAcaoSchema = z.object({
   parecer_final: z.string().nullable().optional(),
   justificativa_cancelamento: z.string().nullable().optional(),
   observacoes: z.string().nullable().optional(),
+}).refine(data => {
+  if (data.responsavel_tipo === "USUARIO") {
+    return !!data.responsavel_usuario_id;
+  }
+  if (data.responsavel_tipo === "COORDENACAO") {
+    return !!data.responsavel_coordenacao_id;
+  }
+  return false;
+}, {
+  message: "Responsável inválido para o tipo selecionado",
+  path: ["responsavel_usuario_id"]
 });
+
+
+
 
 export type PlanoAcaoInput = z.infer<typeof planoAcaoSchema>;
 
@@ -88,54 +105,39 @@ export const criarPlanoAcao = createServerFn({ method: "POST" })
     const { data: isCoordenador } = await supabase.rpc("has_role", { _user_id: userId, _role: "coordenador" });
     const { data: isSupervisor } = await supabase.rpc("has_role", { _user_id: userId, _role: "supervisor" });
     
-    if (isCoordenador === true) {
-      const { data: respProfile } = await supabase
-        .from("profiles")
-        .select("coordenador_usuario_id")
-        .eq("id", input.responsavel_usuario_id)
-        .single();
-      
-      if (respProfile && respProfile.coordenador_usuario_id !== userId && input.responsavel_usuario_id !== userId) {
-         throw new Error("SCOPE_DENIED: O responsável deve pertencer à sua coordenação.");
-      }
-    } else if (isSupervisor === true) {
-      // Se for supervisor, ele só pode criar para si mesmo ou seus subordinados
-      if (input.responsavel_usuario_id !== userId) {
-        // Buscar se existe algum colaborador vinculado ao supervisor que possua este usuario_id no seu profile
-        // Nota: A tabela colaboradores não tem usuario_id diretamente no Row do types.ts, 
-        // mas a lógica de negócio costuma vincular via profiles.
+    if (input.responsavel_tipo === "USUARIO" && input.responsavel_usuario_id) {
+      if (isCoordenador === true) {
         const { data: respProfile } = await supabase
           .from("profiles")
-          .select("id")
-          .eq("id", input.responsavel_usuario_id)
-          .single();
+          .select("coordenador_usuario_id")
+          .eq("id", input.responsavel_usuario_id!)
 
-        if (!respProfile) {
-          throw new Error("SCOPE_DENIED: Responsável não encontrado.");
-        }
-
-        const { data: isSubordinado } = await supabase
-          .from("colaboradores")
-          .select("id")
-          .eq("supervisor_usuario_id", userId)
           .single();
-          
-        // Esta verificação simplificada assume que se o supervisor está tentando atribuir a alguém 
-        // que não é ele mesmo, precisamos validar o vínculo.
-        // Como o erro anterior foi na tentativa de acessar usuario_id em colaboradores, 
-        // vamos usar o filtro supervisor_usuario_id que existe na tabela.
         
-        const { data: countSub } = await supabase
-          .from("colaboradores")
-          .select("id", { count: 'exact', head: true })
-          .eq("supervisor_usuario_id", userId);
-
-        // Se o supervisor não tem subordinados e não é ele mesmo o responsável, negamos.
-        // A lógica ideal seria join com profiles, mas para correção cirúrgica do build:
-        if (input.responsavel_usuario_id !== userId) {
-           // Verificação básica: o supervisor deve ter acesso ao colaborador se ele for o supervisor_usuario_id
-           // O RLS já cuida disso, mas o guardrail server-side reforça.
+        if (respProfile && respProfile.coordenador_usuario_id !== userId && input.responsavel_usuario_id !== userId) {
+           throw new Error("SCOPE_DENIED: O responsável deve pertencer à sua coordenação.");
         }
+      } else if (isSupervisor === true) {
+        if (input.responsavel_usuario_id !== userId) {
+          const { data: respProfile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("id", input.responsavel_usuario_id!)
+            .single();
+  
+          if (!respProfile) {
+            throw new Error("SCOPE_DENIED: Responsável não encontrado.");
+          }
+        }
+      }
+    } else if (input.responsavel_tipo === "COORDENACAO" && input.responsavel_coordenacao_id) {
+      // Validar se coordenação está no projeto (neste caso, se o coordenador tem vinculo com o projeto)
+      const { data: hasProj } = await supabase.rpc("coordenador_has_projeto_via_equipe", {
+        _user_id: input.responsavel_coordenacao_id,
+        _projeto_id: input.projeto_id
+      });
+      if (!hasProj) {
+        throw new Error("SCOPE_DENIED: Esta coordenação não possui vínculo com o projeto selecionado.");
       }
     }
 
@@ -145,6 +147,7 @@ export const criarPlanoAcao = createServerFn({ method: "POST" })
         ...input,
         criado_por_usuario_id: userId,
       })
+
       .select()
       .single();
 
@@ -179,6 +182,7 @@ export const listarPlanosAcao = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false });
 
 
+
     if (input?.status) query = query.eq("status", input.status);
     if (input?.projeto_id) query = query.eq("projeto_id", input.projeto_id);
 
@@ -193,7 +197,7 @@ export const listarPlanosAcao = createServerFn({ method: "GET" })
     const ids = Array.from(
       new Set(
         rows.flatMap((r: any) =>
-          [r.responsavel_usuario_id, r.criado_por_usuario_id].filter(Boolean),
+          [r.responsavel_usuario_id, r.responsavel_coordenacao_id, r.criado_por_usuario_id].filter(Boolean),
         ),
       ),
     );
@@ -210,8 +214,11 @@ export const listarPlanosAcao = createServerFn({ method: "GET" })
     return rows.map((r: any) => {
       const planoComNomes = {
         ...r,
-        responsavel: r.responsavel_usuario_id
+        responsavel_usuario: r.responsavel_usuario_id
           ? { nome: nomes.get(r.responsavel_usuario_id) ?? null }
+          : null,
+        responsavel_coordenacao: r.responsavel_coordenacao_id
+          ? { nome: nomes.get(r.responsavel_coordenacao_id) ?? null }
           : null,
         criador: r.criado_por_usuario_id
           ? { nome: nomes.get(r.criado_por_usuario_id) ?? null }
@@ -222,6 +229,7 @@ export const listarPlanosAcao = createServerFn({ method: "GET" })
         situacao: calcularSituacao(planoComNomes)
       };
     });
+
 
   });
 
@@ -251,9 +259,12 @@ export const obterPlanoAcao = createServerFn({ method: "GET" })
       throw new Error(`DATABASE_ERROR: ${error.message}`);
     }
 
-    const ids = [data.responsavel_usuario_id, data.criado_por_usuario_id].filter(
-      Boolean,
-    ) as string[];
+    const ids = [
+      data.responsavel_usuario_id, 
+      data.responsavel_coordenacao_id, 
+      data.criado_por_usuario_id
+    ].filter(Boolean) as string[];
+
     let nomes = new Map<string, string>();
     if (ids.length > 0) {
       const { data: profs } = await supabase
@@ -265,8 +276,11 @@ export const obterPlanoAcao = createServerFn({ method: "GET" })
 
     const planoComNomes = {
       ...data,
-      responsavel: data.responsavel_usuario_id
+      responsavel_usuario: data.responsavel_usuario_id
         ? { nome: nomes.get(data.responsavel_usuario_id) ?? null }
+        : null,
+      responsavel_coordenacao: data.responsavel_coordenacao_id
+        ? { nome: nomes.get(data.responsavel_coordenacao_id) ?? null }
         : null,
       criador: data.criado_por_usuario_id
         ? { nome: nomes.get(data.criado_por_usuario_id) ?? null }
@@ -277,6 +291,7 @@ export const obterPlanoAcao = createServerFn({ method: "GET" })
       ...planoComNomes,
       situacao: calcularSituacao(planoComNomes)
     };
+
 
   });
 

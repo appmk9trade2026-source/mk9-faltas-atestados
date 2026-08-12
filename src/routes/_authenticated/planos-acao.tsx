@@ -56,8 +56,10 @@ import { useProjetosAtivosPorEmpresa } from "@/hooks/use-projetos";
 import { useSupervisoresPorProjeto } from "@/hooks/use-supervisores";
 import { useColaboradoresAtivos } from "@/hooks/use-colaboradores";
 import { cn } from "@/lib/utils";
+import { useCoordenadoresPorProjeto } from "@/hooks/use-coordenadores";
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+
 
 export const Route = createFileRoute("/_authenticated/planos-acao")({
   head: () => ({ meta: [{ title: "Planos de Ação · CRM MK9" }] }),
@@ -115,9 +117,12 @@ function PlanosAcaoPage() {
       projeto_id: "" as any,
       supervisor_usuario_id: null,
       colaborador_id: null,
-      responsavel_usuario_id: user?.id || "" as any,
+      responsavel_tipo: "USUARIO",
+      responsavel_usuario_id: user?.id || undefined,
+      responsavel_coordenacao_id: null,
     },
   });
+
 
   const generateAIFn = useServerFn(gerarSugestaoPlanoAcao);
   const summarizeAIFn = useServerFn(gerarResumoGerencialIA);
@@ -140,7 +145,10 @@ function PlanosAcaoPage() {
   };
 
 
+  const { data: coordenadores } = useCoordenadoresPorProjeto(form.watch("projeto_id"));
+
   const handleGenerateAI = async () => {
+
     const tipoAlvo = form.getValues("tipo_alvo");
     const projetoId = form.getValues("projeto_id");
     const problema = form.getValues("problema_identificado");
@@ -414,7 +422,16 @@ function PlanosAcaoPage() {
                             {(plano as any).colaborador?.nome_completo ? ` | C: ${(plano as any).colaborador.nome_completo}` : ''}
                          </div>
                       </TableCell>
-                      <TableCell>{(plano as any).responsavel?.nome || "-"}</TableCell>
+                      <TableCell>
+                        <div className="text-xs">
+                          {plano.responsavel_tipo === "USUARIO" ? (
+                            <span className="flex items-center gap-1"><User className="h-3 w-3" /> {(plano as any).responsavel_usuario?.nome || "-"}</span>
+                          ) : (
+                            <span className="flex items-center gap-1 font-semibold text-primary"><Users className="h-3 w-3" /> {(plano as any).responsavel_coordenacao?.nome || "Coordenação"}</span>
+                          )}
+                        </div>
+                      </TableCell>
+
                       <TableCell className="w-[150px]">
                           <div className="flex items-center gap-2">
                              <Progress value={plano.progresso} className="h-2" />
@@ -743,31 +760,95 @@ function PlanosAcaoPage() {
                      )}
                    />
                  </div>
-                 {isCoordenador && (
-                   <FormField
-                     control={form.control}
-                     name="responsavel_usuario_id"
-                     render={({ field }) => (
-                       <FormItem>
-                         <FormLabel>Responsável pelo Plano</FormLabel>
-                         <Select onValueChange={field.onChange} value={field.value}>
-                           <FormControl>
-                             <SelectTrigger>
-                               <SelectValue placeholder="Selecione o responsável" />
-                             </SelectTrigger>
-                           </FormControl>
-                           <SelectContent>
-                             <SelectItem value={user?.id || ""}>{user?.user_metadata?.nome || "Eu mesmo"}</SelectItem>
-                             {supervisores?.map(s => (
-                               <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
-                             ))}
-                           </SelectContent>
-                         </Select>
-                         <FormMessage />
-                       </FormItem>
-                     )}
-                   />
-                 )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="responsavel_tipo"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tipo de Responsável</FormLabel>
+                          <Select 
+                            onValueChange={(val) => {
+                              field.onChange(val);
+                              form.setValue("responsavel_usuario_id", undefined);
+                              form.setValue("responsavel_coordenacao_id", null);
+                            }} 
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o tipo" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="USUARIO">Pessoa (Individual)</SelectItem>
+                              <SelectItem value="COORDENACAO">Coordenação do Projeto</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {form.watch("responsavel_tipo") === "USUARIO" ? (
+                      <FormField
+                        control={form.control}
+                        name="responsavel_usuario_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Pessoa Responsável</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              value={field.value || ""}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione a pessoa" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value={user?.id || "myself"}>{user?.user_metadata?.nome || "Eu mesmo"}</SelectItem>
+                                {supervisores?.map(s => (
+                                  <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    ) : (
+                      <FormField
+                        control={form.control}
+                        name="responsavel_coordenacao_id"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Coordenação Responsável</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              value={field.value || ""}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione a coordenação" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {coordenadores?.map(c => (
+                                  <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                                ))}
+                                {(!coordenadores || coordenadores.length === 0) && (
+                                  <SelectItem value="none" disabled>Nenhuma coordenação encontrada</SelectItem>
+                                )}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </div>
+
                </div>
 
 
@@ -903,11 +984,22 @@ function PlanoDetalhe({ planoId, onClose }: { planoId: string; onClose: () => vo
 
       <div>
         <h2 className="text-xl font-bold">{plano.titulo}</h2>
-        <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <Building2 className="h-4 w-4" /> {plano.projeto?.nome}
           {plano.supervisor?.nome && <><ChevronRight className="h-3 w-3" /> <Users className="h-4 w-4" /> {plano.supervisor.nome}</>}
           {plano.colaborador?.nome_completo && <><ChevronRight className="h-3 w-3" /> <User className="h-4 w-4" /> {plano.colaborador.nome_completo}</>}
+          
+          <div className="flex items-center gap-1 ml-auto border-l pl-2">
+            <span className="font-semibold text-xs uppercase text-primary/70">Responsável:</span>
+            {plano.responsavel_tipo === "USUARIO" ? (
+              <span className="flex items-center gap-1"><User className="h-3 w-3" /> {(plano as any).responsavel_usuario?.nome}</span>
+            ) : (
+              <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Coordenação: {(plano as any).responsavel_coordenacao?.nome}</span>
+            )}
+
+          </div>
         </div>
+
       </div>
 
       <Card>
