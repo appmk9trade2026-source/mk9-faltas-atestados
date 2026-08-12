@@ -6,8 +6,9 @@ import { scrubString } from "./assistente/sanitize.server";
 const API_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 const suggestionInputSchema = z.object({
-  tipo_alvo: z.enum(["PROJETO", "COLABORADOR"]),
+  tipo_alvo: z.enum(["PROJETO", "SUPERVISOR", "COLABORADOR"]),
   projeto_nome: z.string().optional(),
+  supervisor_nome: z.string().optional(),
   colaborador_nome: z.string().optional(),
   problema_identificado: z.string().min(5),
 });
@@ -21,7 +22,7 @@ export const gerarSugestaoPlanoAcao = createServerFn({ method: "POST" })
       throw new Error("LOVABLE_API_KEY não configurada.");
     }
 
-    const { tipo_alvo, projeto_nome, colaborador_nome, problema_identificado } = data;
+    const { tipo_alvo, projeto_nome, supervisor_nome, colaborador_nome, problema_identificado } = data;
     
     // Sanitização de segurança (remover PII/CID do problema se houver)
     const problemaLimpo = scrubString(problema_identificado);
@@ -32,13 +33,16 @@ Ajude a elaborar um plano de ação profissional e prático.
 Contexto:
 - Alvo: ${tipo_alvo}
 ${projeto_nome ? `- Projeto: ${projeto_nome}` : ""}
+${supervisor_nome ? `- Supervisor: ${supervisor_nome}` : ""}
 ${colaborador_nome ? `- Colaborador: ${colaborador_nome}` : ""}
 - Problema Identificado: ${problemaLimpo}
 
 REGRAS:
-1. Retorne EXCLUSIVAMENTE um JSON com as chaves: "problema_revisado", "meta", "acao_proposta".
-2. "problema_revisado": Reescreva o problema de forma profissional e objetiva (máx 300 caracteres).
-3. "meta": Defina uma meta mensurável e temporal (ex: "Reduzir X em Y% nos próximos 30 dias").
+1. Retorne EXCLUSIVAMENTE um JSON com as chaves: "titulo", "problema_revisado", "meta", "indicador_sucesso", "acao_proposta".
+2. "titulo": Crie um título profissional e curto para o plano.
+3. "problema_revisado": Reescreva o problema de forma profissional e objetiva (máx 300 caracteres).
+4. "meta": Defina uma meta mensurável e temporal (ex: "Reduzir X em Y% nos próximos 30 dias").
+5. "indicador_sucesso": Defina como o resultado será mensurado (ex: "Percentual mensal de faltas").
 4. "acao_proposta": Liste 3 a 5 ações práticas e executáveis.
 5. Tom profissional, sem saudações ou preâmbulos.
 

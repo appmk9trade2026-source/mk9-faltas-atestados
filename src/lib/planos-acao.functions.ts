@@ -5,17 +5,19 @@ import { requirePermission } from "@/lib/rbac/guards.server";
 
 const uuid = z.string().uuid();
 
-export const tipoAlvoSchema = z.enum(["PROJETO", "COLABORADOR"]);
+export const tipoAlvoSchema = z.enum(["PROJETO", "SUPERVISOR", "COLABORADOR"]);
 export const statusPlanoSchema = z.enum(["NAO_INICIADO", "EM_ANDAMENTO", "SUSPENSO", "CONCLUIDO", "CANCELADO"]);
 export const prioridadePlanoSchema = z.enum(["BAIXA", "MEDIA", "ALTA", "CRITICA"]);
 
 export const planoAcaoSchema = z.object({
   tipo_alvo: tipoAlvoSchema,
   projeto_id: uuid,
+  supervisor_usuario_id: uuid.nullable().optional(),
   colaborador_id: uuid.nullable().optional(),
   titulo: z.string().min(3).max(200),
   problema_identificado: z.string().min(1),
   indicador_atual: z.string().nullable().optional(),
+  indicador_sucesso: z.string().min(1),
   meta: z.string().min(1),
   acao_proposta: z.string().min(1),
   responsavel_usuario_id: uuid,
@@ -41,16 +43,35 @@ export const criarPlanoAcao = createServerFn({ method: "POST" })
       route: "/planos-acao",
     });
 
-    // Validar se colaborador pertence ao projeto
-    if (input.tipo_alvo === "COLABORADOR" && input.colaborador_id) {
+    // Validações de Hierarquia
+    if (input.tipo_alvo === "SUPERVISOR" || input.tipo_alvo === "COLABORADOR") {
+      if (!input.supervisor_usuario_id) {
+        throw new Error("INVALID_PAYLOAD: Supervisor é obrigatório para este tipo de alvo.");
+      }
+      
+      // Validar se supervisor pertence ao projeto
+      const { data: supProj, error: supProjErr } = await supabase.rpc("get_supervisores_projeto", {
+        _projeto_id: input.projeto_id
+      });
+      
+      if (supProjErr || !supProj?.some((s: any) => s.id === input.supervisor_usuario_id)) {
+        throw new Error("INVALID_PAYLOAD: O supervisor selecionado não pertence ao projeto.");
+      }
+    }
+
+    if (input.tipo_alvo === "COLABORADOR") {
+      if (!input.colaborador_id) {
+        throw new Error("INVALID_PAYLOAD: Colaborador é obrigatório para este tipo de alvo.");
+      }
+
       const { data: colab, error: colabErr } = await supabase
         .from("colaboradores")
-        .select("projeto_id")
+        .select("projeto_id, supervisor_usuario_id")
         .eq("id", input.colaborador_id)
         .single();
 
-      if (colabErr || !colab || colab.projeto_id !== input.projeto_id) {
-        throw new Error("INVALID_PAYLOAD: O colaborador não pertence ao projeto selecionado.");
+      if (colabErr || !colab || colab.projeto_id !== input.projeto_id || colab.supervisor_usuario_id !== input.supervisor_usuario_id) {
+        throw new Error("INVALID_PAYLOAD: O colaborador não pertence ao projeto ou supervisor selecionado.");
       }
     }
 
@@ -101,6 +122,7 @@ export const listarPlanosAcao = createServerFn({ method: "GET" })
       .select(`
         *,
         projeto:projetos(nome),
+        supervisor:profiles!planos_acao_supervisor_usuario_id_fkey(nome),
         colaborador:colaboradores(nome_completo, matricula)
       `)
       .order("created_at", { ascending: false });
@@ -157,6 +179,7 @@ export const obterPlanoAcao = createServerFn({ method: "GET" })
       .select(`
         *,
         projeto:projetos(nome),
+        supervisor:profiles!planos_acao_supervisor_usuario_id_fkey(nome),
         colaborador:colaboradores(nome_completo, matricula)
       `)
       .eq("id", input.id)
