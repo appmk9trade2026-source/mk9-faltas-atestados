@@ -7,44 +7,121 @@ const API_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 const suggestionInputSchema = z.object({
   tipo_alvo: z.enum(["PROJETO", "SUPERVISOR", "COLABORADOR"]),
-  projeto_nome: z.string().optional(),
-  supervisor_nome: z.string().optional(),
-  colaborador_nome: z.string().optional(),
+  projeto_id: z.string().uuid(),
+  supervisor_usuario_id: z.string().uuid().nullable().optional(),
+  colaborador_id: z.string().uuid().nullable().optional(),
   problema_identificado: z.string().min(5),
 });
 
 export const gerarSugestaoPlanoAcao = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => suggestionInputSchema.parse(data))
+  .validator((data: unknown) => suggestionInputSchema.parse(data))
   .handler(async ({ data, context }) => {
+    const { supabase } = context;
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       throw new Error("LOVABLE_API_KEY não configurada.");
     }
 
-    const { tipo_alvo, projeto_nome, supervisor_nome, colaborador_nome, problema_identificado } = data;
-    
-    // Sanitização de segurança (remover PII/CID do problema se houver)
+    const { tipo_alvo, projeto_id, supervisor_usuario_id, colaborador_id, problema_identificado } = data;
+
+    // 1. Coletar contexto operacional real (minimizado/agregado)
+    // Janela de 30 dias
+    const trintaDiasAtras = new Date();
+    trintaDiasAtras.setDate(trintaDiasAtras.getDate() - 30);
+    const trintaDiasAtrasIso = trintaDiasAtras.toISOString().split('T')[0];
+
+    // Janela anterior para comparação (60 a 30 dias atrás)
+    const sessentaDiasAtras = new Date();
+    sessentaDiasAtras.setDate(sessentaDiasAtras.getDate() - 60);
+    const sessentaDiasAtrasIso = sessentaDiasAtras.toISOString().split('T')[0];
+
+    // Consulta básica
+    // Nota: tipo_ausencia_id linka com tipos_ausencia
+    // Usamos select("*, ...") mas o TS vai reclamar se a coluna não estiver no schema gerado.
+    // Vamos usar select count e aggregations via filter se possível ou consultas separadas.
+    let query = supabase
+      .from("ausencias")
+      .select("id, data_inicio, tipo_ausencia_nome, colaborador_id, projeto_id")
+      .gte("data_inicio", sessentaDiasAtrasIso);
+
+    if (tipo_alvo === "PROJETO") {
+      query = query.eq("projeto_id", projeto_id);
+    } else if (tipo_alvo === "SUPERVISOR" && supervisor_usuario_id) {
+      // Como ausencias não tem supervisor_usuario_id direto, precisamos filtrar via colaboradores
+      // Ou usar uma subquery/RPC. Vamos tentar filtrar os colaboradores do supervisor primeiro.
+      const { data: colabs } = await supabase
+        .from("colaboradores")
+        .select("id")
+        .eq("supervisor_usuario_id", supervisor_usuario_id);
+      
+      const colabIds = colabs?.map(c => c.id) || [];
+      if (colabIds.length > 0) {
+        query = query.in("colaborador_id", colabIds);
+      } else {
+        // Se o supervisor não tem colaboradores, força vazio
+        query = query.eq("colaborador_id", "00000000-0000-0000-0000-000000000000");
+      }
+    } else if (tipo_alvo === "COLABORADOR" && colaborador_id) {
+      query = query.eq("colaborador_id", colaborador_id);
+    }
+
+    const { data: ausencias, error: ausenciasErr } = await query;
+    if (ausenciasErr) {
+      console.error("[gerarSugestaoPlanoAcao] Erro ao buscar ausências:", ausenciasErr);
+    }
+
+    // Processar métricas (sem dados médicos)
+    const atuais = ausencias?.filter(a => (a as any).data_inicio >= trintaDiasAtrasIso) || [];
+    const anteriores = ausencias?.filter(a => (a as any).data_inicio < trintaDiasAtrasIso) || [];
+
+    const totalAtuais = atuais.length;
+    const totalAnteriores = anteriores.length;
+    const variacao = totalAnteriores > 0 ? ((totalAtuais - totalAnteriores) / totalAnteriores) * 100 : 0;
+
+    // Tipos recorrentes (agregado)
+    const tiposContagem: Record<string, number> = {};
+    atuais.forEach(a => {
+      const nome = (a as any).tipo_ausencia_nome || "Outros";
+      tiposContagem[nome] = (tiposContagem[nome] || 0) + 1;
+    });
+
+    // Planos anteriores (contexto de efetividade)
+    const { data: planosAnteriores } = await supabase
+      .from("planos_acao")
+      .select("titulo, status, resultado_alcancado, progresso")
+      .eq("projeto_id", projeto_id)
+      .eq("tipo_alvo", tipo_alvo)
+      .order('created_at', { ascending: false })
+      .limit(3);
+
+    // 2. Sanitização do input do usuário
     const problemaLimpo = scrubString(problema_identificado);
 
-    const prompt = `Você é um gestor de RH especialista em planos de ação.
-Ajude a elaborar um plano de ação profissional e prático.
+    // 3. Montar Prompt Estruturado
+    const prompt = `Você é um gestor de RH especialista em análise operacional e planos de ação.
+Sua tarefa é sugerir uma Meta (SMART), Indicador de Sucesso e Ações Propostas com base no histórico operacional REAL fornecido.
 
-Contexto:
+CONTEXTO OPERACIONAL (Últimos 30 dias):
 - Alvo: ${tipo_alvo}
-${projeto_nome ? `- Projeto: ${projeto_nome}` : ""}
-${supervisor_nome ? `- Supervisor: ${supervisor_nome}` : ""}
-${colaborador_nome ? `- Colaborador: ${colaborador_nome}` : ""}
-- Problema Identificado: ${problemaLimpo}
+- Total de Ausências: ${totalAtuais}
+- Período anterior (30-60 dias): ${totalAnteriores}
+- Variação: ${variacao.toFixed(1)}%
+- Tipos recorrentes: ${Object.entries(tiposContagem).map(([n, c]) => `${n} (${c})`).join(", ")}
+${planosAnteriores && planosAnteriores.length > 0 ? `- Planos Anteriores: ${planosAnteriores.map(p => `${p.titulo} (${p.status})`).join("; ")}` : ""}
 
-REGRAS:
-1. Retorne EXCLUSIVAMENTE um JSON com as chaves: "titulo", "problema_revisado", "meta", "indicador_sucesso", "acao_proposta".
-2. "titulo": Crie um título profissional e curto para o plano.
-3. "problema_revisado": Reescreva o problema de forma profissional e objetiva (máx 300 caracteres).
-4. "meta": Defina uma meta mensurável e temporal (ex: "Reduzir X em Y% nos próximos 30 dias").
-5. "indicador_sucesso": Defina como o resultado será mensurado (ex: "Percentual mensal de faltas").
-4. "acao_proposta": Liste 3 a 5 ações práticas e executáveis.
-5. Tom profissional, sem saudações ou preâmbulos.
+PROBLEMA IDENTIFICADO PELO USUÁRIO:
+"${problemaLimpo}"
+
+REGRAS ESTRITAS:
+1. Retorne EXCLUSIVAMENTE um JSON com: "titulo", "meta", "indicador_sucesso", "acao_proposta", "prazo_sugerido_dias", "justificativa".
+2. "meta": Deve ser SMART (Específica, Mensurável, Atingível, Relevante e Temporal). Ex: "Reduzir ausências de ${totalAtuais} para no máximo ${Math.max(1, Math.round(totalAtuais * 0.7))} nos próximos 30 dias".
+3. "indicador_sucesso": Como medir? Ex: "Taxa semanal de ausências do projeto".
+4. "acao_proposta": Liste 3 a 4 ações práticas e proporcionais ao problema.
+5. "prazo_sugerido_dias": Número (ex: 30, 45, 60).
+6. NÃO invente números que não existam no contexto operacional fornecido.
+7. Se não houver histórico suficiente para uma meta quantitativa, indique na justificativa e sugira uma meta qualitativa de acompanhamento.
+8. NUNCA mencione dados médicos ou CIDs.
 
 JSON:`;
 
@@ -55,7 +132,7 @@ JSON:`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.0-flash",
         messages: [
           { role: "system", content: "Você responde apenas em JSON válido." },
           { role: "user", content: prompt }
@@ -124,7 +201,7 @@ Retorne apenas o texto do resumo.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.0-flash",
         messages: [
           { role: "user", content: prompt }
         ],
