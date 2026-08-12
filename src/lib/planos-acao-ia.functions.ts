@@ -121,31 +121,23 @@ JSON:`;
     console.log("[gerarSugestaoPlanoAcao] Calling AI Gateway...");
     
     try {
-    console.log("[gerarSugestaoPlanoAcao] Context data:", {
-      totalAtuais,
-      totalAnteriores,
-      variacao,
-      tiposRecorrentes: Object.keys(tiposContagem).length,
-      planosAnteriores: planosAnteriores?.length || 0
-    });
-
-    const response = await fetch(API_GATEWAY_URL, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "x-lovable-trace": "gerarSugestaoPlanoAcao"
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.0-flash",
-        messages: [
-          { role: "system", content: "Você é um assistente que responde exclusivamente em JSON." },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.2,
-        response_format: { type: "json_object" }
-      }),
-    });
+      const response = await fetch(API_GATEWAY_URL, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "x-lovable-trace": "gerarSugestaoPlanoAcao"
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.0-flash-exp",
+          messages: [
+            { role: "system", content: "Você é um assistente que responde exclusivamente em JSON." },
+            { role: "user", content: prompt }
+          ],
+          temperature: 0.2,
+          response_format: { type: "json_object" }
+        }),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -219,7 +211,7 @@ Retorne apenas o texto do resumo.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.0-flash",
+        model: "google/gemini-2.0-flash-exp",
         messages: [
           { role: "user", content: prompt }
         ],
