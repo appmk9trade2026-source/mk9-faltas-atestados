@@ -17,7 +17,7 @@ export const gerarSugestaoPlanoAcao = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: unknown) => suggestionInputSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    const { supabase } = context;
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       throw new Error("LOVABLE_API_KEY não configurada.");
@@ -36,15 +36,32 @@ export const gerarSugestaoPlanoAcao = createServerFn({ method: "POST" })
     sessentaDiasAtras.setDate(sessentaDiasAtras.getDate() - 60);
     const sessentaDiasAtrasIso = sessentaDiasAtras.toISOString().split('T')[0];
 
+    // Consulta básica
+    // Nota: tipo_ausencia_id linka com tipos_ausencia
+    // Usamos select("*, ...") mas o TS vai reclamar se a coluna não estiver no schema gerado.
+    // Vamos usar select count e aggregations via filter se possível ou consultas separadas.
     let query = supabase
       .from("ausencias")
-      .select("id, data_inicio, tipo_id, tipo_ausencia:tipos_ausencia(nome, codigo)", { count: "exact" })
+      .select("id, data_inicio, tipo_ausencia_nome, colaborador_id, projeto_id")
       .gte("data_inicio", sessentaDiasAtrasIso);
 
     if (tipo_alvo === "PROJETO") {
       query = query.eq("projeto_id", projeto_id);
     } else if (tipo_alvo === "SUPERVISOR" && supervisor_usuario_id) {
-      query = query.eq("supervisor_usuario_id", supervisor_usuario_id);
+      // Como ausencias não tem supervisor_usuario_id direto, precisamos filtrar via colaboradores
+      // Ou usar uma subquery/RPC. Vamos tentar filtrar os colaboradores do supervisor primeiro.
+      const { data: colabs } = await supabase
+        .from("colaboradores")
+        .select("id")
+        .eq("supervisor_usuario_id", supervisor_usuario_id);
+      
+      const colabIds = colabs?.map(c => c.id) || [];
+      if (colabIds.length > 0) {
+        query = query.in("colaborador_id", colabIds);
+      } else {
+        // Se o supervisor não tem colaboradores, força vazio
+        query = query.eq("colaborador_id", "00000000-0000-0000-0000-000000000000");
+      }
     } else if (tipo_alvo === "COLABORADOR" && colaborador_id) {
       query = query.eq("colaborador_id", colaborador_id);
     }
@@ -55,8 +72,8 @@ export const gerarSugestaoPlanoAcao = createServerFn({ method: "POST" })
     }
 
     // Processar métricas (sem dados médicos)
-    const atuais = ausencias?.filter(a => a.data_inicio >= trintaDiasAtrasIso) || [];
-    const anteriores = ausencias?.filter(a => a.data_inicio < trintaDiasAtrasIso) || [];
+    const atuais = ausencias?.filter(a => (a as any).data_inicio >= trintaDiasAtrasIso) || [];
+    const anteriores = ausencias?.filter(a => (a as any).data_inicio < trintaDiasAtrasIso) || [];
 
     const totalAtuais = atuais.length;
     const totalAnteriores = anteriores.length;
@@ -65,7 +82,7 @@ export const gerarSugestaoPlanoAcao = createServerFn({ method: "POST" })
     // Tipos recorrentes (agregado)
     const tiposContagem: Record<string, number> = {};
     atuais.forEach(a => {
-      const nome = (a.tipo_ausencia as any)?.nome || "Outros";
+      const nome = (a as any).tipo_ausencia_nome || "Outros";
       tiposContagem[nome] = (tiposContagem[nome] || 0) + 1;
     });
 
@@ -97,7 +114,7 @@ PROBLEMA IDENTIFICADO PELO USUÁRIO:
 
 REGRAS ESTRITAS:
 1. Retorne EXCLUSIVAMENTE um JSON com: "titulo", "meta", "indicador_sucesso", "acao_proposta", "prazo_sugerido_dias", "justificativa".
-2. "meta": Deve ser SMART (Específica, Mensurável, Atingível, Relevante e Temporal). Ex: "Reduzir faltas não justificadas de ${totalAtuais} para no máximo ${Math.max(1, Math.round(totalAtuais * 0.7))} nos próximos 30 dias".
+2. "meta": Deve ser SMART (Específica, Mensurável, Atingível, Relevante e Temporal). Ex: "Reduzir ausências de ${totalAtuais} para no máximo ${Math.max(1, Math.round(totalAtuais * 0.7))} nos próximos 30 dias".
 3. "indicador_sucesso": Como medir? Ex: "Taxa semanal de ausências do projeto".
 4. "acao_proposta": Liste 3 a 4 ações práticas e proporcionais ao problema.
 5. "prazo_sugerido_dias": Número (ex: 30, 45, 60).
@@ -171,7 +188,7 @@ Dados dos Planos: ${JSON.stringify(resumoDados)}
 
 Regras de Tom:
 - Profissional, direto e acionável.
-- Não use saudoções.
+- Não use saudações.
 - Se houver muitos atrasados, use um tom de alerta.
 
 Retorne apenas o texto do resumo.`;
