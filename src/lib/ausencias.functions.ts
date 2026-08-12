@@ -189,9 +189,14 @@ function ausenciaDbError(
     return new Error("PROJECT_SCOPE_DENIED: O projeto selecionado não pertence ao seu escopo.");
   }
 
-  // Permissão / RLS
+  // Permissão / RLS / Hardening de Vínculo
   if (sqlstate === "42501" || /row-level security|permission denied|not authorized/i.test(msg)) {
     return new Error("PROJECT_SCOPE_DENIED: bloqueado por política de acesso");
+  }
+
+  // Erros de Hardening de Vínculo definidos na RPC (CENÁRIO C e D)
+  if (/já está vinculada a outro projeto/i.test(msg) || /já está vinculada a outro supervisor/i.test(msg)) {
+    return new Error(`CONFLICT: ${msg}`);
   }
 
   if (/fora do seu escopo|não pertence à empresa informada|não está vinculado a você/i.test(msg)) {
