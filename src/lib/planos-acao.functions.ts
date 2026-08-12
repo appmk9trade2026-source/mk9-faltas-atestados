@@ -246,9 +246,12 @@ export const obterPlanoAcao = createServerFn({ method: "GET" })
       throw new Error(`DATABASE_ERROR: ${error.message}`);
     }
 
-    const ids = [data.responsavel_usuario_id, data.criado_por_usuario_id].filter(
-      Boolean,
-    ) as string[];
+    const ids = [
+      data.responsavel_usuario_id, 
+      data.responsavel_coordenacao_id, 
+      data.criado_por_usuario_id
+    ].filter(Boolean) as string[];
+
     let nomes = new Map<string, string>();
     if (ids.length > 0) {
       const { data: profs } = await supabase
@@ -260,8 +263,11 @@ export const obterPlanoAcao = createServerFn({ method: "GET" })
 
     const planoComNomes = {
       ...data,
-      responsavel: data.responsavel_usuario_id
+      responsavel_usuario: data.responsavel_usuario_id
         ? { nome: nomes.get(data.responsavel_usuario_id) ?? null }
+        : null,
+      responsavel_coordenacao: data.responsavel_coordenacao_id
+        ? { nome: nomes.get(data.responsavel_coordenacao_id) ?? null }
         : null,
       criador: data.criado_por_usuario_id
         ? { nome: nomes.get(data.criado_por_usuario_id) ?? null }
@@ -272,6 +278,7 @@ export const obterPlanoAcao = createServerFn({ method: "GET" })
       ...planoComNomes,
       situacao: calcularSituacao(planoComNomes)
     };
+
 
   });
 
