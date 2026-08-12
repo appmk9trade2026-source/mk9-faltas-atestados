@@ -152,10 +152,34 @@ function PlanosAcaoPage() {
     const projetoId = form.getValues("projeto_id");
     const supervisorId = form.getValues("supervisor_usuario_id");
     const colaboradorId = form.getValues("colaborador_id");
-    const problema = form.getValues("problema_identificado");
+    const problema = form.getValues("problema_identificado") || "";
     
-    if (!projetoId || problema.length < 5) {
-      toast.error("Selecione um projeto e descreva o problema (mín. 5 caracteres) para usar a IA.");
+    // Validação A: Projeto
+    if (!projetoId || (typeof projetoId === "string" && projetoId.trim() === "")) {
+      toast.error("Selecione um projeto para gerar sugestões com IA.");
+      return;
+    }
+
+    // Validação de Hierarquia baseada no Tipo de Alvo
+    if (tipoAlvo === "SUPERVISOR" && !supervisorId) {
+      toast.error("Selecione um supervisor para gerar a análise contextual.");
+      return;
+    }
+
+    if (tipoAlvo === "COLABORADOR") {
+      if (!supervisorId) {
+        toast.error("Selecione um supervisor para gerar a análise contextual.");
+        return;
+      }
+      if (!colaboradorId) {
+        toast.error("Selecione um colaborador para gerar a análise contextual.");
+        return;
+      }
+    }
+
+    // Validação B: Problema
+    if (problema.trim().length < 5) {
+      toast.error("Descreva o problema com pelo menos 5 caracteres para gerar sugestões com IA.");
       return;
     }
 
