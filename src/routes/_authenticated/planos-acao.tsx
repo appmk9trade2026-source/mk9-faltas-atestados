@@ -422,7 +422,16 @@ function PlanosAcaoPage() {
                             {(plano as any).colaborador?.nome_completo ? ` | C: ${(plano as any).colaborador.nome_completo}` : ''}
                          </div>
                       </TableCell>
-                      <TableCell>{(plano as any).responsavel?.nome || "-"}</TableCell>
+                      <TableCell>
+                        <div className="text-xs">
+                          {plano.responsavel_tipo === "USUARIO" ? (
+                            <span className="flex items-center gap-1"><User className="h-3 w-3" /> {(plano as any).responsavel_usuario?.nome || "-"}</span>
+                          ) : (
+                            <span className="flex items-center gap-1 font-semibold text-primary"><Users className="h-3 w-3" /> {(plano as any).responsavel_coordenacao?.nome || "Coordenação"}</span>
+                          )}
+                        </div>
+                      </TableCell>
+
                       <TableCell className="w-[150px]">
                           <div className="flex items-center gap-2">
                              <Progress value={plano.progresso} className="h-2" />
