@@ -3047,6 +3047,7 @@ export type Database = {
           data_inicio: string
           id: string
           indicador_atual: string | null
+          indicador_sucesso: string
           meta: string
           observacoes: string | null
           prazo: string
@@ -3056,6 +3057,7 @@ export type Database = {
           responsavel_usuario_id: string
           resultado: string | null
           status: Database["public"]["Enums"]["status_plano_acao"]
+          supervisor_usuario_id: string | null
           tipo_alvo: Database["public"]["Enums"]["tipo_alvo_plano"]
           titulo: string
           updated_at: string
@@ -3069,6 +3071,7 @@ export type Database = {
           data_inicio?: string
           id?: string
           indicador_atual?: string | null
+          indicador_sucesso: string
           meta: string
           observacoes?: string | null
           prazo: string
@@ -3078,6 +3081,7 @@ export type Database = {
           responsavel_usuario_id: string
           resultado?: string | null
           status?: Database["public"]["Enums"]["status_plano_acao"]
+          supervisor_usuario_id?: string | null
           tipo_alvo: Database["public"]["Enums"]["tipo_alvo_plano"]
           titulo: string
           updated_at?: string
@@ -3091,6 +3095,7 @@ export type Database = {
           data_inicio?: string
           id?: string
           indicador_atual?: string | null
+          indicador_sucesso?: string
           meta?: string
           observacoes?: string | null
           prazo?: string
@@ -3100,6 +3105,7 @@ export type Database = {
           responsavel_usuario_id?: string
           resultado?: string | null
           status?: Database["public"]["Enums"]["status_plano_acao"]
+          supervisor_usuario_id?: string | null
           tipo_alvo?: Database["public"]["Enums"]["tipo_alvo_plano"]
           titulo?: string
           updated_at?: string
@@ -3117,6 +3123,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planos_acao_supervisor_usuario_id_fkey"
+            columns: ["supervisor_usuario_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -6284,7 +6297,7 @@ export type Database = {
         | "SUSPENSO"
         | "CONCLUIDO"
         | "CANCELADO"
-      tipo_alvo_plano: "PROJETO" | "COLABORADOR"
+      tipo_alvo_plano: "PROJETO" | "COLABORADOR" | "SUPERVISOR"
       tipo_ausencia:
         | "FALTA"
         | "ATESTADO"
@@ -6774,7 +6787,7 @@ export const Constants = {
         "CONCLUIDO",
         "CANCELADO",
       ],
-      tipo_alvo_plano: ["PROJETO", "COLABORADOR"],
+      tipo_alvo_plano: ["PROJETO", "COLABORADOR", "SUPERVISOR"],
       tipo_ausencia: ["FALTA", "ATESTADO", "DECLARACAO", "SUSPENSAO", "OUTROS"],
       tipo_periodo_ausencia: [
         "DIAS",
