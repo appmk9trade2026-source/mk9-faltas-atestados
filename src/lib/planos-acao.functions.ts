@@ -37,7 +37,19 @@ export const planoAcaoSchema = z.object({
   parecer_final: z.string().nullable().optional(),
   justificativa_cancelamento: z.string().nullable().optional(),
   observacoes: z.string().nullable().optional(),
+}).refine(data => {
+  if (data.responsavel_tipo === "USUARIO") {
+    return !!data.responsavel_usuario_id;
+  }
+  if (data.responsavel_tipo === "COORDENACAO") {
+    return !!data.responsavel_coordenacao_id;
+  }
+  return false;
+}, {
+  message: "Responsável inválido para o tipo selecionado",
+  path: ["responsavel_usuario_id"]
 });
+
 
 
 
