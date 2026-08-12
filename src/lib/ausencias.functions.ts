@@ -451,19 +451,9 @@ export const createAusencia = createServerFn({ method: "POST" })
         } as never,
       );
       if (error) {
-        const msg = error.message || "";
-        // Duplicidade e escopo têm precedência: a mensagem de duplicidade cita
-        // "colaborador" e antes era engolida pelo ramo de falha de cadastro.
-        const classificado = ausenciaDbError(error, "rpc_manual", gate.correlationId);
-        if (
-          !/DUPLICIDADE_AUSENCIA/i.test(msg) &&
-          !classificado.message.startsWith("PROJECT_SCOPE_DENIED") &&
-          /colaborador/i.test(msg) &&
-          /salvar|inserir|insert|colaboradores/i.test(msg)
-        ) {
-          throw new Error("COLLABORATOR_SAVE_FAILED: Não foi possível salvar o colaborador. Revise os dados informados e tente novamente.");
-        }
-        throw classificado;
+        // As mensagens de hardening ("Já está vinculado a outro projeto/supervisor") 
+        // são capturadas aqui pela RPC e formatadas pelo ausenciaDbError.
+        throw ausenciaDbError(error, "rpc_manual", gate.correlationId);
       }
 
 
