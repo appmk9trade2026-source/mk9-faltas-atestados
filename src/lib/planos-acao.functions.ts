@@ -98,7 +98,8 @@ export const criarPlanoAcao = createServerFn({ method: "POST" })
         const { data: respProfile } = await supabase
           .from("profiles")
           .select("coordenador_usuario_id")
-          .eq("id", input.responsavel_usuario_id)
+          .eq("id", input.responsavel_usuario_id!)
+
           .single();
         
         if (respProfile && respProfile.coordenador_usuario_id !== userId && input.responsavel_usuario_id !== userId) {
@@ -109,7 +110,7 @@ export const criarPlanoAcao = createServerFn({ method: "POST" })
           const { data: respProfile } = await supabase
             .from("profiles")
             .select("id")
-            .eq("id", input.responsavel_usuario_id)
+            .eq("id", input.responsavel_usuario_id!)
             .single();
   
           if (!respProfile) {
