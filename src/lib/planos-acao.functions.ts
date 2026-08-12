@@ -10,6 +10,7 @@ export type SituacaoGerencial = "ATRASADO" | "ATENCAO" | "SEM_ACOMPANHAMENTO" | 
 
 
 export const tipoAlvoSchema = z.enum(["PROJETO", "SUPERVISOR", "COLABORADOR"]);
+export const responsavelTipoSchema = z.enum(["USUARIO", "COORDENACAO"]);
 export const statusPlanoSchema = z.enum(["NAO_INICIADO", "EM_ANDAMENTO", "SUSPENSO", "CONCLUIDO", "CANCELADO"]);
 export const prioridadePlanoSchema = z.enum(["BAIXA", "MEDIA", "ALTA", "CRITICA"]);
 
@@ -24,7 +25,9 @@ export const planoAcaoSchema = z.object({
   indicador_sucesso: z.string().min(1),
   meta: z.string().min(1),
   acao_proposta: z.string().min(1),
-  responsavel_usuario_id: uuid,
+  responsavel_tipo: responsavelTipoSchema.default("USUARIO"),
+  responsavel_usuario_id: uuid.nullable().optional(),
+  responsavel_coordenacao_id: uuid.nullable().optional(),
   status: statusPlanoSchema,
   prioridade: prioridadePlanoSchema,
   data_inicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -34,7 +37,19 @@ export const planoAcaoSchema = z.object({
   parecer_final: z.string().nullable().optional(),
   justificativa_cancelamento: z.string().nullable().optional(),
   observacoes: z.string().nullable().optional(),
+}).refine(data => {
+  if (data.responsavel_tipo === "USUARIO") {
+    return !!data.responsavel_usuario_id && !data.responsavel_coordenacao_id;
+  }
+  if (data.responsavel_tipo === "COORDENACAO") {
+    return !!data.responsavel_coordenacao_id && !data.responsavel_usuario_id;
+  }
+  return false;
+}, {
+  message: "Responsável inválido para o tipo selecionado",
+  path: ["responsavel_usuario_id"]
 });
+
 
 export type PlanoAcaoInput = z.infer<typeof planoAcaoSchema>;
 
