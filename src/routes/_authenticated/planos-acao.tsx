@@ -359,7 +359,7 @@ function PlanosAcaoPage() {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="tipo_alvo"
@@ -369,6 +369,7 @@ function PlanosAcaoPage() {
                       <Select onValueChange={(val) => {
                         field.onChange(val);
                         // Reset dependentes
+                        form.setValue("projeto_id", "");
                         form.setValue("supervisor_usuario_id", null);
                         form.setValue("colaborador_id", null);
                       }} defaultValue={field.value}>
@@ -424,7 +425,7 @@ function PlanosAcaoPage() {
                                     key={p.id}
                                     onSelect={() => {
                                       form.setValue("projeto_id", p.id);
-                                      form.setValue("supervisor_usuario_id", null);
+                                      form.setValue("supervisor_usuario_id", isUserSupervisor ? user?.id : null);
                                       form.setValue("colaborador_id", null);
                                     }}
                                   >
@@ -448,8 +449,8 @@ function PlanosAcaoPage() {
                 />
               </div>
 
-              {(tipoAlvo === "SUPERVISOR" || tipoAlvo === "COLABORADOR") && (
-                <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(tipoAlvo === "SUPERVISOR" || tipoAlvo === "COLABORADOR") ? (
                   <FormField
                     control={form.control}
                     name="supervisor_usuario_id"
@@ -510,74 +511,78 @@ function PlanosAcaoPage() {
                       </FormItem>
                     )}
                   />
+                ) : (
+                  <div className="hidden md:block" />
+                )}
 
-                  {tipoAlvo === "COLABORADOR" && (
-                    <FormField
-                      control={form.control}
-                      name="colaborador_id"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Colaborador *</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant="outline"
-                                  role="combobox"
-                                  disabled={!selectedSupervisorId}
-                                  className={cn(
-                                    "justify-between",
-                                    !field.value && "text-muted-foreground"
-                                  )}
-                                >
-                                  {field.value
-                                    ? colaboradores?.find((c) => c.id === field.value)?.nome_completo || "Colaborador selecionado"
-                                    : selectedSupervisorId ? (isLoadingColaboradores ? "Carregando..." : "Selecione o colaborador") : "Selecione um supervisor primeiro"}
-                                  <User className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="p-0" align="start">
-                              <Command shouldFilter={false}>
-                                <CommandInput 
-                                  placeholder="Buscar por nome ou matrícula..." 
-                                  onValueChange={setBuscaColab}
-                                />
-                                <CommandList>
-                                  <CommandEmpty>
-                                    {isLoadingColaboradores ? "Carregando colaboradores..." : "Nenhum colaborador encontrado para este supervisor."}
-                                  </CommandEmpty>
-                                  <CommandGroup>
-                                    {colaboradores?.map((c) => (
-                                      <CommandItem
-                                        value={c.id}
-                                        key={c.id}
-                                        onSelect={() => form.setValue("colaborador_id", c.id)}
-                                      >
-                                        <CheckCircle2
-                                          className={cn(
-                                            "mr-2 h-4 w-4",
-                                            c.id === field.value ? "opacity-100" : "opacity-0"
-                                          )}
-                                        />
-                                        <div className="flex flex-col">
-                                          <span>{c.nome_completo}</span>
-                                          <span className="text-xs text-muted-foreground">Matrícula: {c.matricula}</span>
-                                        </div>
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
-                                </CommandList>
-                              </Command>
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                </div>
-              )}
+                {tipoAlvo === "COLABORADOR" ? (
+                  <FormField
+                    control={form.control}
+                    name="colaborador_id"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Colaborador *</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                disabled={!selectedSupervisorId}
+                                className={cn(
+                                  "justify-between",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value
+                                  ? colaboradores?.find((c) => c.id === field.value)?.nome_completo || "Colaborador selecionado"
+                                  : selectedSupervisorId ? (isLoadingColaboradores ? "Carregando..." : "Selecione o colaborador") : "Selecione um supervisor primeiro"}
+                                <User className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="p-0" align="start">
+                            <Command shouldFilter={false}>
+                              <CommandInput 
+                                placeholder="Buscar por nome ou matrícula..." 
+                                onValueChange={setBuscaColab}
+                              />
+                              <CommandList>
+                                <CommandEmpty>
+                                  {isLoadingColaboradores ? "Carregando colaboradores..." : "Nenhum colaborador encontrado para este supervisor."}
+                                </CommandEmpty>
+                                <CommandGroup>
+                                  {colaboradores?.map((c) => (
+                                    <CommandItem
+                                      value={c.id}
+                                      key={c.id}
+                                      onSelect={() => form.setValue("colaborador_id", c.id)}
+                                    >
+                                      <CheckCircle2
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          c.id === field.value ? "opacity-100" : "opacity-0"
+                                        )}
+                                      />
+                                      <div className="flex flex-col">
+                                        <span>{c.nome_completo}</span>
+                                        <span className="text-xs text-muted-foreground">Matrícula: {c.matricula}</span>
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ) : (
+                  <div className="hidden md:block" />
+                )}
+              </div>
 
               <FormField
                 control={form.control}
