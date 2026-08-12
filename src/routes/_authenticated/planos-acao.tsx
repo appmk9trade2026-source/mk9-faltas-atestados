@@ -660,8 +660,13 @@ function PlanosAcaoPage() {
                        <FormControl>
                          <Textarea placeholder="Descreva o problema observado..." {...field} />
                        </FormControl>
-                       <FormMessage />
-                     </FormItem>
+                        <FormMessage />
+                        {field.value && field.value.trim().length > 0 && field.value.trim().length < 5 && (
+                          <p className="text-[0.8rem] font-medium text-destructive mt-1">
+                            Informe pelo menos 5 caracteres.
+                          </p>
+                        )}
+                      </FormItem>
                    )}
                  />
 
