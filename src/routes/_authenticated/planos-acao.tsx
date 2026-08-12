@@ -330,8 +330,8 @@ function PlanosAcaoPage() {
                         <Badge variant="outline">{STATUS_LABELS[plano.status]}</Badge>
                       </TableCell>
                       <TableCell>
-                         <Button variant="ghost" size="icon" onClick={() => setSelectedPlanoId(plano.id)}>
-                            <MoreVertical className="h-4 w-4" />
+                         <Button variant="ghost" size="sm" onClick={() => setSelectedPlanoId(plano.id)}>
+                            Ver detalhes
                          </Button>
                       </TableCell>
                     </TableRow>
