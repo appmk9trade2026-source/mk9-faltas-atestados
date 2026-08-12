@@ -125,18 +125,23 @@ function PlanosAcaoPage() {
       const projeto = projetos?.find(p => p.id === projetoId);
       const colaboradorId = form.getValues("colaborador_id");
       const colaborador = colaboradores?.find(c => c.id === colaboradorId);
+      const supervisorId = form.getValues("supervisor_usuario_id");
+      const supervisor = supervisores?.find(s => s.id === supervisorId);
 
       const res = await generateAIFn({
         data: {
           tipo_alvo: tipoAlvo,
           projeto_nome: projeto?.nome,
+          supervisor_nome: supervisor?.nome,
           colaborador_nome: colaborador?.nome_completo,
           problema_identificado: problema
         }
       });
 
+      if (res.titulo) form.setValue("titulo", res.titulo);
       if (res.problema_revisado) form.setValue("problema_identificado", res.problema_revisado);
       if (res.meta) form.setValue("meta", res.meta);
+      if (res.indicador_sucesso) form.setValue("indicador_sucesso", res.indicador_sucesso);
       if (res.acao_proposta) form.setValue("acao_proposta", res.acao_proposta);
       
       toast.success("Sugestão da IA aplicada com sucesso!");
