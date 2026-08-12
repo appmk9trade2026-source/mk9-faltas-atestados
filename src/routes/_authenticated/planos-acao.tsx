@@ -162,17 +162,17 @@ function PlanosAcaoPage() {
 
     // Validação de Hierarquia baseada no Tipo de Alvo
     if (tipoAlvo === "SUPERVISOR" && !supervisorId) {
-      toast.error("Selecione um supervisor para gerar a análise contextual.");
+      toast.error("Selecione um supervisor para gerar sugestões com IA.");
       return;
     }
 
     if (tipoAlvo === "COLABORADOR") {
       if (!supervisorId) {
-        toast.error("Selecione um supervisor para gerar a análise contextual.");
+        toast.error("Selecione um supervisor para gerar sugestões com IA.");
         return;
       }
       if (!colaboradorId) {
-        toast.error("Selecione um colaborador para gerar a análise contextual.");
+        toast.error("Selecione um colaborador para gerar sugestões com IA.");
         return;
       }
     }
