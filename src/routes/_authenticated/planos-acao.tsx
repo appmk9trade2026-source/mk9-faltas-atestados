@@ -446,7 +446,6 @@ function PlanosAcaoPage() {
             </Table>
           </CardContent>
         </Card>
-      </div>
 
       <Dialog open={isNewDialogOpen} onOpenChange={setIsNewDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
