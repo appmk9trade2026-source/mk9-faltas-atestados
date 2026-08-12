@@ -3092,7 +3092,11 @@ export type Database = {
           problema_identificado: string
           progresso: number | null
           projeto_id: string
-          responsavel_usuario_id: string
+          responsavel_coordenacao_id: string | null
+          responsavel_tipo:
+            | Database["public"]["Enums"]["responsavel_plano_tipo"]
+            | null
+          responsavel_usuario_id: string | null
           resultado: string | null
           resultado_alcancado: string | null
           status: Database["public"]["Enums"]["status_plano_acao"]
@@ -3120,7 +3124,11 @@ export type Database = {
           problema_identificado: string
           progresso?: number | null
           projeto_id: string
-          responsavel_usuario_id: string
+          responsavel_coordenacao_id?: string | null
+          responsavel_tipo?:
+            | Database["public"]["Enums"]["responsavel_plano_tipo"]
+            | null
+          responsavel_usuario_id?: string | null
           resultado?: string | null
           resultado_alcancado?: string | null
           status?: Database["public"]["Enums"]["status_plano_acao"]
@@ -3148,7 +3156,11 @@ export type Database = {
           problema_identificado?: string
           progresso?: number | null
           projeto_id?: string
-          responsavel_usuario_id?: string
+          responsavel_coordenacao_id?: string | null
+          responsavel_tipo?:
+            | Database["public"]["Enums"]["responsavel_plano_tipo"]
+            | null
+          responsavel_usuario_id?: string | null
           resultado?: string | null
           resultado_alcancado?: string | null
           status?: Database["public"]["Enums"]["status_plano_acao"]
@@ -6301,6 +6313,7 @@ export type Database = {
       prioridade_plano_acao: "BAIXA" | "MEDIA" | "ALTA" | "CRITICA"
       release_status: "PLANEJADA" | "EM_EXECUCAO" | "PUBLICADA" | "CANCELADA"
       release_tipo: "HOTFIX" | "PATCH" | "MINOR" | "MAJOR"
+      responsavel_plano_tipo: "USUARIO" | "COORDENACAO"
       roadmap_categoria:
         | "RH"
         | "OPERACOES"
@@ -6787,6 +6800,7 @@ export const Constants = {
       prioridade_plano_acao: ["BAIXA", "MEDIA", "ALTA", "CRITICA"],
       release_status: ["PLANEJADA", "EM_EXECUCAO", "PUBLICADA", "CANCELADA"],
       release_tipo: ["HOTFIX", "PATCH", "MINOR", "MAJOR"],
+      responsavel_plano_tipo: ["USUARIO", "COORDENACAO"],
       roadmap_categoria: [
         "RH",
         "OPERACOES",
