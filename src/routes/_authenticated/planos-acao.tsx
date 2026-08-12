@@ -277,6 +277,7 @@ function PlanosAcaoPage() {
                   <TableHead>Plano</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Projeto</TableHead>
+                  <TableHead>Alvo (Sup/Colab)</TableHead>
                   <TableHead>Responsável</TableHead>
                   <TableHead>Prioridade</TableHead>
                   <TableHead>Status</TableHead>
@@ -304,6 +305,19 @@ function PlanosAcaoPage() {
                         <Badge variant="secondary">{plano.tipo_alvo}</Badge>
                       </TableCell>
                       <TableCell>{(plano as any).projeto?.nome || "-"}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          {(plano as any).supervisor?.nome && (
+                            <span className="text-xs font-medium">S: {(plano as any).supervisor.nome}</span>
+                          )}
+                          {(plano as any).colaborador?.nome_completo && (
+                            <span className="text-[10px] text-muted-foreground">C: {(plano as any).colaborador.nome_completo}</span>
+                          )}
+                          {!((plano as any).supervisor?.nome) && !((plano as any).colaborador?.nome_completo) && (
+                            <span className="text-xs text-muted-foreground italic">Nível Projeto</span>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>{(plano as any).responsavel?.nome || "-"}</TableCell>
                       <TableCell>
                         <Badge 
