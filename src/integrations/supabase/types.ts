@@ -3037,6 +3037,41 @@ export type Database = {
         }
         Relationships: []
       }
+      plano_acao_acompanhamentos: {
+        Row: {
+          created_at: string
+          criado_por_usuario_id: string
+          id: string
+          observacao: string
+          plano_id: string
+          progresso: number
+        }
+        Insert: {
+          created_at?: string
+          criado_por_usuario_id: string
+          id?: string
+          observacao: string
+          plano_id: string
+          progresso: number
+        }
+        Update: {
+          created_at?: string
+          criado_por_usuario_id?: string
+          id?: string
+          observacao?: string
+          plano_id?: string
+          progresso?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plano_acao_acompanhamentos_plano_id_fkey"
+            columns: ["plano_id"]
+            isOneToOne: false
+            referencedRelation: "planos_acao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       planos_acao: {
         Row: {
           acao_proposta: string
@@ -3048,14 +3083,18 @@ export type Database = {
           id: string
           indicador_atual: string | null
           indicador_sucesso: string
+          justificativa_cancelamento: string | null
           meta: string
           observacoes: string | null
+          parecer_final: string | null
           prazo: string
           prioridade: Database["public"]["Enums"]["prioridade_plano_acao"]
           problema_identificado: string
+          progresso: number | null
           projeto_id: string
           responsavel_usuario_id: string
           resultado: string | null
+          resultado_alcancado: string | null
           status: Database["public"]["Enums"]["status_plano_acao"]
           supervisor_usuario_id: string | null
           tipo_alvo: Database["public"]["Enums"]["tipo_alvo_plano"]
@@ -3072,14 +3111,18 @@ export type Database = {
           id?: string
           indicador_atual?: string | null
           indicador_sucesso: string
+          justificativa_cancelamento?: string | null
           meta: string
           observacoes?: string | null
+          parecer_final?: string | null
           prazo: string
           prioridade?: Database["public"]["Enums"]["prioridade_plano_acao"]
           problema_identificado: string
+          progresso?: number | null
           projeto_id: string
           responsavel_usuario_id: string
           resultado?: string | null
+          resultado_alcancado?: string | null
           status?: Database["public"]["Enums"]["status_plano_acao"]
           supervisor_usuario_id?: string | null
           tipo_alvo: Database["public"]["Enums"]["tipo_alvo_plano"]
@@ -3096,14 +3139,18 @@ export type Database = {
           id?: string
           indicador_atual?: string | null
           indicador_sucesso?: string
+          justificativa_cancelamento?: string | null
           meta?: string
           observacoes?: string | null
+          parecer_final?: string | null
           prazo?: string
           prioridade?: Database["public"]["Enums"]["prioridade_plano_acao"]
           problema_identificado?: string
+          progresso?: number | null
           projeto_id?: string
           responsavel_usuario_id?: string
           resultado?: string | null
+          resultado_alcancado?: string | null
           status?: Database["public"]["Enums"]["status_plano_acao"]
           supervisor_usuario_id?: string | null
           tipo_alvo?: Database["public"]["Enums"]["tipo_alvo_plano"]
