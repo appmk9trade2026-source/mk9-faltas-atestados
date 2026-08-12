@@ -474,8 +474,10 @@ function PlanosAcaoPage() {
              <div className="mt-6">
                 {selectedPlanoId && <PlanoDetalhe planoId={selectedPlanoId} onClose={() => setSelectedPlanoId(null)} />}
              </div>
-         </SheetContent>
-      </Sheet>
+          </SheetContent>
+        </Sheet>
+      </div>
+
     </AppShell>
   );
 }
