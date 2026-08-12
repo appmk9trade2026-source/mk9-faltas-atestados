@@ -743,7 +743,33 @@ function PlanosAcaoPage() {
                      )}
                    />
                  </div>
+                 {isCoordenador && (
+                   <FormField
+                     control={form.control}
+                     name="responsavel_usuario_id"
+                     render={({ field }) => (
+                       <FormItem>
+                         <FormLabel>Responsável pelo Plano</FormLabel>
+                         <Select onValueChange={field.onChange} value={field.value}>
+                           <FormControl>
+                             <SelectTrigger>
+                               <SelectValue placeholder="Selecione o responsável" />
+                             </SelectTrigger>
+                           </FormControl>
+                           <SelectContent>
+                             <SelectItem value={user?.id || ""}>{user?.user_metadata?.nome || "Eu mesmo"}</SelectItem>
+                             {supervisores?.map(s => (
+                               <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                             ))}
+                           </SelectContent>
+                         </Select>
+                         <FormMessage />
+                       </FormItem>
+                     )}
+                   />
+                 )}
                </div>
+
 
                <div className="flex justify-end pt-4">
                   <Button type="submit">Criar Plano</Button>
