@@ -184,7 +184,7 @@ export const listarPlanosAcao = createServerFn({ method: "GET" })
     const ids = Array.from(
       new Set(
         rows.flatMap((r: any) =>
-          [r.responsavel_usuario_id, r.criado_por_usuario_id].filter(Boolean),
+          [r.responsavel_usuario_id, r.responsavel_coordenacao_id, r.criado_por_usuario_id].filter(Boolean),
         ),
       ),
     );
@@ -201,8 +201,11 @@ export const listarPlanosAcao = createServerFn({ method: "GET" })
     return rows.map((r: any) => {
       const planoComNomes = {
         ...r,
-        responsavel: r.responsavel_usuario_id
+        responsavel_usuario: r.responsavel_usuario_id
           ? { nome: nomes.get(r.responsavel_usuario_id) ?? null }
+          : null,
+        responsavel_coordenacao: r.responsavel_coordenacao_id
+          ? { nome: nomes.get(r.responsavel_coordenacao_id) ?? null }
           : null,
         criador: r.criado_por_usuario_id
           ? { nome: nomes.get(r.criado_por_usuario_id) ?? null }
@@ -213,6 +216,7 @@ export const listarPlanosAcao = createServerFn({ method: "GET" })
         situacao: calcularSituacao(planoComNomes)
       };
     });
+
 
   });
 
