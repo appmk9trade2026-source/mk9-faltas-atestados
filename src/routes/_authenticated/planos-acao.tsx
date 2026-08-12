@@ -505,7 +505,7 @@ function PlanoDetalhe({ planoId, onClose }: { planoId: string; onClose: () => vo
 
       <div className="flex flex-wrap gap-2">
         <Button size="sm" onClick={() => {
-          checkinForm.setValue("progresso", plano.progresso);
+          checkinForm.setValue("progresso", plano.progresso ?? 0);
           setIsCheckinDialogOpen(true);
         }}>
           Registrar Acompanhamento
