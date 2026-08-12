@@ -25,6 +25,10 @@ export const planoAcaoSchema = z.object({
   prioridade: prioridadePlanoSchema,
   data_inicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   prazo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  progresso: z.number().min(0).max(100).optional(),
+  resultado_alcancado: z.enum(["SIM", "PARCIAL", "NAO"]).nullable().optional(),
+  parecer_final: z.string().nullable().optional(),
+  justificativa_cancelamento: z.string().nullable().optional(),
   observacoes: z.string().nullable().optional(),
 });
 
@@ -253,5 +257,124 @@ export const obterPlanoAcao = createServerFn({ method: "GET" })
         ? { nome: nomes.get(data.criado_por_usuario_id) ?? null }
         : null,
     };
+  });
+
+export const registrarAcompanhamento = createServerFn({ method: "POST" })
+  .validator((data: unknown) => z.object({
+    plano_id: uuid,
+    progresso: z.number().min(0).max(100),
+    observacao: z.string().min(1),
+  }).parse(data))
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data: input, context }) => {
+    const { supabase, userId } = context;
+
+    const { data, error } = await supabase
+      .from("plano_acao_acompanhamentos")
+      .insert({
+        ...input,
+        criado_por_usuario_id: userId,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("[registrarAcompanhamento]", error);
+      throw new Error(`DATABASE_ERROR: ${error.message}`);
+    }
+
+    return data;
+  });
+
+export const concluirPlano = createServerFn({ method: "POST" })
+  .validator((data: unknown) => z.object({
+    id: uuid,
+    resultado_alcancado: z.enum(["SIM", "PARCIAL", "NAO"]),
+    parecer_final: z.string().min(1),
+  }).parse(data))
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data: input, context }) => {
+    const { supabase } = context;
+
+    const { data, error } = await supabase
+      .from("planos_acao")
+      .update({
+        status: "CONCLUIDO",
+        progresso: 100,
+        resultado_alcancado: input.resultado_alcancado,
+        parecer_final: input.parecer_final,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", input.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("[concluirPlano]", error);
+      throw new Error(`DATABASE_ERROR: ${error.message}`);
+    }
+
+    return data;
+  });
+
+export const cancelarPlano = createServerFn({ method: "POST" })
+  .validator((data: unknown) => z.object({
+    id: uuid,
+    justificativa_cancelamento: z.string().min(1),
+  }).parse(data))
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data: input, context }) => {
+    const { supabase } = context;
+
+    const { data, error } = await supabase
+      .from("planos_acao")
+      .update({
+        status: "CANCELADO",
+        justificativa_cancelamento: input.justificativa_cancelamento,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", input.id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("[cancelarPlano]", error);
+      throw new Error(`DATABASE_ERROR: ${error.message}`);
+    }
+
+    return data;
+  });
+
+export const listarAcompanhamentos = createServerFn({ method: "GET" })
+  .validator((data: unknown) => z.object({ plano_id: uuid }).parse(data))
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ data: input, context }) => {
+    const { supabase } = context;
+
+    const { data, error } = await supabase
+      .from("plano_acao_acompanhamentos")
+      .select("*")
+      .eq("plano_id", input.plano_id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("[listarAcompanhamentos]", error);
+      throw new Error(`DATABASE_ERROR: ${error.message}`);
+    }
+
+    const ids = Array.from(new Set(data.map((r: any) => r.criado_por_usuario_id)));
+    let nomes = new Map<string, string>();
+    if (ids.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, nome")
+        .in("id", ids);
+      nomes = new Map((profs ?? []).map((p: any) => [p.id, p.nome]));
+    }
+
+    return data.map((r: any) => ({
+      ...r,
+      criador: { nome: nomes.get(r.criado_por_usuario_id) ?? null }
+    }));
   });
 
