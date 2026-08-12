@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
-import { Plus, Filter, Loader2, Clock, CheckCircle2, AlertTriangle, Building2, User } from "lucide-react";
+import { Plus, Filter, Loader2, Clock, CheckCircle2, AlertTriangle, Building2, User, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/layout/app-shell";
@@ -44,6 +44,7 @@ import {
 } from "@/lib/planos-acao.functions";
 import { gerarSugestaoPlanoAcao } from "@/lib/planos-acao-ia.functions";
 import { useProjetosAtivosPorEmpresa } from "@/hooks/use-projetos";
+import { useSupervisoresPorProjeto } from "@/hooks/use-supervisores";
 import { useColaboradoresAtivos } from "@/hooks/use-colaboradores";
 import { cn } from "@/lib/utils";
 import { Sparkles } from "lucide-react";
@@ -93,12 +94,15 @@ function PlanosAcaoPage() {
       titulo: "",
       problema_identificado: "",
       meta: "",
+      indicador_sucesso: "",
       acao_proposta: "",
       status: "NAO_INICIADO",
       prioridade: "MEDIA",
       data_inicio: new Date().toISOString().split("T")[0],
       prazo: new Date().toISOString().split("T")[0],
       projeto_id: "" as any,
+      supervisor_usuario_id: null,
+      colaborador_id: null,
       responsavel_usuario_id: user?.id || "" as any,
     },
   });
@@ -157,6 +161,10 @@ function PlanosAcaoPage() {
   });
 
   const onSubmit: SubmitHandler<z.infer<typeof planoAcaoSchema>> = (data) => {
+    if (new Date(data.prazo) < new Date(data.data_inicio)) {
+      toast.error("O prazo final não pode ser anterior à data de início.");
+      return;
+    }
     mutation.mutate(data);
   };
 
@@ -171,11 +179,24 @@ function PlanosAcaoPage() {
   const { data: projetos } = useProjetosAtivosPorEmpresa(empresaId);
   const [buscaColab, setBuscaColab] = useState("");
   const selectedProjetoId = form.watch("projeto_id");
-  const { data: colaboradores } = useColaboradoresAtivos({
+  const selectedSupervisorId = form.watch("supervisor_usuario_id");
+  
+  const { data: supervisores, isLoading: isLoadingSupervisores } = useSupervisoresPorProjeto(selectedProjetoId);
+  
+  const { data: colaboradores, isLoading: isLoadingColaboradores } = useColaboradoresAtivos({
     empresaId,
-    projetoId: selectedProjetoId || null, // Garantir null para evitar undefined no RPC
-    supervisorId: null, // Forçar explicitamente null para bater com a assinatura de 4 parâmetros
+    projetoId: selectedProjetoId || null,
+    supervisorId: selectedSupervisorId || null,
     busca: buscaColab,
+  });
+
+  const isUserSupervisor = roles.includes("supervisor") && !roles.includes("super_admin") && !roles.includes("coordenador");
+  
+  // Auto-fill supervisor field if the user is a supervisor
+  useState(() => {
+    if (isUserSupervisor && user?.id) {
+      form.setValue("supervisor_usuario_id", user.id);
+    }
   });
 
   const tipoAlvo = form.watch("tipo_alvo");
@@ -328,7 +349,9 @@ function PlanosAcaoPage() {
                       <FormLabel>Tipo de Alvo</FormLabel>
                       <Select onValueChange={(val) => {
                         field.onChange(val);
-                        if (val === "PROJETO") form.setValue("colaborador_id", null);
+                        // Reset dependentes
+                        form.setValue("supervisor_usuario_id", null);
+                        form.setValue("colaborador_id", null);
                       }} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -337,6 +360,7 @@ function PlanosAcaoPage() {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="PROJETO">Projeto</SelectItem>
+                          <SelectItem value="SUPERVISOR">Supervisor</SelectItem>
                           <SelectItem value="COLABORADOR">Colaborador</SelectItem>
                         </SelectContent>
                       </Select>
@@ -381,6 +405,7 @@ function PlanosAcaoPage() {
                                     key={p.id}
                                     onSelect={() => {
                                       form.setValue("projeto_id", p.id);
+                                      form.setValue("supervisor_usuario_id", null);
                                       form.setValue("colaborador_id", null);
                                     }}
                                   >
@@ -404,68 +429,135 @@ function PlanosAcaoPage() {
                 />
               </div>
 
-              {tipoAlvo === "COLABORADOR" && (
-                <FormField
-                  control={form.control}
-                  name="colaborador_id"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Colaborador</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              disabled={!form.watch("projeto_id")}
-                              className={cn(
-                                "justify-between",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value
-                                ? colaboradores?.find((c) => c.id === field.value)?.nome_completo || "Colaborador selecionado"
-                                : form.watch("projeto_id") ? "Selecione o colaborador" : "Selecione um projeto primeiro"}
-                              <User className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="p-0" align="start">
-                          <Command shouldFilter={false}>
-                            <CommandInput 
-                              placeholder="Buscar por nome ou matrícula..." 
-                              onValueChange={setBuscaColab}
-                            />
-                            <CommandList>
-                              <CommandEmpty>Nenhum colaborador encontrado.</CommandEmpty>
-                              <CommandGroup>
-                                {colaboradores?.map((c) => (
-                                  <CommandItem
-                                    value={c.id}
-                                    key={c.id}
-                                    onSelect={() => form.setValue("colaborador_id", c.id)}
-                                  >
-                                    <CheckCircle2
-                                      className={cn(
-                                        "mr-2 h-4 w-4",
-                                        c.id === field.value ? "opacity-100" : "opacity-0"
-                                      )}
-                                    />
-                                    <div className="flex flex-col">
-                                      <span>{c.nome_completo}</span>
-                                      <span className="text-xs text-muted-foreground">Matrícula: {c.matricula}</span>
-                                    </div>
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
+              {(tipoAlvo === "SUPERVISOR" || tipoAlvo === "COLABORADOR") && (
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="supervisor_usuario_id"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Supervisor *</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                disabled={!selectedProjetoId || isUserSupervisor}
+                                className={cn(
+                                  "justify-between",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value
+                                  ? supervisores?.find((s) => s.id === field.value)?.nome || "Supervisor selecionado"
+                                  : selectedProjetoId ? (isLoadingSupervisores ? "Carregando..." : "Selecione o supervisor") : "Selecione um projeto primeiro"}
+                                <Users className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder="Buscar supervisor..." />
+                              <CommandList>
+                                <CommandEmpty>
+                                  {isLoadingSupervisores ? "Carregando supervisores..." : "Nenhum supervisor disponível para este projeto."}
+                                </CommandEmpty>
+                                <CommandGroup>
+                                  {supervisores?.map((s) => (
+                                    <CommandItem
+                                      value={s.nome}
+                                      key={s.id}
+                                      onSelect={() => {
+                                        form.setValue("supervisor_usuario_id", s.id);
+                                        form.setValue("colaborador_id", null);
+                                      }}
+                                    >
+                                      <CheckCircle2
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          s.id === field.value ? "opacity-100" : "opacity-0"
+                                        )}
+                                      />
+                                      {s.nome}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {tipoAlvo === "COLABORADOR" && (
+                    <FormField
+                      control={form.control}
+                      name="colaborador_id"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Colaborador *</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  disabled={!selectedSupervisorId}
+                                  className={cn(
+                                    "justify-between",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value
+                                    ? colaboradores?.find((c) => c.id === field.value)?.nome_completo || "Colaborador selecionado"
+                                    : selectedSupervisorId ? (isLoadingColaboradores ? "Carregando..." : "Selecione o colaborador") : "Selecione um supervisor primeiro"}
+                                  <User className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="p-0" align="start">
+                              <Command shouldFilter={false}>
+                                <CommandInput 
+                                  placeholder="Buscar por nome ou matrícula..." 
+                                  onValueChange={setBuscaColab}
+                                />
+                                <CommandList>
+                                  <CommandEmpty>
+                                    {isLoadingColaboradores ? "Carregando colaboradores..." : "Nenhum colaborador encontrado para este supervisor."}
+                                  </CommandEmpty>
+                                  <CommandGroup>
+                                    {colaboradores?.map((c) => (
+                                      <CommandItem
+                                        value={c.id}
+                                        key={c.id}
+                                        onSelect={() => form.setValue("colaborador_id", c.id)}
+                                      >
+                                        <CheckCircle2
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            c.id === field.value ? "opacity-100" : "opacity-0"
+                                          )}
+                                        />
+                                        <div className="flex flex-col">
+                                          <span>{c.nome_completo}</span>
+                                          <span className="text-xs text-muted-foreground">Matrícula: {c.matricula}</span>
+                                        </div>
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   )}
-                />
+                </div>
               )}
 
               <FormField
@@ -523,6 +615,20 @@ function PlanosAcaoPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="indicador_sucesso"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Indicador de Sucesso *</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Ex: Reduzir faltas não justificadas de 8% para até 4% em 30 dias" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="meta"
