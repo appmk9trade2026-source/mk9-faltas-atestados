@@ -129,7 +129,7 @@ JSON:`;
           "x-lovable-trace": "gerarSugestaoPlanoAcao"
         },
         body: JSON.stringify({
-          model: "google/gemini-2.0-flash-exp",
+        model: "google/gemini-2.0-flash",
           messages: [
             { role: "system", content: "Você é um assistente que responde exclusivamente em JSON." },
             { role: "user", content: prompt }
@@ -211,7 +211,7 @@ Retorne apenas o texto do resumo.`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.0-flash-exp",
+        model: "google/gemini-2.0-flash",
         messages: [
           { role: "user", content: prompt }
         ],
