@@ -166,10 +166,14 @@ function PlanosAcaoPage() {
     concluidos: planos?.filter((p: any) => p.status === "CONCLUIDO").length || 0,
   };
 
-  const { data: projetos } = useProjetosAtivosPorEmpresa(user?.user_metadata?.empresa_id);
+  const empresaId = user?.user_metadata?.empresa_id || "0a6c2ac6-2872-47a0-b818-b4660ef81244"; // Fallback para AMBEV se metadata sumir
+  
+  const { data: projetos } = useProjetosAtivosPorEmpresa(empresaId);
   const [buscaColab, setBuscaColab] = useState("");
+  const selectedProjetoId = form.watch("projeto_id");
   const { data: colaboradores } = useColaboradoresAtivos({
-    projetoId: form.watch("projeto_id") || undefined,
+    empresaId,
+    projetoId: selectedProjetoId || undefined,
     busca: buscaColab,
   });
 
