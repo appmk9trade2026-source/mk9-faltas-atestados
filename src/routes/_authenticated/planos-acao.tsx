@@ -975,11 +975,21 @@ function PlanoDetalhe({ planoId, onClose }: { planoId: string; onClose: () => vo
 
       <div>
         <h2 className="text-xl font-bold">{plano.titulo}</h2>
-        <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <Building2 className="h-4 w-4" /> {plano.projeto?.nome}
           {plano.supervisor?.nome && <><ChevronRight className="h-3 w-3" /> <Users className="h-4 w-4" /> {plano.supervisor.nome}</>}
           {plano.colaborador?.nome_completo && <><ChevronRight className="h-3 w-3" /> <User className="h-4 w-4" /> {plano.colaborador.nome_completo}</>}
+          
+          <div className="flex items-center gap-1 ml-auto border-l pl-2">
+            <span className="font-semibold text-xs uppercase text-primary/70">Responsável:</span>
+            {plano.responsavel_tipo === "USUARIO" ? (
+              <span className="flex items-center gap-1"><User className="h-3 w-3" /> {plano.responsavel_usuario?.nome}</span>
+            ) : (
+              <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Coordenação: {plano.responsavel_coordenacao?.nome}</span>
+            )}
+          </div>
         </div>
+
       </div>
 
       <Card>
