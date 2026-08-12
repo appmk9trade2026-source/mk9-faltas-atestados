@@ -1,0 +1,2 @@
+ALTER TYPE public.tipo_alvo_plano ADD VALUE IF NOT EXISTS 'SUPERVISOR';
+COMMIT;

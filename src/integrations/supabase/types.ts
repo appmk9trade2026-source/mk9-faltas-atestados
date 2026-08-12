@@ -6284,7 +6284,7 @@ export type Database = {
         | "SUSPENSO"
         | "CONCLUIDO"
         | "CANCELADO"
-      tipo_alvo_plano: "PROJETO" | "COLABORADOR"
+      tipo_alvo_plano: "PROJETO" | "COLABORADOR" | "SUPERVISOR"
       tipo_ausencia:
         | "FALTA"
         | "ATESTADO"
@@ -6774,7 +6774,7 @@ export const Constants = {
         "CONCLUIDO",
         "CANCELADO",
       ],
-      tipo_alvo_plano: ["PROJETO", "COLABORADOR"],
+      tipo_alvo_plano: ["PROJETO", "COLABORADOR", "SUPERVISOR"],
       tipo_ausencia: ["FALTA", "ATESTADO", "DECLARACAO", "SUSPENSAO", "OUTROS"],
       tipo_periodo_ausencia: [
         "DIAS",
