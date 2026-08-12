@@ -515,10 +515,10 @@ function PlanosAcaoPage() {
                            <SelectItem value="COLABORADOR">Colaborador</SelectItem>
                          </SelectContent>
                        </Select>
-                       <FormMessage />
-                     </FormItem>
-                   )}
-                 />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                  <FormField
                    control={form.control}
