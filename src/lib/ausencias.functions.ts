@@ -1007,6 +1007,8 @@ export const checkConflitosAusencia = createServerFn({ method: "POST" })
       origem_registro: z.enum(["AUTOMATICO", "MANUAL"]),
       manual_matricula: z.string().nullable().optional(),
       empresa_id: uuid.nullable().optional(),
+      projeto_id: uuid.nullable().optional(),
+      _supervisor_id: uuid.nullable().optional(),
     }).parse(data);
   })
   .handler(async ({ data, context }) => {
