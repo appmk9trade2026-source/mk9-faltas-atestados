@@ -1007,6 +1007,8 @@ export const checkConflitosAusencia = createServerFn({ method: "POST" })
       origem_registro: z.enum(["AUTOMATICO", "MANUAL"]),
       manual_matricula: z.string().nullable().optional(),
       empresa_id: uuid.nullable().optional(),
+      projeto_id: uuid.nullable().optional(),
+      _supervisor_id: uuid.nullable().optional(),
     }).parse(data);
   })
   .handler(async ({ data, context }) => {
@@ -1018,6 +1020,8 @@ export const checkConflitosAusencia = createServerFn({ method: "POST" })
       _origem_registro: data.origem_registro,
       _manual_matricula: data.manual_matricula || null,
       _empresa_id: data.empresa_id || null,
+      _projeto_id: data.projeto_id || null,
+      _supervisor_id: (data as any)._supervisor_id || null,
     } as any);
 
 

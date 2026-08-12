@@ -1434,6 +1434,8 @@ function NovaAusenciaPage() {
                             origem_registro: v.modo_manual ? "MANUAL" : "AUTOMATICO",
                             manual_matricula: v.modo_manual ? v.manual_matricula : null,
                             empresa_id: v.modo_manual ? v.empresa_id : null,
+                            projeto_id: v.modo_manual ? v.projeto_id : null,
+                            _supervisor_id: null,
                           }
                         });
 

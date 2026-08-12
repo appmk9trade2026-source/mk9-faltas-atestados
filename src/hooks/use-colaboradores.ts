@@ -40,10 +40,10 @@ export function useColaboradoresAtivos(filtros: ColaboradoresFiltros = {}) {
     enabled: scope.ready,
     queryFn: async (): Promise<ColaboradorAtivo[]> => {
       const { data, error } = await supabase.rpc("get_colaboradores_ativos", {
-        _empresa_id: empresaId ?? undefined,
-        _projeto_id: projetoId ?? undefined,
-        _supervisor_id: supervisorId ?? undefined,
-        _busca: busca ?? undefined,
+        _empresa_id: (empresaId ?? null) as any,
+        _projeto_id: (projetoId ?? null) as any,
+        _supervisor_id: (supervisorId ?? null) as any,
+        _busca: (busca ?? null) as any,
       });
       if (error) throw error;
       return (data ?? []) as ColaboradorAtivo[];

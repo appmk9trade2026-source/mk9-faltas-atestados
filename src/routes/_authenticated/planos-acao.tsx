@@ -173,7 +173,8 @@ function PlanosAcaoPage() {
   const selectedProjetoId = form.watch("projeto_id");
   const { data: colaboradores } = useColaboradoresAtivos({
     empresaId,
-    projetoId: selectedProjetoId || undefined,
+    projetoId: selectedProjetoId || null, // Garantir null para evitar undefined no RPC
+    supervisorId: null, // Forçar explicitamente null para bater com a assinatura de 4 parâmetros
     busca: buscaColab,
   });
 
