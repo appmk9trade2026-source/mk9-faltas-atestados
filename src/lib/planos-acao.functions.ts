@@ -93,27 +93,30 @@ export const criarPlanoAcao = createServerFn({ method: "POST" })
     const { data: isCoordenador } = await supabase.rpc("has_role", { _user_id: userId, _role: "coordenador" });
     const { data: isSupervisor } = await supabase.rpc("has_role", { _user_id: userId, _role: "supervisor" });
     
-    if (isCoordenador === true) {
-      const { data: respProfile } = await supabase
-        .from("profiles")
-        .select("coordenador_usuario_id")
-        .eq("id", input.responsavel_usuario_id)
-        .single();
-      
-      if (respProfile && respProfile.coordenador_usuario_id !== userId && input.responsavel_usuario_id !== userId) {
-         throw new Error("SCOPE_DENIED: O responsável deve pertencer à sua coordenação.");
-      }
-    } else if (isSupervisor === true) {
-      // Se for supervisor, ele só pode criar para si mesmo ou seus subordinados
-      if (input.responsavel_usuario_id !== userId) {
-        // Buscar se existe algum colaborador vinculado ao supervisor que possua este usuario_id no seu profile
-        // Nota: A tabela colaboradores não tem usuario_id diretamente no Row do types.ts, 
-        // mas a lógica de negócio costuma vincular via profiles.
+    if (input.responsavel_tipo === "USUARIO" && input.responsavel_usuario_id) {
+      if (isCoordenador === true) {
         const { data: respProfile } = await supabase
           .from("profiles")
-          .select("id")
+          .select("coordenador_usuario_id")
           .eq("id", input.responsavel_usuario_id)
           .single();
+        
+        if (respProfile && respProfile.coordenador_usuario_id !== userId && input.responsavel_usuario_id !== userId) {
+           throw new Error("SCOPE_DENIED: O responsável deve pertencer à sua coordenação.");
+        }
+      } else if (isSupervisor === true) {
+        // Se for supervisor, ele só pode criar para si mesmo ou seus subordinados
+        if (input.responsavel_usuario_id !== userId) {
+          const { data: respProfile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("id", input.responsavel_usuario_id)
+            .single();
+  
+          if (!respProfile) {
+            throw new Error("SCOPE_DENIED: Responsável não encontrado.");
+          }
+
 
         if (!respProfile) {
           throw new Error("SCOPE_DENIED: Responsável não encontrado.");
