@@ -148,9 +148,10 @@ function PlanosAcaoPage() {
   const { data: coordenadores } = useCoordenadoresPorProjeto(form.watch("projeto_id"));
 
   const handleGenerateAI = async () => {
-
     const tipoAlvo = form.getValues("tipo_alvo");
     const projetoId = form.getValues("projeto_id");
+    const supervisorId = form.getValues("supervisor_usuario_id");
+    const colaboradorId = form.getValues("colaborador_id");
     const problema = form.getValues("problema_identificado");
     
     if (!projetoId || problema.length < 5) {
@@ -160,11 +161,6 @@ function PlanosAcaoPage() {
 
     setIsGeneratingAI(true);
     try {
-      const projeto = projetos?.find(p => p.id === projetoId);
-      const colaboradorId = form.getValues("colaborador_id");
-      const colaborador = colaboradores?.find(c => c.id === colaboradorId);
-      const supervisorId = form.getValues("supervisor_usuario_id");
-      const supervisor = supervisores?.find(s => s.id === supervisorId);
 
       const res = await generateAIFn({
         data: {
