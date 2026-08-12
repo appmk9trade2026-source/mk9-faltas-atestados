@@ -1020,6 +1020,8 @@ export const checkConflitosAusencia = createServerFn({ method: "POST" })
       _origem_registro: data.origem_registro,
       _manual_matricula: data.manual_matricula || null,
       _empresa_id: data.empresa_id || null,
+      _projeto_id: data.projeto_id || null,
+      _supervisor_id: (data as any)._supervisor_id || null,
     } as any);
 
 
