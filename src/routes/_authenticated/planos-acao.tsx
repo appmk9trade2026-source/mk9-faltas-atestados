@@ -992,10 +992,11 @@ function PlanoDetalhe({ planoId, onClose }: { planoId: string; onClose: () => vo
           <div className="flex items-center gap-1 ml-auto border-l pl-2">
             <span className="font-semibold text-xs uppercase text-primary/70">Responsável:</span>
             {plano.responsavel_tipo === "USUARIO" ? (
-              <span className="flex items-center gap-1"><User className="h-3 w-3" /> {plano.responsavel_usuario?.nome}</span>
+              <span className="flex items-center gap-1"><User className="h-3 w-3" /> {(plano as any).responsavel_usuario?.nome}</span>
             ) : (
-              <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Coordenação: {plano.responsavel_coordenacao?.nome}</span>
+              <span className="flex items-center gap-1"><Users className="h-3 w-3" /> Coordenação: {(plano as any).responsavel_coordenacao?.nome}</span>
             )}
+
           </div>
         </div>
 
