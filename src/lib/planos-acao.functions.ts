@@ -163,13 +163,11 @@ export const listarPlanosAcao = createServerFn({ method: "GET" })
         *,
         projeto:projetos(nome),
         supervisor:profiles!planos_acao_supervisor_usuario_id_fkey(nome),
-        responsavel_usuario:profiles!planos_acao_responsavel_usuario_id_fkey(nome),
-        responsavel_coordenacao:profiles!planos_acao_responsavel_coordenacao_id_fkey(nome),
         colaborador:colaboradores(nome_completo, matricula),
         acompanhamentos:plano_acao_acompanhamentos(created_at)
       `)
-
       .order("created_at", { ascending: false });
+
 
 
     if (input?.status) query = query.eq("status", input.status);
