@@ -532,7 +532,7 @@ function PlanosAcaoPage() {
                            form.setValue("supervisor_usuario_id", null);
                            form.setValue("colaborador_id", null);
                          }} 
-                         value={field.value}
+                          value={field.value || ""}
                        >
                          <FormControl>
                            <SelectTrigger>
