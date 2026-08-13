@@ -404,8 +404,8 @@ function CentralProcessamentoPage() {
       <Sheet open={detalhesAbertos} onOpenChange={setDetalhesAbertos}>
         <SheetContent 
           side="right" 
-          className="p-0 w-full sm:w-[95vw] lg:w-[min(1100px,92vw)] max-w-none border-l shadow-2xl overflow-hidden"
-          style={{ maxWidth: 'none' }}
+          className="p-0 !w-full sm:!w-[95vw] lg:!w-[min(1100px,92vw)] !max-w-none border-l shadow-2xl overflow-hidden"
+
 
         >
           {registroSelecionado && (
