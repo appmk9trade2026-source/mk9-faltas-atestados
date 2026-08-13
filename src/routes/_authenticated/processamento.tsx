@@ -377,7 +377,7 @@ function CentralProcessamentoPage() {
                       setDetalhesAbertos(true); 
                     }}
                   >
-                    Ver {total} lançamentos
+                    Ver {grupo.length} lançamentos
                   </Button>
                   <Button 
                     className="bg-primary hover:bg-primary/90 font-bold text-xs h-9 px-4" 
