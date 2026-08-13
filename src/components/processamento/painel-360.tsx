@@ -117,7 +117,7 @@ export function Painel360({
           </Badge>
         </div>
         
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-4 gap-2">
           <div className="bg-white border rounded-lg p-2">
             <p className="text-[9px] font-bold text-muted-foreground uppercase leading-none mb-1">Status RH</p>
             <p className="text-[10px] font-black truncate">{data.status_rh || "PENDENTE"}</p>
@@ -130,7 +130,12 @@ export function Painel360({
             <p className="text-[9px] font-bold text-muted-foreground uppercase leading-none mb-1">Aguardando</p>
             <p className="text-[10px] font-black truncate">{data.tempo_aguardando} dias</p>
           </div>
+          <div className="bg-white border rounded-lg p-2">
+            <p className="text-[9px] font-bold text-muted-foreground uppercase leading-none mb-1">Origem</p>
+            <p className="text-[10px] font-black truncate">{data.origem_registro || "AUTOMÁTICO"}</p>
+          </div>
         </div>
+
       </div>
 
       <ScrollArea className="flex-1">
