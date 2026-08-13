@@ -210,13 +210,17 @@ export function Painel360({
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-3 bg-mk9-surface-deep text-white rounded-xl space-y-1">
-                      <p className="text-[9px] font-bold opacity-60 uppercase">Período</p>
-                      <div className="flex items-center gap-2">
-                        <p className="text-xs font-black">{format(new Date(data.data_inicio + 'T00:00:00'), 'dd/MM/yy')}</p>
-                        <ArrowRight className="h-3 w-3 opacity-60" />
-                        <p className="text-xs font-black">{format(new Date(data.data_fim + 'T00:00:00'), 'dd/MM/yy')}</p>
+                      <p className="text-[9px] font-bold opacity-60 uppercase">TIPO DA AUSÊNCIA (CANÔNICO)</p>
+                      <p className="text-xs font-black uppercase">{data.tipo}</p>
+                      <div className="pt-1 mt-1 border-t border-white/10">
+                        <p className="text-[9px] font-bold opacity-60 uppercase">Período</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-[11px] font-black">{format(new Date(data.data_inicio + 'T00:00:00'), 'dd/MM/yy')}</p>
+                          <ArrowRight className="h-3 w-3 opacity-60" />
+                          <p className="text-[11px] font-black">{format(new Date(data.data_fim + 'T00:00:00'), 'dd/MM/yy')}</p>
+                        </div>
+                        <p className="text-[10px] font-bold bg-white/10 w-fit px-1.5 rounded mt-0.5">{data.dias} {data.dias === 1 ? 'dia' : 'dias'}</p>
                       </div>
-                      <p className="text-[10px] font-bold bg-white/10 w-fit px-1.5 rounded">{data.dias} {data.dias === 1 ? 'dia' : 'dias'}</p>
                     </div>
                     <div className="p-3 bg-slate-100 rounded-xl space-y-1 border">
                       <p className="text-[9px] font-bold text-muted-foreground uppercase">CID Sugerido</p>
@@ -233,7 +237,7 @@ export function Painel360({
                     </div>
                   </div>
                   <div className="p-4 bg-muted/30 rounded-xl border border-dashed space-y-2">
-                    <p className="text-[9px] font-bold text-muted-foreground uppercase">Motivo / Observações do Registro</p>
+                    <p className="text-[9px] font-bold text-muted-foreground uppercase">MOTIVO / OBSERVAÇÕES DO REGISTRO</p>
                     <p className="text-xs italic leading-relaxed text-foreground/80">"{data.motivo || 'Nenhuma observação informada no registro.'}"</p>
                   </div>
                 </div>
