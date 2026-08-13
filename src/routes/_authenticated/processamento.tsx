@@ -30,9 +30,12 @@ import {
   Calendar,
   ChevronRight,
   ArrowRight,
-  ChevronLeft
+  ChevronLeft,
+  Columns,
+  List,
+  Layout
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import { ProcessamentoCard } from "@/components/processamento/processamento-card";
 import { AusenciaCardData, StatusProcessamento } from "@/components/processamento/types";
@@ -44,6 +47,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Painel360 } from "@/components/processamento/painel-360";
 
 
