@@ -167,7 +167,7 @@ function CentralProcessamentoPage() {
 
     const mapa = new Map<string, AusenciaCardData[]>();
     for (const item of list) {
-      // Chave canônica: colaborador_id (ou matricula se manual) + projeto_id
+      // Chave canônica P0: colaborador_id (ou matricula se manual) + projeto_id
       const colabKey = item.colaborador_id || `m-${item.colaborador_matricula}`;
       const projKey = item.projeto_id || "sem-projeto";
       const chave = `${colabKey}|${projKey}`;
@@ -355,7 +355,7 @@ function CentralProcessamentoPage() {
                     variant="outline"
                     className="flex-1 font-bold text-xs h-9" 
                     onClick={() => { 
-                      // Ao abrir o drawer, garantir que pegamos o grupo completo e ordenamos por antiguidade
+                      // Padronização P0: Mesma lógica de chave do agrupamento
                       const colabKey = principal.colaborador_id || `m-${principal.colaborador_matricula}`;
                       const projKey = principal.projeto_id || "sem-projeto";
                       const chaveAlvo = `${colabKey}|${projKey}`;
@@ -365,12 +365,12 @@ function CentralProcessamentoPage() {
                         const gProjKey = g[0].projeto_id || "sem-projeto";
                         return `${gColabKey}|${gProjKey}` === chaveAlvo;
                       });
-
+                      
                       if (grupoCompleto && grupoCompleto.length > 0) {
                         const ordenado = [...grupoCompleto].sort((a, b) => 
                           new Date(a.registrado_em).getTime() - new Date(b.registrado_em).getTime()
                         );
-                        setRegistroSelecionado(ordenado[0]); // Seleciona o mais antigo por padrão
+                        setRegistroSelecionado(ordenado[0]); 
                       } else {
                         setRegistroSelecionado(principal);
                       }
@@ -407,17 +407,21 @@ function CentralProcessamentoPage() {
                   <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground mt-1">
                     <span>Matrícula {registroSelecionado.colaborador_matricula}</span>
                     <div className="h-3 w-px bg-border" />
-                    <span>{(() => {
-                      const colabKey = registroSelecionado.colaborador_id || `m-${registroSelecionado.colaborador_matricula}`;
-                      const projKey = registroSelecionado.projeto_id || "sem-projeto";
-                      const chaveAlvo = `${colabKey}|${projKey}`;
-                      
-                      return agrupado.find(g => {
-                        const gColabKey = g[0].colaborador_id || `m-${g[0].colaborador_matricula}`;
-                        const gProjKey = g[0].projeto_id || "sem-projeto";
-                        return `${gColabKey}|${gProjKey}` === chaveAlvo;
-                      })?.length || 1;
-                    })()} pendências</span>
+                    <span className="text-primary">
+                      {(() => {
+                        const colabKey = registroSelecionado.colaborador_id || `m-${registroSelecionado.colaborador_matricula}`;
+                        const projKey = registroSelecionado.projeto_id || "sem-projeto";
+                        const chaveAlvo = `${colabKey}|${projKey}`;
+                        
+                        const totalGrupo = agrupado.find(g => {
+                          const gColabKey = g[0].colaborador_id || `m-${g[0].colaborador_matricula}`;
+                          const gProjKey = g[0].projeto_id || "sem-projeto";
+                          return `${gColabKey}|${gProjKey}` === chaveAlvo;
+                        })?.length || 0;
+
+                        return `${totalGrupo} pendências pendentes`;
+                      })()}
+                    </span>
                   </div>
                 </div>
                 <Button 
