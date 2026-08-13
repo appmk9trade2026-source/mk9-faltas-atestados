@@ -7,7 +7,7 @@ import {
   iniciarProcessamentoGrupoAdm,
   concluirProcessamentoAdm, 
   reatribuirProcessamentoAdm 
-} from "@/lib.functions";
+} from "@/lib/ausencias.functions";
 import { resolveAusenciaIdentidade } from "@/lib/ausencia-identidade";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/layout/app-shell";
@@ -195,7 +195,7 @@ function CentralProcessamentoPage() {
   const iniciarGrupoMut = useMutation({
     mutationFn: (payload: { colaborador_id: string | null | undefined, colaborador_matricula: string, projeto_id: string }) => 
       iniciarGrupoFn({ data: payload }),
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       if (res.success) {
         toast.success(`Grupo assumido: ${res.count} de ${res.total} pendências elegíveis.`);
         queryClient.invalidateQueries({ queryKey: ["processamento"] });
