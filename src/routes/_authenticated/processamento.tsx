@@ -79,6 +79,7 @@ function CentralProcessamentoPage() {
   const [search, setSearch] = useState("");
   const [detalhesAbertos, setDetalhesAbertos] = useState(false);
   const [registroSelecionado, setRegistroSelecionado] = useState<AusenciaCardData | null>(null);
+  const [tabAtiva, setTabAtiva] = useState<"AGUARDANDO" | "MINHA_FILA">("AGUARDANDO");
 
   const getKpisFn = useServerFn(getCentralProcessamentoKpis);
   const iniciarFn = useServerFn(iniciarProcessamentoAdm);
@@ -166,15 +167,24 @@ function CentralProcessamentoPage() {
   });
 
   const agrupado = useMemo(() => {
-    const list = (ausenciasQ.data || []).filter(a => 
-      a.colaborador_nome.toLowerCase().includes(search.toLowerCase()) || 
-      a.colaborador_matricula.includes(search) || 
-      a.protocolo?.toLowerCase().includes(search.toLowerCase())
-    );
+    const list = (ausenciasQ.data || []).filter(a => {
+      const matchSearch = a.colaborador_nome.toLowerCase().includes(search.toLowerCase()) || 
+        a.colaborador_matricula.includes(search) || 
+        a.protocolo?.toLowerCase().includes(search.toLowerCase());
+      
+      if (!matchSearch) return false;
+
+      // Filtro de Aba
+      if (tabAtiva === "MINHA_FILA") {
+        return a.responsavel_processamento_id === user?.id && a.status_processamento === "EM_PROCESSAMENTO";
+      } else {
+        // Aba "AGUARDANDO": Mostrar apenas o que ninguém assumiu ainda
+        return a.status_processamento === "AGUARDANDO";
+      }
+    });
 
     const mapa = new Map<string, AusenciaCardData[]>();
     for (const item of list) {
-      // Chave canônica P0: colaborador_id (ou matricula se manual) + projeto_id
       const colabKey = item.colaborador_id || `m-${item.colaborador_matricula}`;
       const projKey = item.projeto_id || "sem-projeto";
       const chave = `${colabKey}|${projKey}`;
@@ -183,7 +193,7 @@ function CentralProcessamentoPage() {
       mapa.get(chave)!.push(item);
     }
     return Array.from(mapa.values());
-  }, [ausenciasQ.data, search]);
+  }, [ausenciasQ.data, search, tabAtiva, user?.id]);
 
   const iniciarMut = useMutation({
     mutationFn: (id: string) => iniciarFn({ data: { ausencia_id: id } }),
@@ -201,6 +211,7 @@ function CentralProcessamentoPage() {
     onSuccess: (res: any) => {
       if (res.success) {
         toast.success(`Grupo assumido: ${res.count} de ${res.total} pendências elegíveis.`);
+        setTabAtiva("MINHA_FILA"); // Mudar automaticamente para facilitar fluxo
         queryClient.invalidateQueries({ queryKey: ["processamento"] });
         queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
       } else {
