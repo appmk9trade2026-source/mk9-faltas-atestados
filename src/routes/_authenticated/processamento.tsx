@@ -263,7 +263,7 @@ function CentralProcessamentoPage() {
     <AppShell title="Central de Processamento" breadcrumb={["Operações", "Central de Processamento"]}>
       <div className="space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
-          <KpiCard title="Minha Fila" value={(ausenciasQ.data || []).filter(a => a.responsavel_processamento_id === user?.id).length} icon={User} color="bg-indigo-50 text-indigo-600" />
+          <KpiCard title="Minha Fila" value={(ausenciasQ.data || []).filter(a => a.responsavel_processamento_id === user?.id && a.status_processamento === 'EM_PROCESSAMENTO').length} icon={User} color="bg-indigo-50 text-indigo-600" />
           <KpiCard title="Colaboradores" value={agrupado.length} icon={Users} color="bg-violet-50 text-violet-600" />
           <KpiCard title="Aguardando" value={kpisQ.data?.backlog ?? "0"} icon={History} color="bg-slate-50 text-slate-600" />
           <KpiCard title="Em Processamento" value={kpisQ.data?.em_processamento ?? "0"} icon={TrendingUp} color="bg-blue-50 text-blue-600" />
@@ -284,7 +284,7 @@ function CentralProcessamentoPage() {
               <RefreshCcw className={cn("h-4 w-4", (ausenciasQ.isFetching || kpisQ.isFetching) && "animate-spin")} />
             </Button>
             <Badge variant="secondary" className="h-10 px-4 font-bold text-xs uppercase tracking-wider bg-white">
-              {kpisQ.data?.backlog ?? "0"} ocorrências • {agrupado.length} colaboradores
+              {tabAtiva === "AGUARDANDO" ? kpisQ.data?.backlog ?? "0" : (ausenciasQ.data || []).filter(a => a.responsavel_processamento_id === user?.id && a.status_processamento === 'EM_PROCESSAMENTO').length} ocorrências • {agrupado.length} colaboradores
             </Badge>
           </div>
         </div>
@@ -382,7 +382,10 @@ function CentralProcessamentoPage() {
                     <Clock className="h-3 w-3" />
                     <span>Mais antiga: {format(new Date(maisAntiga.registrado_em), 'dd/MM')}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-primary">
+                  <div className={cn(
+                    "flex items-center gap-1.5",
+                    maisAntiga.sla_status === "FORA" ? "text-red-600" : "text-primary"
+                  )}>
                     <Calendar className="h-3 w-3" />
                     <span>SLA: {maisAntiga.tempo_aguardando} dias</span>
                   </div>
