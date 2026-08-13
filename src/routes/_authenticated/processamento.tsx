@@ -152,7 +152,7 @@ function CentralProcessamentoPage() {
           possui_anexo: row.possui_anexo,
           arquivo_url: row.arquivo_url,
           tipo_ausencia_nome: row.tipo_ausencia_nome,
-          possui_anexo: row.possui_anexo,
+
 
           arquivo_nome: row.arquivo_nome,
           arquivo_mime: row.arquivo_mime,
