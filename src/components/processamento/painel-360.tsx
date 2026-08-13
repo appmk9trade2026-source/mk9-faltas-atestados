@@ -98,74 +98,48 @@ export function Painel360({
     : data.lancado_em ? 1 : 0;
 
   return (
-    <div className="flex flex-col h-full bg-background border-l shadow-2xl animate-in slide-in-from-right duration-300">
-      {/* 1. Resumo Executivo (Header Fixo) */}
-      <div className="p-5 border-b bg-mk9-surface-deep/5 space-y-4">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter bg-white/50">
-                PROT: {data.protocolo || "—"}
-              </Badge>
-              {data.status_documental === "CONTESTADO" && (
-                <Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter bg-amber-500 text-white border-amber-600">
-                  CONTESTADO
-                </Badge>
-              )}
-              {data.status_documental === "CANCELADO" && (
-                <Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter bg-red-500 text-white border-red-600">
-                  CANCELADO
-                </Badge>
-              )}
-              {data.sla_status === "FORA" && (
-                <Badge variant="destructive" className="text-[10px] font-black animate-pulse">
-                  FORA DO SLA
-                </Badge>
-              )}
-
-            </div>
-            <h2 className="text-xl font-black tracking-tight leading-tight uppercase">{data.colaborador_nome}</h2>
-            <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground uppercase">
-              <span>MAT: {data.colaborador_matricula}</span>
-              <Separator orientation="vertical" className="h-3" />
-              <span>{data.empresa_nome}</span>
-            </div>
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            <Badge className={cn("text-[10px] font-black px-2 py-0.5", prioridade.color)}>
-              {prioridade.label}
+    <div className="flex flex-col h-full bg-background animate-in slide-in-from-right duration-300">
+      {/* Resumo Executivo Removido (integrado ao header do Drawer no pai) ou compactado */}
+      <div className="p-5 border-b bg-slate-50/50 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter bg-white">
+              PROT: {data.protocolo || "—"}
             </Badge>
-            <div className="text-right">
-              <p className="text-[9px] font-bold text-muted-foreground uppercase leading-none">Aguardando há</p>
-              <p className="text-lg font-black leading-none">{data.tempo_aguardando}d</p>
-            </div>
+            {data.sla_status === "FORA" && (
+              <Badge variant="destructive" className="text-[10px] font-black animate-pulse">
+                FORA DO SLA
+              </Badge>
+            )}
+          </div>
+          <Badge className={cn("text-[10px] font-black px-2 py-0.5", prioridade.color)}>
+            {prioridade.label}
+          </Badge>
+        </div>
+        
+        <div className="grid grid-cols-4 gap-2">
+          <div className="bg-white border rounded-lg p-2">
+            <p className="text-[9px] font-bold text-muted-foreground uppercase leading-none mb-1">Status RH</p>
+            <p className="text-[10px] font-black truncate">{data.status_rh || "PENDENTE"}</p>
+          </div>
+          <div className="bg-white border rounded-lg p-2">
+            <p className="text-[9px] font-bold text-muted-foreground uppercase leading-none mb-1">Processamento</p>
+            <p className="text-[10px] font-black truncate">{data.status_processamento.replace(/_/g, ' ')}</p>
+          </div>
+          <div className="bg-white border rounded-lg p-2">
+            <p className="text-[9px] font-bold text-muted-foreground uppercase leading-none mb-1">Aguardando</p>
+            <p className="text-[10px] font-black truncate">{data.tempo_aguardando} dias</p>
+          </div>
+          <div className="bg-white border rounded-lg p-2">
+            <p className="text-[9px] font-bold text-muted-foreground uppercase leading-none mb-1">Origem</p>
+            <p className="text-[10px] font-black truncate">{data.origem_registro || "AUTOMÁTICO"}</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-white/50 border rounded-lg p-2 flex items-center gap-2">
-            <div className="h-7 w-7 rounded-md bg-blue-50 flex items-center justify-center shrink-0">
-              <ClipboardList className="h-4 w-4 text-blue-600" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[9px] font-bold text-muted-foreground uppercase leading-tight">Status RH</p>
-              <p className="text-[11px] font-black truncate">{data.status_rh || "PENDENTE"}</p>
-            </div>
-          </div>
-          <div className="bg-white/50 border rounded-lg p-2 flex items-center gap-2">
-            <div className="h-7 w-7 rounded-md bg-amber-50 flex items-center justify-center shrink-0">
-              <Zap className="h-4 w-4 text-amber-600" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[9px] font-bold text-muted-foreground uppercase leading-tight">Processamento</p>
-              <p className="text-[11px] font-black truncate">{data.status_processamento.replace(/_/g, ' ')}</p>
-            </div>
-          </div>
-        </div>
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-5 space-y-8">
+        <div className="p-5 space-y-6">
           <Accordion type="multiple" defaultValue={["dados-colab", "dados-ausencia", "docs", "interno"]}>
             
             {/* 2. Dados Completos do Colaborador */}
@@ -182,6 +156,10 @@ export function Painel360({
                     <p className="text-xs font-black">{data.projeto_nome}</p>
                   </div>
                   <div className="space-y-0.5">
+                    <p className="text-[9px] font-bold text-muted-foreground uppercase">Empresa</p>
+                    <p className="text-xs font-black">{data.empresa_nome}</p>
+                  </div>
+                  <div className="space-y-0.5">
                     <p className="text-[9px] font-bold text-muted-foreground uppercase">Supervisor</p>
                     <p className="text-xs font-black truncate">{data.supervisor_nome}</p>
                   </div>
@@ -189,12 +167,7 @@ export function Painel360({
                     <p className="text-[9px] font-bold text-muted-foreground uppercase">Matrícula</p>
                     <p className="text-xs font-black">{data.colaborador_matricula}</p>
                   </div>
-                  <div className="space-y-0.5">
-                    <p className="text-[9px] font-bold text-muted-foreground uppercase">Vínculo</p>
-                    <Badge variant="secondary" className="text-[9px] font-black h-4 uppercase">
-                      {data.origem_registro === 'MANUAL' ? 'Manual (Orfão)' : 'Automático'}
-                    </Badge>
-                  </div>
+
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -210,18 +183,19 @@ export function Painel360({
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-3 bg-mk9-surface-deep text-white rounded-xl space-y-1">
-                      <p className="text-[9px] font-bold opacity-60 uppercase">TIPO DA AUSÊNCIA (CANÔNICO)</p>
-                      <p className="text-xs font-black uppercase">{data.tipo}</p>
+                      <p className="text-[9px] font-bold opacity-60 uppercase">TIPO DA AUSÊNCIA (ESTRUTURAL)</p>
+                      <p className="text-xs font-black uppercase">{data.tipo_ausencia_nome || data.tipo}</p>
                       <div className="pt-1 mt-1 border-t border-white/10">
-                        <p className="text-[9px] font-bold opacity-60 uppercase">Período</p>
+                        <p className="text-[9px] font-bold opacity-60 uppercase">Período de Afastamento</p>
                         <div className="flex items-center gap-2">
                           <p className="text-[11px] font-black">{format(new Date(data.data_inicio + 'T00:00:00'), 'dd/MM/yy')}</p>
                           <ArrowRight className="h-3 w-3 opacity-60" />
                           <p className="text-[11px] font-black">{format(new Date(data.data_fim + 'T00:00:00'), 'dd/MM/yy')}</p>
                         </div>
-                        <p className="text-[10px] font-bold bg-white/10 w-fit px-1.5 rounded mt-0.5">{data.dias} {data.dias === 1 ? 'dia' : 'dias'}</p>
+                        <p className="text-[10px] font-bold bg-white/10 w-fit px-1.5 rounded mt-0.5">{data.dias} {data.dias === 1 ? 'dia' : 'dias'} de ausência</p>
                       </div>
                     </div>
+
                     <div className="p-3 bg-slate-100 rounded-xl space-y-1 border">
                       <p className="text-[9px] font-bold text-muted-foreground uppercase">CID Sugerido</p>
                       <p className="text-xl font-black text-primary leading-none">{data.cid || "—"}</p>

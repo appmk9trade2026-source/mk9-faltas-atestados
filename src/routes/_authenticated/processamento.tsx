@@ -30,9 +30,12 @@ import {
   Calendar,
   ChevronRight,
   ArrowRight,
-  ChevronLeft
+  ChevronLeft,
+  Columns,
+  List,
+  Layout
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import { ProcessamentoCard } from "@/components/processamento/processamento-card";
 import { AusenciaCardData, StatusProcessamento } from "@/components/processamento/types";
@@ -44,6 +47,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Painel360 } from "@/components/processamento/painel-360";
 
 
@@ -147,6 +151,9 @@ function CentralProcessamentoPage() {
           status_rh: row.status,
           possui_anexo: row.possui_anexo,
           arquivo_url: row.arquivo_url,
+          tipo_ausencia_nome: row.tipo_ausencia_nome,
+
+
           arquivo_nome: row.arquivo_nome,
           arquivo_mime: row.arquivo_mime,
           horario_inicio: row.horario_inicio,
@@ -191,7 +198,7 @@ function CentralProcessamentoPage() {
   const iniciarGrupoMut = useMutation({
     mutationFn: (payload: { colaborador_id: string | null | undefined, colaborador_matricula: string, projeto_id: string }) => 
       iniciarGrupoFn({ data: payload }),
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       if (res.success) {
         toast.success(`Grupo assumido: ${res.count} de ${res.total} pendências elegíveis.`);
         queryClient.invalidateQueries({ queryKey: ["processamento"] });
@@ -398,171 +405,128 @@ function CentralProcessamentoPage() {
       </div>
 
       <Sheet open={detalhesAbertos} onOpenChange={setDetalhesAbertos}>
-        <SheetContent className="p-0 sm:max-w-md md:max-w-xl w-full border-none">
+        <SheetContent 
+          side="right" 
+          className="p-0 w-full sm:w-[95vw] lg:w-[min(1100px,92vw)] max-w-none border-l shadow-2xl overflow-hidden"
+          style={{ maxWidth: 'none' }}
+
+
+
+        >
           {registroSelecionado && (
-            <div className="flex flex-col h-full">
-              <div className="p-4 border-b bg-muted/30 flex items-center justify-between">
-                <div>
-                  <h2 className="font-black text-xl uppercase leading-none">{registroSelecionado.colaborador_nome}</h2>
-                  <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground mt-1">
-                    <span>Matrícula {registroSelecionado.colaborador_matricula}</span>
-                    <div className="h-3 w-px bg-border" />
-                    <span className="text-primary">
+            <div className="flex flex-col h-full bg-background">
+              {/* Header Fixo do Drawer */}
+              <div className="shrink-0 p-5 border-b bg-mk9-surface-deep/5 flex items-center justify-between pr-12">
+                <div className="space-y-0.5">
+                  <h2 className="text-lg font-black tracking-tight leading-tight uppercase truncate max-w-[300px] lg:max-w-md">
+                    {registroSelecionado.colaborador_nome}
+                  </h2>
+                  <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase">
+                    <span>MAT: {registroSelecionado.colaborador_matricula}</span>
+                    <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+                    <span>{registroSelecionado.empresa_nome}</span>
+                    <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+                    <span className="text-primary font-black">
                       {(() => {
                         const colabKey = registroSelecionado.colaborador_id || `m-${registroSelecionado.colaborador_matricula}`;
                         const projKey = registroSelecionado.projeto_id || "sem-projeto";
-                        const chaveAlvo = `${colabKey}|${projKey}`;
-                        
-                        const totalGrupo = agrupado.find(g => {
+                        const chave = `${colabKey}|${projKey}`;
+                        const grupo = agrupado.find(g => {
                           const gColabKey = g[0].colaborador_id || `m-${g[0].colaborador_matricula}`;
                           const gProjKey = g[0].projeto_id || "sem-projeto";
-                          return `${gColabKey}|${gProjKey}` === chaveAlvo;
-                        })?.length || 0;
-
-                        return `${totalGrupo} pendências pendentes`;
+                          return `${gColabKey}|${gProjKey}` === chave;
+                        });
+                        return `${grupo?.length || 1} pendências`;
                       })()}
                     </span>
                   </div>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="rounded-full h-8 w-8"
-                  onClick={() => setDetalhesAbertos(false)}
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </Button>
               </div>
 
-              <div className="flex-1 overflow-y-auto bg-slate-50/50">
-                <div className="p-4 space-y-4">
-                  {/* Etapa 4: Resumo no Drawer */}
-                  <div className="grid grid-cols-2 gap-3 mb-6">
-                    <div className="bg-white border rounded-xl p-3 flex flex-col items-center justify-center text-center">
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase leading-none mb-1">Total</p>
-                      <p className="text-xl font-black">
-                        {(() => {
-                          const colabKey = registroSelecionado.colaborador_id || `m-${registroSelecionado.colaborador_matricula}`;
-                          const projKey = registroSelecionado.projeto_id || "sem-projeto";
-                          const chaveAlvo = `${colabKey}|${projKey}`;
-                          
-                          return agrupado.find(g => {
-                            const gColabKey = g[0].colaborador_id || `m-${g[0].colaborador_matricula}`;
-                            const gProjKey = g[0].projeto_id || "sem-projeto";
-                            return `${gColabKey}|${gProjKey}` === chaveAlvo;
-                          })?.length || 1;
-                        })()}
-                      </p>
-                    </div>
-                    <div className="bg-white border rounded-xl p-3 flex flex-col items-center justify-center text-center">
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase leading-none mb-1">Critério</p>
-                      <Badge className="font-black text-[10px] uppercase h-5">
-                        {(() => {
-                          const colabKey = registroSelecionado.colaborador_id || `m-${registroSelecionado.colaborador_matricula}`;
-                          const projKey = registroSelecionado.projeto_id || "sem-projeto";
-                          const chaveAlvo = `${colabKey}|${projKey}`;
-                          
-                          return agrupado.find(g => {
-                            const gColabKey = g[0].colaborador_id || `m-${g[0].colaborador_matricula}`;
-                            const gProjKey = g[0].projeto_id || "sem-projeto";
-                            return `${gColabKey}|${gProjKey}` === chaveAlvo;
-                          })?.some(item => item.sla_status === "FORA") ? "CRÍTICO" : "NORMAL";
-                        })()}
-                      </Badge>
-                    </div>
+              <div className="flex-1 flex overflow-hidden flex-col lg:flex-row">
+                {/* Coluna Esquerda: Lista de Lançamentos (Desktop) */}
+                <div className="w-full lg:w-[320px] lg:border-r bg-slate-50/30 overflow-hidden flex flex-col h-auto max-h-[250px] lg:max-h-none lg:h-full">
+                  <div className="shrink-0 p-3 bg-slate-100/50 border-b">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                      <History className="h-3.5 w-3.5" /> Fila do Grupo
+                    </p>
                   </div>
+                  <ScrollArea className="flex-1">
+                    <div className="p-2 space-y-1.5">
+                      {(() => {
+                        const colabKey = registroSelecionado.colaborador_id || `m-${registroSelecionado.colaborador_matricula}`;
+                        const projKey = registroSelecionado.projeto_id || "sem-projeto";
+                        const chave = `${colabKey}|${projKey}`;
+                        const grupo = agrupado.find(g => {
+                          const gColabKey = g[0].colaborador_id || `m-${g[0].colaborador_matricula}`;
+                          const gProjKey = g[0].projeto_id || "sem-projeto";
+                          return `${gColabKey}|${gProjKey}` === chave;
+                        });
 
-                  <h3 className="text-[11px] font-black text-muted-foreground uppercase tracking-widest px-1">
-                    Linha do Tempo de Pendências
-                  </h3>
+                        const ordenado = [...(grupo || [])].sort((a, b) => 
+                          new Date(a.registrado_em).getTime() - new Date(b.registrado_em).getTime()
+                        );
 
-                  <div className="space-y-3">
-                    {(() => {
-                      const colabKey = registroSelecionado.colaborador_id || `m-${registroSelecionado.colaborador_matricula}`;
-                      const projKey = registroSelecionado.projeto_id || "sem-projeto";
-                      const chaveAlvo = `${colabKey}|${projKey}`;
-                      
-                      return agrupado.find(g => {
-                        const gColabKey = g[0].colaborador_id || `m-${g[0].colaborador_matricula}`;
-                        const gProjKey = g[0].projeto_id || "sem-projeto";
-                        return `${gColabKey}|${gProjKey}` === chaveAlvo;
-                      }) || [];
-                    })()
-                    .sort((a, b) => new Date(a.registrado_em).getTime() - new Date(b.registrado_em).getTime())
-                    .map((item) => (
-                      <div 
-                        key={item.id}
-                        className={cn(
-                          "p-4 border rounded-xl cursor-pointer transition-all hover:shadow-md group relative overflow-hidden",
-                          registroSelecionado.id === item.id 
-                            ? "border-primary bg-white ring-1 ring-primary shadow-lg" 
-                            : "bg-white hover:border-primary/20"
-                        )}
-                        onClick={() => setRegistroSelecionado(item)}
-                      >
-                        {registroSelecionado.id === item.id && (
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
-                        )}
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Badge variant={item.sla_status === "FORA" ? "destructive" : "outline"} className="text-[9px] font-black uppercase">
-                                {item.protocolo || "Sem Protocolo"}
-                              </Badge>
-                              <span className="text-[10px] font-black uppercase text-muted-foreground">
-                                {format(new Date(item.registrado_em), 'dd/MM/yyyy')}
-                              </span>
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <h4 className="font-black text-xs uppercase flex items-center gap-2 text-foreground">
-                                {item.tipo}
-                                {item.id === registroSelecionado.id && (
-                                  <ArrowRight className="h-3 w-3 text-primary animate-pulse" />
-                                )}
-                              </h4>
-                              {item.motivo && (
-                                <p className="text-[10px] text-muted-foreground italic truncate max-w-[250px]">
-                                  {item.motivo}
-                                </p>
+                        return ordenado.map((item) => {
+                          const isActive = registroSelecionado.id === item.id;
+                          const sla = getSlaStatus(item.registrado_em);
+                          
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => setRegistroSelecionado(item)}
+                              className={cn(
+                                "w-full text-left p-3 rounded-xl border transition-all relative overflow-hidden group mb-1",
+                                isActive 
+                                  ? "bg-white border-primary shadow-sm ring-1 ring-primary/20" 
+                                  : "bg-white/50 border-transparent hover:border-slate-300 hover:bg-white"
                               )}
-                              <div className="flex items-center gap-2 mt-1">
-                                <Badge variant="secondary" className="text-[8px] h-4 font-bold">
-                                  {item.dias} {item.dias === 1 ? 'dia' : 'dias'}
-                                </Badge>
-                                {item.cid && (
-                                  <Badge variant="outline" className="text-[8px] h-4 border-primary/30 text-primary">
-                                    CID: {item.cid}
-                                  </Badge>
-                                )}
+                            >
+                              {isActive && (
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
+                              )}
+                              <div className="space-y-1">
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="text-[10px] font-bold text-muted-foreground uppercase">
+                                    {format(new Date(item.registrado_em), 'dd/MM/yyyy')}
+                                  </p>
+                                  {sla === "FORA" && (
+                                    <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                                  )}
+                                </div>
+                                <p className={cn(
+                                  "text-[11px] font-black uppercase leading-tight truncate",
+                                  isActive ? "text-primary" : "text-foreground"
+                                )}>
+                                  {item.tipo}
+                                </p>
+                                <div className="flex items-center justify-between gap-1 text-[9px] font-bold uppercase opacity-60">
+                                  <span>{item.dias} {item.dias === 1 ? 'dia' : 'dias'}</span>
+                                  <span>{item.protocolo?.split('-').pop()}</span>
+                                </div>
                               </div>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase leading-none">SLA</p>
-                            <p className={cn("text-sm font-black", item.sla_status === "FORA" ? "text-red-500" : "text-primary")}>
-                              {item.tempo_aguardando}d
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                            </button>
+                          );
+                        });
+                      })()}
+                    </div>
+                  </ScrollArea>
                 </div>
-              </div>
 
-              <div className="p-4 border-t mt-auto bg-white shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
-                <div className="mb-4 flex items-center gap-2 text-[10px] font-black text-primary uppercase bg-primary/5 p-2 rounded-lg border border-primary/10">
-                  <Zap className="h-3 w-3 fill-current" />
-                  Visualizando: {registroSelecionado.protocolo || registroSelecionado.tipo}
+                {/* Coluna Direita: Detalhe do Lançamento */}
+                <div className="flex-1 overflow-hidden relative bg-background">
+                  <Painel360 
+                    data={registroSelecionado}
+                    currentUserId={user?.id}
+                    isProcessing={iniciarMut.isPending || concluirMut.isPending || reatribuirMut.isPending}
+                    onIniciar={(id) => iniciarMut.mutate(id)}
+                    onConcluir={(id) => { 
+                      concluirMut.mutate(id);
+                      // Se houver mais itens no grupo, não fechar, apenas atualizar
+                    }}
+                    onReatribuir={(id, ant) => reatribuirMut.mutate({ id, responsavel_anterior_id: ant })}
+                  />
                 </div>
-                <Painel360 
-                  data={registroSelecionado}
-                  onIniciar={(id) => { iniciarMut.mutate(id); }}
-                  onConcluir={(id) => { concluirMut.mutate(id); setDetalhesAbertos(false); }}
-                  onReatribuir={(id, antId) => { reatribuirMut.mutate({ id, responsavel_anterior_id: antId }); }}
-                  isProcessing={iniciarMut.isPending || concluirMut.isPending || reatribuirMut.isPending}
-                  currentUserId={user?.id}
-                />
               </div>
             </div>
           )}
