@@ -672,19 +672,34 @@ function NovaAusenciaPage() {
       return;
     }
     ultimaBuscaRef.current = val;
+    const currentSearchValue = val; // Capture for closure comparison
     const inicio = performance.now();
     setSearching(true);
     setBuscaEstado("carregando");
     let resultado: "ok" | "erro" = "ok";
     try {
+      // REGRA FUNDAMENTAL P0: Match EXATO de matrícula.
+      // Normalização canônica no cliente (trim). O banco aplica tg_colaboradores_normalize.
       const { data, error } = await supabase
         .from("colaboradores")
         .select(
           "id, nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email, ativo, empresa_id, projeto_id, empresa:empresas(id, nome, ativo), projeto:projetos(id, nome, ativo, codigo_protocolo)",
         )
-        .eq("matricula", val)
+        .eq("matricula", val) // P0: eq em vez de ilike/fuzzy
         .eq("ativo", true);
+      
       if (error) throw error;
+
+      // Proteção contra Race Condition (Etapa 12): 
+      // Ignora resposta se o valor no campo já mudou enquanto a request estava em voo.
+      if (ultimaBuscaRef.current !== currentSearchValue) {
+        console.warn("[race-condition] ignorando resposta obsoleta", {
+          expected: currentSearchValue,
+          current: ultimaBuscaRef.current
+        });
+        return;
+      }
+
       const rows = (data ?? []) as unknown as ColabMatch[];
       if (rows.length === 0) {
         setColab(null);
@@ -704,10 +719,13 @@ function NovaAusenciaPage() {
         applyColab(rows[0]);
         if (origem === "manual") toast.success("Colaborador encontrado.");
       } else {
+        // Múltiplos vínculos: Abre modal, NÃO seleciona automaticamente (Etapa 6 e 8)
         setNaoEncontrado(false);
+        setColab(null); // Garante que não use um colab anterior
+        form.setValue("colaborador_id", "");
         setMatchCandidates(rows);
       }
-
+      
       setBuscaEstado("atualizado");
     } catch (e) {
       resultado = "erro";
@@ -730,14 +748,14 @@ function NovaAusenciaPage() {
   // Auto-pesquisa com debounce (~500 ms) — a lupa deixa de ser obrigatória.
   useEffect(() => {
     const val = matriculaInput.trim();
-    if (isEdit || bloqueado || colab) return;
-    if (val.length < 2 || val === ultimaBuscaRef.current) return;
+    if (isEdit || bloqueado || colab || matchCandidates) return; // P0: Não disparar se já temos candidatos ou seleção
+    if (val.length < 1 || val === ultimaBuscaRef.current) return;
     const t = setTimeout(() => {
       void searchMatricula(val, "auto");
     }, 500);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [matriculaInput, isEdit, bloqueado, colab]);
+  }, [matriculaInput, isEdit, bloqueado, colab, !!matchCandidates]);
 
   // O check verde "Dados atualizados" some após alguns segundos.
   useEffect(() => {
@@ -1208,7 +1226,12 @@ function NovaAusenciaPage() {
             manual_supervisor_telefone: (values.manual_supervisor_telefone || "").trim(),
             manual_supervisor_usuario_id: values.manual_supervisor_usuario_id || null,
           }
-        : { origem_registro: "AUTOMATICO" as const, colaborador_id: values.colaborador_id! };
+        : { 
+            origem_registro: "AUTOMATICO" as const, 
+            colaborador_id: values.colaborador_id!,
+            // ETAPA 10: Propaga a matrícula usada na busca para validação server-side de integridade.
+            manual_matricula: matriculaInput.trim() 
+          };
 
       const payload = {
         ...origemFields,
@@ -2403,8 +2426,16 @@ function NovaAusenciaPage() {
               >
                 <span className="text-sm font-semibold">{c.empresa?.nome ?? "—"}</span>
                 <span className="text-xs text-muted-foreground">
-                  {c.nome_completo} · Projeto: {c.projeto?.nome ?? "—"}
+                  {c.nome_completo}
                 </span>
+                <span className="text-[11px] text-muted-foreground">
+                  Projeto: {c.projeto?.nome ?? "—"}
+                </span>
+                {c.supervisor_nome && (
+                  <span className="text-[11px] text-blue-600/70 dark:text-blue-400/70">
+                    Supervisor: {c.supervisor_nome}
+                  </span>
+                )}
               </button>
             ))}
           </div>
