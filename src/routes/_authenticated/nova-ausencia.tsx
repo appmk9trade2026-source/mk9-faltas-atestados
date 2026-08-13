@@ -2426,8 +2426,16 @@ function NovaAusenciaPage() {
               >
                 <span className="text-sm font-semibold">{c.empresa?.nome ?? "—"}</span>
                 <span className="text-xs text-muted-foreground">
-                  {c.nome_completo} · Projeto: {c.projeto?.nome ?? "—"}
+                  {c.nome_completo}
                 </span>
+                <span className="text-[11px] text-muted-foreground">
+                  Projeto: {c.projeto?.nome ?? "—"}
+                </span>
+                {c.supervisor_nome && (
+                  <span className="text-[11px] text-blue-600/70 dark:text-blue-400/70">
+                    Supervisor: {c.supervisor_nome}
+                  </span>
+                )}
               </button>
             ))}
           </div>
