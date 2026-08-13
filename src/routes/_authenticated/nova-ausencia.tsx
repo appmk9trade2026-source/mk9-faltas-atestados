@@ -672,19 +672,34 @@ function NovaAusenciaPage() {
       return;
     }
     ultimaBuscaRef.current = val;
+    const currentSearchValue = val; // Capture for closure comparison
     const inicio = performance.now();
     setSearching(true);
     setBuscaEstado("carregando");
     let resultado: "ok" | "erro" = "ok";
     try {
+      // REGRA FUNDAMENTAL P0: Match EXATO de matrícula.
+      // Normalização canônica no cliente (trim). O banco aplica tg_colaboradores_normalize.
       const { data, error } = await supabase
         .from("colaboradores")
         .select(
           "id, nome_completo, matricula, email, telefone, whatsapp, supervisor_nome, supervisor_telefone, supervisor_email, ativo, empresa_id, projeto_id, empresa:empresas(id, nome, ativo), projeto:projetos(id, nome, ativo, codigo_protocolo)",
         )
-        .eq("matricula", val)
+        .eq("matricula", val) // P0: eq em vez de ilike/fuzzy
         .eq("ativo", true);
+      
       if (error) throw error;
+
+      // Proteção contra Race Condition (Etapa 12): 
+      // Ignora resposta se o valor no campo já mudou enquanto a request estava em voo.
+      if (ultimaBuscaRef.current !== currentSearchValue) {
+        console.warn("[race-condition] ignorando resposta obsoleta", {
+          expected: currentSearchValue,
+          current: ultimaBuscaRef.current
+        });
+        return;
+      }
+
       const rows = (data ?? []) as unknown as ColabMatch[];
       if (rows.length === 0) {
         setColab(null);
@@ -704,10 +719,13 @@ function NovaAusenciaPage() {
         applyColab(rows[0]);
         if (origem === "manual") toast.success("Colaborador encontrado.");
       } else {
+        // Múltiplos vínculos: Abre modal, NÃO seleciona automaticamente (Etapa 6 e 8)
         setNaoEncontrado(false);
+        setColab(null); // Garante que não use um colab anterior
+        form.setValue("colaborador_id", "");
         setMatchCandidates(rows);
       }
-
+      
       setBuscaEstado("atualizado");
     } catch (e) {
       resultado = "erro";
