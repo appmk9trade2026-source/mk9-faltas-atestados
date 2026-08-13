@@ -289,6 +289,25 @@ function CentralProcessamentoPage() {
           </div>
         </div>
 
+        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl w-fit border border-dashed">
+          <Button 
+            variant={tabAtiva === "AGUARDANDO" ? "default" : "ghost"}
+            size="sm"
+            className={cn("font-black text-[10px] uppercase h-8 px-4", tabAtiva === "AGUARDANDO" ? "shadow-md" : "opacity-60")}
+            onClick={() => setTabAtiva("AGUARDANDO")}
+          >
+            Fila Geral ({kpisQ.data?.backlog ?? "0"})
+          </Button>
+          <Button 
+            variant={tabAtiva === "MINHA_FILA" ? "default" : "ghost"}
+            size="sm"
+            className={cn("font-black text-[10px] uppercase h-8 px-4", tabAtiva === "MINHA_FILA" ? "shadow-md text-white bg-blue-600 hover:bg-blue-700" : "opacity-60")}
+            onClick={() => setTabAtiva("MINHA_FILA")}
+          >
+            Minha Fila ({(ausenciasQ.data || []).filter(a => a.responsavel_processamento_id === user?.id && a.status_processamento === "EM_PROCESSAMENTO").length})
+          </Button>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {ausenciasQ.isLoading ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-48 rounded-xl" />) 
           : agrupado.length === 0 ? (
@@ -313,7 +332,8 @@ function CentralProcessamentoPage() {
             return (
               <Card key={i} className={cn(
                 "p-4 border-2 shadow-sm flex flex-col gap-3 transition-all hover:border-primary/30",
-                maisAntiga.sla_status === "FORA" && "border-red-200 bg-red-50/10"
+                maisAntiga.sla_status === "FORA" && tabAtiva === "AGUARDANDO" && "border-red-200 bg-red-50/10",
+                tabAtiva === "MINHA_FILA" && "border-blue-200 bg-blue-50/5"
               )}>
                 <div className="flex justify-between items-start">
                   <div className="space-y-0.5">
@@ -398,15 +418,29 @@ function CentralProcessamentoPage() {
                     Ver {grupo.length} lançamentos
                   </Button>
                   <Button 
-                    className="bg-primary hover:bg-primary/90 font-bold text-xs h-9 px-4" 
-                    onClick={() => iniciarGrupoMut.mutate({
-                      colaborador_id: principal.colaborador_id,
-                      colaborador_matricula: principal.colaborador_matricula,
-                      projeto_id: principal.projeto_id!
-                    })}
+                    className={cn(
+                      "font-bold text-xs h-9 px-4",
+                      tabAtiva === "MINHA_FILA" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-primary hover:bg-primary/90"
+                    )}
+                    onClick={() => {
+                      if (tabAtiva === "MINHA_FILA") {
+                        // Se já está na minha fila, o botão "Assumir" vira "Continuar" e abre o primeiro do grupo
+                        const ordenado = [...grupo].sort((a, b) => 
+                          new Date(a.registrado_em).getTime() - new Date(b.registrado_em).getTime()
+                        );
+                        setRegistroSelecionado(ordenado[0]);
+                        setDetalhesAbertos(true);
+                      } else {
+                        iniciarGrupoMut.mutate({
+                          colaborador_id: principal.colaborador_id,
+                          colaborador_matricula: principal.colaborador_matricula,
+                          projeto_id: principal.projeto_id!
+                        });
+                      }
+                    }}
                     disabled={iniciarGrupoMut.isPending}
                   >
-                    {iniciarGrupoMut.isPending ? <RefreshCcw className="h-3 w-3 animate-spin" /> : "Assumir"}
+                    {iniciarGrupoMut.isPending ? <RefreshCcw className="h-3 w-3 animate-spin" /> : (tabAtiva === "MINHA_FILA" ? "Continuar" : "Assumir")}
                   </Button>
                 </div>
               </Card>
@@ -442,10 +476,10 @@ function CentralProcessamentoPage() {
                         const colabKey = registroSelecionado.colaborador_id || `m-${registroSelecionado.colaborador_matricula}`;
                         const projKey = registroSelecionado.projeto_id || "sem-projeto";
                         const chave = `${colabKey}|${projKey}`;
-                        const grupo = agrupado.find(g => {
-                          const gColabKey = g[0].colaborador_id || `m-${g[0].colaborador_matricula}`;
-                          const gProjKey = g[0].projeto_id || "sem-projeto";
-                          return `${gColabKey}|${gProjKey}` === chave;
+                        const grupo = (ausenciasQ.data || []).filter(a => {
+                          const aColabKey = a.colaborador_id || `m-${a.colaborador_matricula}`;
+                          const aProjKey = a.projeto_id || "sem-projeto";
+                          return `${aColabKey}|${aProjKey}` === chave && a.status_processamento !== "PROCESSADO";
                         });
                         return `${grupo?.length || 1} pendências`;
                       })()}
@@ -468,10 +502,10 @@ function CentralProcessamentoPage() {
                         const colabKey = registroSelecionado.colaborador_id || `m-${registroSelecionado.colaborador_matricula}`;
                         const projKey = registroSelecionado.projeto_id || "sem-projeto";
                         const chave = `${colabKey}|${projKey}`;
-                        const grupo = agrupado.find(g => {
-                          const gColabKey = g[0].colaborador_id || `m-${g[0].colaborador_matricula}`;
-                          const gProjKey = g[0].projeto_id || "sem-projeto";
-                          return `${gColabKey}|${gProjKey}` === chave;
+                        const grupo = (ausenciasQ.data || []).filter(a => {
+                          const aColabKey = a.colaborador_id || `m-${a.colaborador_matricula}`;
+                          const aProjKey = a.projeto_id || "sem-projeto";
+                          return `${aColabKey}|${aProjKey}` === chave && a.status_processamento !== "PROCESSADO";
                         });
 
                         const ordenado = [...(grupo || [])].sort((a, b) => 
