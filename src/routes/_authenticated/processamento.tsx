@@ -442,7 +442,7 @@ function CentralProcessamentoPage() {
 
               <div className="flex-1 flex overflow-hidden flex-col lg:flex-row">
                 {/* Coluna Esquerda: Lista de Lançamentos (Desktop) */}
-                <div className="w-full lg:w-[320px] lg:border-r bg-slate-50/30 overflow-hidden flex flex-col h-[200px] lg:h-full">
+                <div className="w-full lg:w-[320px] lg:border-r bg-slate-50/30 overflow-hidden flex flex-col h-auto max-h-[250px] lg:max-h-none lg:h-full">
                   <div className="shrink-0 p-3 bg-slate-100/50 border-b">
                     <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                       <History className="h-3.5 w-3.5" /> Fila do Grupo
