@@ -156,6 +156,10 @@ export function Painel360({
                     <p className="text-xs font-black">{data.projeto_nome}</p>
                   </div>
                   <div className="space-y-0.5">
+                    <p className="text-[9px] font-bold text-muted-foreground uppercase">Empresa</p>
+                    <p className="text-xs font-black">{data.empresa_nome}</p>
+                  </div>
+                  <div className="space-y-0.5">
                     <p className="text-[9px] font-bold text-muted-foreground uppercase">Supervisor</p>
                     <p className="text-xs font-black truncate">{data.supervisor_nome}</p>
                   </div>
@@ -163,12 +167,7 @@ export function Painel360({
                     <p className="text-[9px] font-bold text-muted-foreground uppercase">Matrícula</p>
                     <p className="text-xs font-black">{data.colaborador_matricula}</p>
                   </div>
-                  <div className="space-y-0.5">
-                    <p className="text-[9px] font-bold text-muted-foreground uppercase">Vínculo</p>
-                    <Badge variant="secondary" className="text-[9px] font-black h-4 uppercase">
-                      {data.origem_registro === 'MANUAL' ? 'Manual (Orfão)' : 'Automático'}
-                    </Badge>
-                  </div>
+
                 </div>
               </AccordionContent>
             </AccordionItem>
