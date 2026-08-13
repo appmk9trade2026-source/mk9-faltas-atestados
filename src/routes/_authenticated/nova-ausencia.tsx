@@ -1226,7 +1226,12 @@ function NovaAusenciaPage() {
             manual_supervisor_telefone: (values.manual_supervisor_telefone || "").trim(),
             manual_supervisor_usuario_id: values.manual_supervisor_usuario_id || null,
           }
-        : { origem_registro: "AUTOMATICO" as const, colaborador_id: values.colaborador_id! };
+        : { 
+            origem_registro: "AUTOMATICO" as const, 
+            colaborador_id: values.colaborador_id!,
+            // ETAPA 10: Propaga a matrícula usada na busca para validação server-side de integridade.
+            manual_matricula: matriculaInput.trim() 
+          };
 
       const payload = {
         ...origemFields,
