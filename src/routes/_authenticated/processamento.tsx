@@ -79,6 +79,7 @@ function CentralProcessamentoPage() {
   const [search, setSearch] = useState("");
   const [detalhesAbertos, setDetalhesAbertos] = useState(false);
   const [registroSelecionado, setRegistroSelecionado] = useState<AusenciaCardData | null>(null);
+  const [tabAtiva, setTabAtiva] = useState<"AGUARDANDO" | "MINHA_FILA">("AGUARDANDO");
 
   const getKpisFn = useServerFn(getCentralProcessamentoKpis);
   const iniciarFn = useServerFn(iniciarProcessamentoAdm);
@@ -166,15 +167,24 @@ function CentralProcessamentoPage() {
   });
 
   const agrupado = useMemo(() => {
-    const list = (ausenciasQ.data || []).filter(a => 
-      a.colaborador_nome.toLowerCase().includes(search.toLowerCase()) || 
-      a.colaborador_matricula.includes(search) || 
-      a.protocolo?.toLowerCase().includes(search.toLowerCase())
-    );
+    const list = (ausenciasQ.data || []).filter(a => {
+      const matchSearch = a.colaborador_nome.toLowerCase().includes(search.toLowerCase()) || 
+        a.colaborador_matricula.includes(search) || 
+        a.protocolo?.toLowerCase().includes(search.toLowerCase());
+      
+      if (!matchSearch) return false;
+
+      // Filtro de Aba
+      if (tabAtiva === "MINHA_FILA") {
+        return a.responsavel_processamento_id === user?.id && a.status_processamento === "EM_PROCESSAMENTO";
+      } else {
+        // Aba "AGUARDANDO": Mostrar apenas o que ninguém assumiu ainda
+        return a.status_processamento === "AGUARDANDO";
+      }
+    });
 
     const mapa = new Map<string, AusenciaCardData[]>();
     for (const item of list) {
-      // Chave canônica P0: colaborador_id (ou matricula se manual) + projeto_id
       const colabKey = item.colaborador_id || `m-${item.colaborador_matricula}`;
       const projKey = item.projeto_id || "sem-projeto";
       const chave = `${colabKey}|${projKey}`;
@@ -183,7 +193,7 @@ function CentralProcessamentoPage() {
       mapa.get(chave)!.push(item);
     }
     return Array.from(mapa.values());
-  }, [ausenciasQ.data, search]);
+  }, [ausenciasQ.data, search, tabAtiva, user?.id]);
 
   const iniciarMut = useMutation({
     mutationFn: (id: string) => iniciarFn({ data: { ausencia_id: id } }),
@@ -201,6 +211,7 @@ function CentralProcessamentoPage() {
     onSuccess: (res: any) => {
       if (res.success) {
         toast.success(`Grupo assumido: ${res.count} de ${res.total} pendências elegíveis.`);
+        setTabAtiva("MINHA_FILA"); // Mudar automaticamente para facilitar fluxo
         queryClient.invalidateQueries({ queryKey: ["processamento"] });
         queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
       } else {
@@ -252,7 +263,7 @@ function CentralProcessamentoPage() {
     <AppShell title="Central de Processamento" breadcrumb={["Operações", "Central de Processamento"]}>
       <div className="space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
-          <KpiCard title="Minha Fila" value={(ausenciasQ.data || []).filter(a => a.responsavel_processamento_id === user?.id).length} icon={User} color="bg-indigo-50 text-indigo-600" />
+          <KpiCard title="Minha Fila" value={(ausenciasQ.data || []).filter(a => a.responsavel_processamento_id === user?.id && a.status_processamento === 'EM_PROCESSAMENTO').length} icon={User} color="bg-indigo-50 text-indigo-600" />
           <KpiCard title="Colaboradores" value={agrupado.length} icon={Users} color="bg-violet-50 text-violet-600" />
           <KpiCard title="Aguardando" value={kpisQ.data?.backlog ?? "0"} icon={History} color="bg-slate-50 text-slate-600" />
           <KpiCard title="Em Processamento" value={kpisQ.data?.em_processamento ?? "0"} icon={TrendingUp} color="bg-blue-50 text-blue-600" />
@@ -273,9 +284,28 @@ function CentralProcessamentoPage() {
               <RefreshCcw className={cn("h-4 w-4", (ausenciasQ.isFetching || kpisQ.isFetching) && "animate-spin")} />
             </Button>
             <Badge variant="secondary" className="h-10 px-4 font-bold text-xs uppercase tracking-wider bg-white">
-              {kpisQ.data?.backlog ?? "0"} ocorrências • {agrupado.length} colaboradores
+              {tabAtiva === "AGUARDANDO" ? kpisQ.data?.backlog ?? "0" : (ausenciasQ.data || []).filter(a => a.responsavel_processamento_id === user?.id && a.status_processamento === 'EM_PROCESSAMENTO').length} ocorrências • {agrupado.length} colaboradores
             </Badge>
           </div>
+        </div>
+
+        <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl w-fit border border-dashed">
+          <Button 
+            variant={tabAtiva === "AGUARDANDO" ? "default" : "ghost"}
+            size="sm"
+            className={cn("font-black text-[10px] uppercase h-8 px-4", tabAtiva === "AGUARDANDO" ? "shadow-md" : "opacity-60")}
+            onClick={() => setTabAtiva("AGUARDANDO")}
+          >
+            Fila Geral ({kpisQ.data?.backlog ?? "0"})
+          </Button>
+          <Button 
+            variant={tabAtiva === "MINHA_FILA" ? "default" : "ghost"}
+            size="sm"
+            className={cn("font-black text-[10px] uppercase h-8 px-4", tabAtiva === "MINHA_FILA" ? "shadow-md text-white bg-blue-600 hover:bg-blue-700" : "opacity-60")}
+            onClick={() => setTabAtiva("MINHA_FILA")}
+          >
+            Minha Fila ({(ausenciasQ.data || []).filter(a => a.responsavel_processamento_id === user?.id && a.status_processamento === "EM_PROCESSAMENTO").length})
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -302,7 +332,8 @@ function CentralProcessamentoPage() {
             return (
               <Card key={i} className={cn(
                 "p-4 border-2 shadow-sm flex flex-col gap-3 transition-all hover:border-primary/30",
-                maisAntiga.sla_status === "FORA" && "border-red-200 bg-red-50/10"
+                maisAntiga.sla_status === "FORA" && tabAtiva === "AGUARDANDO" && "border-red-200 bg-red-50/10",
+                tabAtiva === "MINHA_FILA" && "border-blue-200 bg-blue-50/5"
               )}>
                 <div className="flex justify-between items-start">
                   <div className="space-y-0.5">
@@ -351,7 +382,10 @@ function CentralProcessamentoPage() {
                     <Clock className="h-3 w-3" />
                     <span>Mais antiga: {format(new Date(maisAntiga.registrado_em), 'dd/MM')}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-primary">
+                  <div className={cn(
+                    "flex items-center gap-1.5",
+                    maisAntiga.sla_status === "FORA" ? "text-red-600" : "text-primary"
+                  )}>
                     <Calendar className="h-3 w-3" />
                     <span>SLA: {maisAntiga.tempo_aguardando} dias</span>
                   </div>
@@ -387,15 +421,29 @@ function CentralProcessamentoPage() {
                     Ver {grupo.length} lançamentos
                   </Button>
                   <Button 
-                    className="bg-primary hover:bg-primary/90 font-bold text-xs h-9 px-4" 
-                    onClick={() => iniciarGrupoMut.mutate({
-                      colaborador_id: principal.colaborador_id,
-                      colaborador_matricula: principal.colaborador_matricula,
-                      projeto_id: principal.projeto_id!
-                    })}
+                    className={cn(
+                      "font-bold text-xs h-9 px-4",
+                      tabAtiva === "MINHA_FILA" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-primary hover:bg-primary/90"
+                    )}
+                    onClick={() => {
+                      if (tabAtiva === "MINHA_FILA") {
+                        // Se já está na minha fila, o botão "Assumir" vira "Continuar" e abre o primeiro do grupo
+                        const ordenado = [...grupo].sort((a, b) => 
+                          new Date(a.registrado_em).getTime() - new Date(b.registrado_em).getTime()
+                        );
+                        setRegistroSelecionado(ordenado[0]);
+                        setDetalhesAbertos(true);
+                      } else {
+                        iniciarGrupoMut.mutate({
+                          colaborador_id: principal.colaborador_id,
+                          colaborador_matricula: principal.colaborador_matricula,
+                          projeto_id: principal.projeto_id!
+                        });
+                      }
+                    }}
                     disabled={iniciarGrupoMut.isPending}
                   >
-                    {iniciarGrupoMut.isPending ? <RefreshCcw className="h-3 w-3 animate-spin" /> : "Assumir"}
+                    {iniciarGrupoMut.isPending ? <RefreshCcw className="h-3 w-3 animate-spin" /> : (tabAtiva === "MINHA_FILA" ? "Continuar" : "Assumir")}
                   </Button>
                 </div>
               </Card>
@@ -431,10 +479,10 @@ function CentralProcessamentoPage() {
                         const colabKey = registroSelecionado.colaborador_id || `m-${registroSelecionado.colaborador_matricula}`;
                         const projKey = registroSelecionado.projeto_id || "sem-projeto";
                         const chave = `${colabKey}|${projKey}`;
-                        const grupo = agrupado.find(g => {
-                          const gColabKey = g[0].colaborador_id || `m-${g[0].colaborador_matricula}`;
-                          const gProjKey = g[0].projeto_id || "sem-projeto";
-                          return `${gColabKey}|${gProjKey}` === chave;
+                        const grupo = (ausenciasQ.data || []).filter(a => {
+                          const aColabKey = a.colaborador_id || `m-${a.colaborador_matricula}`;
+                          const aProjKey = a.projeto_id || "sem-projeto";
+                          return `${aColabKey}|${aProjKey}` === chave && a.status_processamento !== "PROCESSADO";
                         });
                         return `${grupo?.length || 1} pendências`;
                       })()}
@@ -457,10 +505,10 @@ function CentralProcessamentoPage() {
                         const colabKey = registroSelecionado.colaborador_id || `m-${registroSelecionado.colaborador_matricula}`;
                         const projKey = registroSelecionado.projeto_id || "sem-projeto";
                         const chave = `${colabKey}|${projKey}`;
-                        const grupo = agrupado.find(g => {
-                          const gColabKey = g[0].colaborador_id || `m-${g[0].colaborador_matricula}`;
-                          const gProjKey = g[0].projeto_id || "sem-projeto";
-                          return `${gColabKey}|${gProjKey}` === chave;
+                        const grupo = (ausenciasQ.data || []).filter(a => {
+                          const aColabKey = a.colaborador_id || `m-${a.colaborador_matricula}`;
+                          const aProjKey = a.projeto_id || "sem-projeto";
+                          return `${aColabKey}|${aProjKey}` === chave && a.status_processamento !== "PROCESSADO";
                         });
 
                         const ordenado = [...(grupo || [])].sort((a, b) => 
