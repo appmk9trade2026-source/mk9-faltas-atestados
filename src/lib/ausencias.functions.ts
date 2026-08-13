@@ -944,6 +944,59 @@ export const iniciarProcessamentoAdm = createServerFn({ method: "POST" })
   });
 
 /**
+ * FASE 2: Iniciar processamento de um GRUPO de ausências (Colaborador + Projeto).
+ * Transacional: Tenta assumir todas as elegíveis que ainda estão em AGUARDANDO.
+ */
+export const iniciarProcessamentoGrupoAdm = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => {
+    return z.object({ 
+      colaborador_id: uuid.nullable().optional(),
+      colaborador_matricula: z.string().optional(),
+      projeto_id: uuid 
+    }).parse(data);
+  })
+  .handler(async ({ data, context }) => {
+    // Busca registros elegíveis do grupo
+    let query = context.supabase
+      .from("ausencias")
+      .select("id")
+      .eq("projeto_id", data.projeto_id)
+      .eq("status_processamento", "AGUARDANDO");
+
+    if (data.colaborador_id) {
+      query = query.eq("colaborador_id", data.colaborador_id);
+    } else if (data.colaborador_matricula) {
+      query = query.eq("manual_matricula", data.colaborador_matricula);
+    } else {
+      throw new Error("Colaborador não identificado para o grupo.");
+    }
+
+    const { data: pendentes, error: fetchError } = await query;
+    if (fetchError) throw fetchError;
+    if (!pendentes || pendentes.length === 0) {
+      return { success: false, message: "Nenhuma pendência disponível para este grupo." };
+    }
+
+    const resultados = [];
+    for (const p of pendentes) {
+      const { data: res, error } = await context.supabase.rpc("iniciar_processamento_ausencia", {
+        _ausencia_id: p.id,
+      });
+      const typedRes = res as unknown as { success: boolean; status: string } | null;
+      if (!error && typedRes?.success) {
+        resultados.push(p.id);
+      }
+    }
+
+    return { 
+      success: resultados.length > 0, 
+      count: resultados.length,
+      total: pendentes.length 
+    };
+  });
+
+/**
  * FASE 2: Concluir processamento administrativo.
  */
 export const concluirProcessamentoAdm = createServerFn({ method: "POST" })

@@ -47,5 +47,6 @@ export interface AusenciaCardData {
   lancado_por_nome?: string | null;
   horario_inicio?: string | null;
   horario_fim?: string | null;
+  colaborador_id?: string | null;
+  projeto_id?: string | null;
 }
-
