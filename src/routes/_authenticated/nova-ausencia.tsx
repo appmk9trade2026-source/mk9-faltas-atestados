@@ -748,14 +748,14 @@ function NovaAusenciaPage() {
   // Auto-pesquisa com debounce (~500 ms) — a lupa deixa de ser obrigatória.
   useEffect(() => {
     const val = matriculaInput.trim();
-    if (isEdit || bloqueado || colab) return;
-    if (val.length < 2 || val === ultimaBuscaRef.current) return;
+    if (isEdit || bloqueado || colab || matchCandidates) return; // P0: Não disparar se já temos candidatos ou seleção
+    if (val.length < 1 || val === ultimaBuscaRef.current) return;
     const t = setTimeout(() => {
       void searchMatricula(val, "auto");
     }, 500);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [matriculaInput, isEdit, bloqueado, colab]);
+  }, [matriculaInput, isEdit, bloqueado, colab, !!matchCandidates]);
 
   // O check verde "Dados atualizados" some após alguns segundos.
   useEffect(() => {
