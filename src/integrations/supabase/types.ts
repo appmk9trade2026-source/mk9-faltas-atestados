@@ -5648,15 +5648,26 @@ export type Database = {
         }
         Returns: Json
       }
-      rel_atestados: {
-        Args: {
-          _empresa_id?: string
-          _fim: string
-          _inicio: string
-          _projeto_id?: string
-        }
-        Returns: Json
-      }
+      rel_atestados:
+        | {
+            Args: {
+              _empresa_id?: string
+              _fim: string
+              _inicio: string
+              _projeto_id?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _empresa_id?: string
+              _fim: string
+              _inicio: string
+              _is_export?: boolean
+              _projeto_id?: string
+            }
+            Returns: Json
+          }
       rel_auditoria: { Args: { _fim: string; _inicio: string }; Returns: Json }
       rel_comunicacoes: {
         Args: {
