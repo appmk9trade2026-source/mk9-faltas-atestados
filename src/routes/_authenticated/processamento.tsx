@@ -167,7 +167,11 @@ function CentralProcessamentoPage() {
 
     const mapa = new Map<string, AusenciaCardData[]>();
     for (const item of list) {
-      const chave = `${item.colaborador_id || item.colaborador_matricula}-${item.projeto_id || "sem-projeto"}`;
+      // Chave canônica: colaborador_id (ou matricula se manual) + projeto_id
+      const colabKey = item.colaborador_id || `m-${item.colaborador_matricula}`;
+      const projKey = item.projeto_id || "sem-projeto";
+      const chave = `${colabKey}|${projKey}`;
+      
       if (!mapa.has(chave)) mapa.set(chave, []);
       mapa.get(chave)!.push(item);
     }
@@ -350,9 +354,30 @@ function CentralProcessamentoPage() {
                   <Button 
                     variant="outline"
                     className="flex-1 font-bold text-xs h-9" 
-                    onClick={() => { setRegistroSelecionado(principal); setDetalhesAbertos(true); }}
+                    onClick={() => { 
+                      // Ao abrir o drawer, garantir que pegamos o grupo completo e ordenamos por antiguidade
+                      const colabKey = principal.colaborador_id || `m-${principal.colaborador_matricula}`;
+                      const projKey = principal.projeto_id || "sem-projeto";
+                      const chaveAlvo = `${colabKey}|${projKey}`;
+                      
+                      const grupoCompleto = agrupado.find(g => {
+                        const gColabKey = g[0].colaborador_id || `m-${g[0].colaborador_matricula}`;
+                        const gProjKey = g[0].projeto_id || "sem-projeto";
+                        return `${gColabKey}|${gProjKey}` === chaveAlvo;
+                      });
+
+                      if (grupoCompleto && grupoCompleto.length > 0) {
+                        const ordenado = [...grupoCompleto].sort((a, b) => 
+                          new Date(a.registrado_em).getTime() - new Date(b.registrado_em).getTime()
+                        );
+                        setRegistroSelecionado(ordenado[0]); // Seleciona o mais antigo por padrão
+                      } else {
+                        setRegistroSelecionado(principal);
+                      }
+                      setDetalhesAbertos(true); 
+                    }}
                   >
-                    Ver {total} lançamentos
+                    Ver {grupo.length} lançamentos
                   </Button>
                   <Button 
                     className="bg-primary hover:bg-primary/90 font-bold text-xs h-9 px-4" 
@@ -382,11 +407,17 @@ function CentralProcessamentoPage() {
                   <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground mt-1">
                     <span>Matrícula {registroSelecionado.colaborador_matricula}</span>
                     <div className="h-3 w-px bg-border" />
-                    <span>{agrupado.find(g => 
-                      (g[0].colaborador_id === registroSelecionado.colaborador_id || 
-                       g[0].colaborador_matricula === registroSelecionado.colaborador_matricula) &&
-                      g[0].projeto_id === registroSelecionado.projeto_id
-                    )?.length || 1} pendências</span>
+                    <span>{(() => {
+                      const colabKey = registroSelecionado.colaborador_id || `m-${registroSelecionado.colaborador_matricula}`;
+                      const projKey = registroSelecionado.projeto_id || "sem-projeto";
+                      const chaveAlvo = `${colabKey}|${projKey}`;
+                      
+                      return agrupado.find(g => {
+                        const gColabKey = g[0].colaborador_id || `m-${g[0].colaborador_matricula}`;
+                        const gProjKey = g[0].projeto_id || "sem-projeto";
+                        return `${gColabKey}|${gProjKey}` === chaveAlvo;
+                      })?.length || 1;
+                    })()} pendências</span>
                   </div>
                 </div>
                 <Button 
@@ -406,21 +437,33 @@ function CentralProcessamentoPage() {
                     <div className="bg-white border rounded-xl p-3 flex flex-col items-center justify-center text-center">
                       <p className="text-[10px] font-bold text-muted-foreground uppercase leading-none mb-1">Total</p>
                       <p className="text-xl font-black">
-                        {agrupado.find(g => 
-                          (g[0].colaborador_id === registroSelecionado.colaborador_id || 
-                           g[0].colaborador_matricula === registroSelecionado.colaborador_matricula) &&
-                          g[0].projeto_id === registroSelecionado.projeto_id
-                        )?.length || 1}
+                        {(() => {
+                          const colabKey = registroSelecionado.colaborador_id || `m-${registroSelecionado.colaborador_matricula}`;
+                          const projKey = registroSelecionado.projeto_id || "sem-projeto";
+                          const chaveAlvo = `${colabKey}|${projKey}`;
+                          
+                          return agrupado.find(g => {
+                            const gColabKey = g[0].colaborador_id || `m-${g[0].colaborador_matricula}`;
+                            const gProjKey = g[0].projeto_id || "sem-projeto";
+                            return `${gColabKey}|${gProjKey}` === chaveAlvo;
+                          })?.length || 1;
+                        })()}
                       </p>
                     </div>
                     <div className="bg-white border rounded-xl p-3 flex flex-col items-center justify-center text-center">
                       <p className="text-[10px] font-bold text-muted-foreground uppercase leading-none mb-1">Critério</p>
                       <Badge className="font-black text-[10px] uppercase h-5">
-                        {agrupado.find(g => 
-                          (g[0].colaborador_id === registroSelecionado.colaborador_id || 
-                           g[0].colaborador_matricula === registroSelecionado.colaborador_matricula) &&
-                          g[0].projeto_id === registroSelecionado.projeto_id
-                        )?.some(item => item.sla_status === "FORA") ? "CRÍTICO" : "NORMAL"}
+                        {(() => {
+                          const colabKey = registroSelecionado.colaborador_id || `m-${registroSelecionado.colaborador_matricula}`;
+                          const projKey = registroSelecionado.projeto_id || "sem-projeto";
+                          const chaveAlvo = `${colabKey}|${projKey}`;
+                          
+                          return agrupado.find(g => {
+                            const gColabKey = g[0].colaborador_id || `m-${g[0].colaborador_matricula}`;
+                            const gProjKey = g[0].projeto_id || "sem-projeto";
+                            return `${gColabKey}|${gProjKey}` === chaveAlvo;
+                          })?.some(item => item.sla_status === "FORA") ? "CRÍTICO" : "NORMAL";
+                        })()}
                       </Badge>
                     </div>
                   </div>
@@ -430,11 +473,18 @@ function CentralProcessamentoPage() {
                   </h3>
 
                   <div className="space-y-3">
-                    {agrupado.find(g => 
-                      (g[0].colaborador_id === registroSelecionado.colaborador_id || 
-                       g[0].colaborador_matricula === registroSelecionado.colaborador_matricula) &&
-                      g[0].projeto_id === registroSelecionado.projeto_id
-                    )?.sort((a, b) => new Date(a.registrado_em).getTime() - new Date(b.registrado_em).getTime())
+                    {(() => {
+                      const colabKey = registroSelecionado.colaborador_id || `m-${registroSelecionado.colaborador_matricula}`;
+                      const projKey = registroSelecionado.projeto_id || "sem-projeto";
+                      const chaveAlvo = `${colabKey}|${projKey}`;
+                      
+                      return agrupado.find(g => {
+                        const gColabKey = g[0].colaborador_id || `m-${g[0].colaborador_matricula}`;
+                        const gProjKey = g[0].projeto_id || "sem-projeto";
+                        return `${gColabKey}|${gProjKey}` === chaveAlvo;
+                      }) || [];
+                    })()
+                    .sort((a, b) => new Date(a.registrado_em).getTime() - new Date(b.registrado_em).getTime())
                     .map((item) => (
                       <div 
                         key={item.id}
@@ -459,12 +509,29 @@ function CentralProcessamentoPage() {
                                 {format(new Date(item.registrado_em), 'dd/MM/yyyy')}
                               </span>
                             </div>
-                            <h4 className="font-black text-sm uppercase flex items-center gap-2">
-                              {item.tipo}
-                              {item.id === registroSelecionado.id && (
-                                <ArrowRight className="h-3 w-3 text-primary animate-pulse" />
+                            <div className="flex flex-col gap-1">
+                              <h4 className="font-black text-xs uppercase flex items-center gap-2 text-foreground">
+                                {item.tipo}
+                                {item.id === registroSelecionado.id && (
+                                  <ArrowRight className="h-3 w-3 text-primary animate-pulse" />
+                                )}
+                              </h4>
+                              {item.motivo && (
+                                <p className="text-[10px] text-muted-foreground italic truncate max-w-[250px]">
+                                  {item.motivo}
+                                </p>
                               )}
-                            </h4>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant="secondary" className="text-[8px] h-4 font-bold">
+                                  {item.dias} {item.dias === 1 ? 'dia' : 'dias'}
+                                </Badge>
+                                {item.cid && (
+                                  <Badge variant="outline" className="text-[8px] h-4 border-primary/30 text-primary">
+                                    CID: {item.cid}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
                           </div>
                           <div className="text-right">
                             <p className="text-[10px] font-bold text-muted-foreground uppercase leading-none">SLA</p>
