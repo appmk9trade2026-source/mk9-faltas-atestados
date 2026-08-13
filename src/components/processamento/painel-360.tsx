@@ -98,74 +98,43 @@ export function Painel360({
     : data.lancado_em ? 1 : 0;
 
   return (
-    <div className="flex flex-col h-full bg-background border-l shadow-2xl animate-in slide-in-from-right duration-300">
-      {/* 1. Resumo Executivo (Header Fixo) */}
-      <div className="p-5 border-b bg-mk9-surface-deep/5 space-y-4">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter bg-white/50">
-                PROT: {data.protocolo || "—"}
-              </Badge>
-              {data.status_documental === "CONTESTADO" && (
-                <Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter bg-amber-500 text-white border-amber-600">
-                  CONTESTADO
-                </Badge>
-              )}
-              {data.status_documental === "CANCELADO" && (
-                <Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter bg-red-500 text-white border-red-600">
-                  CANCELADO
-                </Badge>
-              )}
-              {data.sla_status === "FORA" && (
-                <Badge variant="destructive" className="text-[10px] font-black animate-pulse">
-                  FORA DO SLA
-                </Badge>
-              )}
-
-            </div>
-            <h2 className="text-xl font-black tracking-tight leading-tight uppercase">{data.colaborador_nome}</h2>
-            <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground uppercase">
-              <span>MAT: {data.colaborador_matricula}</span>
-              <Separator orientation="vertical" className="h-3" />
-              <span>{data.empresa_nome}</span>
-            </div>
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            <Badge className={cn("text-[10px] font-black px-2 py-0.5", prioridade.color)}>
-              {prioridade.label}
+    <div className="flex flex-col h-full bg-background animate-in slide-in-from-right duration-300">
+      {/* Resumo Executivo Removido (integrado ao header do Drawer no pai) ou compactado */}
+      <div className="p-5 border-b bg-slate-50/50 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-[10px] font-black uppercase tracking-tighter bg-white">
+              PROT: {data.protocolo || "—"}
             </Badge>
-            <div className="text-right">
-              <p className="text-[9px] font-bold text-muted-foreground uppercase leading-none">Aguardando há</p>
-              <p className="text-lg font-black leading-none">{data.tempo_aguardando}d</p>
-            </div>
+            {data.sla_status === "FORA" && (
+              <Badge variant="destructive" className="text-[10px] font-black animate-pulse">
+                FORA DO SLA
+              </Badge>
+            )}
           </div>
+          <Badge className={cn("text-[10px] font-black px-2 py-0.5", prioridade.color)}>
+            {prioridade.label}
+          </Badge>
         </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-white/50 border rounded-lg p-2 flex items-center gap-2">
-            <div className="h-7 w-7 rounded-md bg-blue-50 flex items-center justify-center shrink-0">
-              <ClipboardList className="h-4 w-4 text-blue-600" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[9px] font-bold text-muted-foreground uppercase leading-tight">Status RH</p>
-              <p className="text-[11px] font-black truncate">{data.status_rh || "PENDENTE"}</p>
-            </div>
+        
+        <div className="grid grid-cols-3 gap-2">
+          <div className="bg-white border rounded-lg p-2">
+            <p className="text-[9px] font-bold text-muted-foreground uppercase leading-none mb-1">Status RH</p>
+            <p className="text-[10px] font-black truncate">{data.status_rh || "PENDENTE"}</p>
           </div>
-          <div className="bg-white/50 border rounded-lg p-2 flex items-center gap-2">
-            <div className="h-7 w-7 rounded-md bg-amber-50 flex items-center justify-center shrink-0">
-              <Zap className="h-4 w-4 text-amber-600" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[9px] font-bold text-muted-foreground uppercase leading-tight">Processamento</p>
-              <p className="text-[11px] font-black truncate">{data.status_processamento.replace(/_/g, ' ')}</p>
-            </div>
+          <div className="bg-white border rounded-lg p-2">
+            <p className="text-[9px] font-bold text-muted-foreground uppercase leading-none mb-1">Processamento</p>
+            <p className="text-[10px] font-black truncate">{data.status_processamento.replace(/_/g, ' ')}</p>
+          </div>
+          <div className="bg-white border rounded-lg p-2">
+            <p className="text-[9px] font-bold text-muted-foreground uppercase leading-none mb-1">Aguardando</p>
+            <p className="text-[10px] font-black truncate">{data.tempo_aguardando} dias</p>
           </div>
         </div>
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-5 space-y-8">
+        <div className="p-5 space-y-6">
           <Accordion type="multiple" defaultValue={["dados-colab", "dados-ausencia", "docs", "interno"]}>
             
             {/* 2. Dados Completos do Colaborador */}
