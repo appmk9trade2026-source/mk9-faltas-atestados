@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { getRelatorioQualidade } from "@/lib/qualidade.functions";
+import { getRelatorioQualidade, QualidadeLancamentosRow } from "@/lib/qualidade.functions";
 import { useState } from "react";
 import { format, subDays } from "date-fns";
 import { 
@@ -33,7 +33,7 @@ function QualidadeLancamentosPage() {
 
   const { data } = useSuspenseQuery({
     queryKey: ["relatorio-qualidade", dataInicio, dataFim],
-    queryFn: () => getRelatorioQualidade({ dataInicio, dataFim }),
+    queryFn: () => getRelatorioQualidade({ data: { dataInicio, dataFim } }),
   });
 
   const totals = (data || []).reduce(
@@ -131,7 +131,7 @@ function QualidadeLancamentosPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data?.map((row, i) => (
+                {(data as QualidadeLancamentosRow[])?.map((row, i) => (
                   <TableRow key={`${row.supervisor_id}-${row.projeto_id}-${i}`}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
@@ -162,3 +162,4 @@ function QualidadeLancamentosPage() {
     </div>
   );
 }
+EOF

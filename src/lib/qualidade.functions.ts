@@ -10,10 +10,21 @@ const getQualidadeParamsSchema = z.object({
   supervisorId: z.string().uuid().optional(),
 });
 
+export type QualidadeLancamentosRow = {
+  supervisor_id: string;
+  supervisor_nome: string;
+  projeto_id: string;
+  projeto_nome: string;
+  total_lancamentos: number;
+  total_correcoes: number;
+  taxa_acerto: number;
+  taxa_correcao: number;
+};
+
 export const getRelatorioQualidade = createServerFn({ method: "GET" })
   .inputValidator((data) => getQualidadeParamsSchema.parse(data))
   .handler(async ({ data }) => {
-    const { data: result, error } = await supabase.rpc("rel_qualidade_lancamentos", {
+    const { data: result, error } = await supabase.rpc("rel_qualidade_lancamentos" as any, {
       p_data_inicio: data.dataInicio,
       p_data_fim: data.dataFim,
       p_empresa_id: data.empresaId,
@@ -26,5 +37,6 @@ export const getRelatorioQualidade = createServerFn({ method: "GET" })
       throw new Error(error.message);
     }
 
-    return result || [];
+    return (result as any) as QualidadeLancamentosRow[];
   });
+EOF
