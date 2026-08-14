@@ -2737,7 +2737,7 @@ function NovaAusenciaPage() {
                     descricao: acidenteDescricao,
                     atendMedico: acidenteAtendMedico,
                     afastamento: acidenteAfastamento,
-                    diasAfast: acidenteDiasAfast,
+                    diasAfast: String(acidenteDiasAfast),
                     catEmitida: acidenteCatEmitida,
                     obs: acidenteObs,
                   },
