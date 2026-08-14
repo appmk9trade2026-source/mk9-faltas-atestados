@@ -411,6 +411,15 @@ function NovaAusenciaPage() {
       manual_supervisor_usuario_id: "",
       horario_inicio: "",
       horario_fim: "",
+      acidente_data: "",
+      acidente_hora: "",
+      acidente_local: "",
+      acidente_descricao: "",
+      acidente_atendimento_medico: null,
+      acidente_houve_afastamento: null,
+      acidente_dias_afastamento_inicial: "",
+      acidente_cat_emitida: null,
+      acidente_observacoes: "",
     },
   });
 
