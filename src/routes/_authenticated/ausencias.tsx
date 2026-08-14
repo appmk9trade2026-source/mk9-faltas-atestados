@@ -1437,6 +1437,7 @@ function AusenciasPage() {
                   <SelectItem value="TIPO_INCORRETO">Tipo de Ausência Incorreto</SelectItem>
                   <SelectItem value="PROJETO_INCORRETO">Projeto Incorreto</SelectItem>
                   <SelectItem value="DOCUMENTO_INCORRETO">Documento/CID Inválido</SelectItem>
+                  <SelectItem value="ERRO_DIGITACAO_SUPERVISOR">Erro de Digitação (Supervisor)</SelectItem>
                   <SelectItem value="LANCAMENTO_INDEVIDO">Lançamento Indevido (Erro Supervisor)</SelectItem>
                   <SelectItem value="CANCELAMENTO_ADMINISTRATIVO">Cancelamento Administrativo (Legítimo)</SelectItem>
                   <SelectItem value="OUTRO">Outro (Justificar)</SelectItem>
