@@ -654,12 +654,15 @@ export const createAusencia = createServerFn({ method: "POST" })
       if (data.arquivo_url) {
         console.warn(`[P0-ORPHAN-PREVENTION] Falha na criação da ausência (Server). Tentando remover objeto órfão: ${data.arquivo_url}. Motivo da falha: ${err instanceof Error ? err.message : String(err)}`);
         try {
-          // Usamos supabaseAdmin se disponível ou o context.supabase para garantir permissão de remoção se for o autor
-          const { error: storageErr } = await context.supabase.storage.from("atestados").remove([data.arquivo_url]);
+          // P0-B: Tenta remover via admin para garantir que o órfão seja limpo mesmo sem política de DELETE para o usuário
+          const { supabaseAdmin } = await import("./supabase.server");
+          const { error: storageErr } = await supabaseAdmin.storage.from("atestados").remove([data.arquivo_url]);
           if (storageErr) {
-            console.error("[P0-ORPHAN-PREVENTION] Erro retornado pelo storage ao tentar remover órfão:", storageErr);
+            console.error("[P0-ORPHAN-PREVENTION] Erro admin ao remover órfão:", storageErr);
+            // Fallback para cliente comum (pode falhar por RLS, mas é a última tentativa)
+            await context.supabase.storage.from("atestados").remove([data.arquivo_url]);
           } else {
-            console.log("[P0-ORPHAN-PREVENTION] Objeto órfão removido com sucesso via Server.");
+            console.log("[P0-ORPHAN-PREVENTION] Objeto órfão removido com sucesso via Admin.");
           }
         } catch (storageErr) {
           console.error("[P0-ORPHAN-PREVENTION] Exceção ao remover objeto órfão:", storageErr);
