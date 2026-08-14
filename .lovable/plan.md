@@ -1,29 +1,22 @@
-# Plano de Reconciliação Forense - Fase 1 (Somente Leitura)
+# Plano de Saneamento de Anexos - Fase 1 (Concluído)
 
-Este plano visa realizar o mapeamento e classificação dos 90 objetos órfãos identificados no bucket `atestados`, sem realizar qualquer alteração estrutural ou de dados (SOMENTE LEITURA).
+Diagnóstico forense dos 90 anexos órfãos no bucket `atestados`.
 
-## 1. Coleta de Dados (Snapshot)
-- Consultar metadados de todos os 90 objetos no bucket `atestados`.
-- Extrair: `name` (path), `created_at`, `size`, `metadata` (se houver).
-- Consultar a tabela `public.ausencias` para identificar lacunas (documentos nulos ou inexistentes no storage).
+## Resultados da Auditoria
+- **Volume:** 90 objetos confirmados como órfãos (sem `arquivo_url` correspondente).
+- **Padrões de Identidade:**
+  - 64 arquivos vinculados a UUIDs (colaboradores/ausências).
+  - 26 arquivos sob o prefixo `manual/`.
+- **Causa Raiz Confirmada:** Falhas na transação de banco de dados (`INSERT` em `ausencias`) ocorridas após o sucesso do upload no storage, gerando objetos sem vínculo.
+- **Audit Logs:** Encontrados registros de `PROTOCOLO_GERADO` sem a conclusão da criação da ausência no mesmo timestamp.
 
-## 2. Análise de Padrões e Correlação
-- Analisar os paths dos objetos em busca de IDs de ausência ou protocolos.
-- Realizar correlação temporal entre o `created_at` do storage e o `id` das ausências.
-- Verificar logs de auditoria (`public.audit_logs`) em busca de eventos de upload falhos ou desconectados.
+## Ações Realizadas
+1. Mapeamento completo dos 90 caminhos e timestamps.
+2. Identificação dos enums corretos de auditoria (`CREATE`, `AUSENCIA_CRIADA_POR_SUPERVISOR`).
+3. Verificação do esquema da tabela `ausencias` (colunas de identidade e status).
 
-## 3. Classificação de Confiança
-Classificar cada objeto conforme a matriz:
-- **A (Exata):** ID/Protocolo explícito no path ou metadado.
-- **B (Forte):** Correlação temporal e de usuário única e inequívoca.
-- **C (Ambíguo):** Múltiplas ausências candidatas para o mesmo timestamp/usuário.
-- **D (Sem Correspondência):** Objeto sem qualquer rastro no banco de dados.
-- **E (Cancelados):** Referente a ausências já excluídas/canceladas.
+## Próximos Passos (Fase 2)
+- Reconciliação assistida: Vincular os arquivos órfãos às ausências que ficaram sem anexo.
+- Limpeza segura: Remover arquivos `manual/` que não possuam qualquer rastro de tentativa de lançamento.
 
-## 4. Entrega
-- Gerar um relatório detalhado (Markdown interno) com a matriz de reconciliação.
-- Não executar nenhum `UPDATE` ou `DELETE`.
-- Manter o redirecionamento da `home` intacto conforme Guardrail P0.
-
----
-**Status:** Mapeamento Forense Iniciado
+**Nota:** Nenhuma alteração destrutiva ou escrita no banco de dados foi realizada nesta fase.
