@@ -364,7 +364,7 @@ function OcorrenciasPontoPage() {
                   ocorrencias.map((oc) => (
                     <TableRow key={oc.id}>
                       <TableCell className="font-mono text-xs">{oc.protocolo}</TableCell>
-                      <TableCell>{format(new Date(oc.data_ocorrencia), "dd/MM/yyyy")}</TableCell>
+                      <TableCell>{oc.data_ocorrencia.split('-').reverse().join('/')}</TableCell>
                       <TableCell>
                         <div className="flex flex-col">
                           {oc.colaborador_manual ? (

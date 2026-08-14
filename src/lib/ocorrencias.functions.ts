@@ -164,40 +164,48 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
       if (colab.supervisor_usuario_id !== data.supervisor_usuario_id) throw new Error("Colaborador não pertence ao supervisor selecionado.");
     }
 
-    // 4. Persistir
-    const { data: newOcorrencia, error } = await context.supabase
-      .from("ocorrencias_ponto")
-      .insert({
-        empresa_id: data.empresa_id,
-        projeto_id: data.projeto_id,
-        colaborador_id: data.colaborador_id || null,
-        colaborador_manual: data.colaborador_manual,
-        manual_matricula: data.manual_matricula || null,
-        manual_nome: data.manual_nome || null,
-        supervisor_usuario_id: data.supervisor_usuario_id,
-        data_ocorrencia: data.data_ocorrencia,
-        motivo: data.motivo,
-        justificativa: data.justificativa,
-        arquivo_url: data.arquivo_url,
-        arquivo_nome: data.arquivo_nome,
-        ausencia_id: data.ausencia_id,
-        registrado_por: context.userId,
-        status: "PENDENTE",
-      })
-      .select()
-      .single();
+    // 4. Iniciar transação para criação da ocorrência e ausência vinculada
+    const { data: result, error: transError } = await context.supabase.rpc("criar_ocorrencia_ponto_ambev", {
+      _empresa_id: data.empresa_id,
+      _projeto_id: data.projeto_id,
+      _colaborador_id: (data.colaborador_id as any) || null,
+      _colaborador_manual: data.colaborador_manual,
+      _manual_matricula: (data.manual_matricula as any) || null,
+      _manual_nome: (data.manual_nome as any) || null,
+      _supervisor_usuario_id: data.supervisor_usuario_id,
+      _data_ocorrencia: data.data_ocorrencia as any,
+      _motivo: data.motivo,
+      _justificativa: data.justificativa,
+      _arquivo_url: data.arquivo_url,
+      _arquivo_nome: (data.arquivo_nome as any) || null,
+      _registrado_por: context.userId
+    });
 
-    if (error) throw new Error(`Erro ao criar ocorrência: ${error.message}`);
 
-    // 5. Log de auditoria
-    const acaoAuditoria = data.colaborador_manual ? "LANCAMENTO" : "LANCAMENTO";
+    if (transError) {
+      console.error("[Ocorrências] Erro na RPC criar_ocorrencia_ponto_ambev:", transError);
+      throw new Error(`Falha ao protocolar ocorrência: ${transError.message}`);
+    }
+
+    const newOcorrencia = result as { 
+      id: string; 
+      protocolo: string; 
+      ausencia_id: string; 
+      ausencia_protocolo: string 
+    };
+
+    if (!newOcorrencia || !newOcorrencia.id) {
+      throw new Error("Falha ao obter confirmação da criação da ocorrência.");
+    }
+
+    // 5. Log de auditoria (feito via supabaseAdmin para garantir privilégio se necessário)
     const obsAuditoria = data.colaborador_manual 
-      ? `Lançamento manual para matrícula ${data.manual_matricula}: ${newOcorrencia.protocolo}`
-      : `Nova ocorrência de ponto protocolada: ${newOcorrencia.protocolo}`;
+      ? `Lançamento manual para matrícula ${data.manual_matricula}: ${newOcorrencia.protocolo} (Ausência: ${newOcorrencia.ausencia_id})`
+      : `Nova ocorrência de ponto protocolada: ${newOcorrencia.protocolo} (Ausência: ${newOcorrencia.ausencia_id})`;
 
     await supabaseAdmin.rpc("log_audit_event", {
       _modulo: "ocorrencias",
-      _acao: acaoAuditoria,
+      _acao: "LANCAMENTO",
       _entidade: "Ocorrência Ponto",
       _registro_id: newOcorrencia.id,
       _empresa_id: data.empresa_id,
@@ -209,6 +217,8 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
     } as any);
 
     return newOcorrencia;
+
+
   });
 
 /** Aprova ou reprova uma ocorrência (RH/Coordenador apenas) */
