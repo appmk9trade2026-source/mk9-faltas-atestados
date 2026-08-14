@@ -307,8 +307,7 @@ function OperacoesContent({ canWrite }: { canWrite: boolean }) {
             </div>
             <p className="mb-3 rounded border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
               <strong>Importante:</strong> o botão “Executar Backup” apenas registra uma solicitação. A execução real
-              é feita pela infraestrutura do Supabase (backups diários automáticos) ou por rotinas administrativas
-              externas. Nenhuma credencial, chave ou variável sensível é exposta neste painel.
+              é feita pela infraestrutura de conexão WhatsApp e a instância canônica axh_vd84gltv foram preservadas integralmente conforme solicitado. Nenhuma credencial, chave ou variável sensível é exposta neste painel.
             </p>
             <Table>
               <TableHeader><TableRow>
