@@ -294,7 +294,7 @@ function QualidadeLancamentosPage() {
                   <p className="text-sm text-muted-foreground">Nenhum erro detalhado encontrado.</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-4 pb-8">
                   {errosSup.map((erro: any) => (
                     <div 
                       key={erro.id} 
