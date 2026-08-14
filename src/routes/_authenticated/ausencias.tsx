@@ -466,11 +466,22 @@ function AusenciasPage() {
   const deleteAusenciaFn = useServerFn(deleteAusencia);
   const excluirMut = useMutation({
     mutationFn: async (row: Ausencia) => {
+      const catErro = [
+        'DATA_PERIODO_INCORRETO',
+        'DUPLICIDADE',
+        'COLABORADOR_INCORRETO',
+        'TIPO_INCORRETO',
+        'PROJETO_INCORRETO',
+        'DOCUMENTO_INCORRETO',
+        'LANCAMENTO_INDEVIDO'
+      ].includes(excluirCategoria);
+      
       return await deleteAusenciaFn({ 
         data: { 
           id: row.id, 
           categoria_motivo: excluirCategoria, 
-          motivo: excluirMotivo 
+          motivo: excluirMotivo,
+          is_error_manual: catErro
         } 
       });
     },
@@ -1417,24 +1428,25 @@ function AusenciasPage() {
               <label className="text-sm font-medium">Categoria do motivo</label>
               <Select value={excluirCategoria} onValueChange={setExcluirCategoria}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione a categoria..." />
+                  <SelectValue placeholder="Selecione a categoria técnica..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Colaborador incorreto">Colaborador incorreto</SelectItem>
-                  <SelectItem value="Matrícula incorreta">Matrícula incorreta</SelectItem>
-                  <SelectItem value="Tipo incorreto">Tipo incorreto</SelectItem>
-                  <SelectItem value="Período incorreto">Período incorreto</SelectItem>
-                  <SelectItem value="Registro duplicado">Registro duplicado</SelectItem>
-                  <SelectItem value="Teste indevido">Teste indevido</SelectItem>
-                  <SelectItem value="Lançamento sem fundamento">Lançamento sem fundamento</SelectItem>
-                  <SelectItem value="Outro">Outro</SelectItem>
+                  <SelectItem value="DATA_PERIODO_INCORRETO">Data ou Período Incorreto</SelectItem>
+                  <SelectItem value="DUPLICIDADE">Registro Duplicado</SelectItem>
+                  <SelectItem value="COLABORADOR_INCORRETO">Colaborador Incorreto</SelectItem>
+                  <SelectItem value="TIPO_INCORRETO">Tipo de Ausência Incorreto</SelectItem>
+                  <SelectItem value="PROJETO_INCORRETO">Projeto Incorreto</SelectItem>
+                  <SelectItem value="DOCUMENTO_INCORRETO">Documento/CID Inválido</SelectItem>
+                  <SelectItem value="LANCAMENTO_INDEVIDO">Lançamento Indevido (Erro Supervisor)</SelectItem>
+                  <SelectItem value="CANCELAMENTO_ADMINISTRATIVO">Cancelamento Administrativo (Legítimo)</SelectItem>
+                  <SelectItem value="OUTRO">Outro (Justificar)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                Motivo detalhado {excluirCategoria === "Outro" && <span className="text-destructive">*</span>}
+                Motivo detalhado {(excluirCategoria === "OUTRO" || excluirCategoria === "CANCELAMENTO_ADMINISTRATIVO") && <span className="text-destructive">*</span>}
               </label>
               <Input 
                 value={excluirMotivo}
@@ -1471,7 +1483,8 @@ function AusenciasPage() {
               type="button"
               disabled={
                 !excluirCategoria || 
-                (excluirCategoria === "Outro" && !excluirMotivo.trim()) || 
+                (excluirCategoria === "OUTRO" && !excluirMotivo.trim()) || 
+                (excluirCategoria === "CANCELAMENTO_ADMINISTRATIVO" && !excluirMotivo.trim()) ||
                 !excluirMotivo.trim() ||
                 !excluirConfirmado ||
                 excluirMut.isPending

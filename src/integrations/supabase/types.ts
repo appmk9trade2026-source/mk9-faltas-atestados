@@ -850,6 +850,7 @@ export type Database = {
           data_retorno: string | null
           dias: number
           dias_label: string | null
+          e_erro_supervisor: boolean | null
           empresa_id: string
           excluida_em: string | null
           excluida_por_usuario_id: string | null
@@ -963,6 +964,7 @@ export type Database = {
           data_retorno?: string | null
           dias?: number
           dias_label?: string | null
+          e_erro_supervisor?: boolean | null
           empresa_id: string
           excluida_em?: string | null
           excluida_por_usuario_id?: string | null
@@ -1076,6 +1078,7 @@ export type Database = {
           data_retorno?: string | null
           dias?: number
           dias_label?: string | null
+          e_erro_supervisor?: boolean | null
           empresa_id?: string
           excluida_em?: string | null
           excluida_por_usuario_id?: string | null
@@ -4944,6 +4947,12 @@ export type Database = {
           ultima_ocorrencia: string
         }[]
       }
+      check_is_error_supervisor: {
+        Args: {
+          cat: Database["public"]["Enums"]["ausencia_motivo_exclusao_categoria_v2"]
+        }
+        Returns: boolean
+      }
       check_projeto_empresa_match: {
         Args: { _empresa_id: string; _projeto_id: string }
         Returns: boolean
@@ -5217,14 +5226,24 @@ export type Database = {
           total_sem_hash: number
         }[]
       }
-      excluir_ausencia_segura: {
-        Args: {
-          p_ausencia_id: string
-          p_categoria_motivo: string
-          p_motivo: string
-        }
-        Returns: Json
-      }
+      excluir_ausencia_segura:
+        | {
+            Args: {
+              p_ausencia_id: string
+              p_categoria_motivo: string
+              p_motivo: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_ausencia_id: string
+              p_categoria_motivo: string
+              p_is_error_manual?: boolean
+              p_motivo: string
+            }
+            Returns: Json
+          }
       gen_projeto_codigo_protocolo: {
         Args: { _empresa_id: string; _exclude_id?: string; _nome: string }
         Returns: string
@@ -5756,12 +5775,15 @@ export type Database = {
           p_supervisor_id?: string
         }
         Returns: {
+          erros_por_100: number
+          lancamentos_com_erro: number
+          principal_causa: string
           projeto_id: string
           projeto_nome: string
           supervisor_id: string
           supervisor_nome: string
           taxa_acerto: number
-          taxa_correcao: number
+          taxa_erro: number
           total_correcoes: number
           total_lancamentos: number
         }[]
@@ -6227,6 +6249,16 @@ export type Database = {
         | "COORDENADOR_DESVINCULADO"
         | "AUSENCIA_RETIFICADA"
         | "AUSENCIA_DUPLICIDADE_BLOQUEADA"
+      ausencia_motivo_exclusao_categoria_v2:
+        | "DATA_PERIODO_INCORRETO"
+        | "DUPLICIDADE"
+        | "COLABORADOR_INCORRETO"
+        | "TIPO_INCORRETO"
+        | "PROJETO_INCORRETO"
+        | "DOCUMENTO_INCORRETO"
+        | "LANCAMENTO_INDEVIDO"
+        | "CANCELAMENTO_ADMINISTRATIVO"
+        | "OUTRO"
       ausencia_status_processamento:
         | "AGUARDANDO"
         | "EM_PROCESSAMENTO"
@@ -6697,6 +6729,17 @@ export const Constants = {
         "COORDENADOR_DESVINCULADO",
         "AUSENCIA_RETIFICADA",
         "AUSENCIA_DUPLICIDADE_BLOQUEADA",
+      ],
+      ausencia_motivo_exclusao_categoria_v2: [
+        "DATA_PERIODO_INCORRETO",
+        "DUPLICIDADE",
+        "COLABORADOR_INCORRETO",
+        "TIPO_INCORRETO",
+        "PROJETO_INCORRETO",
+        "DOCUMENTO_INCORRETO",
+        "LANCAMENTO_INDEVIDO",
+        "CANCELAMENTO_ADMINISTRATIVO",
+        "OUTRO",
       ],
       ausencia_status_processamento: [
         "AGUARDANDO",

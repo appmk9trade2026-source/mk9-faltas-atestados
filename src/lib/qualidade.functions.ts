@@ -10,6 +10,38 @@ const getQualidadeParamsSchema = z.object({
   supervisorId: z.string().uuid().optional(),
 });
 
+export const getErrosSupervisor = createServerFn({ method: "GET" })
+  .inputValidator((data) => z.object({
+    supervisorId: z.string().uuid(),
+    projetoId: z.string().uuid(),
+    dataInicio: z.string(),
+    dataFim: z.string()
+  }).parse(data))
+  .handler(async ({ data }) => {
+    const { data: result, error } = await supabase
+      .from("ausencias")
+      .select(`
+        id,
+        protocolo,
+        data_inicio,
+        tipo_ausencia:tipo_ausencia_id(nome),
+        colaborador_id,
+        manual_nome,
+        motivo_exclusao_categoria_v2,
+        motivo_exclusao_detalhe,
+        registrado_em
+      `)
+      .eq("registrado_por", data.supervisorId)
+      .eq("projeto_id", data.projetoId)
+      .eq("e_erro_supervisor", true)
+      .gte("registrado_em", `${data.dataInicio}T00:00:00`)
+      .lte("registrado_em", `${data.dataFim}T23:59:59`)
+      .order("registrado_em", { ascending: false });
+
+    if (error) throw new Error(error.message);
+    return result;
+  });
+
 export type QualidadeLancamentosRow = {
   supervisor_id: string;
   supervisor_nome: string;
@@ -17,8 +49,11 @@ export type QualidadeLancamentosRow = {
   projeto_nome: string;
   total_lancamentos: number;
   total_correcoes: number;
-  taxa_acerto: number;
-  taxa_correcao: number;
+  lancamentos_com_erro: number;
+  taxa_acerto: number | null;
+  taxa_erro: number | null;
+  erros_por_100: number | null;
+  principal_causa: string;
 };
 
 export const getRelatorioQualidade = createServerFn({ method: "GET" })
