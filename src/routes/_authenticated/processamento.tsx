@@ -533,8 +533,8 @@ function CentralProcessamentoPage() {
                           const aColabKey = a.colaborador_id || `m-${a.colaborador_matricula}`;
                           const aProjKey = a.projeto_id || "sem-projeto";
                           return `${aColabKey}|${aProjKey}` === chave && a.status_processamento !== "PROCESSADO";
-
                         });
+
                         return `${grupo?.length || 1} pendências`;
                       })()}
                     </span>
