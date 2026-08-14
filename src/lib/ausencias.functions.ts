@@ -138,10 +138,51 @@ function manualColumns(data: ManualPayload, userId: string) {
 
 
 
+
+/**
+ * Hardening P0: Validação de conflito que ignora registros cancelados/excluídos.
+ * 
+ * Como a RPC do banco em Lovable Cloud é read-only para comandos DDL, 
+ * implementamos a lógica de filtragem segura aqui no servidor.
+ */
+async function checkConflitosSeguro(
+  supabase: any,
+  data: {
+    colaborador_id?: string;
+    data_inicio: string;
+    data_fim: string;
+    tipo: string;
+    origem_registro: string;
+    manual_matricula?: string;
+    empresa_id?: string;
+  }
+) {
+  const { data: conflitos, error } = await supabase.rpc("detectar_conflitos_ausencia", {
+    _colaborador_id: data.colaborador_id || null,
+    _data_inicio: data.data_inicio,
+    _data_fim: data.data_fim,
+    _tipo: data.tipo,
+    _origem_registro: data.origem_registro,
+    _manual_matricula: data.manual_matricula || null,
+    _empresa_id: data.empresa_id || null
+  });
+
+  if (error) throw error;
+
+  // Filtragem P0: Garantir que registros excluídos ou cancelados não bloqueiem novos lançamentos
+  // mesmo que a RPC original no banco não tenha sido atualizada.
+  return (conflitos || []).filter((c: any) => {
+    const status = (c.status || "").toUpperCase();
+    const statusDoc = (c.status_documental || "ATIVO").toUpperCase();
+    return status !== "CANCELADO" && status !== "SUBSTITUIDA" && statusDoc !== "EXCLUIDO";
+  });
+}
+
 function toInvalidPayload(err: unknown): Error {
   const msg = err instanceof Error ? err.message : String(err);
   return new Error(`INVALID_PAYLOAD: ${msg.slice(0, 240)}`);
 }
+
 
 /**
  * Classificação precisa de erros vindos do Postgres/PostgREST.
