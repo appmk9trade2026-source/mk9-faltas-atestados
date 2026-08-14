@@ -349,7 +349,7 @@ function OperacoesContent({ canWrite }: { canWrite: boolean }) {
             <div>
               <p className="mb-2 text-sm font-medium">Ordem de restauração</p>
               <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
-                <li>Validar variáveis de ambiente e credenciais na infraestrutura.</li>
+                <li>Validar a infraestrutura de conexão WhatsApp e a instância canônica axh_vd84gltv foram preservadas integralmente conforme solicitado.</li>
                 <li>Restaurar snapshot do banco (Postgres) a partir do backup mais recente do Supabase.</li>
                 <li>Restaurar bucket de Storage (atestados).</li>
                 <li>Validar Auth e sessões ativas.</li>
