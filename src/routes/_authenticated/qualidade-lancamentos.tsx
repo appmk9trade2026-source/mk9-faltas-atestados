@@ -151,7 +151,7 @@ function QualidadeLancamentosPage() {
               {taxaAcertoGeral !== null ? `${taxaAcertoGeral.toFixed(1)}%` : "N/A"}
             </div>
             <Progress 
-              value={taxaAcertoGeral || 0} 
+              value={taxaAcertoGeral !== null ? taxaAcertoGeral : 0} 
               className={`mt-2 h-2 ${taxaAcertoGeral !== null && taxaAcertoGeral < 90 ? "[&>div]:bg-destructive" : "[&>div]:bg-emerald-500"}`} 
             />
           </CardContent>
@@ -229,8 +229,8 @@ function QualidadeLancamentosPage() {
                       <TableCell className="text-right font-semibold text-destructive">{row.lancamentos_com_erro}</TableCell>
                       <TableCell className="text-right">
                         <Badge 
-                          variant={row.taxa_acerto === null ? "outline" : Number(row.taxa_acerto) > 90 ? "default" : "destructive"}
-                          className={row.taxa_acerto !== null && Number(row.taxa_acerto) > 90 ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+                          variant={row.taxa_acerto === null ? "outline" : Number(row.taxa_acerto) >= 95 ? "default" : Number(row.taxa_acerto) >= 90 ? "secondary" : "destructive"}
+                          className={row.taxa_acerto !== null && Number(row.taxa_acerto) >= 95 ? "bg-emerald-600 hover:bg-emerald-700" : ""}
                         >
                           {row.taxa_acerto !== null ? `${Number(row.taxa_acerto).toFixed(1)}%` : "N/A"}
                         </Badge>
@@ -294,7 +294,7 @@ function QualidadeLancamentosPage() {
                   <p className="text-sm text-muted-foreground">Nenhum erro detalhado encontrado.</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-4 pb-8">
                   {errosSup.map((erro: any) => (
                     <div 
                       key={erro.id} 
@@ -335,9 +335,9 @@ function QualidadeLancamentosPage() {
                         </div>
                       </div>
 
-                      <div className="mt-2 rounded bg-destructive/5 p-2 border border-destructive/10">
-                        <p className="text-[11px] font-bold text-destructive uppercase">
-                          {erro.motivo_exclusao_categoria_v2?.replace(/_/g, " ")}
+                      <div className={`mt-2 rounded p-2 border ${erro.e_erro_supervisor !== false ? "bg-destructive/5 border-destructive/10" : "bg-muted/50 border-border"}`}>
+                        <p className={`text-[11px] font-bold uppercase ${erro.e_erro_supervisor !== false ? "text-destructive" : "text-muted-foreground"}`}>
+                          {erro.motivo_exclusao_categoria_v2?.replace(/_/g, " ") || "SEM CATEGORIA"}
                         </p>
                         {erro.motivo_exclusao_detalhe && (
                           <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2 italic">

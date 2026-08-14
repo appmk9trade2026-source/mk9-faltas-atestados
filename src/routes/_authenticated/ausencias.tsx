@@ -1437,6 +1437,7 @@ function AusenciasPage() {
                   <SelectItem value="TIPO_INCORRETO">Tipo de Ausência Incorreto</SelectItem>
                   <SelectItem value="PROJETO_INCORRETO">Projeto Incorreto</SelectItem>
                   <SelectItem value="DOCUMENTO_INCORRETO">Documento/CID Inválido</SelectItem>
+                  <SelectItem value="ERRO_DIGITACAO_SUPERVISOR">Erro de Digitação (Supervisor)</SelectItem>
                   <SelectItem value="LANCAMENTO_INDEVIDO">Lançamento Indevido (Erro Supervisor)</SelectItem>
                   <SelectItem value="CANCELAMENTO_ADMINISTRATIVO">Cancelamento Administrativo (Legítimo)</SelectItem>
                   <SelectItem value="OUTRO">Outro (Justificar)</SelectItem>
@@ -1470,14 +1471,20 @@ function AusenciasPage() {
             </div>
           </div>
 
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              setExcluirCategoria("");
-              setExcluirMotivo("");
-              setExcluirConfirmado(false);
-            }}>
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+            <Button
+              variant="outline"
+              type="button"
+              disabled={excluirMut.isPending}
+              onClick={() => {
+                setConfirmExcluir(null);
+                setExcluirCategoria("");
+                setExcluirMotivo("");
+                setExcluirConfirmado(false);
+              }}
+            >
               Cancelar
-            </AlertDialogCancel>
+            </Button>
             <Button
               variant="destructive"
               type="button"
@@ -1499,7 +1506,7 @@ function AusenciasPage() {
             >
               {excluirMut.isPending ? "Excluindo..." : "Excluir lançamento"}
             </Button>
-          </AlertDialogFooter>
+          </div>
         </AlertDialogContent>
       </AlertDialog>
     </AppShell>

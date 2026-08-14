@@ -72,5 +72,13 @@ export const getRelatorioQualidade = createServerFn({ method: "GET" })
       throw new Error(error.message);
     }
 
-    return (result as any) as QualidadeLancamentosRow[];
+    // Ordenação explícita por taxa de erro (descendente) e total de lançamentos
+    const sorted = ((result as any) || []).sort((a: any, b: any) => {
+      const taxaA = a.taxa_erro !== null ? Number(a.taxa_erro) : -1;
+      const taxaB = b.taxa_erro !== null ? Number(b.taxa_erro) : -1;
+      if (taxaB !== taxaA) return taxaB - taxaA;
+      return Number(b.total_lancamentos) - Number(a.total_lancamentos);
+    });
+
+    return sorted as QualidadeLancamentosRow[];
   });
