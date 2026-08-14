@@ -668,15 +668,35 @@ function NovaAusenciaPage() {
         acidente_dias_afastamento_inicial?: number | null; acidente_cat_emitida?: boolean | null;
         acidente_observacoes?: string | null;
       };
-      setAcidenteData(a.acidente_data ?? "");
-      setAcidenteHora((a.acidente_hora ?? "").slice(0, 5));
-      setAcidenteLocal(a.acidente_local ?? "");
-      setAcidenteDescricao(a.acidente_descricao ?? "");
-      setAcidenteAtendMedico(a.acidente_atendimento_medico ?? null);
-      setAcidenteAfastamento(a.acidente_houve_afastamento ?? null);
-      setAcidenteDiasAfast(a.acidente_dias_afastamento_inicial != null ? String(a.acidente_dias_afastamento_inicial) : "");
-      setAcidenteCatEmitida(a.acidente_cat_emitida ?? null);
-      setAcidenteObs(a.acidente_observacoes ?? "");
+      const a_data = a.acidente_data ?? "";
+      const a_hora = (a.acidente_hora ?? "").slice(0, 5);
+      const a_local = a.acidente_local ?? "";
+      const a_desc = a.acidente_descricao ?? "";
+      const a_atend = a.acidente_atendimento_medico ?? null;
+      const a_afast = a.acidente_houve_afastamento ?? null;
+      const a_dias = a.acidente_dias_afastamento_inicial != null ? String(a.acidente_dias_afastamento_inicial) : "";
+      const a_cat = a.acidente_cat_emitida ?? null;
+      const a_obs = a.acidente_observacoes ?? "";
+
+      setAcidenteData(a_data);
+      setAcidenteHora(a_hora);
+      setAcidenteLocal(a_local);
+      setAcidenteDescricao(a_desc);
+      setAcidenteAtendMedico(a_atend);
+      setAcidenteAfastamento(a_afast);
+      setAcidenteDiasAfast(a_dias);
+      setAcidenteCatEmitida(a_cat);
+      setAcidenteObs(a_obs);
+
+      form.setValue("acidente_data", a_data);
+      form.setValue("acidente_hora", a_hora);
+      form.setValue("acidente_local", a_local);
+      form.setValue("acidente_descricao", a_desc);
+      form.setValue("acidente_atendimento_medico", a_atend);
+      form.setValue("acidente_houve_afastamento", a_afast);
+      form.setValue("acidente_dias_afastamento_inicial", a_dias);
+      form.setValue("acidente_cat_emitida", a_cat);
+      form.setValue("acidente_observacoes", a_obs);
       setPrefilled(true);
 
     })();
