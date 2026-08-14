@@ -1334,7 +1334,6 @@ function NovaAusenciaPage() {
 
 
 
-      // Debug logs removidos após correção
       if (isEdit && editId) {
         try {
           await updateFn({ data: { ...payload, id: editId } });
@@ -1350,27 +1349,28 @@ function NovaAusenciaPage() {
             }
           }
           throw err;
-      }
-      
-      try {
-        console.log(`[P0-DIAGNOSTIC] Iniciando createAusencia via server function. Correlation: ${finalCorrelationId}`);
-        const res = await createFn({ data: { ...payload, correlation_id: finalCorrelationId } });
-        console.log(`[P0-DIAGNOSTIC] createAusencia sucesso:`, res);
-        return {
-          manual: !!values.modo_manual,
-          colaboradorCriado: !!(res as { colaborador_criado?: boolean } | undefined)?.colaborador_criado,
-        };
-      } catch (err) {
-        // Compensação de storage para criação
-        if (arquivo_url) {
-          console.warn(`[P0-ORPHAN-PREVENTION] Falha na criação. Tentando remover arquivo: ${arquivo_url}`);
-          try {
-            await supabase.storage.from(BUCKET_ATESTADOS).remove([arquivo_url]);
-          } catch (storageErr) {
-            console.error("[P0-ORPHAN-PREVENTION] Falha ao remover arquivo na criação:", storageErr);
-          }
         }
-        throw err;
+      } else {
+        try {
+          console.log(`[P0-DIAGNOSTIC] Iniciando createAusencia via server function. Correlation: ${finalCorrelationId}`);
+          const res = await createFn({ data: { ...payload, correlation_id: finalCorrelationId } });
+          console.log(`[P0-DIAGNOSTIC] createAusencia sucesso:`, res);
+          return {
+            manual: !!values.modo_manual,
+            colaboradorCriado: !!(res as { colaborador_criado?: boolean } | undefined)?.colaborador_criado,
+          };
+        } catch (err) {
+          // Compensação de storage para criação
+          if (arquivo_url) {
+            console.warn(`[P0-ORPHAN-PREVENTION] Falha na criação. Tentando remover arquivo: ${arquivo_url}`);
+            try {
+              await supabase.storage.from(BUCKET_ATESTADOS).remove([arquivo_url]);
+            } catch (storageErr) {
+              console.error("[P0-ORPHAN-PREVENTION] Falha ao remover arquivo na criação:", storageErr);
+            }
+          }
+          throw err;
+        }
       }
 
     },
