@@ -164,7 +164,9 @@ async function checkConflitosSeguro(
     _tipo: data.tipo,
     _origem_registro: data.origem_registro,
     _manual_matricula: data.manual_matricula || null,
-    _empresa_id: data.empresa_id || null
+    _empresa_id: data.empresa_id || null,
+    _projeto_id: null,
+    _supervisor_id: null
   });
 
   if (error) throw error;
@@ -1195,13 +1197,13 @@ export const checkConflitosAusencia = createServerFn({ method: "POST" })
       _colaborador_id: data.colaborador_id || null,
       _data_inicio: data.data_inicio,
       _data_fim: data.data_fim,
-      _tipo: data.tipo as any,
+      _tipo: data.tipo,
       _origem_registro: data.origem_registro,
       _manual_matricula: data.manual_matricula || null,
       _empresa_id: data.empresa_id || null,
       _projeto_id: data.projeto_id || null,
       _supervisor_id: (data as any)._supervisor_id || null,
-    } as any);
+    });
 
 
     if (error) throw error;
