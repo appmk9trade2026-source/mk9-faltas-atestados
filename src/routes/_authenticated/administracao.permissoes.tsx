@@ -105,7 +105,11 @@ function MatrixEditor() {
       setPending(new Map());
       void qc.invalidateQueries({ queryKey: ["rbac-matrix"] });
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : "Falha ao salvar."),
+    onError: (e) => {
+      const msg = e instanceof Error ? e.message : "Falha ao salvar.";
+      console.error("[rbac-matrix] Error saving changes:", e);
+      toast.error(msg);
+    },
   });
 
   if (q.isLoading || !q.data) return <MatrixSkeleton />;
