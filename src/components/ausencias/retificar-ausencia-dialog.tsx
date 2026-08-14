@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { AlertTriangle, Clock, History, Loader2, ShieldCheck, Upload } from "lucide-react";
+import { AlertTriangle, Clock, History, Loader2, ShieldCheck, Upload, ArrowRight } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { BUCKET_ATESTADOS } from "@/lib/ausencias";
@@ -48,6 +48,7 @@ export type AusenciaRetificavel = {
   projeto_id: string;
   colaborador_id: string | null;
   created_at: string;
+  updated_at: string;
   data_inicio: string;
   data_fim: string;
   tipo_ausencia_id?: string | null;
@@ -60,6 +61,7 @@ export type AusenciaRetificavel = {
   origem_registro?: string | null;
   empresa?: { nome: string } | null;
   projeto?: { nome: string } | null;
+  e_erro_supervisor?: boolean | null;
 };
 
 type TipoOpt = {
@@ -101,6 +103,8 @@ export function RetificarAusenciaDialog({
   const [periodoId, setPeriodoId] = useState<string>("");
   const [dataInicio, setDataInicio] = useState<string>("");
   const [motivoOperacional, setMotivoOperacional] = useState("");
+  const [motivoCategoria, setMotivoCategoria] = useState<string>("");
+  const [eErroSupervisor, setEErroSupervisor] = useState<boolean | null>(null);
   const [cid, setCid] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [confirmando, setConfirmando] = useState(false);
@@ -112,6 +116,8 @@ export function RetificarAusenciaDialog({
     setPeriodoId(ausencia.opcao_periodo_id ?? "");
     setDataInicio(ausencia.data_inicio);
     setMotivoOperacional("");
+    setMotivoCategoria("");
+    setEErroSupervisor(ausencia.e_erro_supervisor ?? null);
     setCid(ausencia.cid ?? "");
     setFile(null);
     setConfirmando(false);
@@ -183,6 +189,7 @@ export function RetificarAusenciaDialog({
     !!periodoId &&
     !!dataInicio &&
     motivoOperacional.trim().length >= 10 &&
+    !!motivoCategoria &&
     mudouAlgo &&
     (!exigeDocumento || temAnexo);
 
@@ -206,6 +213,9 @@ export function RetificarAusenciaDialog({
           opcao_periodo_id: periodoId,
           data_inicio: dataInicio,
           motivo_operacional: motivoOperacional.trim(),
+          motivo_categoria: motivoCategoria,
+          e_erro_supervisor: eErroSupervisor === null ? undefined : eErroSupervisor,
+          updated_at_check: ausencia.updated_at,
           cid: podeVerCid && cid.trim() ? cid.trim().toUpperCase() : null,
           arquivo,
         },
