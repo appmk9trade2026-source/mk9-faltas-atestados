@@ -309,6 +309,11 @@ function QualidadeLancamentosPage() {
                             <Badge variant="outline" className="text-[10px] py-0 h-4 uppercase">
                               {erro.tipo_ausencia?.nome}
                             </Badge>
+                            {erro.retificada && (
+                              <Badge variant="outline" className="text-[10px] py-0 h-4 uppercase border-blue-400 text-blue-600 bg-blue-50/50">
+                                Retificado
+                              </Badge>
+                            )}
                           </div>
                           <h4 className="text-sm font-semibold mt-1">
                             {erro.manual_nome || "Colaborador Base"}
