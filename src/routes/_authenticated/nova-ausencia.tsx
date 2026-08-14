@@ -1244,10 +1244,15 @@ function NovaAusenciaPage() {
         const stamp = Date.now();
         const rand = crypto.randomUUID();
         const path = `ausencias/${values.colaborador_id || "manual"}/${stamp}-${rand}.${ext}`;
+        console.log(`[P0-DIAGNOSTIC] Iniciando upload para path: ${path}`);
         const { error: upErr } = await supabase.storage
           .from(BUCKET_ATESTADOS)
           .upload(path, file, { contentType: file.type, upsert: false });
-        if (upErr) throw upErr;
+        if (upErr) {
+          console.error(`[P0-DIAGNOSTIC] Falha no upload:`, upErr);
+          throw upErr;
+        }
+        console.log(`[P0-DIAGNOSTIC] Upload concluído com sucesso: ${path}`);
         arquivo_url = path;
         arquivo_nome = file.name;
         arquivo_mime = file.type;
@@ -1329,7 +1334,6 @@ function NovaAusenciaPage() {
 
 
 
-      // Debug logs removidos após correção
       if (isEdit && editId) {
         try {
           await updateFn({ data: { ...payload, id: editId } });
@@ -1337,34 +1341,39 @@ function NovaAusenciaPage() {
         } catch (err) {
           // Compensação de storage para edição
           if (arquivo_url) {
-            console.warn(`[P0-ORPHAN-PREVENTION] Falha na edição. Tentando remover arquivo novo: ${arquivo_url}`);
+            console.warn(`[P0-ORPHAN-PREVENTION] Falha na edição. Tentando remover arquivo via Client: ${arquivo_url}`);
             try {
               await supabase.storage.from(BUCKET_ATESTADOS).remove([arquivo_url]);
             } catch (storageErr) {
-              console.error("[P0-ORPHAN-PREVENTION] Falha ao remover arquivo na edição:", storageErr);
+              console.error("[P0-ORPHAN-PREVENTION] Falha ao remover arquivo na edição via Client:", storageErr);
             }
           }
           throw err;
         }
-      }
-
-      try {
-        const res = await createFn({ data: { ...payload, correlation_id: finalCorrelationId } });
-        return {
-          manual: !!values.modo_manual,
-          colaboradorCriado: !!(res as { colaborador_criado?: boolean } | undefined)?.colaborador_criado,
-        };
+      } else {
+        try {
+          console.log(`[P0-DIAGNOSTIC] Iniciando createAusencia via server function. Correlation: ${finalCorrelationId}`);
+          const res = await createFn({ data: { ...payload, correlation_id: finalCorrelationId } });
+          console.log(`[P0-DIAGNOSTIC] createAusencia sucesso:`, res);
+          return {
+            manual: !!values.modo_manual,
+            colaboradorCriado: !!(res as { colaborador_criado?: boolean } | undefined)?.colaborador_criado,
+          };
       } catch (err) {
         // Compensação de storage para criação
         if (arquivo_url) {
-          console.warn(`[P0-ORPHAN-PREVENTION] Falha na criação. Tentando remover arquivo: ${arquivo_url}`);
+          console.warn(`[P0-ORPHAN-PREVENTION] Falha na criação. Tentando remover arquivo via Client e Server: ${arquivo_url}. Erro: ${err instanceof Error ? err.message : String(err)}`);
+          
+          // Etapa 1: Tentativa síncrona/imediata via cliente (pode falhar se não tiver DELETE policy)
           try {
             await supabase.storage.from(BUCKET_ATESTADOS).remove([arquivo_url]);
+            console.log("[P0-ORPHAN-PREVENTION] Remoção via Client solicitada.");
           } catch (storageErr) {
-            console.error("[P0-ORPHAN-PREVENTION] Falha ao remover arquivo na criação:", storageErr);
+            console.error("[P0-ORPHAN-PREVENTION] Falha ao remover arquivo via Client:", storageErr);
           }
         }
         throw err;
+      }
       }
 
     },
