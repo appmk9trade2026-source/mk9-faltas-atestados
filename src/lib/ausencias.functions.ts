@@ -512,9 +512,10 @@ export const createAusencia = createServerFn({ method: "POST" })
       data_fim: data.data_inicio, // A data_fim real é calculada pela RPC no banco, usamos a de início para o gate
       tipo: tipoBase,
       origem_registro: isManual ? "MANUAL" : "AUTOMATICO",
-      manual_matricula: isManual ? (data as any).manual_matricula : undefined,
+      manual_matricula: isManual ? (data as any).manual_matricula || undefined : undefined,
       empresa_id: gate.empresaId
     });
+
 
     if (conflitos.length > 0) {
       const conf = conflitos[0];
