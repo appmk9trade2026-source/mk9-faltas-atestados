@@ -589,6 +589,7 @@ function DocumentacaoTab() {
       itens: [
         "A infraestrutura de conexão WhatsApp e a instância canônica axh_vd84gltv foram preservadas integralmente conforme solicitado.",
       ],
+    },
   ];
 
   return (
