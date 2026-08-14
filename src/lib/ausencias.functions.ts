@@ -655,7 +655,7 @@ export const createAusencia = createServerFn({ method: "POST" })
         console.warn(`[P0-ORPHAN-PREVENTION] Falha na criação da ausência (Server). Tentando remover objeto órfão: ${data.arquivo_url}. Motivo da falha: ${err instanceof Error ? err.message : String(err)}`);
         try {
           // P0-B: Tenta remover via admin para garantir que o órfão seja limpo mesmo sem política de DELETE para o usuário
-          const { supabaseAdmin } = await import("./supabase.server");
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const { error: storageErr } = await supabaseAdmin.storage.from("atestados").remove([data.arquivo_url]);
           if (storageErr) {
             console.error("[P0-ORPHAN-PREVENTION] Erro admin ao remover órfão:", storageErr);
