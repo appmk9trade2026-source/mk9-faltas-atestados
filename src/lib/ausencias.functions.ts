@@ -138,10 +138,51 @@ function manualColumns(data: ManualPayload, userId: string) {
 
 
 
+
+/**
+ * Hardening P0: Validação de conflito que ignora registros cancelados/excluídos.
+ * 
+ * Como a RPC do banco em Lovable Cloud é read-only para comandos DDL, 
+ * implementamos a lógica de filtragem segura aqui no servidor.
+ */
+async function checkConflitosSeguro(
+  supabase: any,
+  data: {
+    colaborador_id?: string;
+    data_inicio: string;
+    data_fim: string;
+    tipo: string;
+    origem_registro: string;
+    manual_matricula?: string;
+    empresa_id?: string;
+  }
+) {
+  const { data: conflitos, error } = await supabase.rpc("detectar_conflitos_ausencia", {
+    _colaborador_id: data.colaborador_id || null,
+    _data_inicio: data.data_inicio,
+    _data_fim: data.data_fim,
+    _tipo: data.tipo,
+    _origem_registro: data.origem_registro,
+    _manual_matricula: data.manual_matricula || null,
+    _empresa_id: data.empresa_id || null
+  });
+
+  if (error) throw error;
+
+  // Filtragem P0: Garantir que registros excluídos ou cancelados não bloqueiem novos lançamentos
+  // mesmo que a RPC original no banco não tenha sido atualizada.
+  return (conflitos || []).filter((c: any) => {
+    const status = (c.status || "").toUpperCase();
+    const statusDoc = (c.status_documental || "ATIVO").toUpperCase();
+    return status !== "CANCELADO" && status !== "SUBSTITUIDA" && statusDoc !== "EXCLUIDO";
+  });
+}
+
 function toInvalidPayload(err: unknown): Error {
   const msg = err instanceof Error ? err.message : String(err);
   return new Error(`INVALID_PAYLOAD: ${msg.slice(0, 240)}`);
 }
+
 
 /**
  * Classificação precisa de erros vindos do Postgres/PostgREST.
@@ -464,6 +505,24 @@ export const createAusencia = createServerFn({ method: "POST" })
 
 
 
+    // 6. Hardening P0: Validação Antecipada de Conflito (Ignora EXCLUIDO/CANCELADO)
+    const conflitos = await checkConflitosSeguro(context.supabase, {
+      colaborador_id: isManual ? undefined : data.colaborador_id,
+      data_inicio: data.data_inicio,
+      data_fim: data.data_inicio,
+      tipo: tipoBase,
+      origem_registro: isManual ? "MANUAL" : "AUTOMATICO",
+      manual_matricula: isManual ? (data as any).manual_matricula || undefined : undefined,
+      empresa_id: gate.empresaId || undefined
+    });
+
+
+
+    if (conflitos.length > 0) {
+      const conf = conflitos[0];
+      throw new Error(`CONFLICT: Já existe um lançamento de ${conf.tipo} para este período (Protocolo: ${conf.protocolo}).`);
+    }
+
     // 7. mutação — RLS + trigger de supervisor continuam ativos como 2ª camada
     //
     // MANUAL: o colaborador informado à mão é persistido (find-or-create por
@@ -473,6 +532,7 @@ export const createAusencia = createServerFn({ method: "POST" })
     let protocolo: string | null = null;
     let colaboradorId: string | null = null;
     let colaboradorCriado = false;
+
 
     if (isManual) {
       // Determinar o supervisor responsável:
