@@ -224,6 +224,15 @@ const schema = z
     manual_supervisor_usuario_id: z.string().uuid().optional().or(z.literal("")),
     horario_inicio: z.string().optional().or(z.literal("")),
     horario_fim: z.string().optional().or(z.literal("")),
+    acidente_data: z.string().optional().or(z.literal("")),
+    acidente_hora: z.string().optional().or(z.literal("")),
+    acidente_local: z.string().trim().max(200).optional().or(z.literal("")),
+    acidente_descricao: z.string().trim().max(2000).optional().or(z.literal("")),
+    acidente_atendimento_medico: z.boolean().optional().nullable(),
+    acidente_houve_afastamento: z.boolean().optional().nullable(),
+    acidente_dias_afastamento_inicial: z.union([z.string(), z.number()]).optional().nullable(),
+    acidente_cat_emitida: z.boolean().optional().nullable(),
+    acidente_observacoes: z.string().trim().max(2000).optional().or(z.literal("")),
   })
   .superRefine((v, ctx) => {
     const req = (path: keyof typeof v, message: string) =>
@@ -402,6 +411,15 @@ function NovaAusenciaPage() {
       manual_supervisor_usuario_id: "",
       horario_inicio: "",
       horario_fim: "",
+      acidente_data: "",
+      acidente_hora: "",
+      acidente_local: "",
+      acidente_descricao: "",
+      acidente_atendimento_medico: null,
+      acidente_houve_afastamento: null,
+      acidente_dias_afastamento_inicial: "",
+      acidente_cat_emitida: null,
+      acidente_observacoes: "",
     },
   });
 
@@ -641,6 +659,15 @@ function NovaAusenciaPage() {
         manual_email: ausencia.manual_email ?? "",
         manual_supervisor_nome: ausencia.manual_supervisor_nome ?? "",
         manual_supervisor_telefone: ausencia.manual_supervisor_telefone ?? "",
+        acidente_data: (ausencia as any).acidente_data ?? "",
+        acidente_hora: (ausencia as any).acidente_hora ?? "",
+        acidente_local: (ausencia as any).acidente_local ?? "",
+        acidente_descricao: (ausencia as any).acidente_descricao ?? "",
+        acidente_atendimento_medico: (ausencia as any).acidente_atendimento_medico ?? null,
+        acidente_houve_afastamento: (ausencia as any).acidente_houve_afastamento ?? null,
+        acidente_dias_afastamento_inicial: (ausencia as any).acidente_dias_afastamento_inicial ?? "",
+        acidente_cat_emitida: (ausencia as any).acidente_cat_emitida ?? null,
+        acidente_observacoes: (ausencia as any).acidente_observacoes ?? "",
       });
 
       const a = ausencia as unknown as {
@@ -650,15 +677,35 @@ function NovaAusenciaPage() {
         acidente_dias_afastamento_inicial?: number | null; acidente_cat_emitida?: boolean | null;
         acidente_observacoes?: string | null;
       };
-      setAcidenteData(a.acidente_data ?? "");
-      setAcidenteHora((a.acidente_hora ?? "").slice(0, 5));
-      setAcidenteLocal(a.acidente_local ?? "");
-      setAcidenteDescricao(a.acidente_descricao ?? "");
-      setAcidenteAtendMedico(a.acidente_atendimento_medico ?? null);
-      setAcidenteAfastamento(a.acidente_houve_afastamento ?? null);
-      setAcidenteDiasAfast(a.acidente_dias_afastamento_inicial != null ? String(a.acidente_dias_afastamento_inicial) : "");
-      setAcidenteCatEmitida(a.acidente_cat_emitida ?? null);
-      setAcidenteObs(a.acidente_observacoes ?? "");
+      const a_data = a.acidente_data ?? "";
+      const a_hora = (a.acidente_hora ?? "").slice(0, 5);
+      const a_local = a.acidente_local ?? "";
+      const a_desc = a.acidente_descricao ?? "";
+      const a_atend = a.acidente_atendimento_medico ?? null;
+      const a_afast = a.acidente_houve_afastamento ?? null;
+      const a_dias = a.acidente_dias_afastamento_inicial != null ? String(a.acidente_dias_afastamento_inicial) : "";
+      const a_cat = a.acidente_cat_emitida ?? null;
+      const a_obs = a.acidente_observacoes ?? "";
+
+      setAcidenteData(a_data);
+      setAcidenteHora(a_hora);
+      setAcidenteLocal(a_local);
+      setAcidenteDescricao(a_desc);
+      setAcidenteAtendMedico(a_atend);
+      setAcidenteAfastamento(a_afast);
+      setAcidenteDiasAfast(a_dias);
+      setAcidenteCatEmitida(a_cat);
+      setAcidenteObs(a_obs);
+
+      form.setValue("acidente_data", a_data);
+      form.setValue("acidente_hora", a_hora);
+      form.setValue("acidente_local", a_local);
+      form.setValue("acidente_descricao", a_desc);
+      form.setValue("acidente_atendimento_medico", a_atend);
+      form.setValue("acidente_houve_afastamento", a_afast);
+      form.setValue("acidente_dias_afastamento_inicial", a_dias);
+      form.setValue("acidente_cat_emitida", a_cat);
+      form.setValue("acidente_observacoes", a_obs);
       setPrefilled(true);
 
     })();
@@ -1110,15 +1157,15 @@ function NovaAusenciaPage() {
         arquivo_tamanho,
         tipo: tipoBaseFromDetalhe(tipoSelecionado?.codigo || ""),
         ...(isAcidente ? {
-          acidente_data: acidenteData,
-          acidente_hora: acidenteHora,
-          acidente_local: acidenteLocal,
-          acidente_descricao: acidenteDescricao,
-          acidente_atendimento_medico: acidenteAtendMedico,
-          acidente_houve_afastamento: acidenteAfastamento,
+          acidente_data: acidenteData || null,
+          acidente_hora: acidenteHora || null,
+          acidente_local: acidenteLocal || null,
+          acidente_descricao: acidenteDescricao || null,
+          acidente_atendimento_medico: acidenteAtendMedico ?? null,
+          acidente_houve_afastamento: acidenteAfastamento ?? null,
           acidente_dias_afastamento_inicial: parseInt(acidenteDiasAfast) || 0,
-          acidente_cat_emitida: acidenteCatEmitida,
-          acidente_observacoes: acidenteObs,
+          acidente_cat_emitida: acidenteCatEmitida ?? null,
+          acidente_observacoes: acidenteObs || null,
         } : {}),
         // Campos manuais se necessário
         ...(params.values.modo_manual ? {
@@ -1214,7 +1261,7 @@ function NovaAusenciaPage() {
 
       const isAcidente = tipoSelecionado?.codigo === "ACIDENTE_TRABALHO";
       if (isAcidente) {
-        if (!acidenteData || !acidenteHora || !acidenteLocal.trim() || !acidenteDescricao.trim()) {
+        if (!acidenteData || !acidenteHora || !acidenteLocal?.trim() || !acidenteDescricao?.trim()) {
           throw new Error("Para Acidente de Trabalho, informe data, hora, local e descrição.");
         }
       }
@@ -1268,14 +1315,14 @@ function NovaAusenciaPage() {
         horario_inicio: values.horario_inicio || null,
         horario_fim: values.horario_fim || null,
         ...(isAcidente ? {
-          acidente_data: acidenteData,
-          acidente_hora: acidenteHora.length === 5 ? `${acidenteHora}:00` : acidenteHora,
-          acidente_local: acidenteLocal.trim(),
-          acidente_descricao: acidenteDescricao.trim(),
-          acidente_atendimento_medico: acidenteAtendMedico,
-          acidente_houve_afastamento: acidenteAfastamento,
+          acidente_data: acidenteData || null,
+          acidente_hora: acidenteHora.length === 5 ? `${acidenteHora}:00` : (acidenteHora || null),
+          acidente_local: acidenteLocal.trim() || null,
+          acidente_descricao: acidenteDescricao.trim() || null,
+          acidente_atendimento_medico: acidenteAtendMedico ?? null,
+          acidente_houve_afastamento: acidenteAfastamento ?? null,
           acidente_dias_afastamento_inicial: acidenteDiasAfast.trim() ? Number(acidenteDiasAfast) : null,
-          acidente_cat_emitida: acidenteCatEmitida,
+          acidente_cat_emitida: acidenteCatEmitida ?? null,
           acidente_observacoes: acidenteObs.trim() || null,
         } : {}),
       };
@@ -2072,71 +2119,195 @@ function NovaAusenciaPage() {
                           </span>
                         </div>
                         <div className="grid gap-3 md:grid-cols-3">
-                          <div>
-                            <label className="text-xs font-medium">Data do acidente <span className="text-red-500">*</span></label>
-                            <Input type="date" value={acidenteData} onChange={(e) => setAcidenteData(e.target.value)} />
-                          </div>
-                          <div>
-                            <label className="text-xs font-medium">Hora <span className="text-red-500">*</span></label>
-                            <Input type="time" value={acidenteHora} onChange={(e) => setAcidenteHora(e.target.value)} />
-                          </div>
-                          <div>
-                            <label className="text-xs font-medium">Local <span className="text-red-500">*</span></label>
-                            <Input maxLength={200} placeholder="Ex: Depósito - Setor B" value={acidenteLocal} onChange={(e) => setAcidenteLocal(e.target.value)} />
-                          </div>
+                          <FormField
+                            control={form.control}
+                            name="acidente_data"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs font-medium">Data do acidente <span className="text-red-500">*</span></FormLabel>
+                                <FormControl>
+                                  <Input type="date" {...field} value={acidenteData} onChange={(e) => {
+                                    setAcidenteData(e.target.value);
+                                    field.onChange(e.target.value);
+                                  }} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="acidente_hora"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs font-medium">Hora <span className="text-red-500">*</span></FormLabel>
+                                <FormControl>
+                                  <Input type="time" {...field} value={acidenteHora} onChange={(e) => {
+                                    setAcidenteHora(e.target.value);
+                                    field.onChange(e.target.value);
+                                  }} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="acidente_local"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs font-medium">Local <span className="text-red-500">*</span></FormLabel>
+                                <FormControl>
+                                  <Input maxLength={200} placeholder="Ex: Depósito - Setor B" {...field} value={acidenteLocal} onChange={(e) => {
+                                    setAcidenteLocal(e.target.value);
+                                    field.onChange(e.target.value);
+                                  }} />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
                         </div>
                         <div className="mt-3">
-                          <label className="text-xs font-medium">Descrição do ocorrido <span className="text-red-500">*</span></label>
-                          <Textarea rows={3} maxLength={2000} placeholder="Descreva o que aconteceu, como e onde." value={acidenteDescricao} onChange={(e) => setAcidenteDescricao(e.target.value)} />
+                          <FormField
+                            control={form.control}
+                            name="acidente_descricao"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs font-medium">Descrição do ocorrido <span className="text-red-500">*</span></FormLabel>
+                                <FormControl>
+                                  <Textarea 
+                                    rows={3} 
+                                    maxLength={2000} 
+                                    placeholder="Descreva o que aconteceu, como e onde." 
+                                    {...field}
+                                    value={acidenteDescricao} 
+                                    onChange={(e) => {
+                                      setAcidenteDescricao(e.target.value);
+                                      field.onChange(e.target.value);
+                                    }} 
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
                         </div>
                         <div className="mt-3 grid gap-3 md:grid-cols-3">
-                          <div>
-                            <label className="text-xs font-medium">Houve atendimento médico?</label>
-                            <RadioGroup
-                              value={acidenteAtendMedico === null ? "" : acidenteAtendMedico ? "sim" : "nao"}
-                              onValueChange={(v) => setAcidenteAtendMedico(v === "sim" ? true : v === "nao" ? false : null)}
-                              className="flex gap-3 pt-1"
-                            >
-                              <label className="flex cursor-pointer items-center gap-1.5 text-sm"><RadioGroupItem value="sim" /> Sim</label>
-                              <label className="flex cursor-pointer items-center gap-1.5 text-sm"><RadioGroupItem value="nao" /> Não</label>
-                            </RadioGroup>
-                          </div>
-                          <div>
-                            <label className="text-xs font-medium">Houve afastamento?</label>
-                            <RadioGroup
-                              value={acidenteAfastamento === null ? "" : acidenteAfastamento ? "sim" : "nao"}
-                              onValueChange={(v) => setAcidenteAfastamento(v === "sim" ? true : v === "nao" ? false : null)}
-                              className="flex gap-3 pt-1"
-                            >
-                              <label className="flex cursor-pointer items-center gap-1.5 text-sm"><RadioGroupItem value="sim" /> Sim</label>
-                              <label className="flex cursor-pointer items-center gap-1.5 text-sm"><RadioGroupItem value="nao" /> Não</label>
-                            </RadioGroup>
-                          </div>
-                          <div>
-                            <label className="text-xs font-medium">Dias iniciais de afastamento</label>
-                            <Input type="number" min={0} max={3650} value={acidenteDiasAfast} onChange={(e) => setAcidenteDiasAfast(e.target.value)} disabled={acidenteAfastamento !== true} />
-                          </div>
+                          <FormField
+                            control={form.control}
+                            name="acidente_atendimento_medico"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs font-medium">Houve atendimento médico?</FormLabel>
+                                <FormControl>
+                                  <RadioGroup
+                                    value={acidenteAtendMedico === null ? "" : acidenteAtendMedico ? "sim" : "nao"}
+                                    onValueChange={(v) => {
+                                      const val = v === "sim" ? true : v === "nao" ? false : null;
+                                      setAcidenteAtendMedico(val);
+                                      field.onChange(val);
+                                    }}
+                                    className="flex gap-3 pt-1"
+                                  >
+                                    <label className="flex cursor-pointer items-center gap-1.5 text-sm"><RadioGroupItem value="sim" /> Sim</label>
+                                    <label className="flex cursor-pointer items-center gap-1.5 text-sm"><RadioGroupItem value="nao" /> Não</label>
+                                  </RadioGroup>
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="acidente_houve_afastamento"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs font-medium">Houve afastamento?</FormLabel>
+                                <FormControl>
+                                  <RadioGroup
+                                    value={acidenteAfastamento === null ? "" : acidenteAfastamento ? "sim" : "nao"}
+                                    onValueChange={(v) => {
+                                      const val = v === "sim" ? true : v === "nao" ? false : null;
+                                      setAcidenteAfastamento(val);
+                                      field.onChange(val);
+                                    }}
+                                    className="flex gap-3 pt-1"
+                                  >
+                                    <label className="flex cursor-pointer items-center gap-1.5 text-sm"><RadioGroupItem value="sim" /> Sim</label>
+                                    <label className="flex cursor-pointer items-center gap-1.5 text-sm"><RadioGroupItem value="nao" /> Não</label>
+                                  </RadioGroup>
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="acidente_dias_afastamento_inicial"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs font-medium">Dias iniciais de afastamento</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number" 
+                                    min={0} 
+                                    max={3650} 
+                                    {...field}
+                                    value={acidenteDiasAfast} 
+                                    onChange={(e) => {
+                                      setAcidenteDiasAfast(e.target.value);
+                                      field.onChange(e.target.value.trim() ? Number(e.target.value) : null);
+                                    }} 
+                                    disabled={acidenteAfastamento !== true} 
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
                         </div>
                         <div className="mt-3 grid gap-3 md:grid-cols-2">
-                          <div>
-                            <label className="text-xs font-medium">CAT emitida?</label>
-                            <RadioGroup
-                              value={acidenteCatEmitida === null ? "" : acidenteCatEmitida ? "sim" : "nao"}
-                              onValueChange={(v) => setAcidenteCatEmitida(v === "sim" ? true : v === "nao" ? false : null)}
-                              className="flex gap-3 pt-1"
-                            >
-                              <label className="flex cursor-pointer items-center gap-1.5 text-sm"><RadioGroupItem value="sim" /> Sim</label>
-                              <label className="flex cursor-pointer items-center gap-1.5 text-sm"><RadioGroupItem value="nao" /> Não</label>
-                            </RadioGroup>
-                          </div>
-                          <div>
-                            <label className="text-xs font-medium">Observações</label>
-                            <Textarea rows={2} maxLength={2000} value={acidenteObs} onChange={(e) => setAcidenteObs(e.target.value)} />
-                          </div>
+                          <FormField
+                            control={form.control}
+                            name="acidente_cat_emitida"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs font-medium">CAT emitida?</FormLabel>
+                                <FormControl>
+                                  <RadioGroup
+                                    value={acidenteCatEmitida === null ? "" : acidenteCatEmitida ? "sim" : "nao"}
+                                    onValueChange={(v) => {
+                                      const val = v === "sim" ? true : v === "nao" ? false : null;
+                                      setAcidenteCatEmitida(val);
+                                      field.onChange(val);
+                                    }}
+                                    className="flex gap-3 pt-1"
+                                  >
+                                    <label className="flex cursor-pointer items-center gap-1.5 text-sm"><RadioGroupItem value="sim" /> Sim</label>
+                                    <label className="flex cursor-pointer items-center gap-1.5 text-sm"><RadioGroupItem value="nao" /> Não</label>
+                                  </RadioGroup>
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="acidente_observacoes"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs font-medium">Observações</FormLabel>
+                                <FormControl>
+                                  <Textarea 
+                                    rows={2} 
+                                    maxLength={2000} 
+                                    {...field}
+                                    value={acidenteObs} 
+                                    onChange={(e) => {
+                                      setAcidenteObs(e.target.value);
+                                      field.onChange(e.target.value);
+                                    }} 
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
                         </div>
                       </div>
                     )}
-
 
 
                     <div className="mt-4">

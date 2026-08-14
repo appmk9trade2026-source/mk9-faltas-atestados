@@ -838,6 +838,7 @@ const deleteSchema = z.object({
   id: uuid,
   categoria_motivo: z.string().min(1),
   motivo: z.string().min(1),
+  is_error_manual: z.boolean().optional(),
 });
 
 export const deleteAusencia = createServerFn({ method: "POST" })
@@ -868,7 +869,8 @@ export const deleteAusencia = createServerFn({ method: "POST" })
     const { data: res, error: rpcErr } = await context.supabase.rpc("excluir_ausencia_segura" as any, {
       p_ausencia_id: data.id,
       p_categoria_motivo: data.categoria_motivo,
-      p_motivo: data.motivo
+      p_motivo: data.motivo,
+      p_is_error_manual: data.is_error_manual ?? null
     });
 
     if (rpcErr) {
