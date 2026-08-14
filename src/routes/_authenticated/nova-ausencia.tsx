@@ -1341,11 +1341,11 @@ function NovaAusenciaPage() {
         } catch (err) {
           // Compensação de storage para edição
           if (arquivo_url) {
-            console.warn(`[P0-ORPHAN-PREVENTION] Falha na edição. Tentando remover arquivo novo: ${arquivo_url}`);
+            console.warn(`[P0-ORPHAN-PREVENTION] Falha na edição. Tentando remover arquivo via Client: ${arquivo_url}`);
             try {
               await supabase.storage.from(BUCKET_ATESTADOS).remove([arquivo_url]);
             } catch (storageErr) {
-              console.error("[P0-ORPHAN-PREVENTION] Falha ao remover arquivo na edição:", storageErr);
+              console.error("[P0-ORPHAN-PREVENTION] Falha ao remover arquivo na edição via Client:", storageErr);
             }
           }
           throw err;
