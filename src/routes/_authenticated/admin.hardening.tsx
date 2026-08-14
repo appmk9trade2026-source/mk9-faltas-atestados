@@ -584,6 +584,11 @@ function DocumentacaoTab() {
         "Painel /inteligencia/governanca consolida SLA, backlog, qualidade e auditoria com export CSV/XLSX/PDF.",
       ],
     },
+    {
+      titulo: "Infraestrutura Crítica",
+      itens: [
+        "A infraestrutura de conexão WhatsApp e a instância canônica axh_vd84gltv foram preservadas integralmente conforme solicitado.",
+      ],
   ];
 
   return (
