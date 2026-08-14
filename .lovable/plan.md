@@ -9,7 +9,7 @@ Este plano visa realizar o mapeamento e classificação dos 90 objetos órfãos 
 
 ## 2. Análise de Padrões e Correlação
 - Analisar os paths dos objetos em busca de IDs de ausência ou protocolos.
-- Realizar correlação temporal entre o `created_at` do storage e o `criado_at` (ou ID incremental) das ausências.
+- Realizar correlação temporal entre o `created_at` do storage e o `id` das ausências.
 - Verificar logs de auditoria (`public.audit_logs`) em busca de eventos de upload falhos ou desconectados.
 
 ## 3. Classificação de Confiança
@@ -21,9 +21,9 @@ Classificar cada objeto conforme a matriz:
 - **E (Cancelados):** Referente a ausências já excluídas/canceladas.
 
 ## 4. Entrega
-- Gerar um relatório detalhado (JSON ou Markdown interno) com a matriz de reconciliação.
+- Gerar um relatório detalhado (Markdown interno) com a matriz de reconciliação.
 - Não executar nenhum `UPDATE` ou `DELETE`.
 - Manter o redirecionamento da `home` intacto conforme Guardrail P0.
 
 ---
-**Status:** Mapeamento Forense Iniciado (Aguardando Snapshot)
+**Status:** Mapeamento Forense Iniciado
