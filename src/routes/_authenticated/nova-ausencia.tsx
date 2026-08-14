@@ -665,7 +665,7 @@ function NovaAusenciaPage() {
         acidente_descricao: (ausencia as any).acidente_descricao ?? "",
         acidente_atendimento_medico: (ausencia as any).acidente_atendimento_medico ?? null,
         acidente_houve_afastamento: (ausencia as any).acidente_houve_afastamento ?? null,
-        acidente_dias_afastamento_inicial: (ausencia as any).acidente_dias_afastamento_inicial ?? "",
+        acidente_dias_afastamento_inicial: (ausencia as any).acidente_dias_afastamento_inicial != null ? String((ausencia as any).acidente_dias_afastamento_inicial) : "",
         acidente_cat_emitida: (ausencia as any).acidente_cat_emitida ?? null,
         acidente_observacoes: (ausencia as any).acidente_observacoes ?? "",
       });
