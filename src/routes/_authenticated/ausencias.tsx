@@ -860,8 +860,8 @@ function AusenciasPage() {
                     {formatBRDate(row.data_inicio)} — {formatBRDate(row.data_fim)}
                   </TableCell>
                   <TableCell className="text-center">{row.dias}</TableCell>
-                  <TableCell>
-                    <StatusBadge status={row.status} />
+                   <TableCell>
+                    <StatusBadge status={row.status} retificada={row.retificada} />
                   </TableCell>
                   <TableCell>
                     <ProcessamentoBadge status={row.status_processamento} />
