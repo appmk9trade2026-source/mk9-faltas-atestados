@@ -1470,14 +1470,20 @@ function AusenciasPage() {
             </div>
           </div>
 
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              setExcluirCategoria("");
-              setExcluirMotivo("");
-              setExcluirConfirmado(false);
-            }}>
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+            <Button
+              variant="outline"
+              type="button"
+              disabled={excluirMut.isPending}
+              onClick={() => {
+                setConfirmExcluir(null);
+                setExcluirCategoria("");
+                setExcluirMotivo("");
+                setExcluirConfirmado(false);
+              }}
+            >
               Cancelar
-            </AlertDialogCancel>
+            </Button>
             <Button
               variant="destructive"
               type="button"
@@ -1499,7 +1505,7 @@ function AusenciasPage() {
             >
               {excluirMut.isPending ? "Excluindo..." : "Excluir lançamento"}
             </Button>
-          </AlertDialogFooter>
+          </div>
         </AlertDialogContent>
       </AlertDialog>
     </AppShell>
