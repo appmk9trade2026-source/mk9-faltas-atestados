@@ -230,7 +230,7 @@ const schema = z
     acidente_descricao: z.string().trim().max(2000).optional().or(z.literal("")),
     acidente_atendimento_medico: z.boolean().optional().nullable(),
     acidente_houve_afastamento: z.boolean().optional().nullable(),
-    acidente_dias_afastamento_inicial: z.string().optional().or(z.literal("")),
+    acidente_dias_afastamento_inicial: z.union([z.string(), z.number()]).optional().nullable(),
     acidente_cat_emitida: z.boolean().optional().nullable(),
     acidente_observacoes: z.string().trim().max(2000).optional().or(z.literal("")),
   })
