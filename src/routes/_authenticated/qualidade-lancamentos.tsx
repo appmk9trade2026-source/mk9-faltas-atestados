@@ -31,10 +31,22 @@ function QualidadeLancamentosPage() {
   const [dataInicio, setDataInicio] = useState(format(subDays(new Date(), 30), "yyyy-MM-dd"));
   const [dataFim, setDataFim] = useState(format(new Date(), "yyyy-MM-dd"));
 
-  const { data } = useSuspenseQuery({
+  const { data, isLoading, error } = useSuspenseQuery({
     queryKey: ["relatorio-qualidade", dataInicio, dataFim],
     queryFn: () => getRelatorioQualidade({ data: { dataInicio, dataFim } }),
   });
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[50vh] gap-4">
+        <TrendingDown className="h-12 w-12 text-destructive opacity-20" />
+        <h2 className="text-xl font-semibold">Erro ao carregar indicadores</h2>
+        <p className="text-muted-foreground text-center max-w-md">
+          Não foi possível carregar os indicadores de qualidade para o período selecionado.
+        </p>
+      </div>
+    );
+  }
 
   const totals = (data || []).reduce(
     (acc: { lancamentos: number; correcoes: number }, curr: QualidadeLancamentosRow) => ({
@@ -44,9 +56,11 @@ function QualidadeLancamentosPage() {
     { lancamentos: 0, correcoes: 0 }
   );
 
-  const taxaAcertoGeral = totals.lancamentos > 0 
+  const hasData = totals.lancamentos > 0;
+  const taxaAcertoGeral = hasData
     ? ((totals.lancamentos - totals.correcoes) / totals.lancamentos) * 100 
-    : 0;
+    : null;
+
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -82,8 +96,11 @@ function QualidadeLancamentosPage() {
             <TrendingDown className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{taxaAcertoGeral.toFixed(1)}%</div>
-            <Progress value={taxaAcertoGeral} className="mt-2 h-2" />
+            <div className="text-2xl font-bold">
+              {taxaAcertoGeral !== null ? `${taxaAcertoGeral.toFixed(1)}%` : "N/A"}
+            </div>
+            <Progress value={taxaAcertoGeral || 0} className="mt-2 h-2" />
+
           </CardContent>
         </Card>
         <Card>
@@ -131,29 +148,38 @@ function QualidadeLancamentosPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(data as QualidadeLancamentosRow[])?.map((row, i) => (
-                  <TableRow key={`${row.supervisor_id}-${row.projeto_id}-${i}`}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        {row.supervisor_nome}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Target className="h-3 w-3 text-muted-foreground" />
-                        {row.projeto_nome}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">{row.total_lancamentos}</TableCell>
-                    <TableCell className="text-right">{row.total_correcoes}</TableCell>
-                    <TableCell className="text-right">
-                      <Badge variant={Number(row.taxa_acerto) > 90 ? "default" : "destructive"}>
-                        {Number(row.taxa_acerto).toFixed(1)}%
-                      </Badge>
+                {(!data || data.length === 0) ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                      Nenhum lançamento encontrado no período selecionado.
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  (data as QualidadeLancamentosRow[])?.map((row, i) => (
+                    <TableRow key={`${row.supervisor_id}-${row.projeto_id}-${i}`}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          {row.supervisor_nome}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Target className="h-3 w-3 text-muted-foreground" />
+                          {row.projeto_nome}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">{row.total_lancamentos}</TableCell>
+                      <TableCell className="text-right">{row.total_correcoes}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant={Number(row.taxa_acerto) > 90 ? "default" : "destructive"}>
+                          {Number(row.taxa_acerto).toFixed(1)}%
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+
               </TableBody>
             </Table>
           </CardContent>
