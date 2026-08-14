@@ -5170,51 +5170,30 @@ export type Database = {
           total_exec_time_ms: number
         }[]
       }
-      detectar_conflitos_ausencia:
-        | {
-            Args: {
-              _colaborador_id: string
-              _data_fim: string
-              _data_inicio: string
-              _empresa_id: string
-              _manual_matricula: string
-              _origem_registro: string
-              _tipo: string
-            }
-            Returns: {
-              data_fim: string
-              data_inicio: string
-              id: string
-              protocolo: string
-              registrado_em: string
-              registrado_por: string
-              registrado_por_nome: string
-              status: string
-              tipo: string
-            }[]
-          }
-        | {
-            Args: {
-              _colaborador_id: string
-              _data_fim: string
-              _data_inicio: string
-              _empresa_id?: string
-              _manual_matricula?: string
-              _origem_registro?: string
-              _tipo: Database["public"]["Enums"]["tipo_ausencia"]
-            }
-            Returns: {
-              data_fim: string
-              data_inicio: string
-              id: string
-              protocolo: string
-              registrado_em: string
-              registrado_por: string
-              registrado_por_nome: string
-              status: Database["public"]["Enums"]["status_ausencia"]
-              tipo: Database["public"]["Enums"]["tipo_ausencia"]
-            }[]
-          }
+      detectar_conflitos_ausencia: {
+        Args: {
+          _colaborador_id: string
+          _data_fim: string
+          _data_inicio: string
+          _empresa_id: string
+          _manual_matricula: string
+          _origem_registro: string
+          _projeto_id?: string
+          _supervisor_id?: string
+          _tipo: string
+        }
+        Returns: {
+          data_fim: string
+          data_inicio: string
+          id: string
+          protocolo: string
+          registrado_em: string
+          registrado_por: string
+          registrado_por_nome: string
+          status: string
+          tipo: string
+        }[]
+      }
       diagnose_projetos_duplicados: { Args: never; Returns: Json }
       diagnosticar_integridade_ausencias: {
         Args: never

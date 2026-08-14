@@ -164,7 +164,9 @@ async function checkConflitosSeguro(
     _tipo: data.tipo,
     _origem_registro: data.origem_registro,
     _manual_matricula: data.manual_matricula || null,
-    _empresa_id: data.empresa_id || null
+    _empresa_id: data.empresa_id || null,
+    _projeto_id: null,
+    _supervisor_id: null
   });
 
   if (error) throw error;
@@ -1192,15 +1194,15 @@ export const checkConflitosAusencia = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const { data: conflitos, error } = await context.supabase.rpc("detectar_conflitos_ausencia", {
-      _colaborador_id: data.colaborador_id || null,
+      _colaborador_id: data.colaborador_id || (null as any),
       _data_inicio: data.data_inicio,
       _data_fim: data.data_fim,
-      _tipo: data.tipo as any,
+      _tipo: data.tipo,
       _origem_registro: data.origem_registro,
-      _manual_matricula: data.manual_matricula || null,
-      _empresa_id: data.empresa_id || null,
-      _projeto_id: data.projeto_id || null,
-      _supervisor_id: (data as any)._supervisor_id || null,
+      _manual_matricula: data.manual_matricula || (null as any),
+      _empresa_id: data.empresa_id || (null as any),
+      _projeto_id: data.projeto_id || (null as any),
+      _supervisor_id: (data as any)._supervisor_id || (null as any),
     } as any);
 
 
