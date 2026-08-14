@@ -505,6 +505,22 @@ export const createAusencia = createServerFn({ method: "POST" })
 
 
 
+    // 6. Hardening P0: Validação Antecipada de Conflito (Ignora EXCLUIDO/CANCELADO)
+    const conflitos = await checkConflitosSeguro(context.supabase, {
+      colaborador_id: isManual ? undefined : data.colaborador_id,
+      data_inicio: data.data_inicio,
+      data_fim: data.data_inicio, // A data_fim real é calculada pela RPC no banco, usamos a de início para o gate
+      tipo: tipoBase,
+      origem_registro: isManual ? "MANUAL" : "AUTOMATICO",
+      manual_matricula: isManual ? (data as any).manual_matricula : undefined,
+      empresa_id: gate.empresaId
+    });
+
+    if (conflitos.length > 0) {
+      const conf = conflitos[0];
+      throw new Error(`CONFLICT: Já existe um lançamento de ${conf.tipo} para este período (Protocolo: ${conf.protocolo}).`);
+    }
+
     // 7. mutação — RLS + trigger de supervisor continuam ativos como 2ª camada
     //
     // MANUAL: o colaborador informado à mão é persistido (find-or-create por
@@ -514,6 +530,7 @@ export const createAusencia = createServerFn({ method: "POST" })
     let protocolo: string | null = null;
     let colaboradorId: string | null = null;
     let colaboradorCriado = false;
+
 
     if (isManual) {
       // Determinar o supervisor responsável:
