@@ -197,11 +197,23 @@ function CentralProcessamentoPage() {
 
   const iniciarMut = useMutation({
     mutationFn: (id: string) => iniciarFn({ data: { ausencia_id: id } }),
-    onSuccess: () => {
+    onSuccess: (_, initiatedId) => {
       toast.success("Processamento iniciado.");
+      
+      // Se estivermos no drawer, atualizar o registro selecionado para refletir o status EM_PROCESSAMENTO
+      if (registroSelecionado && registroSelecionado.id === initiatedId) {
+        setRegistroSelecionado({
+          ...registroSelecionado,
+          status_processamento: "EM_PROCESSAMENTO",
+          responsavel_processamento_id: user?.id || null,
+          responsavel_processamento_nome: user?.user_metadata?.nome || "Você"
+        });
+      }
+
       queryClient.invalidateQueries({ queryKey: ["processamento"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
     },
+
     onError: (e: any) => toast.error(e.message)
   });
 
@@ -223,21 +235,59 @@ function CentralProcessamentoPage() {
 
   const concluirMut = useMutation({
     mutationFn: (id: string) => concluirFn({ data: { ausencia_id: id } }),
-    onSuccess: () => {
+    onSuccess: (_, concludedId) => {
       toast.success("Processamento concluído.");
+      
+      // Auto-navegação para o próximo pendente do mesmo grupo
+      if (registroSelecionado && registroSelecionado.id === concludedId) {
+        const colabKey = registroSelecionado.colaborador_id || `m-${registroSelecionado.colaborador_matricula}`;
+        const projKey = registroSelecionado.projeto_id || "sem-projeto";
+        const chave = `${colabKey}|${projKey}`;
+        
+        const restantes = (ausenciasQ.data || []).filter(a => {
+          const aColabKey = a.colaborador_id || `m-${a.colaborador_matricula}`;
+          const aProjKey = a.projeto_id || "sem-projeto";
+          return `${aColabKey}|${aProjKey}` === chave && 
+                 a.status_processamento !== "PROCESSADO" && 
+                 a.id !== concludedId;
+        });
+
+        if (restantes.length > 0) {
+          const proximo = [...restantes].sort((a, b) => 
+            new Date(a.registrado_em).getTime() - new Date(b.registrado_em).getTime()
+          )[0];
+          setRegistroSelecionado(proximo);
+        } else {
+          setDetalhesAbertos(false);
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ["processamento"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
     },
+
     onError: (e: any) => toast.error(e.message)
   });
 
   const reatribuirMut = useMutation({
     mutationFn: (payload: { id: string, responsavel_anterior_id: string }) => 
       reatribuirFn({ data: { ausencia_id: payload.id, responsavel_anterior_id: payload.responsavel_anterior_id } }),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast.success("Processamento reatribuído com sucesso.");
+      
+      // Se estivermos no drawer, atualizar o registro selecionado
+      if (registroSelecionado && registroSelecionado.id === variables.id) {
+        setRegistroSelecionado({
+          ...registroSelecionado,
+          status_processamento: "EM_PROCESSAMENTO",
+          responsavel_processamento_id: user?.id || null,
+          responsavel_processamento_nome: user?.user_metadata?.nome || "Você"
+        });
+      }
+      
       queryClient.invalidateQueries({ queryKey: ["processamento"] });
     },
+
     onError: (e: any) => toast.error(e.message)
   });
 
@@ -483,6 +533,7 @@ function CentralProcessamentoPage() {
                           const aColabKey = a.colaborador_id || `m-${a.colaborador_matricula}`;
                           const aProjKey = a.projeto_id || "sem-projeto";
                           return `${aColabKey}|${aProjKey}` === chave && a.status_processamento !== "PROCESSADO";
+
                         });
                         return `${grupo?.length || 1} pendências`;
                       })()}

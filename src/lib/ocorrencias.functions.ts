@@ -165,6 +165,9 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
     }
 
     // 4. Iniciar transação para criação da ocorrência e ausência vinculada
+    try {
+
+
     const { data: result, error: transError } = await context.supabase.rpc("criar_ocorrencia_ponto_ambev", {
       _empresa_id: data.empresa_id,
       _projeto_id: data.projeto_id,
@@ -217,9 +220,30 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
     } as any);
 
     return newOcorrencia;
+    } catch (err) {
 
+      // Compensação segura para evitar órfãos em projetos AMBEV
+      if (data.arquivo_url) {
+        console.warn(`[P0-ORPHAN-PREVENTION] Falha na criação da ocorrência. Tentando remover objeto órfão: ${data.arquivo_url}`);
+        try {
+          // Extrair o path relativo se necessário (a URL pode ser completa ou relativa)
+          // Na maioria das vezes no storage.from().remove() passamos o path relativo.
+          const urlParts = data.arquivo_url.split('/');
+          const fileName = urlParts[urlParts.length - 1];
+          // Se for path completo do bucket
+          const relativePath = data.arquivo_url.includes('atestados/') 
+            ? data.arquivo_url.split('atestados/')[1] 
+            : data.arquivo_url;
 
+          await context.supabase.storage.from("atestados").remove([relativePath]);
+        } catch (storageErr) {
+          console.error("[P0-ORPHAN-PREVENTION] Falha ao remover objeto órfão na ocorrência:", storageErr);
+        }
+      }
+      throw err;
+    }
   });
+
 
 /** Aprova ou reprova uma ocorrência (RH/Coordenador apenas) */
 export const processarOcorrencia = createServerFn({ method: "POST" })
