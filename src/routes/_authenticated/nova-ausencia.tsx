@@ -1353,8 +1353,9 @@ function NovaAusenciaPage() {
         }
       }
 
-      try {
+        console.log(`[P0-DIAGNOSTIC] Iniciando createAusencia via server function. Correlation: ${finalCorrelationId}`);
         const res = await createFn({ data: { ...payload, correlation_id: finalCorrelationId } });
+        console.log(`[P0-DIAGNOSTIC] createAusencia sucesso:`, res);
         return {
           manual: !!values.modo_manual,
           colaboradorCriado: !!(res as { colaborador_criado?: boolean } | undefined)?.colaborador_criado,
