@@ -53,7 +53,7 @@ const commonPayloadSchema = z.object({
   acidente_descricao: z.string().trim().max(2000).nullable().optional(),
   acidente_atendimento_medico: z.boolean().nullable().optional(),
   acidente_houve_afastamento: z.boolean().nullable().optional(),
-  acidente_dias_afastamento_inicial: z.number().int().min(0).max(3650).nullable().optional(),
+  acidente_dias_afastamento_inicial: z.union([z.string(), z.number()]).nullable().optional(),
   acidente_cat_emitida: z.boolean().nullable().optional(),
   acidente_observacoes: z.string().trim().max(2000).nullable().optional(),
 });
