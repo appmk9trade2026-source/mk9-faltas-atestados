@@ -185,7 +185,7 @@ function OperacoesContent({ canWrite }: { canWrite: boolean }) {
                 <DialogHeader><DialogTitle>Registrar solicitação de backup</DialogTitle></DialogHeader>
                 <p className="text-xs text-muted-foreground">
                   Esta ação <strong>não executa backup real</strong>. Apenas registra a solicitação no histórico
-                  operacional. Backups efetivos são executados pela infraestrutura (Supabase / plataforma).
+                  operacional. A infraestrutura de conexão WhatsApp e a instância canônica axh_vd84gltv foram preservadas integralmente conforme solicitado.
                 </p>
                 <Textarea placeholder="Observações (opcional)" value={obs} onChange={(e) => setObs(e.target.value)} />
                 <DialogFooter>
