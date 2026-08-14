@@ -1244,10 +1244,15 @@ function NovaAusenciaPage() {
         const stamp = Date.now();
         const rand = crypto.randomUUID();
         const path = `ausencias/${values.colaborador_id || "manual"}/${stamp}-${rand}.${ext}`;
+        console.log(`[P0-DIAGNOSTIC] Iniciando upload para path: ${path}`);
         const { error: upErr } = await supabase.storage
           .from(BUCKET_ATESTADOS)
           .upload(path, file, { contentType: file.type, upsert: false });
-        if (upErr) throw upErr;
+        if (upErr) {
+          console.error(`[P0-DIAGNOSTIC] Falha no upload:`, upErr);
+          throw upErr;
+        }
+        console.log(`[P0-DIAGNOSTIC] Upload concluído com sucesso: ${path}`);
         arquivo_url = path;
         arquivo_nome = file.name;
         arquivo_mime = file.type;
