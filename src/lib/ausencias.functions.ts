@@ -304,9 +304,19 @@ export const createAusencia = createServerFn({ method: "POST" })
     }
   })
   .handler(async ({ data, context }) => {
-    const isManual = data.origem_registro === "MANUAL";
-    const request = getRequest();
-    const meta = resolveOperationMetadata(request);
+    const correlationId = (globalThis as any).__lastCorrelationId || "no-correlation-id";
+    try {
+      const isManual = data.origem_registro === "MANUAL";
+      const request = getRequest();
+      const meta = resolveOperationMetadata(request);
+
+
+
+
+
+
+
+
 
     // ETAPA 10 e 11 — Validação Server-side P0 de Integridade da Matrícula
     // Impede que matrícula A seja vinculada ao colaborador_id da matrícula B.
@@ -571,14 +581,29 @@ export const createAusencia = createServerFn({ method: "POST" })
       userId: gate.userId,
     });
 
-    return {
-      id: rowId,
-      protocolo,
-      colaborador_id: colaboradorId,
-      colaborador_criado: colaboradorCriado,
-      correlation_id: gate.correlationId,
-    };
+      return {
+        id: rowId,
+        protocolo,
+        colaborador_id: colaboradorId,
+        colaborador_criado: colaboradorCriado,
+        correlation_id: gate.correlationId,
+      };
+    } catch (err) {
+      // ETAPA 7 — HARDENING CONTRA NOVOS ÓRFÃOS
+      // Se houver arquivo_url e a criação da ausência falhou, tentamos remover o objeto órfão.
+      if (data.arquivo_url) {
+        console.warn(`[P0-ORPHAN-PREVENTION] Falha na criação da ausência. Tentando remover objeto órfão: ${data.arquivo_url}`);
+        try {
+          await context.supabase.storage.from("atestados").remove([data.arquivo_url]);
+        } catch (storageErr) {
+          console.error("[P0-ORPHAN-PREVENTION] Falha ao remover objeto órfão:", storageErr);
+        }
+      }
+      throw err;
+    }
   });
+
+
 
 
 // ==================== UPDATE ====================

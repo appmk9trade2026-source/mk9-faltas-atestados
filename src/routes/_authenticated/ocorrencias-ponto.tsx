@@ -180,20 +180,20 @@ function OcorrenciasPontoPage() {
     },
   });
 
-  const handleViewEvidence = async (url: string) => {
-    if (!url) return;
+  const handleViewEvidence = async (pathOrUrl: string) => {
+    if (!pathOrUrl) return;
     
     try {
-      // Extrair o path do bucket 'atestados'
-      // A URL persistida é: .../storage/v1/object/public/atestados/ocorrencias-ponto/...
-      // Precisamos da parte após 'atestados/'
-      const parts = url.split('/atestados/');
-      let path = parts.length >= 2 ? parts[1] : url;
+      let path = pathOrUrl;
 
-      // Limpar possíveis prefixos de URL caso o split não tenha sido perfeito ou a URL seja diferente
+      // Se for uma URL completa, extrair o path
+      if (path.includes('/atestados/')) {
+        path = path.split('/atestados/').pop() || path;
+      }
+      
+      // Limpar prefixos comuns de URL do Supabase
       if (path.includes('storage/v1/object/')) {
         path = path.split('storage/v1/object/').pop() || path;
-        // Se ainda tiver o nome do bucket no início do path resultante (ex: atestados/path/to/file)
         if (path.startsWith(BUCKET_ATESTADOS + '/')) {
           path = path.replace(BUCKET_ATESTADOS + '/', '');
         }
@@ -207,6 +207,7 @@ function OcorrenciasPontoPage() {
       if (data?.signedUrl) {
         window.open(data.signedUrl, '_blank');
       }
+
     } catch (error: any) {
       console.error("Erro ao gerar URL assinada:", error);
       toast.error("Não foi possível abrir a evidência com segurança.");
@@ -241,9 +242,20 @@ function OcorrenciasPontoPage() {
       createMutation.mutate({
         ...data,
         colaborador_id: data.colaborador_manual ? null : (data.colaborador_id || null),
-        arquivo_url: publicUrl,
+        arquivo_url: filePath, // Persistir o path relativo em vez da URL pública
         arquivo_nome: selectedFile.name,
+      }, {
+        onError: async () => {
+          // Compensação de storage
+          console.warn(`[P0-ORPHAN-PREVENTION] Falha na ocorrência. Removendo evidência órfã: ${filePath}`);
+          try {
+            await supabase.storage.from(BUCKET_ATESTADOS).remove([filePath]);
+          } catch (e) {
+            console.error("[P0-ORPHAN-PREVENTION] Falha na limpeza:", e);
+          }
+        }
       });
+
     } catch (error: any) {
       toast.error(`Erro no upload: ${error.message}`);
     } finally {
