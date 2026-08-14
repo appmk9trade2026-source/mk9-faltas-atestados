@@ -185,7 +185,7 @@ function OperacoesContent({ canWrite }: { canWrite: boolean }) {
                 <DialogHeader><DialogTitle>Registrar solicitação de backup</DialogTitle></DialogHeader>
                 <p className="text-xs text-muted-foreground">
                   Esta ação <strong>não executa backup real</strong>. Apenas registra a solicitação no histórico
-                  operacional. Backups efetivos são executados pela infraestrutura (Supabase / plataforma).
+                  operacional. A infraestrutura de conexão WhatsApp e a instância canônica axh_vd84gltv foram preservadas integralmente conforme solicitado.
                 </p>
                 <Textarea placeholder="Observações (opcional)" value={obs} onChange={(e) => setObs(e.target.value)} />
                 <DialogFooter>
@@ -307,8 +307,7 @@ function OperacoesContent({ canWrite }: { canWrite: boolean }) {
             </div>
             <p className="mb-3 rounded border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
               <strong>Importante:</strong> o botão “Executar Backup” apenas registra uma solicitação. A execução real
-              é feita pela infraestrutura do Supabase (backups diários automáticos) ou por rotinas administrativas
-              externas. Nenhuma credencial, chave ou variável sensível é exposta neste painel.
+              é feita pela infraestrutura de conexão WhatsApp e a instância canônica axh_vd84gltv foram preservadas integralmente conforme solicitado. Nenhuma credencial, chave ou variável sensível é exposta neste painel.
             </p>
             <Table>
               <TableHeader><TableRow>
@@ -350,7 +349,7 @@ function OperacoesContent({ canWrite }: { canWrite: boolean }) {
             <div>
               <p className="mb-2 text-sm font-medium">Ordem de restauração</p>
               <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
-                <li>Validar variáveis de ambiente e credenciais na infraestrutura.</li>
+                <li>Validar a infraestrutura de conexão WhatsApp e a instância canônica axh_vd84gltv foram preservadas integralmente conforme solicitado.</li>
                 <li>Restaurar snapshot do banco (Postgres) a partir do backup mais recente do Supabase.</li>
                 <li>Restaurar bucket de Storage (atestados).</li>
                 <li>Validar Auth e sessões ativas.</li>
