@@ -509,12 +509,13 @@ export const createAusencia = createServerFn({ method: "POST" })
     const conflitos = await checkConflitosSeguro(context.supabase, {
       colaborador_id: isManual ? undefined : data.colaborador_id,
       data_inicio: data.data_inicio,
-      data_fim: data.data_inicio, // A data_fim real é calculada pela RPC no banco, usamos a de início para o gate
+      data_fim: data.data_inicio,
       tipo: tipoBase,
       origem_registro: isManual ? "MANUAL" : "AUTOMATICO",
       manual_matricula: isManual ? (data as any).manual_matricula || undefined : undefined,
-      empresa_id: gate.empresaId
+      empresa_id: gate.empresaId || undefined
     });
+
 
 
     if (conflitos.length > 0) {
