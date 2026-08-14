@@ -39,4 +39,3 @@ export const getRelatorioQualidade = createServerFn({ method: "GET" })
 
     return (result as any) as QualidadeLancamentosRow[];
   });
-EOF

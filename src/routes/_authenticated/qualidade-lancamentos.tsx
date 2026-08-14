@@ -37,7 +37,7 @@ function QualidadeLancamentosPage() {
   });
 
   const totals = (data || []).reduce(
-    (acc, curr) => ({
+    (acc: { lancamentos: number; correcoes: number }, curr: QualidadeLancamentosRow) => ({
       lancamentos: acc.lancamentos + Number(curr.total_lancamentos),
       correcoes: acc.correcoes + Number(curr.total_correcoes),
     }),
@@ -162,4 +162,3 @@ function QualidadeLancamentosPage() {
     </div>
   );
 }
-EOF
