@@ -1163,7 +1163,7 @@ function NovaAusenciaPage() {
           acidente_descricao: acidenteDescricao || null,
           acidente_atendimento_medico: acidenteAtendMedico ?? null,
           acidente_houve_afastamento: acidenteAfastamento ?? null,
-          acidente_dias_afastamento_inicial: parseInt(String(acidenteDiasAfast)) || 0,
+          acidente_dias_afastamento_inicial: String(acidenteDiasAfast).trim() ? parseInt(String(acidenteDiasAfast)) || 0 : 0,
           acidente_cat_emitida: acidenteCatEmitida ?? null,
           acidente_observacoes: acidenteObs || null,
         } : {}),
