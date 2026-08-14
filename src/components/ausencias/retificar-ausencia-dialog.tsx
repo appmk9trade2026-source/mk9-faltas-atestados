@@ -379,12 +379,30 @@ export function RetificarAusenciaDialog({
           )}
 
           <div className="space-y-2 sm:col-span-2">
-            <Label>Motivo operacional da retificação</Label>
+            <Label>Motivo da retificação</Label>
+            <Select value={motivoCategoria} onValueChange={setMotivoCategoria} disabled={bloqueadoPorPrazo}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o motivo estruturado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="DATA_PERIODO_INCORRETO">Data/período incorreto</SelectItem>
+                <SelectItem value="TIPO_INCORRETO">Tipo de ausência incorreto</SelectItem>
+                <SelectItem value="ERRO_DIGITACAO_SUPERVISOR">Erro de digitação do supervisor</SelectItem>
+                <SelectItem value="DOCUMENTO_INCORRETO">Documento incorreto</SelectItem>
+                <SelectItem value="DUPLICIDADE">Duplicidade</SelectItem>
+                <SelectItem value="LANCAMENTO_INDEVIDO">Lançamento indevido</SelectItem>
+                <SelectItem value="OUTRO">Outro motivo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2 sm:col-span-2">
+            <Label>Justificativa detalhada</Label>
             <Textarea
               rows={3}
               value={motivoOperacional}
               onChange={(e) => setMotivoOperacional(e.target.value)}
-              placeholder="Ex.: colaborador apresentou atestado médico após o registro da falta."
+              placeholder="Descreva o motivo real da alteração..."
               maxLength={500}
               disabled={bloqueadoPorPrazo}
             />
@@ -393,6 +411,52 @@ export function RetificarAusenciaDialog({
             </p>
           </div>
         </div>
+
+        {mudouAlgo && (
+          <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900/30 dark:bg-blue-900/10">
+            <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-blue-700 dark:text-blue-400">
+              <ShieldCheck className="h-4 w-4" /> Resumo das alterações
+            </h4>
+            <div className="space-y-2">
+              {tipoId !== (ausencia.tipo_ausencia_id ?? "") && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Tipo</span>
+                  <div className="flex items-center gap-2 font-medium">
+                    <span className="line-through opacity-50">{ausencia.tipo_ausencia_nome}</span>
+                    <ArrowRight className="h-3 w-3" />
+                    <span>{tipoSelecionado?.nome}</span>
+                  </div>
+                </div>
+              )}
+              {periodoId !== (ausencia.opcao_periodo_id ?? "") && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Período</span>
+                  <div className="flex items-center gap-2 font-medium">
+                    <span className="line-through opacity-50">{ausencia.opcao_periodo_nome}</span>
+                    <ArrowRight className="h-3 w-3" />
+                    <span>{periodosQ.data?.find(p => p.id === periodoId)?.nome}</span>
+                  </div>
+                </div>
+              )}
+              {dataInicio !== ausencia.data_inicio && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Data inicial</span>
+                  <div className="flex items-center gap-2 font-medium">
+                    <span className="line-through opacity-50">{fmtDate(ausencia.data_inicio)}</span>
+                    <ArrowRight className="h-3 w-3" />
+                    <span>{fmtDate(dataInicio)}</span>
+                  </div>
+                </div>
+              )}
+              {file && (
+                <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">
+                  <span>Novo documento</span>
+                  <span className="font-medium">{file.name}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {(historicoQ.data?.length ?? 0) > 0 && (
           <>
