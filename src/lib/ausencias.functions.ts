@@ -450,7 +450,7 @@ export const createAusencia = createServerFn({ method: "POST" })
         acidente_descricao: data.acidente_descricao?.trim() ?? null,
         acidente_atendimento_medico: data.acidente_atendimento_medico ?? null,
         acidente_houve_afastamento: data.acidente_houve_afastamento ?? null,
-        acidente_dias_afastamento_inicial: data.acidente_dias_afastamento_inicial ?? null,
+        acidente_dias_afastamento_inicial: data.acidente_dias_afastamento_inicial != null ? parseInt(String(data.acidente_dias_afastamento_inicial)) || 0 : null,
         acidente_cat_emitida: data.acidente_cat_emitida ?? null,
         acidente_observacoes: data.acidente_observacoes?.trim() ?? null,
       } : {}),
