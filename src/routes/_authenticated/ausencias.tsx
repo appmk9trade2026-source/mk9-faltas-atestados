@@ -195,42 +195,63 @@ function formatSize(n: number | null | undefined) {
   return `${(n / 1024 / 1024).toFixed(2)} MB`;
 }
 
-function StatusBadge({ status }: { status: StatusAusencia | "SUBSTITUIDA" | "CANCELADO" }) {
-  if (status === "PENDENTE")
+function StatusBadge({ 
+  status, 
+  retificada 
+}: { 
+  status: StatusAusencia | "SUBSTITUIDA" | "CANCELADO",
+  retificada?: boolean | null
+}) {
+  const badge = (() => {
+    if (status === "PENDENTE")
+      return (
+        <Badge
+          variant="secondary"
+          className="border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+        >
+          Pendente
+        </Badge>
+      );
+    if (status === "SUBSTITUIDA")
+      return (
+        <Badge
+          variant="secondary"
+          className="border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300"
+        >
+          Substituída
+        </Badge>
+      );
+    if (status === "CANCELADO")
+      return (
+        <Badge
+          variant="secondary"
+          className="border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300"
+        >
+          Cancelado
+        </Badge>
+      );
     return (
       <Badge
         variant="secondary"
-        className="border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+        className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
       >
-        Pendente
+        Lançado
       </Badge>
     );
-  if (status === "SUBSTITUIDA")
+  })();
+
+  if (retificada) {
     return (
-      <Badge
-        variant="secondary"
-        className="border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300"
-      >
-        Substituída
-      </Badge>
+      <div className="flex flex-col gap-1">
+        {badge}
+        <Badge variant="outline" className="h-4 border-blue-400 text-[9px] text-blue-600 bg-blue-50/50 uppercase">
+          Retificado
+        </Badge>
+      </div>
     );
-  if (status === "CANCELADO")
-    return (
-      <Badge
-        variant="secondary"
-        className="border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300"
-      >
-        Cancelado
-      </Badge>
-    );
-  return (
-    <Badge
-      variant="secondary"
-      className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-    >
-      Lançado
-    </Badge>
-  );
+  }
+
+  return badge;
 }
 
 function ProcessamentoBadge({ status }: { status: StatusProcessamento }) {
