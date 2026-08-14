@@ -1359,18 +1359,21 @@ function NovaAusenciaPage() {
             manual: !!values.modo_manual,
             colaboradorCriado: !!(res as { colaborador_criado?: boolean } | undefined)?.colaborador_criado,
           };
-        } catch (err) {
-          // Compensação de storage para criação
-          if (arquivo_url) {
-            console.warn(`[P0-ORPHAN-PREVENTION] Falha na criação. Tentando remover arquivo: ${arquivo_url}`);
-            try {
-              await supabase.storage.from(BUCKET_ATESTADOS).remove([arquivo_url]);
-            } catch (storageErr) {
-              console.error("[P0-ORPHAN-PREVENTION] Falha ao remover arquivo na criação:", storageErr);
-            }
+      } catch (err) {
+        // Compensação de storage para criação
+        if (arquivo_url) {
+          console.warn(`[P0-ORPHAN-PREVENTION] Falha na criação. Tentando remover arquivo via Client e Server: ${arquivo_url}. Erro: ${err instanceof Error ? err.message : String(err)}`);
+          
+          // Etapa 1: Tentativa síncrona/imediata via cliente (pode falhar se não tiver DELETE policy)
+          try {
+            await supabase.storage.from(BUCKET_ATESTADOS).remove([arquivo_url]);
+            console.log("[P0-ORPHAN-PREVENTION] Remoção via Client solicitada.");
+          } catch (storageErr) {
+            console.error("[P0-ORPHAN-PREVENTION] Falha ao remover arquivo via Client:", storageErr);
           }
-          throw err;
         }
+        throw err;
+      }
       }
 
     },
