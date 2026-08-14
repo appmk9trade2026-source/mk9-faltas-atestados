@@ -186,11 +186,16 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
       throw new Error(`Falha ao protocolar ocorrência: ${transError.message}`);
     }
 
-    if (!result || !result.id) {
+    const newOcorrencia = result as { 
+      id: string; 
+      protocolo: string; 
+      ausencia_id: string; 
+      ausencia_protocolo: string 
+    };
+
+    if (!newOcorrencia || !newOcorrencia.id) {
       throw new Error("Falha ao obter confirmação da criação da ocorrência.");
     }
-
-    const newOcorrencia = result;
 
     // 5. Log de auditoria (feito via supabaseAdmin para garantir privilégio se necessário)
     const obsAuditoria = data.colaborador_manual 
@@ -211,6 +216,7 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
     } as any);
 
     return newOcorrencia;
+
 
   });
 
