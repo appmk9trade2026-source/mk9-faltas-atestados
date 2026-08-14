@@ -168,18 +168,19 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
     const { data: result, error: transError } = await context.supabase.rpc("criar_ocorrencia_ponto_ambev", {
       _empresa_id: data.empresa_id,
       _projeto_id: data.projeto_id,
-      _colaborador_id: data.colaborador_id || null,
+      _colaborador_id: (data.colaborador_id as any) || null,
       _colaborador_manual: data.colaborador_manual,
-      _manual_matricula: data.manual_matricula || null,
-      _manual_nome: data.manual_nome || null,
+      _manual_matricula: (data.manual_matricula as any) || null,
+      _manual_nome: (data.manual_nome as any) || null,
       _supervisor_usuario_id: data.supervisor_usuario_id,
-      _data_ocorrencia: data.data_ocorrencia,
+      _data_ocorrencia: data.data_ocorrencia as any,
       _motivo: data.motivo,
       _justificativa: data.justificativa,
       _arquivo_url: data.arquivo_url,
-      _arquivo_nome: data.arquivo_nome || null,
+      _arquivo_nome: (data.arquivo_nome as any) || null,
       _registrado_por: context.userId
     });
+
 
     if (transError) {
       console.error("[Ocorrências] Erro na RPC criar_ocorrencia_ponto_ambev:", transError);
