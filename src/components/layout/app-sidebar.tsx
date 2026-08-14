@@ -73,7 +73,9 @@ const items: Item[] = [
   { title: "WhatsApp Admin", url: "/comunicacoes/whatsapp", icon: MessageSquare, roles: WHATSAPP_ADMIN_ROLES },
   { title: "Alertas", url: "/alertas", icon: Bell, roles: ["super_admin", "rh", "coordenador", "supervisor", "compliance"] },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: ["super_admin", "rh", "coordenador", "compliance"] },
+  { title: "Qualidade de Lançamentos", url: "/qualidade-lancamentos", icon: Trophy, roles: ["super_admin", "rh", "compliance"] },
   { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["super_admin", "rh"] },
+
   { title: "Auditoria", url: "/auditoria", icon: ScrollText, roles: ["super_admin", "compliance", "rh"] },
   { title: "Usuários", url: "/usuarios", icon: UserCog, roles: ["super_admin", "compliance", "rh"] },
   { title: "Homologação", url: "/homologacao", icon: ClipboardCheck, roles: ["super_admin", "compliance", "rh"] },
@@ -124,7 +126,7 @@ const SECTIONS: Section[] = [
   {
     id: "analises",
     label: "Análises",
-    urls: ["/relatorios", "/bi-executivo", "/inteligencia", "/auditoria"],
+    urls: ["/relatorios", "/bi-executivo", "/inteligencia", "/qualidade-lancamentos", "/auditoria"],
   },
   {
     id: "administracao",

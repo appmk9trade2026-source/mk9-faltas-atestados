@@ -5747,6 +5747,25 @@ export type Database = {
         }
         Returns: Json
       }
+      rel_qualidade_lancamentos: {
+        Args: {
+          p_data_fim: string
+          p_data_inicio: string
+          p_empresa_id?: string
+          p_projeto_id?: string
+          p_supervisor_id?: string
+        }
+        Returns: {
+          projeto_id: string
+          projeto_nome: string
+          supervisor_id: string
+          supervisor_nome: string
+          taxa_acerto: number
+          taxa_correcao: number
+          total_correcoes: number
+          total_lancamentos: number
+        }[]
+      }
       report_projetos_colisoes_ativas: { Args: never; Returns: Json }
       reprocess_supervisor_batch: { Args: { _rows: Json }; Returns: Json }
       reprocessar_escalonamentos: { Args: never; Returns: Json }

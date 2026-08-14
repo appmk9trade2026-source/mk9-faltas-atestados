@@ -18,6 +18,7 @@ import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedSaudeRouteImport } from './routes/_authenticated/saude'
 import { Route as AuthenticatedRoadmapRouteImport } from './routes/_authenticated/roadmap'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
+import { Route as AuthenticatedQualidadeLancamentosRouteImport } from './routes/_authenticated/qualidade-lancamentos'
 import { Route as AuthenticatedProcessamentoRouteImport } from './routes/_authenticated/processamento'
 import { Route as AuthenticatedPlanosAcaoRouteImport } from './routes/_authenticated/planos-acao'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
@@ -129,6 +130,12 @@ const AuthenticatedRelatoriosRoute = AuthenticatedRelatoriosRouteImport.update({
   path: '/relatorios',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedQualidadeLancamentosRoute =
+  AuthenticatedQualidadeLancamentosRouteImport.update({
+    id: '/qualidade-lancamentos',
+    path: '/qualidade-lancamentos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedProcessamentoRoute =
   AuthenticatedProcessamentoRouteImport.update({
     id: '/processamento',
@@ -544,6 +551,7 @@ export interface FileRoutesByFullPath {
   '/perfil': typeof AuthenticatedPerfilRoute
   '/planos-acao': typeof AuthenticatedPlanosAcaoRoute
   '/processamento': typeof AuthenticatedProcessamentoRoute
+  '/qualidade-lancamentos': typeof AuthenticatedQualidadeLancamentosRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/roadmap': typeof AuthenticatedRoadmapRoute
   '/saude': typeof AuthenticatedSaudeRoute
@@ -619,6 +627,7 @@ export interface FileRoutesByTo {
   '/perfil': typeof AuthenticatedPerfilRoute
   '/planos-acao': typeof AuthenticatedPlanosAcaoRoute
   '/processamento': typeof AuthenticatedProcessamentoRoute
+  '/qualidade-lancamentos': typeof AuthenticatedQualidadeLancamentosRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/roadmap': typeof AuthenticatedRoadmapRoute
   '/saude': typeof AuthenticatedSaudeRoute
@@ -696,6 +705,7 @@ export interface FileRoutesById {
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/planos-acao': typeof AuthenticatedPlanosAcaoRoute
   '/_authenticated/processamento': typeof AuthenticatedProcessamentoRoute
+  '/_authenticated/qualidade-lancamentos': typeof AuthenticatedQualidadeLancamentosRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/roadmap': typeof AuthenticatedRoadmapRoute
   '/_authenticated/saude': typeof AuthenticatedSaudeRoute
@@ -774,6 +784,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/planos-acao'
     | '/processamento'
+    | '/qualidade-lancamentos'
     | '/relatorios'
     | '/roadmap'
     | '/saude'
@@ -849,6 +860,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/planos-acao'
     | '/processamento'
+    | '/qualidade-lancamentos'
     | '/relatorios'
     | '/roadmap'
     | '/saude'
@@ -925,6 +937,7 @@ export interface FileRouteTypes {
     | '/_authenticated/perfil'
     | '/_authenticated/planos-acao'
     | '/_authenticated/processamento'
+    | '/_authenticated/qualidade-lancamentos'
     | '/_authenticated/relatorios'
     | '/_authenticated/roadmap'
     | '/_authenticated/saude'
@@ -1045,6 +1058,13 @@ declare module '@tanstack/react-router' {
       path: '/relatorios'
       fullPath: '/relatorios'
       preLoaderRoute: typeof AuthenticatedRelatoriosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/qualidade-lancamentos': {
+      id: '/_authenticated/qualidade-lancamentos'
+      path: '/qualidade-lancamentos'
+      fullPath: '/qualidade-lancamentos'
+      preLoaderRoute: typeof AuthenticatedQualidadeLancamentosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/processamento': {
@@ -1669,6 +1689,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedPlanosAcaoRoute: typeof AuthenticatedPlanosAcaoRoute
   AuthenticatedProcessamentoRoute: typeof AuthenticatedProcessamentoRoute
+  AuthenticatedQualidadeLancamentosRoute: typeof AuthenticatedQualidadeLancamentosRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedRoadmapRoute: typeof AuthenticatedRoadmapRoute
   AuthenticatedSaudeRoute: typeof AuthenticatedSaudeRoute
@@ -1716,6 +1737,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedPlanosAcaoRoute: AuthenticatedPlanosAcaoRoute,
   AuthenticatedProcessamentoRoute: AuthenticatedProcessamentoRoute,
+  AuthenticatedQualidadeLancamentosRoute:
+    AuthenticatedQualidadeLancamentosRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedRoadmapRoute: AuthenticatedRoadmapRoute,
   AuthenticatedSaudeRoute: AuthenticatedSaudeRoute,
