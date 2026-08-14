@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { AlertTriangle, Clock, History, Loader2, ShieldCheck, Upload } from "lucide-react";
+import { AlertTriangle, Clock, History, Loader2, ShieldCheck, Upload, ArrowRight } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { BUCKET_ATESTADOS } from "@/lib/ausencias";
@@ -48,6 +48,7 @@ export type AusenciaRetificavel = {
   projeto_id: string;
   colaborador_id: string | null;
   created_at: string;
+  updated_at: string;
   data_inicio: string;
   data_fim: string;
   tipo_ausencia_id?: string | null;
@@ -60,6 +61,7 @@ export type AusenciaRetificavel = {
   origem_registro?: string | null;
   empresa?: { nome: string } | null;
   projeto?: { nome: string } | null;
+  e_erro_supervisor?: boolean | null;
 };
 
 type TipoOpt = {
@@ -101,6 +103,8 @@ export function RetificarAusenciaDialog({
   const [periodoId, setPeriodoId] = useState<string>("");
   const [dataInicio, setDataInicio] = useState<string>("");
   const [motivoOperacional, setMotivoOperacional] = useState("");
+  const [motivoCategoria, setMotivoCategoria] = useState<string>("");
+  const [eErroSupervisor, setEErroSupervisor] = useState<boolean | null>(null);
   const [cid, setCid] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [confirmando, setConfirmando] = useState(false);
@@ -112,6 +116,8 @@ export function RetificarAusenciaDialog({
     setPeriodoId(ausencia.opcao_periodo_id ?? "");
     setDataInicio(ausencia.data_inicio);
     setMotivoOperacional("");
+    setMotivoCategoria("");
+    setEErroSupervisor(ausencia.e_erro_supervisor ?? null);
     setCid(ausencia.cid ?? "");
     setFile(null);
     setConfirmando(false);
@@ -183,6 +189,7 @@ export function RetificarAusenciaDialog({
     !!periodoId &&
     !!dataInicio &&
     motivoOperacional.trim().length >= 10 &&
+    !!motivoCategoria &&
     mudouAlgo &&
     (!exigeDocumento || temAnexo);
 
@@ -206,6 +213,9 @@ export function RetificarAusenciaDialog({
           opcao_periodo_id: periodoId,
           data_inicio: dataInicio,
           motivo_operacional: motivoOperacional.trim(),
+          motivo_categoria: motivoCategoria,
+          e_erro_supervisor: eErroSupervisor === null ? undefined : eErroSupervisor,
+          updated_at_check: ausencia.updated_at,
           cid: podeVerCid && cid.trim() ? cid.trim().toUpperCase() : null,
           arquivo,
         },
@@ -369,12 +379,30 @@ export function RetificarAusenciaDialog({
           )}
 
           <div className="space-y-2 sm:col-span-2">
-            <Label>Motivo operacional da retificação</Label>
+            <Label>Motivo da retificação</Label>
+            <Select value={motivoCategoria} onValueChange={setMotivoCategoria} disabled={bloqueadoPorPrazo}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o motivo estruturado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="DATA_PERIODO_INCORRETO">Data/período incorreto</SelectItem>
+                <SelectItem value="TIPO_INCORRETO">Tipo de ausência incorreto</SelectItem>
+                <SelectItem value="ERRO_DIGITACAO_SUPERVISOR">Erro de digitação do supervisor</SelectItem>
+                <SelectItem value="DOCUMENTO_INCORRETO">Documento incorreto</SelectItem>
+                <SelectItem value="DUPLICIDADE">Duplicidade</SelectItem>
+                <SelectItem value="LANCAMENTO_INDEVIDO">Lançamento indevido</SelectItem>
+                <SelectItem value="OUTRO">Outro motivo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2 sm:col-span-2">
+            <Label>Justificativa detalhada</Label>
             <Textarea
               rows={3}
               value={motivoOperacional}
               onChange={(e) => setMotivoOperacional(e.target.value)}
-              placeholder="Ex.: colaborador apresentou atestado médico após o registro da falta."
+              placeholder="Descreva o motivo real da alteração..."
               maxLength={500}
               disabled={bloqueadoPorPrazo}
             />
@@ -383,6 +411,52 @@ export function RetificarAusenciaDialog({
             </p>
           </div>
         </div>
+
+        {mudouAlgo && (
+          <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900/30 dark:bg-blue-900/10">
+            <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-blue-700 dark:text-blue-400">
+              <ShieldCheck className="h-4 w-4" /> Resumo das alterações
+            </h4>
+            <div className="space-y-2">
+              {tipoId !== (ausencia.tipo_ausencia_id ?? "") && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Tipo</span>
+                  <div className="flex items-center gap-2 font-medium">
+                    <span className="line-through opacity-50">{ausencia.tipo_ausencia_nome}</span>
+                    <ArrowRight className="h-3 w-3" />
+                    <span>{tipoSelecionado?.nome}</span>
+                  </div>
+                </div>
+              )}
+              {periodoId !== (ausencia.opcao_periodo_id ?? "") && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Período</span>
+                  <div className="flex items-center gap-2 font-medium">
+                    <span className="line-through opacity-50">{ausencia.opcao_periodo_nome}</span>
+                    <ArrowRight className="h-3 w-3" />
+                    <span>{periodosQ.data?.find(p => p.id === periodoId)?.nome}</span>
+                  </div>
+                </div>
+              )}
+              {dataInicio !== ausencia.data_inicio && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Data inicial</span>
+                  <div className="flex items-center gap-2 font-medium">
+                    <span className="line-through opacity-50">{fmtDate(ausencia.data_inicio)}</span>
+                    <ArrowRight className="h-3 w-3" />
+                    <span>{fmtDate(dataInicio)}</span>
+                  </div>
+                </div>
+              )}
+              {file && (
+                <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">
+                  <span>Novo documento</span>
+                  <span className="font-medium">{file.name}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {(historicoQ.data?.length ?? 0) > 0 && (
           <>

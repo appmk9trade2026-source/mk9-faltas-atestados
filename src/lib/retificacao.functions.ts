@@ -33,6 +33,9 @@ const retificarSchema = z.object({
     })
     .nullable()
     .optional(),
+  updated_at_check: z.string().optional(),
+  motivo_categoria: z.string().optional(),
+  e_erro_supervisor: z.boolean().optional(),
 });
 
 export type RetificarAusenciaInput = z.infer<typeof retificarSchema>;
@@ -72,6 +75,9 @@ export const retificarAusencia = createServerFn({ method: "POST" })
             }
           : null,
         p_observacao: data.observacao ?? null,
+        p_updated_at_check: data.updated_at_check ?? null,
+        p_motivo_categoria: data.motivo_categoria ?? null,
+        p_e_erro_supervisor: data.e_erro_supervisor ?? null,
       } as never,
     );
     if (error) throw new Error(mapRetificacaoError(error.message));

@@ -29,7 +29,8 @@ export const getErrosSupervisor = createServerFn({ method: "GET" })
         manual_nome,
         motivo_exclusao_categoria_v2,
         motivo_exclusao_detalhe,
-        registrado_em
+        registrado_em,
+        retificada
       `)
       .eq("registrado_por", data.supervisorId)
       .eq("projeto_id", data.projetoId)
