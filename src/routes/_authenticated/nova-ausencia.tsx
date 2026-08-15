@@ -761,12 +761,13 @@ function NovaAusenciaPage() {
           form.setValue("projeto_id", "");
         }
         setNaoEncontrado(true);
-        setBuscaEstado("vazio");
+        setBuscaEstado("idle");
         logEvent({ 
-          categoria: "busca", 
+          categoria: "alerta", 
           acao: "matricula_nao_visivel", 
-          resultado: "info", 
-          observacoes: `Matrícula ${val} não retornou registros no escopo RLS.`
+          resultado: "ok", 
+          duracao_ms: 0,
+          detalhe: `Busca matricula ${val} resultou em 0 linhas no escopo do usuario.`
         });
         if (origem === "manual") {
           toast.error("Colaborador não localizado.", {
