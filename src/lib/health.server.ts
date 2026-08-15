@@ -1,5 +1,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { LogContext } from "./observability.server";
+import { crypto } from "crypto";
+
 
 /**
  * Configurações de Alerta (Etapa 6)
