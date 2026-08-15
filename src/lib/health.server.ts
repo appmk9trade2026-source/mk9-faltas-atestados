@@ -73,13 +73,15 @@ async function evaluateOperationalAlert(incidentId: string, context: LogContext)
 
     // 3. Rate Limit Global (Anti-Flood)
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
-    const { count: recentReadyAlerts } = await supabaseAdmin
+    const recentReadyRes = await supabaseAdmin
       .from("operational_alerts")
       .select("*", { count: "exact", head: true })
       .eq("status", "READY")
       .gte("last_alerted_at", oneHourAgo);
 
-    if ((recentReadyAlerts || 0) >= ALERT_CONFIG.GLOBAL_RATE_LIMIT_PER_HOUR) {
+    const recentReadyAlerts = recentReadyRes?.count || 0;
+
+    if (recentReadyAlerts >= ALERT_CONFIG.GLOBAL_RATE_LIMIT_PER_HOUR) {
       await logAlertDecision(incidentId, incident.fingerprint, incident.severity, "SUPPRESSED", "RATE_LIMIT", context.traceId);
       return;
     }
