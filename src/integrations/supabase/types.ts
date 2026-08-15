@@ -3019,6 +3019,63 @@ export type Database = {
         }
         Relationships: []
       }
+      operational_health_incidents: {
+        Row: {
+          affected_users_count: number
+          category: string
+          created_at: string
+          fingerprint: string
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          metadata: Json | null
+          module: string
+          occurrence_count: number
+          operation: string
+          sample_trace_id: string | null
+          severity: string
+          stage: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          affected_users_count?: number
+          category: string
+          created_at?: string
+          fingerprint: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          metadata?: Json | null
+          module: string
+          occurrence_count?: number
+          operation: string
+          sample_trace_id?: string | null
+          severity: string
+          stage?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          affected_users_count?: number
+          category?: string
+          created_at?: string
+          fingerprint?: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          metadata?: Json | null
+          module?: string
+          occurrence_count?: number
+          operation?: string
+          sample_trace_id?: string | null
+          severity?: string
+          stage?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       permissions: {
         Row: {
           action: string
