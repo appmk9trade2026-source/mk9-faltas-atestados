@@ -2,6 +2,16 @@ import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
 
+/**
+ * Dispara manualmente o worker de notificações - Super Admin Only
+ */
+export const triggerNotificationWorker = createServerFn({ method: "POST" })
+  .handler(async () => {
+    const { processNotificationOutbox } = await import("./health-worker.server");
+    return processNotificationOutbox();
+  });
+
+
 export type HealthStatus = "HEALTHY" | "DEGRADED" | "CRITICAL" | "UNKNOWN";
 
 export interface ModuleHealth {
