@@ -1,0 +1,67 @@
+// RBAC Fase 3 — códigos de erro padronizados + mapeamento amigável.
+//
+// Nunca exponha stack, SQLSTATE ou nome de policy ao usuário.
+// Toda mutação hardened joga erros com esta forma "CODE: descrição" e
+// o backend anexa um HINT com o correlation_id.
+export const RBAC_ERROR_CODES = [
+    "AUTH_REQUIRED",
+    "PERMISSION_DENIED",
+    "COMPANY_SCOPE_DENIED",
+    "PROJECT_SCOPE_DENIED",
+    "COLLABORATOR_SCOPE_DENIED",
+    "INVALID_PAYLOAD",
+    "RESOURCE_NOT_FOUND",
+    "CONFLICT",
+    "RATE_LIMITED",
+];
+const CODE_SET = new Set(RBAC_ERROR_CODES);
+/** Extrai `{ code, message, correlationId }` de qualquer erro RBAC serializado. */
+export function parseRbacError(err) {
+    const raw = err instanceof Error
+        ? err.message
+        : typeof err === "string"
+            ? err
+            : err?.message ?? "";
+    const hint = err?.hint ?? undefined;
+    const m = /^([A-Z_]+):\s?(.*)$/s.exec(raw);
+    if (m && CODE_SET.has(m[1])) {
+        return { code: m[1], message: m[2] || m[1], correlationId: hint };
+    }
+    return { code: "UNKNOWN", message: raw || "Erro desconhecido", correlationId: hint };
+}
+const FRIENDLY = {
+    AUTH_REQUIRED: "Sua sessão expirou. Faça login novamente.",
+    PERMISSION_DENIED: "Você não possui permissão para realizar esta ação.",
+    COMPANY_SCOPE_DENIED: "Esta empresa não está disponível no seu escopo de acesso.",
+    PROJECT_SCOPE_DENIED: "Este projeto não está disponível no seu escopo de acesso.",
+    COLLABORATOR_SCOPE_DENIED: "Este colaborador não está disponível no seu escopo de acesso.",
+    INVALID_PAYLOAD: "Os dados enviados são inválidos.",
+    RESOURCE_NOT_FOUND: "Registro não encontrado.",
+    CONFLICT: "Operação em conflito com o estado atual do registro.",
+    RATE_LIMITED: "Muitas tentativas em pouco tempo. Aguarde alguns instantes.",
+};
+/**
+ * Códigos cuja mensagem específica deve chegar ao usuário como descrição.
+ * Sem isso, causas reais (ex.: duplicidade de ausência) ficavam invisíveis
+ * atrás do título genérico.
+ */
+const CODES_COM_DETALHE = new Set([
+    "CONFLICT",
+    "INVALID_PAYLOAD",
+    "RESOURCE_NOT_FOUND",
+    // Escopo: o servidor devolve a razão exata (projeto/supervisor/colaborador
+    // fora da hierarquia). É informação de negócio, não detalhe técnico.
+    "PROJECT_SCOPE_DENIED",
+    "COLLABORATOR_SCOPE_DENIED",
+]);
+/** Mensagem amigável ao usuário — nunca vaza detalhes técnicos. */
+export function friendlyRbacError(err) {
+    const shape = parseRbacError(err);
+    if (shape.code === "UNKNOWN") {
+        return { title: "Não foi possível concluir a operação.", description: shape.message.slice(0, 240), correlationId: shape.correlationId };
+    }
+    const detalhe = CODES_COM_DETALHE.has(shape.code) && shape.message && shape.message !== shape.code
+        ? shape.message.slice(0, 240)
+        : undefined;
+    return { title: FRIENDLY[shape.code], description: detalhe, correlationId: shape.correlationId };
+}
