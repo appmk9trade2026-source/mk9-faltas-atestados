@@ -2,7 +2,7 @@ import { createFileRoute, redirect } from '@tanstack/react-router';
 
 /**
  * CRM MK9 — PROGRAMA DE ESTABILIZAÇÃO GERAL
- * ETAPA 2 — REDE DE PROTEÇÃO CONTRA REGRESSÕES
+ * ETAPA 3 — OBSERVABILIDADE, TRACE ID E DIAGNÓSTICO DE PRODUÇÃO
  * MODO: FREEZE DE FEATURES + REGRESSION HARDENING
  * 
  * OBJETIVO: Reduzir drasticamente a recorrência de erros no sistema.
