@@ -3185,6 +3185,60 @@ export type Database = {
           },
         ]
       }
+      operational_notification_audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          after_state: Json | null
+          before_state: Json | null
+          created_at: string | null
+          id: string
+          trace_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          after_state?: Json | null
+          before_state?: Json | null
+          created_at?: string | null
+          id?: string
+          trace_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          after_state?: Json | null
+          before_state?: Json | null
+          created_at?: string | null
+          id?: string
+          trace_id?: string | null
+        }
+        Relationships: []
+      }
+      operational_notification_config: {
+        Row: {
+          environment: Database["public"]["Enums"]["notification_environment"]
+          id: string
+          kill_switch_enabled: boolean
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          environment?: Database["public"]["Enums"]["notification_environment"]
+          id?: string
+          kill_switch_enabled?: boolean
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          environment?: Database["public"]["Enums"]["notification_environment"]
+          id?: string
+          kill_switch_enabled?: boolean
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       operational_notification_outbox: {
         Row: {
           alert_id: string | null
@@ -3268,6 +3322,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      operational_notification_recipients: {
+        Row: {
+          active: boolean
+          channel: string
+          created_at: string | null
+          destination: string
+          environment: Database["public"]["Enums"]["notification_environment"]
+          id: string
+          is_test_recipient: boolean
+          label: string
+          severity_scope: string[]
+          updated_at: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          active?: boolean
+          channel?: string
+          created_at?: string | null
+          destination: string
+          environment?: Database["public"]["Enums"]["notification_environment"]
+          id?: string
+          is_test_recipient?: boolean
+          label: string
+          severity_scope?: string[]
+          updated_at?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          active?: boolean
+          channel?: string
+          created_at?: string | null
+          destination?: string
+          environment?: Database["public"]["Enums"]["notification_environment"]
+          id?: string
+          is_test_recipient?: boolean
+          label?: string
+          severity_scope?: string[]
+          updated_at?: string | null
+          verified_at?: string | null
+        }
+        Relationships: []
       }
       permissions: {
         Row: {
@@ -5206,6 +5302,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_notification_ready: {
+        Args: {
+          p_channel: string
+          p_environment: Database["public"]["Enums"]["notification_environment"]
+        }
+        Returns: boolean
+      }
       check_projeto_empresa_match: {
         Args: { _empresa_id: string; _projeto_id: string }
         Returns: boolean
@@ -6622,6 +6725,7 @@ export type Database = {
         | "WHATSAPP_AUSENCIA_COLABORADOR"
         | "WHATSAPP_AUSENCIA_RH"
         | "WHATSAPP_AUSENCIA_SUPERVISOR"
+      notification_environment: "DISABLED" | "SANDBOX" | "PRODUCTION"
       oa_ambiente: "desenvolvimento" | "homologacao" | "preview" | "producao"
       oa_comentario_tipo: "COMENTARIO" | "ATUALIZACAO" | "VALIDACAO" | "DECISAO"
       oa_evento_tipo:
@@ -7121,6 +7225,7 @@ export const Constants = {
         "WHATSAPP_AUSENCIA_RH",
         "WHATSAPP_AUSENCIA_SUPERVISOR",
       ],
+      notification_environment: ["DISABLED", "SANDBOX", "PRODUCTION"],
       oa_ambiente: ["desenvolvimento", "homologacao", "preview", "producao"],
       oa_comentario_tipo: ["COMENTARIO", "ATUALIZACAO", "VALIDACAO", "DECISAO"],
       oa_evento_tipo: [
