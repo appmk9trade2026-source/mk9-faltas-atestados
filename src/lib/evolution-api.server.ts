@@ -1,4 +1,12 @@
-import { isEvolutionAccepted } from "./whatsapp-worker";
+import { classifyEvolutionError, isEvolutionAccepted } from "./whatsapp-worker";
+
+/**
+ * Normaliza o número de telefone para o formato esperado pela Evolution API
+ * (Apenas dígitos, sem o prefixo +)
+ */
+export function normalizeEvolutionNumber(telefone: string): string {
+  return telefone.replace(/\D/g, "");
+}
 
 export async function sendEvolutionText(args: {
   baseUrl: string;
@@ -16,6 +24,10 @@ export async function sendEvolutionText(args: {
   const url = `${args.baseUrl.replace(/\/+$/, "")}/message/sendText/${encodeURIComponent(args.instance)}`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), args.timeoutMs);
+  
+  // Normalização P0: Garantir apenas dígitos no destinatário
+  const normalizedNumber = normalizeEvolutionNumber(args.telefone);
+
   try {
     const res = await fetch(url, {
       method: "POST",
@@ -24,7 +36,7 @@ export async function sendEvolutionText(args: {
         apikey: args.apiKey,
         "x-idempotency-key": args.idempotencyKey,
       },
-      body: JSON.stringify({ number: args.telefone, text: args.texto }),
+      body: JSON.stringify({ number: normalizedNumber, text: args.texto }),
       signal: controller.signal,
     });
     const raw = await res.text();
