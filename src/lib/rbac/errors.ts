@@ -14,6 +14,7 @@ export const RBAC_ERROR_CODES = [
   "RESOURCE_NOT_FOUND",
   "CONFLICT",
   "RATE_LIMITED",
+  "TECHNICAL_ERROR",
 ] as const;
 export type RbacErrorCode = (typeof RBAC_ERROR_CODES)[number];
 
