@@ -331,6 +331,7 @@ function AuditoriaPage() {
                   <Field label="Origem" value={String(d.origem ?? "—")} />
                   <Field label="IP" value={String(d.ip ?? "—")} />
                   <Field label="Sucesso" value={d.sucesso ? "Sim" : "Não"} />
+                  <Field label="Trace ID" value={String(d.trace_id ?? "—")} />
                 </div>
                 {d.user_agent ? <Field label="User Agent" value={String(d.user_agent)} /> : null}
                 {d.observacoes ? <Field label="Observações" value={String(d.observacoes)} /> : null}

@@ -33,12 +33,20 @@ export type MatrixChange = {
 };
 
 export async function applyRoleMatrix(changes: MatrixChange[]): Promise<{ applied: number; correlation_id: string }> {
-  const { data, error } = await supabase.rpc("rbac_apply_role_matrix", {
-    _changes: changes as never,
-  } as never);
-  if (error) throw error;
-  invalidatePermissions();
-  return data as unknown as { applied: number; correlation_id: string };
+  const traceId = crypto.randomUUID();
+  try {
+    const { data, error } = await supabase.rpc("rbac_apply_role_matrix", {
+      _changes: changes as never,
+    } as never);
+    if (error) {
+      console.error(`[RBAC] Matrix Apply Error [trace=${traceId}]`, error);
+      throw error;
+    }
+    invalidatePermissions();
+    return data as unknown as { applied: number; correlation_id: string };
+  } catch (err) {
+    throw err;
+  }
 }
 
 export type UserPermissionMode = "inherit" | "allow" | "deny";

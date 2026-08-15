@@ -347,32 +347,38 @@ export const createAusencia = createServerFn({ method: "POST" })
     }
   })
   .handler(async ({ data, context }) => {
-    const correlationId = (globalThis as any).__lastCorrelationId || "no-correlation-id";
+    const traceId = (data as any).correlation_id || crypto.randomUUID();
+    const logger = async (stage: string, err: unknown, category: any = "DATABASE", severity: any = "P1") => {
+      const { logAppError } = await import("./observability.server");
+      return logAppError({
+        traceId,
+        userId: context.userId,
+        module: "ausencias",
+        operation: "createAusencia",
+        stage,
+        category,
+        severity
+      }, err);
+    };
+
     try {
+      // ETAPA 9 — RESOLVE_COLABORADOR
       const isManual = data.origem_registro === "MANUAL";
       const request = getRequest();
       const meta = resolveOperationMetadata(request);
 
-
-
-
-
-
-
-
-
-    // ETAPA 10 e 11 — Validação Server-side P0 de Integridade da Matrícula
-    // Impede que matrícula A seja vinculada ao colaborador_id da matrícula B.
-    if (!isManual && data.colaborador_id) {
-      const { data: colab, error: colabErr } = await context.supabase
-        .from("colaboradores")
-        .select("matricula")
-        .eq("id", data.colaborador_id)
-        .maybeSingle();
-      
-      if (colabErr || !colab) {
-        throw new Error("INVALID_PAYLOAD: Colaborador não encontrado para verificação de identidade.");
-      }
+      // ETAPA 10 e 11 — Validação Server-side P0 de Integridade da Matrícula
+      if (!isManual && data.colaborador_id) {
+        const { data: colab, error: colabErr } = await context.supabase
+          .from("colaboradores")
+          .select("matricula")
+          .eq("id", data.colaborador_id)
+          .maybeSingle();
+        
+        if (colabErr || !colab) {
+          await logger("RESOLVE_COLABORADOR", colabErr || "Colaborador não encontrado", "VALIDATION");
+          throw new Error("INVALID_PAYLOAD: Colaborador não encontrado para verificação de identidade.");
+        }
 
       // Normalização básica: trim. O banco é a fonte da verdade.
       // O input validator do frontend já passou, mas aqui é o gate final.
@@ -522,6 +528,7 @@ export const createAusencia = createServerFn({ method: "POST" })
 
     if (conflitos.length > 0) {
       const conf = conflitos[0];
+      await logger("CHECK_CONFLICT", `Conflito detectado com protocolo ${conf.protocolo}`, "DUPLICITY", "P2");
       throw new Error(`CONFLICT: Já existe um lançamento de ${conf.tipo} para este período (Protocolo: ${conf.protocolo}).`);
     }
 
@@ -600,6 +607,7 @@ export const createAusencia = createServerFn({ method: "POST" })
         .select("id, empresa_id, projeto_id, protocolo, status")
         .single();
       if (error) {
+        await logger("CREATE_ABSENCE", error, "DATABASE", "P1");
         throw ausenciaDbError(error, "insert_ausencia", gate.correlationId);
       }
 
@@ -650,27 +658,32 @@ export const createAusencia = createServerFn({ method: "POST" })
         colaborador_criado: colaboradorCriado,
         correlation_id: gate.correlationId,
       };
-    } catch (err) {
+    } catch (err: any) {
       // ETAPA 7 — HARDENING CONTRA NOVOS ÓRFÃOS
       // Se houver arquivo_url e a criação da ausência falhou, tentamos remover o objeto órfão.
       if (data.arquivo_url) {
         console.warn(`[P0-ORPHAN-PREVENTION] Falha na criação da ausência (Server). Tentando remover objeto órfão: ${data.arquivo_url}. Motivo da falha: ${err instanceof Error ? err.message : String(err)}`);
         try {
-          // P0-B: Tenta remover via admin para garantir que o órfão seja limpo mesmo sem política de DELETE para o usuário
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const { error: storageErr } = await supabaseAdmin.storage.from("atestados").remove([data.arquivo_url]);
-          if (storageErr) {
-            console.error("[P0-ORPHAN-PREVENTION] Erro admin ao remover órfão:", storageErr);
-            // Fallback para cliente comum (pode falhar por RLS, mas é a última tentativa)
-            await context.supabase.storage.from("atestados").remove([data.arquivo_url]);
-          } else {
-            console.log("[P0-ORPHAN-PREVENTION] Objeto órfão removido com sucesso via Admin.");
-          }
+          await supabaseAdmin.storage.from("atestados").remove([data.arquivo_url]);
         } catch (storageErr) {
           console.error("[P0-ORPHAN-PREVENTION] Exceção ao remover objeto órfão:", storageErr);
         }
       }
-      throw err;
+
+      if (err.message?.includes("CONFLICT") || err.message?.includes("INVALID_PAYLOAD")) {
+        throw err;
+      }
+
+      const { logAppError } = await import("./observability.server");
+      return logAppError({
+        traceId,
+        userId: context.userId,
+        module: "ausencias",
+        operation: "createAusencia",
+        category: "UNKNOWN",
+        severity: "P1"
+      }, err);
     }
   });
 
