@@ -86,7 +86,7 @@ function SaudeSistemaPage() {
               </CardContent>
             </Card>
             
-            {Object.entries(healthQ.data?.modules ?? {}).map(([name, mod]) => (
+            {Object.entries((healthQ.data?.modules ?? {}) as Record<string, any>).map(([name, mod]) => (
               <Card key={name}>
                 <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">{name}</CardTitle></CardHeader>
                 <CardContent>
@@ -164,7 +164,7 @@ function SaudeSistemaPage() {
                   ) : !incidentsQ.data?.incidents.length ? (
                     <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">Nenhum incidente encontrado no período selecionado.</TableCell></TableRow>
                   ) : (
-                    incidentsQ.data.incidents.map((incident) => (
+                    incidentsQ.data.incidents.map((incident: IncidentRow) => (
                       <TableRow 
                         key={incident.id} 
                         className="cursor-pointer hover:bg-muted/50 transition-colors"

@@ -74,7 +74,7 @@ export const validateNotificationGoLive = createServerFn({ method: "GET" })
     const { data: recipients } = await supabaseAdmin
       .from("operational_notification_recipients")
       .select("id")
-      .eq("environment", config?.environment)
+      .eq("environment", config?.environment || 'DISABLED')
       .eq("active", true)
       .not("verified_at", "is", null);
 
