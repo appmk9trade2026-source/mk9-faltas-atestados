@@ -150,9 +150,11 @@ function SaudeSistemaPage() {
                   <TableRow>
                     <TableHead>Módulo</TableHead>
                     <TableHead>Severidade</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Status Incidente</TableHead>
+                    <TableHead>Alerta Operacional</TableHead>
                     <TableHead className="text-right">Ocorrências</TableHead>
                     <TableHead>Último Evento</TableHead>
+
                     <TableHead>Sample Trace</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -187,7 +189,20 @@ function SaudeSistemaPage() {
                             {incident.status}
                           </Badge>
                         </TableCell>
+
+                        <TableCell>
+                          <Badge variant="outline" className={cn(
+                            incident.alert_status === "READY" ? "bg-red-500 text-white" :
+                            incident.alert_status === "ESCALATED" ? "bg-orange-600 text-white" :
+                            incident.alert_status === "SUPPRESSED" ? "bg-slate-100 text-slate-500" :
+                            incident.alert_status === "PENDING" ? "bg-blue-50 text-blue-600 border-blue-200" :
+                            "bg-slate-50 text-slate-400"
+                          )}>
+                            {incident.alert_status || "—"}
+                          </Badge>
+                        </TableCell>
                         <TableCell className="text-right">{incident.occurrence_count}</TableCell>
+
                         <TableCell className="text-xs">{format(new Date(incident.last_seen_at), "dd/MM HH:mm")}</TableCell>
                         <TableCell className="text-xs font-mono">{incident.sample_trace_id?.slice(0, 8)}...</TableCell>
                       </TableRow>
@@ -215,6 +230,9 @@ function SaudeSistemaPage() {
                 <DetailField label="Severidade" value={selectedIncident.severity} />
                 <DetailField label="Status" value={selectedIncident.status} />
                 <DetailField label="Ocorrências" value={selectedIncident.occurrence_count.toString()} />
+                <DetailField label="Alerta Status" value={selectedIncident.alert_status || "—"} />
+                <DetailField label="Alerta Motivo" value={selectedIncident.alert_reason || "—"} />
+
                 <DetailField label="Usuários Afetados" value={selectedIncident.affected_users_count.toString()} />
                 <DetailField label="Primeiro Evento" value={format(new Date(selectedIncident.first_seen_at), "dd/MM/yyyy HH:mm:ss")} />
                 <DetailField label="Último Evento" value={format(new Date(selectedIncident.last_seen_at), "dd/MM/yyyy HH:mm:ss")} />

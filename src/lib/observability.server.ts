@@ -81,8 +81,8 @@ export async function logAppError(
     // Inserção direta via admin ignorando tipagem do client gerado para suportar trace_id recém-criado
     await supabaseAdmin.from("audit_logs").insert(auditData);
     
-    // Etapa 4: Agregação de incidente operacional (assíncrono)
-    aggregateIncident(context, error).catch(e => console.error("[HEALTH_AGGREGATION_ERROR]", e));
+    // Etapa 4: Agregação de incidente operacional
+    await aggregateIncident(context, error);
   } catch (err) {
     console.error("[CRITICAL_LOGGER_FAILURE]", err);
   }

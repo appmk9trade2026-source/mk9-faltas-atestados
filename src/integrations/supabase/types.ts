@@ -3019,6 +3019,68 @@ export type Database = {
         }
         Relationships: []
       }
+      operational_alerts: {
+        Row: {
+          alert_count: number
+          created_at: string
+          decision_reason: string | null
+          escalation_level: number
+          fingerprint: string
+          first_eligible_at: string
+          id: string
+          incident_id: string
+          last_alerted_at: string | null
+          last_evaluated_at: string
+          next_eligible_at: string | null
+          sample_trace_id: string | null
+          severity: string
+          status: Database["public"]["Enums"]["operational_alert_status"]
+          updated_at: string
+        }
+        Insert: {
+          alert_count?: number
+          created_at?: string
+          decision_reason?: string | null
+          escalation_level?: number
+          fingerprint: string
+          first_eligible_at?: string
+          id?: string
+          incident_id: string
+          last_alerted_at?: string | null
+          last_evaluated_at?: string
+          next_eligible_at?: string | null
+          sample_trace_id?: string | null
+          severity: string
+          status?: Database["public"]["Enums"]["operational_alert_status"]
+          updated_at?: string
+        }
+        Update: {
+          alert_count?: number
+          created_at?: string
+          decision_reason?: string | null
+          escalation_level?: number
+          fingerprint?: string
+          first_eligible_at?: string
+          id?: string
+          incident_id?: string
+          last_alerted_at?: string | null
+          last_evaluated_at?: string
+          next_eligible_at?: string | null
+          sample_trace_id?: string | null
+          severity?: string
+          status?: Database["public"]["Enums"]["operational_alert_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operational_alerts_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "operational_health_incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       operational_health_incidents: {
         Row: {
           affected_users_count: number
@@ -6489,6 +6551,12 @@ export type Database = {
       oa_severidade: "BAIXA" | "MEDIA" | "ALTA" | "CRITICA"
       op_assist_prioridade: "BAIXA" | "MEDIA" | "ALTA" | "CRITICA"
       op_assist_status: "ABERTO" | "EM_ANDAMENTO" | "RESOLVIDO" | "CANCELADO"
+      operational_alert_status:
+        | "PENDING"
+        | "SUPPRESSED"
+        | "READY"
+        | "ESCALATED"
+        | "CLOSED"
       permission_effect: "allow" | "deny"
       prioridade_plano_acao: "BAIXA" | "MEDIA" | "ALTA" | "CRITICA"
       release_status: "PLANEJADA" | "EM_EXECUCAO" | "PUBLICADA" | "CANCELADA"
@@ -6987,6 +7055,13 @@ export const Constants = {
       oa_severidade: ["BAIXA", "MEDIA", "ALTA", "CRITICA"],
       op_assist_prioridade: ["BAIXA", "MEDIA", "ALTA", "CRITICA"],
       op_assist_status: ["ABERTO", "EM_ANDAMENTO", "RESOLVIDO", "CANCELADO"],
+      operational_alert_status: [
+        "PENDING",
+        "SUPPRESSED",
+        "READY",
+        "ESCALATED",
+        "CLOSED",
+      ],
       permission_effect: ["allow", "deny"],
       prioridade_plano_acao: ["BAIXA", "MEDIA", "ALTA", "CRITICA"],
       release_status: ["PLANEJADA", "EM_EXECUCAO", "PUBLICADA", "CANCELADA"],
