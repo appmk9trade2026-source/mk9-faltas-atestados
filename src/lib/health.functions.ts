@@ -222,8 +222,13 @@ export const listHealthIncidents = createServerFn({ method: "GET" })
       incidents: (data || []).map(row => ({
         ...row,
         alert_status: (row as any).alert?.[0]?.status,
-        alert_reason: (row as any).alert?.[0]?.decision_reason
+        alert_reason: (row as any).alert?.[0]?.decision_reason,
+        notifications: (row as any).notifications?.map((n: any) => ({
+          ...n,
+          last_attempt_at: n.updated_at
+        }))
       })) as IncidentRow[],
+
       total: count || 0
     };
   });
