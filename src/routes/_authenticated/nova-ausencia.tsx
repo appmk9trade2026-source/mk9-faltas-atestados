@@ -761,9 +761,16 @@ function NovaAusenciaPage() {
           form.setValue("projeto_id", "");
         }
         setNaoEncontrado(true);
+        setBuscaEstado("vazio");
+        logEvent({ 
+          categoria: "busca", 
+          acao: "matricula_nao_visivel", 
+          resultado: "info", 
+          observacoes: `Matrícula ${val} não retornou registros no escopo RLS.`
+        });
         if (origem === "manual") {
           toast.error("Colaborador não localizado.", {
-            description: "A matrícula informada não foi encontrada no seu escopo de acesso. Utilize o preenchimento manual.",
+            description: "A matrícula informada não foi encontrada no seu escopo de acesso. Verifique o número ou utilize o preenchimento manual.",
           });
         }
       } else if (rows.length === 1) {
