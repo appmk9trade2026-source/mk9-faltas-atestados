@@ -1855,6 +1855,8 @@ function NovaAusenciaPage() {
                                   <Button
                                     variant="outline"
                                     role="combobox"
+                                    name="tipo_ausencia_id"
+                                    id="tipo_ausencia_id"
                                     className={cn(
                                       "w-full justify-between font-normal",
                                       !field.value && "text-muted-foreground",
