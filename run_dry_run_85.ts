@@ -13,6 +13,7 @@ async function main() {
       severity: "P0",
       status: "OPEN",
       module: "INFRA",
+      operation: "HEALTH_CHECK",
       metadata: { trace_id: traceId }
     })
     .select()
