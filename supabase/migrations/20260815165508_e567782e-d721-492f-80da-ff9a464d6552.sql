@@ -1,6 +1,3 @@
--- Migration 20260815164000: Admin Verification Fallback P0
--- Objetivo: Implementar contingência administrativa para provedores sem pre-flight check.
-
 -- 1. Alterar Tabela de Destinatários
 ALTER TABLE public.operational_notification_recipients 
 ADD COLUMN IF NOT EXISTS admin_verified BOOLEAN DEFAULT false,
@@ -15,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.operational_notification_recipient_audit (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     recipient_id UUID REFERENCES public.operational_notification_recipients(id) ON DELETE CASCADE,
     actor_id UUID REFERENCES auth.users(id),
-    action TEXT NOT NULL, -- 'ADMIN_VERIFY', 'ADMIN_REVOKE'
+    action TEXT NOT NULL,
     before_state JSONB,
     after_state JSONB,
     reason TEXT,
@@ -41,7 +38,7 @@ BEGIN
         ON public.operational_notification_recipient_audit
         FOR SELECT
         TO authenticated
-        USING (public.has_role(auth.uid(), 'admin'));
+        USING (public.has_role(auth.uid(), 'super_admin'));
     END IF;
 END $$;
 

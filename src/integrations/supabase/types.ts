@@ -3323,9 +3323,54 @@ export type Database = {
           },
         ]
       }
+      operational_notification_recipient_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          after_state: Json | null
+          before_state: Json | null
+          created_at: string | null
+          id: string
+          reason: string | null
+          recipient_id: string | null
+          trace_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          after_state?: Json | null
+          before_state?: Json | null
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+          recipient_id?: string | null
+          trace_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          after_state?: Json | null
+          before_state?: Json | null
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+          recipient_id?: string | null
+          trace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operational_notification_recipient_audit_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "operational_notification_recipients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       operational_notification_recipients: {
         Row: {
           active: boolean
+          admin_verified: boolean | null
           channel: string
           created_at: string | null
           destination: string
@@ -3333,12 +3378,18 @@ export type Database = {
           id: string
           is_test_recipient: boolean
           label: string
+          provider_check_capability: string | null
           severity_scope: string[]
+          trace_id: string | null
           updated_at: string | null
+          verification_method: string | null
+          verification_reason: string | null
           verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
           active?: boolean
+          admin_verified?: boolean | null
           channel?: string
           created_at?: string | null
           destination: string
@@ -3346,12 +3397,18 @@ export type Database = {
           id?: string
           is_test_recipient?: boolean
           label: string
+          provider_check_capability?: string | null
           severity_scope?: string[]
+          trace_id?: string | null
           updated_at?: string | null
+          verification_method?: string | null
+          verification_reason?: string | null
           verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
           active?: boolean
+          admin_verified?: boolean | null
           channel?: string
           created_at?: string | null
           destination?: string
@@ -3359,9 +3416,14 @@ export type Database = {
           id?: string
           is_test_recipient?: boolean
           label?: string
+          provider_check_capability?: string | null
           severity_scope?: string[]
+          trace_id?: string | null
           updated_at?: string | null
+          verification_method?: string | null
+          verification_reason?: string | null
           verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: []
       }
