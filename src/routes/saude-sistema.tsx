@@ -184,10 +184,10 @@ function SaudeSistemaPage() {
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => updateConfigM.mutate({ 
-                              environment: configQ.data?.environment, 
-                              kill_switch_enabled: !configQ.data?.kill_switch_enabled 
-                            })}>
+                        <AlertDialogAction onClick={() => updateConfigM.mutate({ 
+                          environment: configQ.data?.environment, 
+                          kill_switch_enabled: !!configQ.data?.kill_switch_enabled 
+                        })}>
                               Confirmar Alteração
                             </AlertDialogAction>
                           </AlertDialogFooter>
@@ -271,7 +271,7 @@ function SaudeSistemaPage() {
                   <CardTitle className="text-base">Destinatários Técnicos</CardTitle>
                   <p className="text-xs text-muted-foreground">Apenas números verificados são elegíveis para PRODUCTION.</p>
                 </div>
-                <Button variant="outline" size="xs" onClick={() => toast.warning("Funcionalidade de adição via Painel em desenvolvimento.")}>+ Adicionar</Button>
+                <Button variant="outline" size="sm" onClick={() => toast.warning("Funcionalidade de adição via Painel em desenvolvimento.")}>+ Adicionar</Button>
               </CardHeader>
               <CardContent>
                 <Table>
