@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SaudeSistemaRouteImport } from './routes/saude-sistema'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -86,6 +87,11 @@ import { Route as AuthenticatedComunicacoesWhatsappExecucoesRouteImport } from '
 import { Route as AuthenticatedComunicacoesWhatsappDeadLetterRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.dead-letter'
 import { Route as AuthenticatedComunicacoesWhatsappConfiguracaoRouteImport } from './routes/_authenticated/comunicacoes.whatsapp.configuracao'
 
+const SaudeSistemaRoute = SaudeSistemaRouteImport.update({
+  id: '/saude-sistema',
+  path: '/saude-sistema',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -525,6 +531,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/saude-sistema': typeof SaudeSistemaRoute
   '/acessos': typeof AuthenticatedAcessosRoute
   '/alertas': typeof AuthenticatedAlertasRoute
   '/assistente': typeof AuthenticatedAssistenteRoute
@@ -602,6 +609,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/saude-sistema': typeof SaudeSistemaRoute
   '/acessos': typeof AuthenticatedAcessosRoute
   '/alertas': typeof AuthenticatedAlertasRoute
   '/assistente': typeof AuthenticatedAssistenteRoute
@@ -679,6 +687,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/saude-sistema': typeof SaudeSistemaRoute
   '/_authenticated/acessos': typeof AuthenticatedAcessosRoute
   '/_authenticated/alertas': typeof AuthenticatedAlertasRoute
   '/_authenticated/assistente': typeof AuthenticatedAssistenteRoute
@@ -758,6 +767,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/saude-sistema'
     | '/acessos'
     | '/alertas'
     | '/assistente'
@@ -835,6 +845,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/reset-password'
+    | '/saude-sistema'
     | '/acessos'
     | '/alertas'
     | '/assistente'
@@ -911,6 +922,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/reset-password'
+    | '/saude-sistema'
     | '/_authenticated/acessos'
     | '/_authenticated/alertas'
     | '/_authenticated/assistente'
@@ -990,6 +1002,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SaudeSistemaRoute: typeof SaudeSistemaRoute
   AuthNovaSenhaRoute: typeof AuthNovaSenhaRoute
   ApiPublicHooksEvolutionWhatsappWebhookRoute: typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   ApiPublicHooksProcessWhatsappOutboxRoute: typeof ApiPublicHooksProcessWhatsappOutboxRoute
@@ -997,6 +1010,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/saude-sistema': {
+      id: '/saude-sistema'
+      path: '/saude-sistema'
+      fullPath: '/saude-sistema'
+      preLoaderRoute: typeof SaudeSistemaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -1780,6 +1800,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SaudeSistemaRoute: SaudeSistemaRoute,
   AuthNovaSenhaRoute: AuthNovaSenhaRoute,
   ApiPublicHooksEvolutionWhatsappWebhookRoute:
     ApiPublicHooksEvolutionWhatsappWebhookRoute,
