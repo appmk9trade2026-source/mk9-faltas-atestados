@@ -1,7 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
-import { getSystemHealth, listHealthIncidents, type IncidentRow } from "@/lib/health.functions";
+import { getSystemHealth, listHealthIncidents, type IncidentRow, triggerNotificationWorker } from "@/lib/health.functions";
+import { getNotificationConfig, updateNotificationConfig, listNotificationRecipients, validateNotificationGoLive } from "@/lib/health-config.functions";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ShieldCheck, ShieldAlert, AlertTriangle, CheckCircle2, XCircle, Bell, Settings2, Trash2, Eye } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +30,42 @@ function SaudeSistemaPage() {
   const [filterSeverity, setFilterSeverity] = useState<string>("ALL");
   const [filterPeriod, setFilterPeriod] = useState<string>("24h");
   const [selectedIncident, setSelectedIncident] = useState<IncidentRow | null>(null);
+  const queryClient = useQueryClient();
+  
+  const configQ = useQuery({
+    queryKey: ["notification-config"],
+    queryFn: () => getNotificationConfig({}),
+  });
+
+  const recipientsQ = useQuery({
+    queryKey: ["notification-recipients"],
+    queryFn: () => listNotificationRecipients({}),
+  });
+
+  const validateQ = useQuery({
+    queryKey: ["validate-go-live"],
+    queryFn: () => validateNotificationGoLive({}),
+    enabled: !!configQ.data,
+  });
+
+  const updateConfigM = useMutation({
+    mutationFn: (vars: { environment: any; kill_switch_enabled: boolean }) => updateNotificationConfig(vars),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notification-config"] });
+      queryClient.invalidateQueries({ queryKey: ["validate-go-live"] });
+      toast.success("Configuração atualizada.");
+    },
+    onError: (err: any) => toast.error("Falha ao atualizar: " + err.message),
+  });
+
+  const triggerWorkerM = useMutation({
+    mutationFn: (vars: { dryRun: boolean }) => triggerNotificationWorker(vars),
+    onSuccess: (res: any) => {
+      queryClient.invalidateQueries({ queryKey: ["health-incidents"] });
+      toast.success(res.processed > 0 ? `Processado ${res.processed} item(s).` : "Nenhum item pendente.");
+    },
+    onError: (err: any) => toast.error("Falha ao disparar: " + err.message),
+  });
   
   const healthQ = useQuery({
     queryKey: ["health-consolidated"],
@@ -98,6 +138,213 @@ function SaudeSistemaPage() {
             ))}
           </div>
         )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-base">Notificações P0 (Etapa 8)</CardTitle>
+                  <p className="text-xs text-muted-foreground">Governança, Kill Switch e Controle de Ambiente.</p>
+                </div>
+                <div className="flex gap-2">
+                  <Badge variant={validateQ.data?.status === "READY" ? "success" : "danger" as any} className="flex gap-1 items-center">
+                    {validateQ.data?.status === "READY" ? <CheckCircle2 className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
+                    {validateQ.data?.status === "READY" ? "READY" : "BLOCKED"}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm">Kill Switch Global</Label>
+                        <p className="text-xs text-muted-foreground">Bloqueia todos os envios externos se desativado.</p>
+                      </div>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant={configQ.data?.kill_switch_enabled ? "destructive" : "outline"}
+                            size="sm"
+                            disabled={updateConfigM.isPending}
+                          >
+                            {configQ.data?.kill_switch_enabled ? "DESATIVAR" : "ATIVAR"}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Alterar Kill Switch?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {configQ.data?.kill_switch_enabled 
+                                ? "Você está prestes a DESATIVAR o envio de notificações críticas. Novos alertas P0 não serão enviados para canais externos."
+                                : "Você está prestes a ATIVAR o envio de notificações reais. Certifique-se de que os destinatários estão corretos."
+                              }
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => updateConfigM.mutate({ 
+                              environment: configQ.data?.environment, 
+                              kill_switch_enabled: !configQ.data?.kill_switch_enabled 
+                            })}>
+                              Confirmar Alteração
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-sm">Ambiente de Notificação</Label>
+                      <Select 
+                        value={configQ.data?.environment} 
+                        onValueChange={(val: any) => {
+                          if (val === 'PRODUCTION') {
+                            toast.info("A ativação de PRODUCTION exige destinatários verificados.");
+                          }
+                          updateConfigM.mutate({ 
+                            environment: val, 
+                            kill_switch_enabled: configQ.data?.kill_switch_enabled 
+                          });
+                        }}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="DISABLED">DISABLED (Nenhum envio)</SelectItem>
+                          <SelectItem value="SANDBOX">SANDBOX (Somente testes)</SelectItem>
+                          <SelectItem value="PRODUCTION">PRODUCTION (Real)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="p-3 border rounded-lg bg-blue-50/50 text-blue-800 space-y-2">
+                      <div className="flex items-center gap-2 font-semibold text-sm">
+                        <ShieldCheck className="h-4 w-4" /> Go-Live Status
+                      </div>
+                      {validateQ.data?.reasons?.length ? (
+                        <ul className="text-xs space-y-1 ml-4 list-disc">
+                          {validateQ.data.reasons.map((r: string) => (
+                            <li key={r}>{r}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-xs">Infraestrutura pronta para operação controlada.</p>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="secondary" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => triggerWorkerM.mutate({ dryRun: true })}
+                        disabled={triggerWorkerM.isPending}
+                      >
+                        <Eye className="h-3.5 w-3.5 mr-2" /> DRY RUN
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => {
+                          const preview = `[TESTE DE SISTEMA]\nCRM MK9 — ALERTA P0\n\nMódulo: Nova Ausência\nStatus: Crítico\nIncidente: TEST-8822\nTrace: ${Math.random().toString(36).slice(2, 10)}\n\nAcesse Saúde do Sistema para diagnóstico.`;
+                          toast.info("Mensagem Sanitizada:", {
+                            description: preview,
+                            duration: 6000,
+                          });
+                        }}
+                      >
+                        <Bell className="h-3.5 w-3.5 mr-2" /> PREVIEW
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-base">Destinatários Técnicos</CardTitle>
+                  <p className="text-xs text-muted-foreground">Apenas números verificados são elegíveis para PRODUCTION.</p>
+                </div>
+                <Button variant="outline" size="xs" onClick={() => toast.warning("Funcionalidade de adição via Painel em desenvolvimento.")}>+ Adicionar</Button>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Label</TableHead>
+                      <TableHead>Destino</TableHead>
+                      <TableHead>Env</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recipientsQ.data?.map((r: any) => (
+                      <TableRow key={r.id}>
+                        <TableCell className="text-xs font-medium">{r.label}</TableCell>
+                        <TableCell className="text-xs font-mono">
+                          {r.destination.replace(/.(?=.{4})/g, "*")}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-[10px]">{r.environment}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            {r.active && r.verified_at ? (
+                              <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                            ) : (
+                              <AlertTriangle className="h-3 w-3 text-amber-500" />
+                            )}
+                            <span className="text-[10px]">{r.active ? "Ativo" : "Inativo"}</span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {!recipientsQ.data?.length && (
+                      <TableRow><TableCell colSpan={4} className="text-center py-4 text-xs text-muted-foreground">Nenhum destinatário cadastrado.</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="lg:col-span-1">
+            <Card className="h-full">
+              <CardHeader>
+                <CardTitle className="text-base">Auditoria de Segurança</CardTitle>
+                <p className="text-xs text-muted-foreground">Fail-Closed e Proteção de PII.</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-3 border rounded-lg bg-emerald-50/50 text-emerald-800 space-y-2">
+                  <div className="flex items-center gap-2 font-semibold text-sm">
+                    <ShieldCheck className="h-4 w-4" /> PII Guardrail
+                  </div>
+                  <p className="text-[10px]">Todas as notificações externas excluem Nome, CPF, Matrícula e CID.</p>
+                </div>
+                <div className="p-3 border rounded-lg bg-emerald-50/50 text-emerald-800 space-y-2">
+                  <div className="flex items-center gap-2 font-semibold text-sm">
+                    <ShieldCheck className="h-4 w-4" /> Fail-Closed Active
+                  </div>
+                  <p className="text-[10px]">O sistema bloqueia envios automaticamente se houver ambiguidade na configuração.</p>
+                </div>
+                <div className="p-3 border rounded-lg bg-slate-50 text-slate-600 space-y-2">
+                  <div className="flex items-center gap-2 font-semibold text-sm text-slate-800">
+                    <Settings2 className="h-4 w-4" /> Outbox Worker
+                  </div>
+                  <p className="text-[10px]">Status: Homologado Etapa 7</p>
+                  <p className="text-[10px]">Idempotência: SHA-256 (Ativa)</p>
+                  <p className="text-[10px]">Locking: Concorrente (Ativo)</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
