@@ -1708,9 +1708,12 @@ function NovaAusenciaPage() {
                             )}
 
                           {form.formState.errors.colaborador_id && !colab && (
-                            <p className="text-xs text-red-500">
-                              {form.formState.errors.colaborador_id.message}
-                            </p>
+                            <div className="mt-2 animate-in fade-in slide-in-from-top-1 rounded-md border border-destructive/20 bg-destructive/5 p-2">
+                              <p className="flex items-center gap-1.5 text-xs font-semibold text-destructive">
+                                <AlertTriangle className="h-3.5 w-3.5" />
+                                {form.formState.errors.colaborador_id.message || "Busque um colaborador pela matrícula."}
+                              </p>
+                            </div>
                           )}
                           {form.formState.errors.manual_matricula && modoManual && (
                             <p className="text-xs text-red-500">
@@ -2587,27 +2590,44 @@ function NovaAusenciaPage() {
                         >
                           Cancelar
                         </Button>
-                        <Button
-                          type="submit"
-                          size="lg"
-                          disabled={
-                            salvarMut.isPending ||
-                            (!isEdit && (!confirmado || (!!colab && !colab.projeto?.codigo_protocolo)))
-                          }
-                          className="min-w-[220px] bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:from-blue-700 hover:to-indigo-800"
-                        >
-
-                        {salvarMut.isPending ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <Send className="mr-2 h-4 w-4" />
-                        )}
-                        {salvarMut.isPending
-                          ? "Enviando..."
-                          : isEdit
-                            ? "Salvar Alterações"
-                            : "Enviar Lançamento"}
-                      </Button>
+                        <TooltipProvider delayDuration={0}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="w-full sm:w-auto">
+                                <Button
+                                  type="submit"
+                                  size="lg"
+                                  disabled={
+                                    salvarMut.isPending ||
+                                    (!isEdit && (!confirmado || (!!colab && !colab.projeto?.codigo_protocolo)))
+                                  }
+                                  className="min-w-[220px] bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:from-blue-700 hover:to-indigo-800 disabled:opacity-50"
+                                >
+                                  {salvarMut.isPending ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Send className="mr-2 h-4 w-4" />
+                                  )}
+                                  {salvarMut.isPending
+                                    ? "Enviando..."
+                                    : isEdit
+                                      ? "Salvar Alterações"
+                                      : "Enviar Lançamento"}
+                                </Button>
+                              </div>
+                            </TooltipTrigger>
+                            {!isEdit && !confirmado && !salvarMut.isPending && (
+                              <TooltipContent side="top" className="bg-amber-600 text-white border-none text-xs">
+                                <p>Marque o checkbox de confirmação para habilitar o envio.</p>
+                              </TooltipContent>
+                            )}
+                            {!!colab && !colab.projeto?.codigo_protocolo && (
+                              <TooltipContent side="top" className="bg-destructive text-white border-none text-xs">
+                                <p>Projeto sem código de protocolo configurado.</p>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        </TooltipProvider>
                     </div>
                   </div>
                   )}
