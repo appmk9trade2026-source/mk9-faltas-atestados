@@ -1,26 +1,30 @@
 # Programa de Estabilização Geral — Etapa 2
-## Rede de Proteção Contra Regressões
+## Implementação da Rede de Proteção
 
-### Status: Etapa 1 Concluída (Inventário da Infraestrutura)
+### Etapa 2 — Classificação de Testes
+Vou estruturar a pasta `tests/` para refletir a classificação:
+- `tests/safe-read/`: Smoke tests e validações estáticas (Rotas, Sidebar).
+- `tests/controlled-write/`: Testes que realizam mutações (Nova Ausência, Duplicidade).
 
-O inventário da infraestrutura de testes foi realizado com sucesso. A stack atual é robusta o suficiente para suportar a suíte de regressão sem a necessidade de instalar novas ferramentas.
+### Etapa 3 — Regressão P0: Nova Ausência
+Vou implementar `tests/controlled-write/nova-ausencia.e2e.mjs` utilizando Playwright.
+**Cenários:**
+1. **FALTA**: Lançamento com sucesso de uma falta.
+2. **ATESTADO**: Lançamento com sucesso de um atestado (com upload).
+3. **VALIDAÇÃO**: Verificação de campos obrigatórios e feedback de erro.
 
-#### Inventário:
-- **Playwright**: Presente em `tests/smoke/smoke.mjs` (scripts smoke read-only).
-- **Testes Unitários**: Presentes em `tests/unit/` (validação de rotas e permissões de sidebar).
-- **Testes de Integração**: Presentes em `tests/unit/` (lógica de parsing de componentes).
-- **Scripts package.json**: `test`, `test:unit`, `test:smoke`, `test:e2e` (placeholder), `check` (CI baseline).
-- **Fixtures**: `tests/setup.ts` configurado.
-- **Helpers de Autenticação**: Implementados em `smoke.mjs`; utiliza `TEST_USER_EMAIL` e `TEST_USER_PASSWORD`.
-- **Sessões Salvas**: Efêmeras durante a execução dos testes.
-- **Usuários de Teste**: Dependem de variáveis de ambiente no ambiente de preview/homologação.
-- **Mocks**: `jsdom` configurado para Vitest.
-- **Ambiente de Teste**: `vitest.config.ts` e `vite.config.ts` integrados; proteção via `test-guard.ts` ativa.
-- **CI/CD**: Script `bun run check` pronto para execução em pipelines.
+### Etapa 4 — Regressão Crítica de Duplicidade
+Vou implementar `tests/controlled-write/duplicidade.e2e.mjs`.
+**Cenários:**
+1. **ATIVO**: Deve bloquear duplicidade real.
+2. **CANCELADO/EXCLUIDO**: Deve permitir novo lançamento no mesmo período.
+3. **OUTRO COLABORADOR**: Deve permitir lançamento no mesmo período.
 
-### Próximos Passos:
-- **Etapa 2**: Classificar testes existentes e novos como SAFE READ ou CONTROLLED WRITE.
-- **Etapa 3**: Iniciar implementação da cobertura de regressão para o fluxo "Nova Ausência".
+### Etapa 5 — Teste de Contrato RPC
+Vou implementar `tests/safe-read/rpc-contracts.test.ts` (Vitest) para auditar `detectar_conflitos_ausencia` e `dashboard_metrics`.
 
 ---
-**Guardrail P0**: `src/routes/index.tsx` permanece como um redirecionamento puro para `/dashboard`. Nenhuma documentação técnica foi inserida na interface pública.
+**Critérios de Segurança:**
+- Utilização de `assertMutableEnv`.
+- Prefixos `TEST_E2E_` em todos os registros.
+- Limpeza de dados de teste (exclusão lógica/cancelamento) após a execução.
