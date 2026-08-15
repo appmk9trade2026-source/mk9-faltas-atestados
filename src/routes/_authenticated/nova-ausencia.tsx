@@ -206,7 +206,10 @@ const schema = z
     loja_codigo_nome: z.string().trim().min(1, "Código ou nome da loja é obrigatório.").max(150),
     cid: z.string().max(20).optional().or(z.literal("")),
     acidente_trabalho_trajeto: z.enum(["sim", "nao"], {
-      errorMap: () => ({ message: "Selecione Sim ou Não." }),
+      errorMap: () => ({ message: "Informe se a ausência está relacionada a acidente de trabalho." }),
+    }),
+    legal_confirmacao: z.literal(true, {
+      errorMap: () => ({ message: "Para enviar o lançamento, confirme que as informações acima estão corretas." }),
     }),
     motivo: z
       .string()
@@ -382,10 +385,7 @@ function NovaAusenciaPage() {
   const [conflitoDialogOpen, setConflitoDialogOpen] = useState(false);
   const [pendingValues, setPendingValues] = useState<FormData | null>(null);
   const [confirmado, setConfirmado] = useState(false);
-
-
-
-
+  
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -400,6 +400,7 @@ function NovaAusenciaPage() {
       loja_codigo_nome: "",
       cid: "",
       acidente_trabalho_trajeto: undefined as unknown as "sim",
+      legal_confirmacao: false as any,
       motivo: "",
       manual_nome: "",
       manual_matricula: "",
@@ -2567,18 +2568,42 @@ function NovaAusenciaPage() {
                       )}
 
                       {!isEdit && (
-                        <div className="flex items-start gap-3 rounded-lg border border-blue-100 bg-blue-50/50 p-4 max-w-2xl">
-                          <input
-                            type="checkbox"
-                            id="confirmacao-lancamento"
-                            checked={confirmado}
-                            onChange={(e) => setConfirmado(e.target.checked)}
-                            className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <Label htmlFor="confirmacao-lancamento" className="text-sm font-normal leading-relaxed text-blue-900 cursor-pointer">
-                            Confirmo que as informações prestadas são verdadeiras e que o documento anexo (se houver) é autêntico. Estou ciente de que o lançamento de informações falsas pode acarretar sanções disciplinares.
-                          </Label>
-                        </div>
+                        <FormField
+                          control={form.control}
+                          name="legal_confirmacao"
+                          render={({ field }) => (
+                            <FormItem className="w-full max-w-2xl">
+                              <div className={cn(
+                                "flex items-start gap-3 rounded-lg border p-4 transition-colors",
+                                field.value ? "border-blue-100 bg-blue-50/50" : "border-border bg-muted/20",
+                                form.formState.errors.legal_confirmacao && "border-destructive/50 bg-destructive/5"
+                              )}>
+                                <FormControl>
+                                  <input
+                                    type="checkbox"
+                                    id="confirmacao-lancamento"
+                                    name="legal_confirmacao"
+                                    checked={field.value}
+                                    onChange={(e) => field.onChange(e.target.checked)}
+                                    className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                  />
+                                </FormControl>
+                                <div className="space-y-1">
+                                  <Label 
+                                    htmlFor="confirmacao-lancamento" 
+                                    className="text-sm font-normal leading-relaxed text-blue-900 cursor-pointer block"
+                                  >
+                                    Confirmo que as informações prestadas são verdadeiras e que o documento anexo (se houver) é autêntico. Estou ciente de que o lançamento de informações falsas pode acarretar sanções disciplinares.
+                                  </Label>
+                                  <p className="text-[11px] text-muted-foreground italic">
+                                    Para enviar o lançamento, confirme que as informações acima estão corretas.
+                                  </p>
+                                  <FormMessage className="text-xs font-semibold" />
+                                </div>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
                       )}
 
                       <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center w-full">
@@ -2599,7 +2624,7 @@ function NovaAusenciaPage() {
                                   size="lg"
                                   disabled={
                                     salvarMut.isPending ||
-                                    (!isEdit && (!confirmado || (!!colab && !colab.projeto?.codigo_protocolo)))
+                                    (!!colab && !colab.projeto?.codigo_protocolo)
                                   }
                                   className="min-w-[220px] bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:from-blue-700 hover:to-indigo-800 disabled:opacity-50"
                                 >
@@ -2616,7 +2641,7 @@ function NovaAusenciaPage() {
                                 </Button>
                               </div>
                             </TooltipTrigger>
-                            {!isEdit && !confirmado && !salvarMut.isPending && (
+                            {!isEdit && !form.getValues("legal_confirmacao") && !salvarMut.isPending && (
                               <TooltipContent side="top" className="bg-amber-600 text-white border-none text-xs">
                                 <p>Marque o checkbox de confirmação para habilitar o envio.</p>
                               </TooltipContent>
