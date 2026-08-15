@@ -218,12 +218,14 @@ export async function aggregateIncident(context: LogContext, error: unknown) {
     let incidentId: string | null = null;
 
     // 3. Upsert atômico
-    const { data: existing } = await supabaseAdmin
+    const result = await supabaseAdmin
       .from("operational_health_incidents")
       .select("id, occurrence_count, affected_users_count, metadata")
       .eq("fingerprint", fingerprint)
       .in("status", ["OPEN", "MONITORING"])
       .maybeSingle();
+
+    const existing = result?.data;
 
     if (existing) {
       incidentId = existing.id;
