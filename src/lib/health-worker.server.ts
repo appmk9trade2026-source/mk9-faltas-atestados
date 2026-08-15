@@ -118,10 +118,10 @@ async function processSingleItem(item: any, config: any, dryRun: boolean) {
     
     if (response.success) {
       resultStatus = "SUCCESS";
-      providerMessageId = response.id;
+      providerMessageId = (response as any).id;
     } else {
-      resultStatus = response.permanent ? "PERMANENT_FAILURE" : "TRANSIENT_FAILURE";
-      safeErrorCode = response.errorCode;
+      resultStatus = (response as any).permanent ? "PERMANENT_FAILURE" : "TRANSIENT_FAILURE";
+      safeErrorCode = (response as any).errorCode;
     }
 
   } catch (err: any) {
