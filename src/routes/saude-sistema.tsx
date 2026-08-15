@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { getSystemHealth, listHealthIncidents, type IncidentRow, triggerNotificationWorker } from "@/lib/health.functions";
-import { getNotificationConfig, updateNotificationConfig, listNotificationRecipients, validateNotificationGoLive } from "@/lib/health-config.functions";
+import { getNotificationConfig, updateNotificationConfig, listNotificationRecipients, validateNotificationGoLive, adminVerifyRecipient, revokeAdminVerification } from "@/lib/health-config.functions";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ShieldCheck, ShieldAlert, AlertTriangle, CheckCircle2, XCircle, Bell, Settings2, Trash2, Eye } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -269,9 +269,8 @@ function SaudeSistemaPage() {
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-base">Destinatários Técnicos</CardTitle>
-                  <p className="text-xs text-muted-foreground">Apenas números verificados são elegíveis para PRODUCTION.</p>
+                  <p className="text-xs text-muted-foreground">Homologação manual permitida para check NOT_SUPPORTED.</p>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => toast.warning("Funcionalidade de adição via Painel em desenvolvimento.")}>+ Adicionar</Button>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -280,7 +279,9 @@ function SaudeSistemaPage() {
                       <TableHead>Label</TableHead>
                       <TableHead>Destino</TableHead>
                       <TableHead>Env</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Check</TableHead>
+                      <TableHead>Admin</TableHead>
+                      <TableHead className="text-right">Ação</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -294,20 +295,33 @@ function SaudeSistemaPage() {
                           <Badge variant="outline" className="text-[10px]">{r.environment}</Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1">
-                            {r.active && r.verified_at ? (
-                              <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                            ) : (
-                              <AlertTriangle className="h-3 w-3 text-amber-500" />
+                          <Badge 
+                            variant="secondary" 
+                            className={cn(
+                              "text-[10px]",
+                              r.provider_check_capability === 'NOT_SUPPORTED' ? "bg-amber-50 text-amber-700" : "bg-slate-50"
                             )}
-                            <span className="text-[10px]">{r.active ? "Ativo" : "Inativo"}</span>
-                          </div>
+                          >
+                            {r.provider_check_capability}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {r.admin_verified ? (
+                            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-slate-300" />
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {r.provider_check_capability === 'NOT_SUPPORTED' && !r.admin_verified && (
+                            <AdminVerifyAction recipient={r} onSuccess={() => queryClient.invalidateQueries({ queryKey: ["notification-recipients"] })} />
+                          )}
+                          {r.admin_verified && (
+                            <RevokeVerifyAction recipient={r} onSuccess={() => queryClient.invalidateQueries({ queryKey: ["notification-recipients"] })} />
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
-                    {!recipientsQ.data?.length && (
-                      <TableRow><TableCell colSpan={4} className="text-center py-4 text-xs text-muted-foreground">Nenhum destinatário cadastrado.</TableCell></TableRow>
-                    )}
                   </TableBody>
                 </Table>
               </CardContent>

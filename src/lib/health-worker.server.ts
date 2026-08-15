@@ -86,16 +86,21 @@ async function processSingleItem(item: any, config: any, dryRun: boolean) {
       return { id: item.id, status: "CANCELLED" };
     }
 
-    // 3. Mapear Destinatários Técnicos (Etapa 8)
+    // 3. Mapear Destinatários Técnicos (Etapa 8.7 Fallback)
     const { data: recipients } = await supabaseAdmin
       .from("operational_notification_recipients")
       .select("*")
       .eq("channel", item.channel)
       .eq("environment", config.environment)
       .eq("active", true)
-      .not("verified_at", "is", null);
+      .or(`verified_at.not.is.null,and(admin_verified.eq.true,provider_check_capability.eq.NOT_SUPPORTED)`);
 
-    if (!recipients || recipients.length === 0) {
+    // Guardrail P0: Em SANDBOX, apenas is_test_recipient
+    const eligibleRecipients = config.environment === 'SANDBOX' 
+      ? (recipients || []).filter(r => r.is_test_recipient)
+      : (recipients || []);
+
+    if (eligibleRecipients.length === 0) {
       await finalizeItem(item.id, "FAILED", item.attempt_count, "NO_VERIFIED_RECIPIENTS");
       return { id: item.id, status: "FAILED", reason: "NO_VERIFIED_RECIPIENTS" };
     }
