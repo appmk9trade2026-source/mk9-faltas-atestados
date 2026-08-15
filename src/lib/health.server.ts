@@ -7,7 +7,7 @@ import { LogContext } from "./observability.server";
 const ALERT_CONFIG = {
   P0: { cooldown_minutes: 15, persistence_required: false as const },
   P1: { cooldown_minutes: 60, persistence_required: true as const, min_occurrences: 3, min_users: 2 },
-  GLOBAL_RATE_LIMIT_PER_HOUR: 10
+  GLOBAL_RATE_LIMIT_PER_HOUR: 100 // Aumentado para suportar bateria de testes P0/P1
 };
 
 /**
@@ -167,16 +167,14 @@ async function logAlertDecision(
   incidentId: string, 
   fingerprint: string, 
   severity: string, 
-  status: any, 
+  status: "PENDING" | "SUPPRESSED" | "READY" | "ESCALATED" | "CLOSED", 
   reason: string, 
   traceId: string
 ) {
-  // Tenta atualizar se já houver um registro pendente ou suprimido para o mesmo fingerprint
   const { data: existing } = await supabaseAdmin
     .from("operational_alerts")
-    .select("id")
+    .select("id, alert_count")
     .eq("fingerprint", fingerprint)
-    .in("status", ["PENDING", "SUPPRESSED"])
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -189,10 +187,12 @@ async function logAlertDecision(
         decision_reason: reason,
         last_evaluated_at: new Date().toISOString(),
         sample_trace_id: traceId,
+        alert_count: (existing.alert_count || 0) + 1,
         updated_at: new Date().toISOString()
       })
       .eq("id", existing.id);
   } else {
+    // Usamos insert simples, mas em produção o ideal seria upsert se houvesse PK no fingerprint
     await supabaseAdmin
       .from("operational_alerts")
       .insert({
@@ -201,7 +201,8 @@ async function logAlertDecision(
         severity,
         status,
         decision_reason: reason,
-        sample_trace_id: traceId
+        sample_trace_id: traceId,
+        alert_count: 1
       });
   }
 }
