@@ -5,6 +5,7 @@ import { getSystemHealth, listHealthIncidents, type IncidentRow, triggerNotifica
 import { getNotificationConfig, updateNotificationConfig, listNotificationRecipients, validateNotificationGoLive, adminVerifyRecipient, revokeAdminVerification } from "@/lib/health-config.functions";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ShieldCheck, ShieldAlert, AlertTriangle, CheckCircle2, XCircle, Bell, Settings2, Trash2, Eye } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
