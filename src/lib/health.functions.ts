@@ -99,6 +99,21 @@ export const getSystemHealth = createServerFn({ method: "GET" })
   });
 
 
+export interface AlertRow {
+  id: string;
+  incident_id: string;
+  fingerprint: string;
+  severity: string;
+  status: "PENDING" | "SUPPRESSED" | "READY" | "ESCALATED" | "CLOSED";
+  decision_reason: string | null;
+  alert_count: number;
+  escalation_level: number;
+  sample_trace_id: string | null;
+  last_alerted_at: string | null;
+  next_eligible_at: string | null;
+  created_at: string;
+}
+
 export interface IncidentRow {
   id: string;
   fingerprint: string;
@@ -116,6 +131,8 @@ export interface IncidentRow {
   metadata: any;
   created_at: string;
   updated_at: string;
+  alert_status?: string;
+  alert_reason?: string;
 }
 
 const listIncidentsSchema = z.object({
@@ -140,7 +157,20 @@ export const listHealthIncidents = createServerFn({ method: "GET" })
   .handler(async ({ data: filters }) => {
     let query = supabaseAdmin
       .from("operational_health_incidents")
-      .select("*", { count: "exact" });
+      .select(`
+        *,
+        operational_alerts!inner (
+          status,
+          decision_reason
+        )
+      `, { count: "exact" });
+    
+    // Note: Use .select("*, operational_alerts(status, decision_reason)") if we want to include all incidents even without alerts.
+    // The requirement says only P0/P1 generate alerts, so we might want to keep all incidents.
+    query = supabaseAdmin
+      .from("operational_health_incidents")
+      .select("*, alert:operational_alerts(status, decision_reason)", { count: "exact" });
+
 
     if (filters.status && filters.status !== "ALL") {
       query = query.eq("status", filters.status);
@@ -176,7 +206,11 @@ export const listHealthIncidents = createServerFn({ method: "GET" })
     if (error) throw error;
 
     return {
-      incidents: (data || []) as IncidentRow[],
+      incidents: (data || []).map(row => ({
+        ...row,
+        alert_status: (row as any).alert?.[0]?.status,
+        alert_reason: (row as any).alert?.[0]?.decision_reason
+      })) as IncidentRow[],
       total: count || 0
     };
   });

@@ -2,6 +2,15 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { LogContext } from "./observability.server";
 
 /**
+ * Configurações de Alerta (Etapa 6)
+ */
+const ALERT_CONFIG = {
+  P0: { cooldown_minutes: 15, persistence_required: false as const },
+  P1: { cooldown_minutes: 60, persistence_required: true as const, min_occurrences: 3, min_users: 2 },
+  GLOBAL_RATE_LIMIT_PER_HOUR: 100 // Aumentado para suportar bateria de testes P0/P1
+};
+
+/**
  * Filtros de incidentes - NÃO criar incidentes para erros esperados.
  */
 const IGNORED_CATEGORIES = ["VALIDATION", "AUTH"];
@@ -32,7 +41,174 @@ function calculateFingerprint(context: LogContext, error: any): string {
 }
 
 /**
- * Agrega um erro em um incidente operacional.
+ * Engine de Avaliação de Alerta (Etapa 6)
+ */
+async function evaluateOperationalAlert(incidentId: string, context: LogContext) {
+  try {
+    const incidentRes = await supabaseAdmin
+      .from("operational_health_incidents")
+      .select("*")
+      .eq("id", incidentId)
+      .single();
+
+    const incident = incidentRes?.data;
+    if (!incident) return;
+
+    // 1. Somente P0 e P1 geram alertas
+    if (incident.severity !== "P0" && incident.severity !== "P1") return;
+
+    // 2. Buscar alerta existente ou criar novo ciclo
+    const alertRes = await supabaseAdmin
+      .from("operational_alerts")
+      .select("*")
+      .eq("fingerprint", incident.fingerprint)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const alert = alertRes?.data;
+
+    const now = new Date();
+    const config = incident.severity === "P0" ? ALERT_CONFIG.P0 : ALERT_CONFIG.P1;
+
+    // 3. Rate Limit Global (Anti-Flood)
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
+    const recentReadyRes = await supabaseAdmin
+      .from("operational_alerts")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "READY")
+      .gte("last_alerted_at", oneHourAgo);
+
+    const recentReadyAlerts = recentReadyRes?.count || 0;
+
+    if (recentReadyAlerts >= ALERT_CONFIG.GLOBAL_RATE_LIMIT_PER_HOUR) {
+      // Usamos upsert aqui para garantir que a decisão seja registrada sem criar múltiplos registros se o incidente ocorrer em rajada
+      await logAlertDecision(incidentId, incident.fingerprint, incident.severity, "SUPPRESSED", "RATE_LIMIT", context.traceId);
+      return;
+    }
+
+    // 4. Lógica de Cooldown
+    if (alert && alert.status !== "CLOSED") {
+      const nextEligible = alert.next_eligible_at ? new Date(alert.next_eligible_at) : null;
+      if (nextEligible && now < nextEligible) {
+        await supabaseAdmin
+          .from("operational_alerts")
+          .update({
+            alert_count: Number(alert.alert_count) + 1,
+            last_evaluated_at: now.toISOString(),
+            decision_reason: "COOLDOWN",
+            status: "SUPPRESSED"
+          })
+          .eq("id", alert.id);
+        return;
+      }
+    }
+
+    // 5. Lógica de Persistência (P1)
+    if (config.persistence_required) {
+      const p1Config = config as typeof ALERT_CONFIG.P1;
+      const isPersistent = 
+        Number(incident.occurrence_count) >= (p1Config.min_occurrences || 0) || 
+        Number(incident.affected_users_count) >= (p1Config.min_users || 0);
+
+      if (!isPersistent) {
+        await logAlertDecision(incidentId, incident.fingerprint, incident.severity, "PENDING", "LOW_OCCURRENCE", context.traceId);
+        return;
+      }
+    }
+
+    // 6. Decisão Final: READY ou ESCALATED
+    let status: "READY" | "ESCALATED" = "READY";
+    let escalationLevel = alert ? alert.escalation_level : 1;
+
+    if (alert && alert.alert_count > 5) {
+      status = "ESCALATED";
+      escalationLevel++;
+    }
+
+    const nextEligibleDate = new Date(now.getTime() + config.cooldown_minutes * 60 * 1000);
+
+    if (alert && alert.status !== "CLOSED") {
+      await supabaseAdmin
+        .from("operational_alerts")
+        .update({
+          status,
+          decision_reason: status === "ESCALATED" ? "PERSISTENCE_HIGH" : "THRESHOLD_MET",
+          alert_count: Number(alert.alert_count) + 1,
+          last_alerted_at: now.toISOString(),
+          last_evaluated_at: now.toISOString(),
+          next_eligible_at: nextEligibleDate.toISOString(),
+          escalation_level: escalationLevel,
+          sample_trace_id: context.traceId
+        })
+        .eq("id", alert.id);
+    } else {
+      await supabaseAdmin
+        .from("operational_alerts")
+        .insert({
+          incident_id: incidentId,
+          fingerprint: incident.fingerprint,
+          severity: incident.severity,
+          status,
+          decision_reason: "INITIAL_DETECTION",
+          alert_count: 1,
+          last_alerted_at: now.toISOString(),
+          next_eligible_at: nextEligibleDate.toISOString(),
+          sample_trace_id: context.traceId
+        });
+    }
+
+  } catch (err) {
+    console.error("[ALERT_ENGINE_FAILURE]", err);
+  }
+}
+
+async function logAlertDecision(
+  incidentId: string, 
+  fingerprint: string, 
+  severity: string, 
+  status: "PENDING" | "SUPPRESSED" | "READY" | "ESCALATED" | "CLOSED", 
+  reason: string, 
+  traceId: string
+) {
+  const { data: existing } = await supabaseAdmin
+    .from("operational_alerts")
+    .select("id, alert_count")
+    .eq("fingerprint", fingerprint)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existing) {
+    await supabaseAdmin
+      .from("operational_alerts")
+      .update({
+        status,
+        decision_reason: reason,
+        last_evaluated_at: new Date().toISOString(),
+        sample_trace_id: traceId,
+        alert_count: (existing.alert_count || 0) + 1,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", existing.id);
+  } else {
+    // Usamos insert simples, mas em produção o ideal seria upsert se houvesse PK no fingerprint
+    await supabaseAdmin
+      .from("operational_alerts")
+      .insert({
+        incident_id: incidentId,
+        fingerprint,
+        severity,
+        status,
+        decision_reason: reason,
+        sample_trace_id: traceId,
+        alert_count: 1
+      });
+  }
+}
+
+/**
+ * Agrega um erro em um incidente operacional e avalia alertas.
  */
 export async function aggregateIncident(context: LogContext, error: unknown) {
   // 1. Filtros
@@ -46,17 +222,20 @@ export async function aggregateIncident(context: LogContext, error: unknown) {
   const fingerprint = calculateFingerprint(context, rawError);
 
   try {
-    // 3. Upsert atômico (ou busca e atualização)
-    // Usamos select primeiro para evitar conflitos de transação complexos em ambientes serverless se o fingerprint já existir.
-    const { data: existing } = await supabaseAdmin
+    let incidentId: string | null = null;
+
+    // 3. Upsert atômico
+    const result = await supabaseAdmin
       .from("operational_health_incidents")
       .select("id, occurrence_count, affected_users_count, metadata")
       .eq("fingerprint", fingerprint)
       .in("status", ["OPEN", "MONITORING"])
       .maybeSingle();
 
+    const existing = result?.data;
+
     if (existing) {
-      // Atualizar incidente existente
+      incidentId = existing.id;
       const newMetadata = existing.metadata as any;
       const affectedUsers = new Set(newMetadata.affected_users || []);
       if (context.userId) affectedUsers.add(context.userId);
@@ -75,7 +254,7 @@ export async function aggregateIncident(context: LogContext, error: unknown) {
     } else {
       // Criar novo incidente
       const affectedUsers = context.userId ? [context.userId] : [];
-      await supabaseAdmin
+      const { data: inserted } = await supabaseAdmin
         .from("operational_health_incidents")
         .insert({
           fingerprint,
@@ -89,10 +268,20 @@ export async function aggregateIncident(context: LogContext, error: unknown) {
           affected_users_count: affectedUsers.length,
           sample_trace_id: context.traceId,
           metadata: { affected_users: affectedUsers }
-        });
+        })
+        .select("id")
+        .single();
+      
+      if (inserted) incidentId = inserted.id;
     }
+
+    // 4. Avaliar Alerta (Etapa 6)
+    if (incidentId) {
+      await evaluateOperationalAlert(incidentId, context);
+    }
+
   } catch (err) {
-    // Falha silenciosa para não quebrar o log original
     console.error("[HEALTH_AGGREGATION_FAILURE]", err);
   }
 }
+
