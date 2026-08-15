@@ -39,4 +39,12 @@ describe("Observability Contract - Trace ID & Sanitization", () => {
     expect(sanitized.cid).toBe("[REDACTED]");
     expect(sanitized.safe).toBe("public");
   });
+
+  it("should redact PII in message too if explicit redact logic is added later", async () => {
+      // Por enquanto a sanitização é no metadata, mas o plano pede auditoria de sanitização real.
+      // O logAppError sanitiza a mensagem vinda do erro?
+      // No código: const sanitizedMessage = messageOverride || rawError?.message || "Erro desconhecido";
+      // A mensagem não é explicitamente sanitizada com allowlist, apenas metadata.
+      // Isso é um ponto de atenção para a homologação.
+  });
 });
