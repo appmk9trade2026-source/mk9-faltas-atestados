@@ -1957,7 +1957,7 @@ function NovaAusenciaPage() {
                               disabled={!tipoAusenciaId || opcoesPorTipoQ.isLoading}
                             >
                               <FormControl>
-                                <SelectTrigger>
+                                <SelectTrigger name="opcao_periodo_id" id="opcao_periodo_id">
                                   <SelectValue
                                     placeholder={
                                       tipoAusenciaId
