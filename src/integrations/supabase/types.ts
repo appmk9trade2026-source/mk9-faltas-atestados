@@ -3138,6 +3138,137 @@ export type Database = {
         }
         Relationships: []
       }
+      operational_notification_attempts: {
+        Row: {
+          attempt_number: number
+          created_at: string | null
+          finished_at: string | null
+          id: string
+          outbox_id: string
+          provider_message_id: string | null
+          provider_status: string | null
+          result: string
+          safe_error_code: string | null
+          started_at: string | null
+        }
+        Insert: {
+          attempt_number: number
+          created_at?: string | null
+          finished_at?: string | null
+          id?: string
+          outbox_id: string
+          provider_message_id?: string | null
+          provider_status?: string | null
+          result: string
+          safe_error_code?: string | null
+          started_at?: string | null
+        }
+        Update: {
+          attempt_number?: number
+          created_at?: string | null
+          finished_at?: string | null
+          id?: string
+          outbox_id?: string
+          provider_message_id?: string | null
+          provider_status?: string | null
+          result?: string
+          safe_error_code?: string | null
+          started_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operational_notification_attempts_outbox_id_fkey"
+            columns: ["outbox_id"]
+            isOneToOne: false
+            referencedRelation: "operational_notification_outbox"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operational_notification_outbox: {
+        Row: {
+          alert_id: string | null
+          attempt_count: number
+          channel: string
+          created_at: string | null
+          failed_at: string | null
+          fingerprint: string
+          id: string
+          idempotency_key: string
+          incident_id: string
+          last_error_code: string | null
+          locked_at: string | null
+          locked_by: string | null
+          max_attempts: number
+          metadata: Json | null
+          next_attempt_at: string | null
+          provider_message_id: string | null
+          sent_at: string | null
+          severity: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          alert_id?: string | null
+          attempt_count?: number
+          channel?: string
+          created_at?: string | null
+          failed_at?: string | null
+          fingerprint: string
+          id?: string
+          idempotency_key: string
+          incident_id: string
+          last_error_code?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          max_attempts?: number
+          metadata?: Json | null
+          next_attempt_at?: string | null
+          provider_message_id?: string | null
+          sent_at?: string | null
+          severity: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          alert_id?: string | null
+          attempt_count?: number
+          channel?: string
+          created_at?: string | null
+          failed_at?: string | null
+          fingerprint?: string
+          id?: string
+          idempotency_key?: string
+          incident_id?: string
+          last_error_code?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          max_attempts?: number
+          metadata?: Json | null
+          next_attempt_at?: string | null
+          provider_message_id?: string | null
+          sent_at?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operational_notification_outbox_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "operational_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operational_notification_outbox_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "operational_health_incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       permissions: {
         Row: {
           action: string
