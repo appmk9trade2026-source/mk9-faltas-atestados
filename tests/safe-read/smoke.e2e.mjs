@@ -11,7 +11,8 @@
  * script will sign in and probe authenticated routes; otherwise it stops at
  * /auth. It NEVER creates or mutates records.
  */
-import { chromium } from "playwright";
+import playwright from "playwright";
+const { chromium } = playwright;
 import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 

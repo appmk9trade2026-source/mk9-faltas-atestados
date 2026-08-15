@@ -12,7 +12,7 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./tests/setup.ts"],
-    include: ["tests/unit/**/*.test.{ts,tsx}"],
+    include: ["tests/safe-read/**/*.test.{ts,tsx}"],
     css: false,
     server: {
       deps: { inline: [/@tanstack/] },
