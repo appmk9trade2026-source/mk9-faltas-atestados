@@ -184,10 +184,10 @@ function SaudeSistemaPage() {
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => updateConfigM.mutate({ 
-                          environment: configQ.data?.environment, 
-                          kill_switch_enabled: !!configQ.data?.kill_switch_enabled 
-                        })}>
+                            <AlertDialogAction onClick={() => updateConfigM.mutate({ 
+                              environment: configQ.data?.environment, 
+                              kill_switch_enabled: !configQ.data?.kill_switch_enabled 
+                            })}>
                               Confirmar Alteração
                             </AlertDialogAction>
                           </AlertDialogFooter>
