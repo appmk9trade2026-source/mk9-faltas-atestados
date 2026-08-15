@@ -63,7 +63,7 @@ function FieldShell({
     <div className="space-y-1.5">
       <Label className="flex items-center gap-1.5 text-sm">
         {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
-        {label} {required && <span className="text-red-500">*</span>}
+        {label} {required && <span className="text-red-500" aria-hidden="false">*</span>}
       </Label>
       {hint && <p className="text-[11px] leading-tight text-muted-foreground">{hint}</p>}
       {children}

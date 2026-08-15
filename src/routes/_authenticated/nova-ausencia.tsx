@@ -206,7 +206,10 @@ const schema = z
     loja_codigo_nome: z.string().trim().min(1, "Código ou nome da loja é obrigatório.").max(150),
     cid: z.string().max(20).optional().or(z.literal("")),
     acidente_trabalho_trajeto: z.enum(["sim", "nao"], {
-      errorMap: () => ({ message: "Selecione Sim ou Não." }),
+      errorMap: () => ({ message: "Informe se a ausência está relacionada a acidente de trabalho." }),
+    }),
+    legal_confirmacao: z.literal(true, {
+      errorMap: () => ({ message: "Para enviar o lançamento, confirme que as informações acima estão corretas." }),
     }),
     motivo: z
       .string()
@@ -382,10 +385,7 @@ function NovaAusenciaPage() {
   const [conflitoDialogOpen, setConflitoDialogOpen] = useState(false);
   const [pendingValues, setPendingValues] = useState<FormData | null>(null);
   const [confirmado, setConfirmado] = useState(false);
-
-
-
-
+  
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -400,6 +400,7 @@ function NovaAusenciaPage() {
       loja_codigo_nome: "",
       cid: "",
       acidente_trabalho_trajeto: undefined as unknown as "sim",
+      legal_confirmacao: false as any,
       motivo: "",
       manual_nome: "",
       manual_matricula: "",
@@ -1534,58 +1535,76 @@ function NovaAusenciaPage() {
             <Form {...form}>
               <fieldset disabled={bloqueado || (supervisorSemProjetos && !isEdit)} className="contents">
                 <form
-                  onSubmit={form.handleSubmit(async (v) => {
-                    if (salvarMut.isPending || substituirMut.isPending || bloqueado) return;
-                    if (supervisorSemProjetos && !isEdit) {
-                      toast.error("Sem projetos vinculados. Procure um administrador.");
-                      return;
-                    }
-                    if (!colab && !isEdit && !v.modo_manual) {
-                      toast.error("Busque um colaborador pela matrícula ou use o preenchimento manual.");
-                      return;
-                    }
-
-                    // 1. Detecção de Conflitos (Etapa 1)
-                    if (!isEdit) {
-                      try {
-                        const tipo = tipoSelecionado?.codigo ? tipoBaseFromDetalhe(tipoSelecionado.codigo) : "FALTA";
-                        const confs = await checkConflitosFn({
-                          data: {
-                            colaborador_id: v.modo_manual ? null : v.colaborador_id,
-                            data_inicio: v.data_inicio,
-                            data_fim: dataFim || v.data_inicio,
-                            tipo: tipo as any,
-                            origem_registro: v.modo_manual ? "MANUAL" : "AUTOMATICO",
-                            manual_matricula: v.modo_manual ? v.manual_matricula : null,
-                            empresa_id: v.modo_manual ? v.empresa_id : null,
-                            projeto_id: v.modo_manual ? v.projeto_id : null,
-                            _supervisor_id: null,
-                          }
-                        });
-
-
-                        if (confs && confs.length > 0) {
-                          setConflitos(confs);
-                          setPendingValues(v);
-                          setConflitoDialogOpen(true);
-                          return;
-                        }
-                      } catch (err) {
-                        console.error("Erro ao verificar conflitos:", err);
-                        // Se falhar a verificação, prossegue com o salvamento normal
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    
+                    form.handleSubmit(async (v) => {
+                      if (salvarMut.isPending || substituirMut.isPending || bloqueado) return;
+                      if (supervisorSemProjetos && !isEdit) {
+                        toast.error("Sem projetos vinculados. Procure um administrador.");
+                        return;
                       }
-                    }
+                      if (!colab && !isEdit && !v.modo_manual) {
+                        toast.error("Busque um colaborador pela matrícula ou use o preenchimento manual.");
+                        return;
+                      }
 
-                    if (colab && !colab.projeto?.codigo_protocolo) {
-                      toast.error(
-                        "O projeto do colaborador está sem código de protocolo. Peça a um administrador para cadastrar em Configurações → Projetos.",
+                      // 1. Detecção de Conflitos (Etapa 1)
+                      if (!isEdit) {
+                        try {
+                          const tipo = tipoSelecionado?.codigo ? tipoBaseFromDetalhe(tipoSelecionado.codigo) : "FALTA";
+                          const confs = await checkConflitosFn({
+                            data: {
+                              colaborador_id: v.modo_manual ? null : v.colaborador_id,
+                              data_inicio: v.data_inicio,
+                              data_fim: dataFim || v.data_inicio,
+                              tipo: tipo as any,
+                              origem_registro: v.modo_manual ? "MANUAL" : "AUTOMATICO",
+                              manual_matricula: v.modo_manual ? v.manual_matricula : null,
+                              empresa_id: v.modo_manual ? v.empresa_id : null,
+                              projeto_id: v.modo_manual ? v.projeto_id : null,
+                              _supervisor_id: null,
+                            }
+                          });
 
-                      );
-                      return;
-                    }
-                    console.log("DEBUG: Iniciando mutate com os valores:", v);
-                    salvarMut.mutate(v);
-                  })}
+                          if (confs && confs.length > 0) {
+                            setConflitos(confs);
+                            setPendingValues(v);
+                            setConflitoDialogOpen(true);
+                            return;
+                          }
+                        } catch (err) {
+                          console.error("Erro ao verificar conflitos:", err);
+                        }
+                      }
+
+                      if (colab && !colab.projeto?.codigo_protocolo) {
+                        toast.error(
+                          "O projeto do colaborador está sem código de protocolo. Peça a um administrador para cadastrar em Configurações → Projetos.",
+                        );
+                        return;
+                      }
+                      console.log("DEBUG: Iniciando mutate com os valores:", v);
+                      salvarMut.mutate(v);
+                    })(e).catch(() => {
+                      // Scroll to first error
+                      const firstError = Object.keys(form.formState.errors)[0];
+                      if (firstError) {
+                        const element = document.querySelector(`[name="${firstError}"]`) || 
+                                       document.querySelector(`[id="${firstError}"]`) ||
+                                       document.querySelector(`[aria-labelledby*="${firstError}"]`);
+                        
+                        if (element) {
+                          element.scrollIntoView({ behavior: "smooth", block: "center" });
+                          if (element instanceof HTMLElement) {
+                            setTimeout(() => element.focus(), 600);
+                          }
+                        }
+                        
+                        toast.error("Revise os campos obrigatórios destacados antes de enviar.");
+                      }
+                    });
+                  }}
                   className="space-y-6"
                 >
                   {/* ============= SEÇÃO 1: Dados do Colaborador ============= */}
@@ -1623,8 +1642,9 @@ function NovaAusenciaPage() {
                           </p>
                           <div className="flex flex-col gap-2 sm:flex-row">
                             <Input
-                              id="matricula-busca"
-                              ref={matriculaRef}
+                               id="colaborador_id"
+                               name="colaborador_id"
+                               ref={matriculaRef}
                               value={matriculaInput}
                               onChange={(e) => {
                                 setMatriculaInput(e.target.value);
@@ -1835,6 +1855,8 @@ function NovaAusenciaPage() {
                                   <Button
                                     variant="outline"
                                     role="combobox"
+                                    name="tipo_ausencia_id"
+                                    id="tipo_ausencia_id"
                                     className={cn(
                                       "w-full justify-between font-normal",
                                       !field.value && "text-muted-foreground",
@@ -1935,7 +1957,7 @@ function NovaAusenciaPage() {
                               disabled={!tipoAusenciaId || opcoesPorTipoQ.isLoading}
                             >
                               <FormControl>
-                                <SelectTrigger>
+                                <SelectTrigger name="opcao_periodo_id" id="opcao_periodo_id">
                                   <SelectValue
                                     placeholder={
                                       tipoAusenciaId
@@ -2100,6 +2122,8 @@ function NovaAusenciaPage() {
                             </FormLabel>
                             <FormControl>
                               <RadioGroup
+                                id="acidente_trabalho_trajeto"
+                                name="acidente_trabalho_trajeto"
                                 value={field.value ?? ""}
                                 onValueChange={field.onChange}
                                 className="flex flex-wrap gap-4 pt-1"
@@ -2404,7 +2428,7 @@ function NovaAusenciaPage() {
                   <Card className="border border-border/60 p-5">
                     <div className="mb-4 flex items-center gap-2">
                       <UploadCloud className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                      <h2 className="text-base font-semibold">Anexar Documento</h2>
+                      <h2 className="text-base font-semibold">Anexar Documento {tipoSelecionado?.exige_documento && <span className="text-red-500">*</span>}</h2>
                     </div>
 
                     {anexoExistenteVisivel && (
@@ -2567,18 +2591,42 @@ function NovaAusenciaPage() {
                       )}
 
                       {!isEdit && (
-                        <div className="flex items-start gap-3 rounded-lg border border-blue-100 bg-blue-50/50 p-4 max-w-2xl">
-                          <input
-                            type="checkbox"
-                            id="confirmacao-lancamento"
-                            checked={confirmado}
-                            onChange={(e) => setConfirmado(e.target.checked)}
-                            className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <Label htmlFor="confirmacao-lancamento" className="text-sm font-normal leading-relaxed text-blue-900 cursor-pointer">
-                            Confirmo que as informações prestadas são verdadeiras e que o documento anexo (se houver) é autêntico. Estou ciente de que o lançamento de informações falsas pode acarretar sanções disciplinares.
-                          </Label>
-                        </div>
+                        <FormField
+                          control={form.control}
+                          name="legal_confirmacao"
+                          render={({ field }) => (
+                            <FormItem className="w-full max-w-2xl">
+                              <div className={cn(
+                                "flex items-start gap-3 rounded-lg border p-4 transition-colors",
+                                field.value ? "border-blue-100 bg-blue-50/50" : "border-border bg-muted/20",
+                                form.formState.errors.legal_confirmacao && "border-destructive/50 bg-destructive/5"
+                              )}>
+                                <FormControl>
+                                  <input
+                                    type="checkbox"
+                                    id="confirmacao-lancamento"
+                                    name="legal_confirmacao"
+                                    checked={field.value}
+                                    onChange={(e) => field.onChange(e.target.checked)}
+                                    className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                  />
+                                </FormControl>
+                                <div className="space-y-1">
+                                  <Label 
+                                    htmlFor="confirmacao-lancamento" 
+                                    className="text-sm font-normal leading-relaxed text-blue-900 cursor-pointer block"
+                                  >
+                                    Confirmo que as informações prestadas são verdadeiras e que o documento anexo (se houver) é autêntico. Estou ciente de que o lançamento de informações falsas pode acarretar sanções disciplinares.
+                                  </Label>
+                                  <p className="text-[11px] text-muted-foreground italic">
+                                    Para enviar o lançamento, confirme que as informações acima estão corretas.
+                                  </p>
+                                  <FormMessage className="text-xs font-semibold" />
+                                </div>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
                       )}
 
                       <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center w-full">
@@ -2599,7 +2647,7 @@ function NovaAusenciaPage() {
                                   size="lg"
                                   disabled={
                                     salvarMut.isPending ||
-                                    (!isEdit && (!confirmado || (!!colab && !colab.projeto?.codigo_protocolo)))
+                                    (!!colab && !colab.projeto?.codigo_protocolo)
                                   }
                                   className="min-w-[220px] bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:from-blue-700 hover:to-indigo-800 disabled:opacity-50"
                                 >
@@ -2616,7 +2664,7 @@ function NovaAusenciaPage() {
                                 </Button>
                               </div>
                             </TooltipTrigger>
-                            {!isEdit && !confirmado && !salvarMut.isPending && (
+                            {!isEdit && !form.getValues("legal_confirmacao") && !salvarMut.isPending && (
                               <TooltipContent side="top" className="bg-amber-600 text-white border-none text-xs">
                                 <p>Marque o checkbox de confirmação para habilitar o envio.</p>
                               </TooltipContent>
