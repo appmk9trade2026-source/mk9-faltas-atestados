@@ -181,7 +181,8 @@ export const listHealthIncidents = createServerFn({ method: "GET" })
     // The requirement says only P0/P1 generate alerts, so we might want to keep all incidents.
     query = supabaseAdmin
       .from("operational_health_incidents")
-      .select("*, alert:operational_alerts(status, decision_reason)", { count: "exact" });
+      .select("*, alert:operational_alerts(status, decision_reason), notifications:operational_notification_outbox(id, channel, status, attempt_count, updated_at, sent_at, last_error_code, next_attempt_at)", { count: "exact" });
+
 
 
     if (filters.status && filters.status !== "ALL") {
