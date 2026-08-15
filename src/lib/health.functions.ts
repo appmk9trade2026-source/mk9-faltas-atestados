@@ -89,8 +89,8 @@ export const getSystemHealth = createServerFn({ method: "GET" })
         status,
         errors_recent: recentErrorCount,
         open_incidents: openCount,
-        last_error_at: modIncidents[0]?.last_seen_at || modLogs[0]?.created_at,
-        sample_trace_id: modIncidents[0]?.sample_trace_id || modLogs[0]?.trace_id
+        last_error_at: modIncidents[0]?.last_seen_at || modLogs[0]?.created_at || undefined,
+        sample_trace_id: modIncidents[0]?.sample_trace_id || modLogs[0]?.trace_id || undefined
       };
     }
 
