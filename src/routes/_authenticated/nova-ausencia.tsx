@@ -728,6 +728,7 @@ function NovaAusenciaPage() {
     try {
       // REGRA FUNDAMENTAL P0: Match EXATO de matrícula.
       // Normalização canônica no cliente (trim). O banco aplica tg_colaboradores_normalize.
+      const traceId = crypto.randomUUID();
       const { data, error } = await supabase
         .from("colaboradores")
         .select(
@@ -736,7 +737,10 @@ function NovaAusenciaPage() {
         .eq("matricula", val) // P0: eq em vez de ilike/fuzzy
         .eq("ativo", true);
       
-      if (error) throw error;
+      if (error) {
+        console.error(`[NovaAusencia] Colab Search Error [trace=${traceId}]`, error);
+        throw error;
+      }
 
       // Proteção contra Race Condition (Etapa 12): 
       // Ignora resposta se o valor no campo já mudou enquanto a request estava em voo.
