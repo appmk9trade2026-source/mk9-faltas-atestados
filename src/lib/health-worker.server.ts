@@ -188,21 +188,51 @@ async function finalizeItem(id: string, status: string, attempts: number, error:
 }
 
 /**
- * Mock do Provedor de Notificações para Sandbox (Etapa 7.29)
+ * Envio real via Evolution API (Etapa 8 - Go-Live)
  */
-async function mockProviderSend(item: any) {
-  // Simular latência de rede
-  await new Promise(r => setTimeout(r, 500));
+async function realProviderSend(item: any, recipients: any[]) {
+  const baseUrl = process.env.EVOLUTION_BASE_URL;
+  const apiKey = process.env.EVOLUTION_API_KEY;
+  const instanceName = process.env.EVOLUTION_INSTANCE_NAME;
 
-  // Simular falhas baseadas em metadados de teste para a suite de testes
-  const testMode = item.metadata?.test_mode;
-  
-  if (testMode === "TIMEOUT") throw new Error("Timeout");
-  if (testMode === "429") return { success: false, permanent: false, errorCode: "RATE_LIMIT" };
-  if (testMode === "PERMANENT") return { success: false, permanent: true, errorCode: "INVALID_RECIPIENT" };
+  if (!baseUrl || !apiKey || !instanceName) {
+    return { success: false, permanent: true, errorCode: "MISSING_SECRETS" };
+  }
 
-  return {
-    success: true,
-    id: `msg_${crypto.randomUUID().slice(0, 8)}`
-  };
+  // 1. Construir a mensagem técnica (PII Guardrail)
+  const traceId = item.metadata?.trace_id || "N/A";
+  const message = `🚨 P0 INCIDENT [${item.fingerprint}] | Severity: ${item.severity} | Trace: ${traceId}`;
+
+  // 2. Disparar para todos os destinatários técnicos elegíveis
+  // Em produção, poderíamos otimizar, mas para o Go-Live P0, enviamos sequencialmente
+  // para garantir rastreabilidade.
+  let lastResult = { success: true, id: null as string | null };
+
+  for (const recipient of recipients) {
+    const telefone = recipient.phone || recipient.address; // Mapeia para o campo correto
+    if (!telefone) continue;
+
+    const res = await sendEvolutionText({
+      baseUrl,
+      apiKey,
+      instance: instanceName,
+      telefone,
+      texto: message,
+      idempotencyKey: `${item.idempotency_key}:${recipient.id}`,
+      timeoutMs: WORKER_CONFIG.TIMEOUT_MS
+    });
+
+    if (!res.ok) {
+      const cls = classifyEvolutionError(res.status, res.message);
+      return { 
+        success: false, 
+        permanent: cls.kind === "DEFINITIVA", 
+        errorCode: cls.codigo 
+      };
+    }
+    
+    lastResult = { success: true, id: res.providerMessageId };
+  }
+
+  return lastResult;
 }
