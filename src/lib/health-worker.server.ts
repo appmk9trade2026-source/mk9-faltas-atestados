@@ -209,7 +209,7 @@ async function realProviderSend(item: any, recipients: any[]) {
   let lastResult = { success: true, id: null as string | null };
 
   for (const recipient of recipients) {
-    const telefone = recipient.phone || recipient.address; // Mapeia para o campo correto
+    const telefone = recipient.destination; // Corrigido de .phone/.address para .destination conforme schema verificado
     if (!telefone) continue;
 
     const res = await sendEvolutionText({
