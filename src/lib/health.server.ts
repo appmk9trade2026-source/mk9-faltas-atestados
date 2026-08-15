@@ -84,7 +84,6 @@ async function evaluateOperationalAlert(incidentId: string, context: LogContext)
     const recentReadyAlerts = recentReadyRes?.count || 0;
 
     if (recentReadyAlerts >= ALERT_CONFIG.GLOBAL_RATE_LIMIT_PER_HOUR) {
-      // Usamos upsert aqui para garantir que a decisão seja registrada sem criar múltiplos registros se o incidente ocorrer em rajada
       await logAlertDecision(incidentId, incident.fingerprint, incident.severity, "SUPPRESSED", "RATE_LIMIT", context.traceId);
       return;
     }
@@ -122,6 +121,7 @@ async function evaluateOperationalAlert(incidentId: string, context: LogContext)
     // 6. Decisão Final: READY ou ESCALATED
     let status: "READY" | "ESCALATED" = "READY";
     let escalationLevel = alert ? alert.escalation_level : 1;
+    let alertId = alert?.id;
 
     if (alert && alert.alert_count > 5) {
       status = "ESCALATED";
@@ -145,7 +145,7 @@ async function evaluateOperationalAlert(incidentId: string, context: LogContext)
         })
         .eq("id", alert.id);
     } else {
-      await supabaseAdmin
+      const { data: inserted } = await supabaseAdmin
         .from("operational_alerts")
         .insert({
           incident_id: incidentId,
@@ -157,13 +157,18 @@ async function evaluateOperationalAlert(incidentId: string, context: LogContext)
           last_alerted_at: now.toISOString(),
           next_eligible_at: nextEligibleDate.toISOString(),
           sample_trace_id: context.traceId
-        });
+        })
+        .select("id")
+        .single();
+      
+      if (inserted) alertId = inserted.id;
     }
 
-      // 7. Enfileirar Notificação P0 se estiver READY ou ESCALATED (Etapa 7)
-      if (status === "READY" || status === "ESCALATED") {
-        await enqueueOperationalNotification(incident, alertIdToNotify, status, escalationLevel, context.traceId);
-      }
+    // 7. Enfileirar Notificação P0 se estiver READY ou ESCALATED (Etapa 7)
+    if ((status === "READY" || status === "ESCALATED") && alertId) {
+      await enqueueOperationalNotification(incident, alertId, status, escalationLevel, context.traceId);
+    }
+
 
   } catch (err) {
     console.error("[ALERT_ENGINE_FAILURE]", err);
