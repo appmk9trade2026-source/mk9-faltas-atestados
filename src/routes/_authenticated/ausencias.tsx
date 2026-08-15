@@ -837,6 +837,14 @@ function AusenciasPage() {
                   <TableCell>
                     <div className="flex flex-wrap items-center gap-1">
                       <Badge variant="outline">{TIPO_LABEL[row.tipo]}</Badge>
+                      {row.origem_registro === "OCORRENCIA_PONTO_AMBEV" && (
+                        <Badge
+                          variant="secondary"
+                          className="border-purple-500/30 bg-purple-500/10 text-purple-700 dark:text-purple-300"
+                        >
+                          Ocorrência de Ponto
+                        </Badge>
+                      )}
                       {row.status_documental === "EXCLUIDO" && (
                         <Badge
                           variant="destructive"
