@@ -14,6 +14,7 @@ async function main() {
       status: "OPEN",
       module: "INFRA",
       operation: "HEALTH_CHECK",
+      category: "SYSTEM",
       metadata: { trace_id: traceId }
     })
     .select()
