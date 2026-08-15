@@ -160,12 +160,64 @@ async function evaluateOperationalAlert(incidentId: string, context: LogContext)
         });
     }
 
+      // 7. Enfileirar Notificação P0 se estiver READY ou ESCALATED (Etapa 7)
+      if (status === "READY" || status === "ESCALATED") {
+        await enqueueOperationalNotification(incident, alertIdToNotify, status, escalationLevel, context.traceId);
+      }
+
   } catch (err) {
     console.error("[ALERT_ENGINE_FAILURE]", err);
   }
 }
 
+/**
+ * Enfileira notificação na outbox com proteção de idempotência (Etapa 7)
+ */
+async function enqueueOperationalNotification(
+  incident: any, 
+  alertId: string, 
+  status: string, 
+  escalationLevel: number,
+  traceId: string
+) {
+  // Apenas P0 gera notificação externa nesta etapa
+  if (incident.severity !== "P0") return;
+
+  const channel = "WHATSAPP";
+  const cycle = "1"; // Ciclo de notificação atual
+  
+  // Idempotency Key Determinística: alert_id + escalation_level + channel + cycle
+  const rawIdem = `${alertId}|${escalationLevel}|${channel}|${cycle}`;
+  const idempotencyKey = crypto.createHash("sha256").update(rawIdem).digest("hex");
+
+  try {
+    const { error } = await supabaseAdmin
+      .from("operational_notification_outbox")
+      .insert({
+        alert_id: alertId,
+        incident_id: incident.id,
+        fingerprint: incident.fingerprint,
+        severity: incident.severity,
+        channel,
+        status: "PENDING",
+        idempotency_key: idempotencyKey,
+        metadata: {
+          escalation_level: escalationLevel,
+          trace_id: traceId,
+          cycle
+        }
+      });
+
+    if (error && error.code !== "23505") { // Ignora conflito de chave única (idempotência)
+      console.error("[NOTIFICATION_ENQUEUE_FAILURE]", error);
+    }
+  } catch (err) {
+    console.error("[NOTIFICATION_ENQUEUE_CRITICAL_FAILURE]", err);
+  }
+}
+
 async function logAlertDecision(
+
   incidentId: string, 
   fingerprint: string, 
   severity: string, 
