@@ -362,30 +362,23 @@ export const createAusencia = createServerFn({ method: "POST" })
     };
 
     try {
+      // ETAPA 9 — RESOLVE_COLABORADOR
       const isManual = data.origem_registro === "MANUAL";
       const request = getRequest();
       const meta = resolveOperationMetadata(request);
 
-
-
-
-
-
-
-
-
-    // ETAPA 10 e 11 — Validação Server-side P0 de Integridade da Matrícula
-    // Impede que matrícula A seja vinculada ao colaborador_id da matrícula B.
-    if (!isManual && data.colaborador_id) {
-      const { data: colab, error: colabErr } = await context.supabase
-        .from("colaboradores")
-        .select("matricula")
-        .eq("id", data.colaborador_id)
-        .maybeSingle();
-      
-      if (colabErr || !colab) {
-        throw new Error("INVALID_PAYLOAD: Colaborador não encontrado para verificação de identidade.");
-      }
+      // ETAPA 10 e 11 — Validação Server-side P0 de Integridade da Matrícula
+      if (!isManual && data.colaborador_id) {
+        const { data: colab, error: colabErr } = await context.supabase
+          .from("colaboradores")
+          .select("matricula")
+          .eq("id", data.colaborador_id)
+          .maybeSingle();
+        
+        if (colabErr || !colab) {
+          await logger("RESOLVE_COLABORADOR", colabErr || "Colaborador não encontrado", "VALIDATION");
+          throw new Error("INVALID_PAYLOAD: Colaborador não encontrado para verificação de identidade.");
+        }
 
       // Normalização básica: trim. O banco é a fonte da verdade.
       // O input validator do frontend já passou, mas aqui é o gate final.
