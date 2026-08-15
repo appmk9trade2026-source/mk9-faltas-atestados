@@ -1708,9 +1708,12 @@ function NovaAusenciaPage() {
                             )}
 
                           {form.formState.errors.colaborador_id && !colab && (
-                            <p className="text-xs text-red-500">
-                              {form.formState.errors.colaborador_id.message}
-                            </p>
+                            <div className="mt-2 animate-in fade-in slide-in-from-top-1 rounded-md border border-destructive/20 bg-destructive/5 p-2">
+                              <p className="flex items-center gap-1.5 text-xs font-semibold text-destructive">
+                                <AlertTriangle className="h-3.5 w-3.5" />
+                                {form.formState.errors.colaborador_id.message || "Busque um colaborador pela matrícula."}
+                              </p>
+                            </div>
                           )}
                           {form.formState.errors.manual_matricula && modoManual && (
                             <p className="text-xs text-red-500">
