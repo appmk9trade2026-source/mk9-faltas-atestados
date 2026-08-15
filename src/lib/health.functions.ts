@@ -1,14 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 /**
  * Dispara manualmente o worker de notificações - Super Admin Only
  */
 export const triggerNotificationWorker = createServerFn({ method: "POST" })
-  .handler(async () => {
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { dryRun?: boolean } = {}) => data)
+  .handler(async ({ data }) => {
     const { processNotificationOutbox } = await import("./health-worker.server");
-    return processNotificationOutbox();
+    return processNotificationOutbox(data.dryRun);
   });
 
 
@@ -32,7 +35,8 @@ export interface ConsolidatedHealth {
  * Health Check Consolidado - Apenas para Super Admin
  */
 export const getSystemHealth = createServerFn({ method: "GET" })
-  .handler(async (): Promise<ConsolidatedHealth> => {
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<ConsolidatedHealth> => {
     // 1. Verificação de permissão (Super Admin only)
     // Nota: O middleware de auth e a verificação de has_role devem estar ativos.
     
@@ -171,12 +175,9 @@ const listIncidentsSchema = z.object({
  * Listagem de incidentes com filtros - Super Admin Only
  */
 export const listHealthIncidents = createServerFn({ method: "GET" })
-  .middleware([
-    // Aqui deveria ter o requireSupabaseAuth + check super_admin
-    // Por enquanto usamos a política de RLS no DB que já restringe super_admin
-  ])
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => listIncidentsSchema.parse(data))
-  .handler(async ({ data: filters }) => {
+  .handler(async ({ data: filters, context }) => {
     let query = supabaseAdmin
       .from("operational_health_incidents")
       .select(`
