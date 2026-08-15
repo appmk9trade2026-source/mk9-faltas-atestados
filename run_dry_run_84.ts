@@ -6,18 +6,20 @@ async function runDryRun() {
   console.log("--- DRY RUN TR-8-REAL-003 ---");
   
   const fingerprint = `dry-run-${Date.now()}`;
-  const traceId = "TR-8-REAL-003-DRY";
+  const traceId = crypto.randomUUID();
   
   // 1. Criar Incidente
   const { data: incident, error: incError } = await supabaseAdmin.from("operational_health_incidents").insert({
     fingerprint,
     severity: "P0",
     status: "OPEN",
-    first_occurrence: new Date().toISOString(),
-    last_occurrence: new Date().toISOString(),
+    first_seen_at: new Date().toISOString(),
+    last_seen_at: new Date().toISOString(),
     occurrence_count: 1,
-    title: "Dry Run Notification Normalization Test",
-    technical_details: "Test for 8.4"
+    module: "HEALTH",
+    operation: "DRY_RUN_TEST",
+    category: "TEST",
+    sample_trace_id: traceId
   }).select().single();
   
   if (incError) {
@@ -47,8 +49,8 @@ async function runDryRun() {
     fingerprint,
     idempotency_key: crypto.randomUUID(),
     status: "PENDING",
-    next_attempt_at: new Date().toISOString(), // Garantir que está elegível
-    metadata: { trace_id: traceId }
+    next_attempt_at: new Date().toISOString(),
+    metadata: { trace_id: "TR-8-REAL-003-DRY" }
   }).select().single();
   
   if (outError) {
