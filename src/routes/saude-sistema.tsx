@@ -22,7 +22,7 @@ function SaudeSistemaPage() {
   
   const healthQ = useQuery({
     queryKey: ["health-consolidated"],
-    queryFn: () => getSystemHealth({ data: {} }),
+    queryFn: () => getSystemHealth({}),
     refetchInterval: 60000,
   });
 
