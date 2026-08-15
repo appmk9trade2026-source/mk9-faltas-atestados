@@ -1,19 +1,15 @@
 import { processNotificationOutbox } from "./src/lib/health-worker.server";
 import { supabaseAdmin } from "./src/integrations/supabase/client.server";
+import * as crypto from "crypto";
 
 async function runDryRun() {
   console.log("--- DRY RUN TR-8-REAL-003 ---");
   
-  // 1. Garantir que o Kill Switch esteja OFF para o Dry Run (Fail-Closed logic)
-  // No worker.server.ts:68, se kill_switch_enabled for false, ele retorna SUPPRESSED.
-  // Mas para o teste manual 8.4, o usuário quer ver o fluxo de normalização no log ou comportamento.
-  // O processNotificationOutbox(true) marca como SENT se o dryRun for true.
-  
-  // Criar fixture para o Dry Run
   const fingerprint = `dry-run-${Date.now()}`;
   const traceId = "TR-8-REAL-003-DRY";
   
-  const { data: incident } = await supabaseAdmin.from("operational_health_incidents").insert({
+  // 1. Criar Incidente
+  const { data: incident, error: incError } = await supabaseAdmin.from("operational_health_incidents").insert({
     fingerprint,
     severity: "P0",
     status: "OPEN",
@@ -24,14 +20,26 @@ async function runDryRun() {
     technical_details: "Test for 8.4"
   }).select().single();
   
-  const { data: alert } = await supabaseAdmin.from("operational_alerts").insert({
+  if (incError) {
+    console.error("Error creating incident:", incError);
+    return;
+  }
+  
+  // 2. Criar Alerta
+  const { data: alert, error: alertError } = await supabaseAdmin.from("operational_alerts").insert({
     incident_id: incident.id,
     severity: "P0",
     status: "READY",
     fingerprint
   }).select().single();
+
+  if (alertError) {
+    console.error("Error creating alert:", alertError);
+    return;
+  }
   
-  const { data: outbox } = await supabaseAdmin.from("operational_notification_outbox").insert({
+  // 3. Criar Outbox
+  const { data: outbox, error: outError } = await supabaseAdmin.from("operational_notification_outbox").insert({
     incident_id: incident.id,
     alert_id: alert.id,
     channel: "WHATSAPP",
@@ -39,25 +47,37 @@ async function runDryRun() {
     fingerprint,
     idempotency_key: crypto.randomUUID(),
     status: "PENDING",
+    next_attempt_at: new Date().toISOString(), // Garantir que está elegível
     metadata: { trace_id: traceId }
   }).select().single();
   
+  if (outError) {
+    console.error("Error creating outbox:", outError);
+    return;
+  }
+  
   console.log(`Created Outbox item: ${outbox.id}`);
   
-  // Habilitar Kill Switch temporariamente para o Dry Run não ser suprimido
+  // 4. Habilitar Kill Switch temporariamente
   await supabaseAdmin.from("operational_notification_config").update({ kill_switch_enabled: true }).eq("environment", "SANDBOX");
   
   console.log("Running Worker in DRY RUN mode...");
   const result = await processNotificationOutbox(true);
   console.log("Result:", JSON.stringify(result, null, 2));
   
-  // Restaurar Kill Switch OFF
+  // 5. Restaurar Kill Switch OFF
   await supabaseAdmin.from("operational_notification_config").update({ kill_switch_enabled: false }).eq("environment", "SANDBOX");
   
-  // Verificar resultado no banco
+  // 6. Verificar resultado
   const { data: updatedOutbox } = await supabaseAdmin.from("operational_notification_outbox").select("*").eq("id", outbox.id).single();
-  console.log(`Final Status (should be SENT): ${updatedOutbox.status}`);
-  console.log(`Last Error (should be DRY_RUN_PASSED): ${updatedOutbox.last_error_code}`);
+  console.log(`Final Status: ${updatedOutbox.status}`);
+  console.log(`Last Error: ${updatedOutbox.last_error_code}`);
+  
+  if (updatedOutbox.status === 'SENT' && updatedOutbox.last_error_code === 'DRY_RUN_PASSED') {
+    console.log("DRY RUN SUCCESSFUL.");
+  } else {
+    console.log("DRY RUN FAILED.");
+  }
 }
 
 runDryRun().catch(console.error);
