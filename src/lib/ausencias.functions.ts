@@ -278,6 +278,11 @@ function ausenciaDbError(
      return new Error(`INVALID_PAYLOAD: ${msg.slice(0, 240) || "Erro ao processar lançamento manual."}`);
   }
 
+  // Capturar ambiguidade de função ou falhas técnicas de infra (ex: log_audit_event ambiguity)
+  if (/is not unique|ambiguous|could not identify/i.test(msg)) {
+    return new Error(`TECHNICAL_ERROR: Falha técnica na infraestrutura de auditoria. Ref: ${correlationId || "unknown"}`);
+  }
+
   return new Error(`TECHNICAL_ERROR: ${msg.slice(0, 240) || "Falha técnica ao gravar a ausência."}`);
 }
 
