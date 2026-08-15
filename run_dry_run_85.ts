@@ -2,14 +2,15 @@ import { processNotificationOutbox } from "./src/lib/health-worker.server";
 import { supabaseAdmin } from "./src/integrations/supabase/client.server";
 
 async function main() {
-  console.log("--- FASE A: DRY RUN TR-8-REAL-004 ---");
+  const ts = Date.now();
+  console.log(`--- FASE A: DRY RUN TR-8-REAL-004 (${ts}) ---`);
   
   // 1. Criar Fixture de Teste
-  const traceId = "TR-8-REAL-004-DRY";
+  const traceId = `TR-8-REAL-004-DRY-${ts}`;
   const { data: incident, error: incError } = await supabaseAdmin
     .from("operational_health_incidents")
     .insert({
-      fingerprint: "TEST_FINGERPRINT_85",
+      fingerprint: `TEST_FINGERPRINT_85_${ts}`,
       severity: "P0",
       status: "OPEN",
       module: "INFRA",
@@ -41,9 +42,9 @@ async function main() {
       alert_id: alert.id,
       channel: "WHATSAPP",
       severity: "P0",
-      fingerprint: "TEST_FINGERPRINT_85",
+      fingerprint: `TEST_FINGERPRINT_85_${ts}`,
       status: "PENDING",
-      idempotency_key: `idemp-${traceId}-${Date.now()}`,
+      idempotency_key: `idemp-${traceId}-${ts}`,
       metadata: { trace_id: traceId },
       next_attempt_at: new Date().toISOString()
     })
