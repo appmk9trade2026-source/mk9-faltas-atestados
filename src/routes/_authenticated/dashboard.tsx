@@ -192,18 +192,27 @@ function DashboardPage() {
     queryKey: ["dashboard-metrics", ...scope.keyParts, filters],
     enabled: scope.ready,
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("dashboard_metrics", {
-        _inicio: filters.inicio,
-        _fim: filters.fim,
-        _empresa_id: filters.empresa_id,
-        _projeto_id: filters.projeto_id,
-        _supervisor: filters.supervisor,
-        _tipo: filters.tipo as never,
-        _status: filters.status as never,
-        _categoria_id: filters.categoria_id as never,
-      });
-      if (error) throw error;
-      return data as unknown as DashboardData;
+      const traceId = crypto.randomUUID();
+      try {
+        const { data, error } = await supabase.rpc("dashboard_metrics", {
+          _inicio: filters.inicio,
+          _fim: filters.fim,
+          _empresa_id: filters.empresa_id,
+          _projeto_id: filters.projeto_id,
+          _supervisor: filters.supervisor,
+          _tipo: filters.tipo as never,
+          _status: filters.status as never,
+          _categoria_id: filters.categoria_id as never,
+        });
+        if (error) {
+           console.error(`[Dashboard] RPC Error [trace=${traceId}]`, error);
+           throw error;
+        }
+        return data as unknown as DashboardData;
+      } catch (err) {
+        toast.error(`Falha ao carregar métricas. Ref: ${traceId.slice(0, 8)}`);
+        throw err;
+      }
     },
     // refetchInterval: 60_000,
     staleTime: 30_000,
