@@ -7,10 +7,12 @@ async function main() {
   
   // 1. Criar Fixture de Teste
   const traceId = `TR-8-REAL-004-DRY-${ts}`;
+  const fingerprint = `TEST_FINGERPRINT_85_${ts}`;
+
   const { data: incident, error: incError } = await supabaseAdmin
     .from("operational_health_incidents")
     .insert({
-      fingerprint: `TEST_FINGERPRINT_85_${ts}`,
+      fingerprint: fingerprint,
       severity: "P0",
       status: "OPEN",
       module: "INFRA",
@@ -28,7 +30,8 @@ async function main() {
     .insert({
       incident_id: incident.id,
       severity: "P0",
-      status: "READY"
+      status: "READY",
+      fingerprint: fingerprint
     })
     .select()
     .single();
@@ -42,7 +45,7 @@ async function main() {
       alert_id: alert.id,
       channel: "WHATSAPP",
       severity: "P0",
-      fingerprint: `TEST_FINGERPRINT_85_${ts}`,
+      fingerprint: fingerprint,
       status: "PENDING",
       idempotency_key: `idemp-${traceId}-${ts}`,
       metadata: { trace_id: traceId },
