@@ -6,7 +6,11 @@ import { supabaseAdmin } from "../../src/integrations/supabase/client.server";
 vi.mock("../../src/integrations/supabase/client.server", () => ({
   supabaseAdmin: {
     from: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockResolvedValue({ data: null, error: null })
+    insert: vi.fn().mockResolvedValue({ data: null, error: null }),
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockResolvedValue(null)
   }
 }));
 
