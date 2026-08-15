@@ -49,7 +49,7 @@ function SaudeSistemaPage() {
   });
 
   const updateConfigM = useMutation({
-    mutationFn: (vars: { environment: any; kill_switch_enabled: boolean }) => updateNotificationConfig(vars),
+    mutationFn: (vars: { environment: any; kill_switch_enabled: boolean }) => updateNotificationConfig({ data: vars }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notification-config"] });
       queryClient.invalidateQueries({ queryKey: ["validate-go-live"] });
@@ -59,7 +59,7 @@ function SaudeSistemaPage() {
   });
 
   const triggerWorkerM = useMutation({
-    mutationFn: (vars: { dryRun: boolean }) => triggerNotificationWorker(vars),
+    mutationFn: (vars: { dryRun: boolean }) => triggerNotificationWorker({ data: vars }),
     onSuccess: (res: any) => {
       queryClient.invalidateQueries({ queryKey: ["health-incidents"] });
       toast.success(res.processed > 0 ? `Processado ${res.processed} item(s).` : "Nenhum item pendente.");
