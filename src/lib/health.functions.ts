@@ -144,6 +144,7 @@ export interface IncidentRow {
   updated_at: string;
   alert_status?: string;
   alert_reason?: string;
+  notifications?: NotificationOutboxRow[];
 }
 
 const listIncidentsSchema = z.object({
