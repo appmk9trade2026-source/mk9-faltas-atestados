@@ -41,7 +41,13 @@ export async function checkEvolutionNumber(args: {
       return { ok: true, exists };
     }
     
-    // Se for 400 ou 404, geralmente significa que o numero nao existe ou instancia deslogada
+    // Em v2.3.7, se o endpoint retornar 404, não podemos assumir que o número não existe,
+    // pois pode ser um erro de rota na API (Cannot GET).
+    if (res.status === 404 && raw.includes("Cannot GET")) {
+      return { ok: false, status: 404, message: "CHECK_ENDPOINT_UNAVAILABLE" };
+    }
+
+    // Se for 400 ou 404 (sem ser erro de rota), geralmente significa que o numero nao existe
     if (res.status === 400 || res.status === 404) {
       return { ok: true, exists: false };
     }
