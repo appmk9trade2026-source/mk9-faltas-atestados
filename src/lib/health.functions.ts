@@ -114,6 +114,17 @@ export interface AlertRow {
   created_at: string;
 }
 
+export interface NotificationOutboxRow {
+  id: string;
+  channel: string;
+  status: "PENDING" | "PROCESSING" | "SENT" | "RETRY" | "FAILED" | "CANCELLED";
+  attempt_count: number;
+  last_attempt_at?: string;
+  sent_at?: string;
+  last_error_code?: string;
+  next_attempt_at?: string;
+}
+
 export interface IncidentRow {
   id: string;
   fingerprint: string;
