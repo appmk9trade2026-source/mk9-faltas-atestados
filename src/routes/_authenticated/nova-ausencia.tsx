@@ -2119,6 +2119,8 @@ function NovaAusenciaPage() {
                             </FormLabel>
                             <FormControl>
                               <RadioGroup
+                                id="acidente_trabalho_trajeto"
+                                name="acidente_trabalho_trajeto"
                                 value={field.value ?? ""}
                                 onValueChange={field.onChange}
                                 className="flex flex-wrap gap-4 pt-1"
