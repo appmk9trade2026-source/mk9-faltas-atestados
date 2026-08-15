@@ -1,24 +1,31 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/layout/app-shell";
-import { getSystemHealth, listHealthIncidents } from "@/lib/health.functions";
+import { getSystemHealth, listHealthIncidents, type IncidentRow } from "@/lib/health.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { useState } from "react";
-import { RefreshCw, Search } from "lucide-react";
+import { useState, useMemo } from "react";
+import { RefreshCw, Search, History, Copy, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/saude-sistema")({
   component: SaudeSistemaPage,
 });
 
 function SaudeSistemaPage() {
-  const [traceId, setTraceId] = useState("");
+  const [searchTraceId, setSearchTraceId] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string>("ALL");
+  const [filterSeverity, setFilterSeverity] = useState<string>("ALL");
+  const [filterPeriod, setFilterPeriod] = useState<string>("24h");
+  const [selectedIncident, setSelectedIncident] = useState<IncidentRow | null>(null);
   
   const healthQ = useQuery({
     queryKey: ["health-consolidated"],
@@ -27,8 +34,15 @@ function SaudeSistemaPage() {
   });
 
   const incidentsQ = useQuery({
-    queryKey: ["health-incidents", { traceId }],
-    queryFn: () => listHealthIncidents({ data: { traceId: traceId || undefined } }),
+    queryKey: ["health-incidents", { filterStatus, filterSeverity, filterPeriod, searchTraceId }],
+    queryFn: () => listHealthIncidents({ 
+      data: { 
+        status: filterStatus as any,
+        severity: filterSeverity as any,
+        period: filterPeriod as any,
+        traceId: searchTraceId || undefined
+      } 
+    }),
   });
 
   const getStatusColor = (status: string) => {
