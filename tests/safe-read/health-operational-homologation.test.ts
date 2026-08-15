@@ -23,9 +23,8 @@ describe("Operational Health - Backend Tests", () => {
         await logAppError(context, error);
     }
 
-    // A agregação é assíncrona no código, então precisamos esperar um pouco ou consultar
-    // Em um ambiente de teste real com banco, esperaríamos a persistência.
-    // Para homologação técnica, validamos a estrutura.
+    // A agregação é assíncrona, aguardamos para garantir persistência no DB
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
     // Verificamos se o incidente foi criado
     const { data: incident } = await supabaseAdmin
