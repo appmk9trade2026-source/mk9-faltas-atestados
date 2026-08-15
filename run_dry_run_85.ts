@@ -27,8 +27,7 @@ async function main() {
     .insert({
       incident_id: incident.id,
       severity: "P0",
-      status: "READY",
-      metadata: { trace_id: traceId }
+      status: "READY"
     })
     .select()
     .single();
