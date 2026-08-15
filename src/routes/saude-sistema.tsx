@@ -205,7 +205,7 @@ function SaudeSistemaPage() {
                           }
                           updateConfigM.mutate({ 
                             environment: val, 
-                            kill_switch_enabled: configQ.data?.kill_switch_enabled 
+                            kill_switch_enabled: !!configQ.data?.kill_switch_enabled 
                           });
                         }}
                       >
