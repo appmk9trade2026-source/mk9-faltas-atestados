@@ -12,9 +12,9 @@
     "format": "prettier --write .",
     "typecheck": "tsgo --noEmit",
     "test": "vitest run",
-    "test:unit": "vitest run",
-    "test:watch": "vitest",
-    "test:smoke": "node tests/smoke/smoke.mjs",
+    "test:unit": "vitest run tests/safe-read",
+    "test:watch": "vitest tests/safe-read",
+    "test:smoke": "node tests/safe-read/smoke.e2e.mjs",
     "test:e2e": "echo 'E2E flows run via Playwright in preview environments — see tests/README.md' && exit 0",
     "check": "bun run typecheck && bun run test:unit && bun run test:smoke && bun run build"
   },
