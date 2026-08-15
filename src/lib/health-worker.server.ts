@@ -1,4 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import * as crypto from "crypto";
+
 
 const WORKER_CONFIG = {
   BATCH_SIZE: 5,
