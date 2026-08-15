@@ -1409,26 +1409,25 @@ function NovaAusenciaPage() {
     },
 
     onError: (err: unknown) => {
-      console.error("ETAPA 1 — ERRO DA MUTATION (CORRELATION ID PROPAGADO)", {
-        correlation_id: (globalThis as any).__manualCorrelationId,
+      const traceId = (globalThis as any).__manualCorrelationId || "unknown";
+      console.error("[NovaAusencia] Falha ao salvar ausência:", {
+        correlation_id: traceId,
         error: err,
         message: err instanceof Error ? err.message : String(err)
       });
-      const friendly = friendlyRbacError(err);
-      const isScope = parseRbacError(err).code === "PROJECT_SCOPE_DENIED";
-      toast.error(
-        isScope
-          ? "Você não possui permissão para registrar uma ausência neste projeto."
-          : friendly.title,
-        {
-          description: isScope
-            ? undefined
-            : [friendly.description, friendly.correlationId ? `ref: ${friendly.correlationId.slice(0, 8)}` : null]
-                .filter(Boolean)
-                .join(" • ") || undefined,
-
-        },
-      );
+      
+      const { title, description, correlationId } = friendlyRbacError(err);
+      
+      toast.error(title, {
+        description: description || "Verifique os dados e tente novamente.",
+        action: (correlationId || traceId) ? {
+          label: "Copiar Ref",
+          onClick: () => {
+            navigator.clipboard.writeText(correlationId || traceId);
+            toast.success("Referência copiada para o suporte.");
+          }
+        } : undefined
+      });
     },
   });
 
