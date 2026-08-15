@@ -124,7 +124,7 @@ async function processSingleItem(item: any, config: any, dryRun: boolean) {
 
     // 5. Dispatcher de Provedor (WHATSAPP)
     // O envio real usa a Evolution API configurada via env vars
-    const response = await realProviderSend(item, recipients);
+    const response = await realProviderSend(item, eligibleRecipients);
     
     if (response.success) {
       resultStatus = "SUCCESS";
