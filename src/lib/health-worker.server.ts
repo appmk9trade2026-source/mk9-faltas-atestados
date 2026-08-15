@@ -99,9 +99,9 @@ async function processSingleItem(item: any) {
 
   // 5. Finalizar ou Agendar Retry
   if (resultStatus === "SUCCESS") {
-    await finalizeItem(item.id, "SENT", item.attempt_count + 1, null, providerMessageId);
+    await finalizeItem(item.id, "SENT", item.attempt_count + 1, null, providerMessageId || undefined);
   } else if (resultStatus === "PERMANENT_FAILURE" || item.attempt_count + 1 >= item.max_attempts) {
-    await finalizeItem(item.id, "FAILED", item.attempt_count + 1, safeErrorCode);
+    await finalizeItem(item.id, "FAILED", item.attempt_count + 1, safeErrorCode || null);
   } else {
     // Backoff Exponencial
     const delay = WORKER_CONFIG.BASE_DELAY_SECONDS * Math.pow(2, item.attempt_count);
@@ -120,6 +120,7 @@ async function processSingleItem(item: any) {
       })
       .eq("id", item.id);
   }
+
 
   return { id: item.id, status: resultStatus };
 }
