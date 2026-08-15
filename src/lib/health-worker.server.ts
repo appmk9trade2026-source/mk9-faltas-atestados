@@ -1,5 +1,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import * as crypto from "crypto";
+import { sendEvolutionText } from "./evolution-api.server";
+import { classifyEvolutionError } from "./whatsapp-worker";
 
 
 const WORKER_CONFIG = {
