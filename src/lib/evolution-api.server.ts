@@ -52,6 +52,12 @@ export async function checkEvolutionNumber(args: {
       return { ok: true, exists: false };
     }
 
+    // Se não for nenhum dos anteriores e a rota base falhou com 404/Cannot GET,
+    // a versão pode não suportar o mecanismo de check.
+    if (res.status === 404 || res.status === 405) {
+      return { ok: false, status: res.status, message: "CHECK_NOT_SUPPORTED" };
+    }
+
     return { ok: false, status: res.status, message: raw.slice(0, 200) };
   } catch (err: any) {
     const status = err?.name === "AbortError" ? 408 : null;
