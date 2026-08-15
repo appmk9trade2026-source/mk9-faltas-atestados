@@ -1642,8 +1642,9 @@ function NovaAusenciaPage() {
                           </p>
                           <div className="flex flex-col gap-2 sm:flex-row">
                             <Input
-                              id="matricula-busca"
-                              ref={matriculaRef}
+                               id="colaborador_id"
+                               name="colaborador_id"
+                               ref={matriculaRef}
                               value={matriculaInput}
                               onChange={(e) => {
                                 setMatriculaInput(e.target.value);
