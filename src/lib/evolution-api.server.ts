@@ -29,6 +29,18 @@ export async function sendEvolutionText(args: {
   const normalizedNumber = normalizeEvolutionNumber(args.telefone);
 
   try {
+    const payload = { 
+      number: normalizedNumber, 
+      text: args.texto,
+      // A Evolution API v2 em algumas instâncias/configurações requer fields específicos
+      // Adicionando options de compatibilidade
+      options: {
+        delay: 0,
+        presence: "composing",
+        linkPreview: false
+      }
+    };
+    
     const res = await fetch(url, {
       method: "POST",
       headers: {
@@ -36,7 +48,7 @@ export async function sendEvolutionText(args: {
         apikey: args.apiKey,
         "x-idempotency-key": args.idempotencyKey,
       },
-      body: JSON.stringify({ number: normalizedNumber, text: args.texto }),
+      body: JSON.stringify(payload),
       signal: controller.signal,
     });
     const raw = await res.text();
@@ -45,6 +57,8 @@ export async function sendEvolutionText(args: {
     
     if (!isEvolutionAccepted(res.status)) {
       const msg = (parsed && (parsed.message || parsed.error)) || raw || `HTTP ${res.status}`;
+      // Log técnico para forensic (sem PII no destino, mas logando o erro real do provedor)
+      console.error(`[EVOLUTION_API_ERROR] status=${res.status} response=${raw.slice(0, 200)}`);
       return { ok: false, status: res.status, message: String(msg).slice(0, 500) };
     }
     const providerMessageId =
