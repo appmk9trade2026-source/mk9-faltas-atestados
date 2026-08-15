@@ -347,7 +347,20 @@ export const createAusencia = createServerFn({ method: "POST" })
     }
   })
   .handler(async ({ data, context }) => {
-    const correlationId = (globalThis as any).__lastCorrelationId || "no-correlation-id";
+    const traceId = (data as any).correlation_id || crypto.randomUUID();
+    const logger = async (stage: string, err: unknown, category: any = "DATABASE", severity: any = "P1") => {
+      const { logAppError } = await import("./observability.server");
+      return logAppError({
+        traceId,
+        userId: context.userId,
+        module: "ausencias",
+        operation: "createAusencia",
+        stage,
+        category,
+        severity
+      }, err);
+    };
+
     try {
       const isManual = data.origem_registro === "MANUAL";
       const request = getRequest();
