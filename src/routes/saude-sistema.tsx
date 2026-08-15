@@ -277,6 +277,56 @@ function SaudeSistemaPage() {
                 </div>
               </div>
 
+              {selectedIncident.notifications && selectedIncident.notifications.length > 0 && (
+                <div className="space-y-3 pt-4 border-t">
+                  <div className="flex items-center gap-2 text-primary">
+                    <History className="h-4 w-4" />
+                    <h3 className="font-semibold text-sm uppercase tracking-wider">Notificações Operacionais</h3>
+                  </div>
+                  <div className="rounded-md border overflow-hidden">
+                    <Table>
+                      <TableHeader className="bg-muted/50">
+                        <TableRow>
+                          <TableHead className="text-[10px] h-8">Canal</TableHead>
+                          <TableHead className="text-[10px] h-8">Status</TableHead>
+                          <TableHead className="text-[10px] h-8">Tentativas</TableHead>
+                          <TableHead className="text-[10px] h-8">Última</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedIncident.notifications.map((n) => (
+                          <TableRow key={n.id} className="h-10">
+                            <TableCell className="text-[11px] py-1">{n.channel}</TableCell>
+                            <TableCell className="text-[11px] py-1">
+                              <Badge variant="outline" className={cn(
+                                "text-[9px] px-1 h-4",
+                                n.status === "SENT" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                                n.status === "FAILED" ? "bg-red-50 text-red-700 border-red-200" :
+                                n.status === "RETRY" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                                n.status === "PROCESSING" ? "bg-blue-50 text-blue-700 border-blue-200" :
+                                "bg-slate-50 text-slate-500 border-slate-200"
+                              )}>
+                                {n.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-[11px] py-1 text-center">{n.attempt_count}</TableCell>
+                            <TableCell className="text-[11px] py-1 whitespace-nowrap">
+                              {n.last_attempt_at ? format(new Date(n.last_attempt_at), "HH:mm") : "—"}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {selectedIncident.notifications.some(n => n.status === "RETRY") && (
+                    <p className="text-[10px] text-amber-600 italic">
+                      * Algumas notificações estão aguardando retry com backoff exponencial.
+                    </p>
+                  )}
+                </div>
+              )}
+
+
               <div className="flex justify-end gap-2 pt-4 border-t">
                 <Button variant="outline" size="sm" onClick={() => {
                    // Integrar com busca administrativa de Etapa 3

@@ -2,6 +2,16 @@ import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
 
+/**
+ * Dispara manualmente o worker de notificações - Super Admin Only
+ */
+export const triggerNotificationWorker = createServerFn({ method: "POST" })
+  .handler(async () => {
+    const { processNotificationOutbox } = await import("./health-worker.server");
+    return processNotificationOutbox();
+  });
+
+
 export type HealthStatus = "HEALTHY" | "DEGRADED" | "CRITICAL" | "UNKNOWN";
 
 export interface ModuleHealth {
@@ -114,6 +124,17 @@ export interface AlertRow {
   created_at: string;
 }
 
+export interface NotificationOutboxRow {
+  id: string;
+  channel: string;
+  status: "PENDING" | "PROCESSING" | "SENT" | "RETRY" | "FAILED" | "CANCELLED";
+  attempt_count: number;
+  last_attempt_at?: string;
+  sent_at?: string;
+  last_error_code?: string;
+  next_attempt_at?: string;
+}
+
 export interface IncidentRow {
   id: string;
   fingerprint: string;
@@ -133,6 +154,7 @@ export interface IncidentRow {
   updated_at: string;
   alert_status?: string;
   alert_reason?: string;
+  notifications?: NotificationOutboxRow[];
 }
 
 const listIncidentsSchema = z.object({
@@ -169,7 +191,8 @@ export const listHealthIncidents = createServerFn({ method: "GET" })
     // The requirement says only P0/P1 generate alerts, so we might want to keep all incidents.
     query = supabaseAdmin
       .from("operational_health_incidents")
-      .select("*, alert:operational_alerts(status, decision_reason)", { count: "exact" });
+      .select("*, alert:operational_alerts(status, decision_reason), notifications:operational_notification_outbox(id, channel, status, attempt_count, updated_at, sent_at, last_error_code, next_attempt_at)", { count: "exact" });
+
 
 
     if (filters.status && filters.status !== "ALL") {
@@ -209,8 +232,13 @@ export const listHealthIncidents = createServerFn({ method: "GET" })
       incidents: (data || []).map(row => ({
         ...row,
         alert_status: (row as any).alert?.[0]?.status,
-        alert_reason: (row as any).alert?.[0]?.decision_reason
+        alert_reason: (row as any).alert?.[0]?.decision_reason,
+        notifications: (row as any).notifications?.map((n: any) => ({
+          ...n,
+          last_attempt_at: n.updated_at
+        }))
       })) as IncidentRow[],
+
       total: count || 0
     };
   });

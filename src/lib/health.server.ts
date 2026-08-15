@@ -1,5 +1,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { LogContext } from "./observability.server";
+import * as crypto from "crypto";
+
 
 /**
  * Configurações de Alerta (Etapa 6)
@@ -82,7 +84,6 @@ async function evaluateOperationalAlert(incidentId: string, context: LogContext)
     const recentReadyAlerts = recentReadyRes?.count || 0;
 
     if (recentReadyAlerts >= ALERT_CONFIG.GLOBAL_RATE_LIMIT_PER_HOUR) {
-      // Usamos upsert aqui para garantir que a decisão seja registrada sem criar múltiplos registros se o incidente ocorrer em rajada
       await logAlertDecision(incidentId, incident.fingerprint, incident.severity, "SUPPRESSED", "RATE_LIMIT", context.traceId);
       return;
     }
@@ -120,6 +121,7 @@ async function evaluateOperationalAlert(incidentId: string, context: LogContext)
     // 6. Decisão Final: READY ou ESCALATED
     let status: "READY" | "ESCALATED" = "READY";
     let escalationLevel = alert ? alert.escalation_level : 1;
+    let alertId = alert?.id;
 
     if (alert && alert.alert_count > 5) {
       status = "ESCALATED";
@@ -143,7 +145,7 @@ async function evaluateOperationalAlert(incidentId: string, context: LogContext)
         })
         .eq("id", alert.id);
     } else {
-      await supabaseAdmin
+      const { data: inserted } = await supabaseAdmin
         .from("operational_alerts")
         .insert({
           incident_id: incidentId,
@@ -155,15 +157,72 @@ async function evaluateOperationalAlert(incidentId: string, context: LogContext)
           last_alerted_at: now.toISOString(),
           next_eligible_at: nextEligibleDate.toISOString(),
           sample_trace_id: context.traceId
-        });
+        })
+        .select("id")
+        .single();
+      
+      if (inserted) alertId = inserted.id;
     }
+
+    // 7. Enfileirar Notificação P0 se estiver READY ou ESCALATED (Etapa 7)
+    if ((status === "READY" || status === "ESCALATED") && alertId) {
+      await enqueueOperationalNotification(incident, alertId, status, escalationLevel, context.traceId);
+    }
+
 
   } catch (err) {
     console.error("[ALERT_ENGINE_FAILURE]", err);
   }
 }
 
+/**
+ * Enfileira notificação na outbox com proteção de idempotência (Etapa 7)
+ */
+async function enqueueOperationalNotification(
+  incident: any, 
+  alertId: string, 
+  status: string, 
+  escalationLevel: number,
+  traceId: string
+) {
+  // Apenas P0 gera notificação externa nesta etapa
+  if (incident.severity !== "P0") return;
+
+  const channel = "WHATSAPP";
+  const cycle = "1"; // Ciclo de notificação atual
+  
+  // Idempotency Key Determinística: alert_id + escalation_level + channel + cycle
+  const rawIdem = `${alertId}|${escalationLevel}|${channel}|${cycle}`;
+  const idempotencyKey = crypto.createHash("sha256").update(rawIdem).digest("hex");
+
+  try {
+    const { error } = await supabaseAdmin
+      .from("operational_notification_outbox")
+      .insert({
+        alert_id: alertId,
+        incident_id: incident.id,
+        fingerprint: incident.fingerprint,
+        severity: incident.severity,
+        channel,
+        status: "PENDING",
+        idempotency_key: idempotencyKey,
+        metadata: {
+          escalation_level: escalationLevel,
+          trace_id: traceId,
+          cycle
+        }
+      });
+
+    if (error && error.code !== "23505") { // Ignora conflito de chave única (idempotência)
+      console.error("[NOTIFICATION_ENQUEUE_FAILURE]", error);
+    }
+  } catch (err) {
+    console.error("[NOTIFICATION_ENQUEUE_CRITICAL_FAILURE]", err);
+  }
+}
+
 async function logAlertDecision(
+
   incidentId: string, 
   fingerprint: string, 
   severity: string, 
