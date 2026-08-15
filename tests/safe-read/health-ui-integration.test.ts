@@ -1,6 +1,22 @@
 import { describe, it, expect } from "vitest";
 import { getSystemHealth, listHealthIncidents } from "../../src/lib/health.functions";
 
+// Mock do ambiente TanStack Start para testes de servidor
+vi.mock("@tanstack/react-start", async () => {
+  const actual = await vi.importActual("@tanstack/react-start");
+  return {
+    ...actual,
+    createServerFn: (options) => {
+      const fn = async (args) => {
+        // Simular o comportamento do handler do server function
+        const data = args?.data !== undefined ? args.data : args;
+        return options.handler({ data });
+      };
+      return fn;
+    },
+  };
+});
+
 describe("Operational Health - UI Integration Tests", () => {
   
   it("should return consolidated health with correct modules", async () => {
@@ -17,7 +33,6 @@ describe("Operational Health - UI Integration Tests", () => {
   });
 
   it("should filter incidents by traceId", async () => {
-    // Primeiro listamos para pegar um traceId real se existir
     const all = await listHealthIncidents({ data: { status: "ALL", period: "30d" } });
     
     if (all.incidents.length > 0) {
