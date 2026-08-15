@@ -29,16 +29,12 @@ export async function sendEvolutionText(args: {
   const normalizedNumber = normalizeEvolutionNumber(args.telefone);
 
   try {
+    // A Evolution API requer o número com o sufixo @s.whatsapp.net em algumas versões
+    // ou simplesmente o número para outras. O erro 400 anterior indicou que o JID
+    // gerado internamente não existia. Vamos testar o formato mais compatível.
     const payload = { 
       number: normalizedNumber, 
-      text: args.texto,
-      // A Evolution API v2 em algumas instâncias/configurações requer fields específicos
-      // Adicionando options de compatibilidade
-      options: {
-        delay: 0,
-        presence: "composing",
-        linkPreview: false
-      }
+      text: args.texto
     };
     
     const res = await fetch(url, {
@@ -57,7 +53,6 @@ export async function sendEvolutionText(args: {
     
     if (!isEvolutionAccepted(res.status)) {
       const msg = (parsed && (parsed.message || parsed.error)) || raw || `HTTP ${res.status}`;
-      // Log técnico para forensic (sem PII no destino, mas logando o erro real do provedor)
       console.error(`[EVOLUTION_API_ERROR] status=${res.status} response=${raw.slice(0, 200)}`);
       return { ok: false, status: res.status, message: String(msg).slice(0, 500) };
     }
