@@ -45,25 +45,28 @@ function calculateFingerprint(context: LogContext, error: any): string {
  */
 async function evaluateOperationalAlert(incidentId: string, context: LogContext) {
   try {
-    const { data: incident } = await supabaseAdmin
+    const incidentRes = await supabaseAdmin
       .from("operational_health_incidents")
       .select("*")
       .eq("id", incidentId)
       .single();
 
+    const incident = incidentRes?.data;
     if (!incident) return;
 
     // 1. Somente P0 e P1 geram alertas
     if (incident.severity !== "P0" && incident.severity !== "P1") return;
 
     // 2. Buscar alerta existente ou criar novo ciclo
-    const { data: alert } = await supabaseAdmin
+    const alertRes = await supabaseAdmin
       .from("operational_alerts")
       .select("*")
       .eq("fingerprint", incident.fingerprint)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
+
+    const alert = alertRes?.data;
 
     const now = new Date();
     const config = incident.severity === "P0" ? ALERT_CONFIG.P0 : ALERT_CONFIG.P1;
