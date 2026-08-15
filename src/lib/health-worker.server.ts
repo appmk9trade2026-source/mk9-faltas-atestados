@@ -218,7 +218,7 @@ async function realProviderSend(item: any, recipients: any[]) {
   // para garantir rastreabilidade.
   let lastResult = { success: true, id: null as string | null };
 
-  for (const recipient of recipients) {
+  for (const recipient of (recipients || [])) {
     const telefone = recipient.destination; // Corrigido de .phone/.address para .destination conforme schema verificado
     if (!telefone) continue;
 
