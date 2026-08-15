@@ -52,6 +52,7 @@ const FRIENDLY: Record<RbacErrorCode, string> = {
   RESOURCE_NOT_FOUND: "Registro não encontrado.",
   CONFLICT: "Operação em conflito com o estado atual do registro.",
   RATE_LIMITED: "Muitas tentativas em pouco tempo. Aguarde alguns instantes.",
+  TECHNICAL_ERROR: "Não foi possível concluir a operação devido a uma falha técnica.",
 };
 
 /**
@@ -67,6 +68,7 @@ const CODES_COM_DETALHE = new Set<RbacErrorCode>([
   // fora da hierarquia). É informação de negócio, não detalhe técnico.
   "PROJECT_SCOPE_DENIED",
   "COLLABORATOR_SCOPE_DENIED",
+  "TECHNICAL_ERROR",
 ]);
 
 
