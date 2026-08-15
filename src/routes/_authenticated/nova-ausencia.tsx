@@ -761,9 +761,17 @@ function NovaAusenciaPage() {
           form.setValue("projeto_id", "");
         }
         setNaoEncontrado(true);
+        setBuscaEstado("idle");
+        logEvent({ 
+          categoria: "alerta", 
+          acao: "matricula_nao_visivel", 
+          resultado: "ok", 
+          duracao_ms: 0,
+          detalhe: `Busca matricula ${val} resultou em 0 linhas no escopo do usuario.`
+        });
         if (origem === "manual") {
           toast.error("Colaborador não localizado.", {
-            description: "A matrícula informada não foi encontrada no seu escopo de acesso. Utilize o preenchimento manual.",
+            description: "A matrícula informada não foi encontrada no seu escopo de acesso. Verifique o número ou utilize o preenchimento manual.",
           });
         }
       } else if (rows.length === 1) {
@@ -1401,26 +1409,25 @@ function NovaAusenciaPage() {
     },
 
     onError: (err: unknown) => {
-      console.error("ETAPA 1 — ERRO DA MUTATION (CORRELATION ID PROPAGADO)", {
-        correlation_id: (globalThis as any).__manualCorrelationId,
+      const traceId = (globalThis as any).__manualCorrelationId || "unknown";
+      console.error("[NovaAusencia] Falha ao salvar ausência:", {
+        correlation_id: traceId,
         error: err,
         message: err instanceof Error ? err.message : String(err)
       });
-      const friendly = friendlyRbacError(err);
-      const isScope = parseRbacError(err).code === "PROJECT_SCOPE_DENIED";
-      toast.error(
-        isScope
-          ? "Você não possui permissão para registrar uma ausência neste projeto."
-          : friendly.title,
-        {
-          description: isScope
-            ? undefined
-            : [friendly.description, friendly.correlationId ? `ref: ${friendly.correlationId.slice(0, 8)}` : null]
-                .filter(Boolean)
-                .join(" • ") || undefined,
-
-        },
-      );
+      
+      const { title, description, correlationId } = friendlyRbacError(err);
+      
+      toast.error(title, {
+        description: description || "Verifique os dados e tente novamente.",
+        action: (correlationId || traceId) ? {
+          label: "Copiar Ref",
+          onClick: () => {
+            navigator.clipboard.writeText(correlationId || traceId);
+            toast.success("Referência copiada para o suporte.");
+          }
+        } : undefined
+      });
     },
   });
 

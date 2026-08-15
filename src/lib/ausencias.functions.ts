@@ -226,7 +226,7 @@ function ausenciaDbError(
     return new Error("INVALID_PAYLOAD: Selecione o Supervisor responsável pelo colaborador.");
   }
   if (/COLABORADOR_FORA_DO_SUPERVISOR/i.test(msg)) {
-    return new Error("COLLABORATOR_SCOPE_DENIED: Colaborador não encontrado no seu escopo.");
+    return new Error("COLLABORATOR_SCOPE_DENIED: Este colaborador existe, mas não pertence ao seu escopo atual.");
   }
   if (/PROJETO_FORA_DO_ESCOPO|Projeto fora do seu escopo/i.test(msg)) {
     return new Error("PROJECT_SCOPE_DENIED: O projeto selecionado não pertence ao seu escopo.");
@@ -234,7 +234,7 @@ function ausenciaDbError(
 
   // Permissão / RLS / Hardening de Vínculo
   if (sqlstate === "42501" || /row-level security|permission denied|not authorized/i.test(msg)) {
-    return new Error("PROJECT_SCOPE_DENIED: bloqueado por política de acesso");
+    return new Error("PROJECT_SCOPE_DENIED: Este colaborador ou projeto não está disponível no seu escopo de acesso.");
   }
 
   // Erros de Hardening de Vínculo definidos na RPC (CENÁRIO C e D)
@@ -243,7 +243,7 @@ function ausenciaDbError(
   }
 
   if (/fora do seu escopo|não pertence à empresa informada|não está vinculado a você/i.test(msg)) {
-    return new Error("PROJECT_SCOPE_DENIED: bloqueado por política de acesso");
+    return new Error("PROJECT_SCOPE_DENIED: Acesso negado por política de escopo.");
   }
 
   // Duplicidade (trigger trg_ausencias_bloqueia_duplicidade — SQLSTATE 23505)
@@ -251,10 +251,10 @@ function ausenciaDbError(
     const limpa = msg.replace(/^.*DUPLICIDADE_AUSENCIA:\s*/s, "").trim();
     // REGRA CRÍTICA: Se for duplicidade em modo manual, a mensagem deve ser clara sobre o bloqueio seguro.
     if (etapa === "rpc_manual") {
-      return new Error(`CONFLICT: BLOQUEIO DE SEGURANÇA — Esta matrícula já possui um registro ativo no sistema. Para evitar duplicidade e inconsistência na folha, o lançamento manual foi interceptado. Verifique o histórico ou utilize a busca automática.`);
+      return new Error(`CONFLICT: BLOQUEIO DE SEGURANÇA — Esta matrícula já possui um registro ativo no sistema. Verifique o histórico ou utilize a busca automática.`);
     }
     return new Error(
-      `CONFLICT: ${limpa || "Já existe uma ausência registrada para este colaborador neste período. Retifique o lançamento existente."}`,
+      `CONFLICT: ${limpa || "Já existe uma ausência ativa para este colaborador neste período."}`,
     );
   }
 
@@ -273,7 +273,12 @@ function ausenciaDbError(
     return new Error(`INVALID_PAYLOAD: ${msg.slice(0, 240)}`);
   }
 
-  return new Error(`CONFLICT: ${msg.slice(0, 240) || "falha ao gravar a ausência"}`);
+  // Se for qualquer outro erro CONFLICT vindo da RPC manual, garantir que não pareça duplicidade se não for
+  if (etapa === "rpc_manual" && !/duplicidade|período/i.test(msg)) {
+     return new Error(`INVALID_PAYLOAD: ${msg.slice(0, 240) || "Erro ao processar lançamento manual."}`);
+  }
+
+  return new Error(`TECHNICAL_ERROR: ${msg.slice(0, 240) || "Falha técnica ao gravar a ausência."}`);
 }
 
 
