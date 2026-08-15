@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { LogContext } from "./observability.server";
-import { crypto } from "crypto";
+import * as crypto from "crypto";
 
 
 /**
