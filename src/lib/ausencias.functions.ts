@@ -656,8 +656,20 @@ export const createAusencia = createServerFn({ method: "POST" })
         colaborador_criado: colaboradorCriado,
         correlation_id: gate.correlationId,
       };
-    } catch (err) {
-      // ETAPA 7 — HARDENING CONTRA NOVOS ÓRFÃOS
+    } catch (err: any) {
+      if (err.message?.includes("CONFLICT") || err.message?.includes("INVALID_PAYLOAD")) {
+        throw err;
+      }
+      const { logAppError } = await import("./observability.server");
+      return logAppError({
+        traceId,
+        userId: context.userId,
+        module: "ausencias",
+        operation: "createAusencia",
+        category: "UNKNOWN",
+        severity: "P1"
+      }, err);
+    }
       // Se houver arquivo_url e a criação da ausência falhou, tentamos remover o objeto órfão.
       if (data.arquivo_url) {
         console.warn(`[P0-ORPHAN-PREVENTION] Falha na criação da ausência (Server). Tentando remover objeto órfão: ${data.arquivo_url}. Motivo da falha: ${err instanceof Error ? err.message : String(err)}`);
