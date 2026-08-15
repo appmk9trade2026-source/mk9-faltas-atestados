@@ -162,7 +162,7 @@ export const revokeAdminVerification = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: isAdmin } = await supabaseAdmin.rpc('has_role', { 
       _user_id: context.userId, 
-      _role: 'super_admin' as any
+      _role: 'admin' as any
     });
     if (!isAdmin) throw new Error("Unauthorized: Super Admin required");
 
