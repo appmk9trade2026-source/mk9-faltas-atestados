@@ -112,10 +112,9 @@ async function processSingleItem(item: any, config: any, dryRun: boolean) {
       return { id: item.id, status: "DRY_RUN_PASSED" };
     }
 
-    // 5. Simular Dispatcher de Provedor (WHATSAPP)
-    // Nesta etapa, implementamos a lógica de retry/backoff e auditoria
-    // O envio real é delegado a um mock/provedor configurado
-    const response = await mockProviderSend(item);
+    // 5. Dispatcher de Provedor (WHATSAPP)
+    // O envio real usa a Evolution API configurada via env vars
+    const response = await realProviderSend(item, recipients);
     
     if (response.success) {
       resultStatus = "SUCCESS";
@@ -126,8 +125,9 @@ async function processSingleItem(item: any, config: any, dryRun: boolean) {
     }
 
   } catch (err: any) {
+    console.error("[NOTIFICATION_WORKER_ITEM_ERROR]", err);
     resultStatus = "TRANSIENT_FAILURE";
-    safeErrorCode = "PROVIDER_TIMEOUT";
+    safeErrorCode = err?.name === "AbortError" ? "TIMEOUT" : "INTERNAL_ERROR";
   }
 
   // 4. Registrar Tentativa
