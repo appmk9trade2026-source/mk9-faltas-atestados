@@ -86,16 +86,26 @@ async function processSingleItem(item: any, config: any, dryRun: boolean) {
       return { id: item.id, status: "CANCELLED" };
     }
 
-    // 3. Mapear Destinatários Técnicos (Etapa 8)
+    // 3. Mapear Destinatários Técnicos (Etapa 8.7 Fallback)
     const { data: recipients } = await supabaseAdmin
       .from("operational_notification_recipients")
       .select("*")
       .eq("channel", item.channel)
       .eq("environment", config.environment)
-      .eq("active", true)
-      .not("verified_at", "is", null);
+      .eq("active", true);
 
-    if (!recipients || recipients.length === 0) {
+    const filtered = (recipients as any[] || []).filter(r => {
+      const isVerified = r.verified_at !== null;
+      const isAdminVerified = r.admin_verified === true && r.provider_check_capability === 'NOT_SUPPORTED';
+      return isVerified || isAdminVerified;
+    });
+
+    // Guardrail P0: Em SANDBOX, apenas is_test_recipient
+    const eligibleRecipients = config.environment === 'SANDBOX' 
+      ? filtered.filter(r => (r as any).is_test_recipient)
+      : filtered;
+
+    if (eligibleRecipients.length === 0) {
       await finalizeItem(item.id, "FAILED", item.attempt_count, "NO_VERIFIED_RECIPIENTS");
       return { id: item.id, status: "FAILED", reason: "NO_VERIFIED_RECIPIENTS" };
     }
@@ -114,7 +124,7 @@ async function processSingleItem(item: any, config: any, dryRun: boolean) {
 
     // 5. Dispatcher de Provedor (WHATSAPP)
     // O envio real usa a Evolution API configurada via env vars
-    const response = await realProviderSend(item, recipients);
+    const response = await realProviderSend(item, eligibleRecipients);
     
     if (response.success) {
       resultStatus = "SUCCESS";
@@ -208,7 +218,7 @@ async function realProviderSend(item: any, recipients: any[]) {
   // para garantir rastreabilidade.
   let lastResult = { success: true, id: null as string | null };
 
-  for (const recipient of recipients) {
+  for (const recipient of (recipients || [])) {
     const telefone = recipient.destination; // Corrigido de .phone/.address para .destination conforme schema verificado
     if (!telefone) continue;
 

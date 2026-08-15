@@ -2,9 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { getSystemHealth, listHealthIncidents, type IncidentRow, triggerNotificationWorker } from "@/lib/health.functions";
-import { getNotificationConfig, updateNotificationConfig, listNotificationRecipients, validateNotificationGoLive } from "@/lib/health-config.functions";
+import { getNotificationConfig, updateNotificationConfig, listNotificationRecipients, validateNotificationGoLive, adminVerifyRecipient, revokeAdminVerification } from "@/lib/health-config.functions";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ShieldCheck, ShieldAlert, AlertTriangle, CheckCircle2, XCircle, Bell, Settings2, Trash2, Eye } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -269,9 +270,8 @@ function SaudeSistemaPage() {
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                   <CardTitle className="text-base">Destinatários Técnicos</CardTitle>
-                  <p className="text-xs text-muted-foreground">Apenas números verificados são elegíveis para PRODUCTION.</p>
+                  <p className="text-xs text-muted-foreground">Homologação manual permitida para check NOT_SUPPORTED.</p>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => toast.warning("Funcionalidade de adição via Painel em desenvolvimento.")}>+ Adicionar</Button>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -280,7 +280,9 @@ function SaudeSistemaPage() {
                       <TableHead>Label</TableHead>
                       <TableHead>Destino</TableHead>
                       <TableHead>Env</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Check</TableHead>
+                      <TableHead>Admin</TableHead>
+                      <TableHead className="text-right">Ação</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -294,20 +296,33 @@ function SaudeSistemaPage() {
                           <Badge variant="outline" className="text-[10px]">{r.environment}</Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1">
-                            {r.active && r.verified_at ? (
-                              <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                            ) : (
-                              <AlertTriangle className="h-3 w-3 text-amber-500" />
+                          <Badge 
+                            variant="secondary" 
+                            className={cn(
+                              "text-[10px]",
+                              r.provider_check_capability === 'NOT_SUPPORTED' ? "bg-amber-50 text-amber-700" : "bg-slate-50"
                             )}
-                            <span className="text-[10px]">{r.active ? "Ativo" : "Inativo"}</span>
-                          </div>
+                          >
+                            {r.provider_check_capability}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {r.admin_verified ? (
+                            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-slate-300" />
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {r.provider_check_capability === 'NOT_SUPPORTED' && !r.admin_verified && (
+                            <AdminVerifyAction recipient={r} onSuccess={() => queryClient.invalidateQueries({ queryKey: ["notification-recipients"] })} />
+                          )}
+                          {r.admin_verified && (
+                            <RevokeVerifyAction recipient={r} onSuccess={() => queryClient.invalidateQueries({ queryKey: ["notification-recipients"] })} />
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
-                    {!recipientsQ.data?.length && (
-                      <TableRow><TableCell colSpan={4} className="text-center py-4 text-xs text-muted-foreground">Nenhum destinatário cadastrado.</TableCell></TableRow>
-                    )}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -607,5 +622,97 @@ function DetailField({ label, value }: { label: string; value: string }) {
 function Label({ children, className }: { children: React.ReactNode; className?: string }) {
   return <span className={cn("block font-medium", className)}>{children}</span>;
 }
+
+function AdminVerifyAction({ recipient, onSuccess }: { recipient: any; onSuccess: () => void }) {
+  const [reason, setReason] = useState("");
+  const [confirmed, setConfirmed] = useState(false);
+  const verifyM = useMutation({
+    mutationFn: adminVerifyRecipient,
+    onSuccess: () => {
+      onSuccess();
+      toast.success("Verificação administrativa concluída.");
+    },
+    onError: (err: any) => toast.error(err.message)
+  });
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline" size="sm" className="text-[10px] h-7">Verificar</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Verificação Administrativa</AlertDialogTitle>
+          <AlertDialogDescription className="space-y-4 pt-2">
+            <div className="bg-muted p-2 rounded text-xs text-left">
+              <strong>Destinatário:</strong> {recipient.label} ({recipient.destination.replace(/.(?=.{4})/g, "*")})<br/>
+              <strong>Ambiente:</strong> {recipient.environment}<br/>
+              <strong>Capability:</strong> {recipient.provider_check_capability || 'UNKNOWN'}
+            </div>
+            <div className="space-y-2 text-left">
+              <Label className="text-xs">Justificativa da verificação (Obrigatório)</Label>
+              <Input 
+                value={reason} 
+                onChange={e => setReason(e.target.value)} 
+                placeholder="Ex: Número técnico corporativo confirmado manualmente..." 
+                className="text-xs"
+              />
+            </div>
+            <div className="flex items-start space-x-2 text-left">
+              <Checkbox id="confirm" checked={confirmed} onCheckedChange={(v) => setConfirmed(!!v)} />
+              <label htmlFor="confirm" className="text-[11px] leading-tight text-muted-foreground">
+                Confirmo que este número técnico foi validado externamente como conta WhatsApp ativa e está autorizado para receber mensagens de homologação.
+              </label>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction 
+            disabled={!confirmed || reason.length < 10 || verifyM.isPending}
+            onClick={() => verifyM.mutate({ data: { 
+              recipientId: recipient.id, 
+              reason, 
+              traceId: `ADMIN-VERIFY-${Date.now()}` 
+            }})}
+          >
+            Confirmar Verificação
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function RevokeVerifyAction({ recipient, onSuccess }: { recipient: any; onSuccess: () => void }) {
+  const revokeM = useMutation({
+    mutationFn: revokeAdminVerification,
+    onSuccess: () => {
+      onSuccess();
+      toast.success("Verificação revogada.");
+    },
+    onError: (err: any) => toast.error(err.message)
+  });
+
+  return (
+    <Button 
+      variant="ghost" 
+      size="sm" 
+      className="text-[10px] h-7 text-red-600 hover:text-red-700 hover:bg-red-50"
+      onClick={() => {
+        if (confirm("Deseja revogar a verificação administrativa deste destinatário?")) {
+          revokeM.mutate({ data: { recipientId: recipient.id, reason: "Revogação manual via painel" }});
+        }
+      }}
+      disabled={revokeM.isPending}
+    >
+      Revogar
+    </Button>
+  );
+}
+
+
+
+
 
 
