@@ -528,6 +528,7 @@ export const createAusencia = createServerFn({ method: "POST" })
 
     if (conflitos.length > 0) {
       const conf = conflitos[0];
+      await logger("CHECK_CONFLICT", `Conflito detectado com protocolo ${conf.protocolo}`, "DUPLICITY", "P2");
       throw new Error(`CONFLICT: Já existe um lançamento de ${conf.tipo} para este período (Protocolo: ${conf.protocolo}).`);
     }
 
@@ -606,6 +607,7 @@ export const createAusencia = createServerFn({ method: "POST" })
         .select("id, empresa_id, projeto_id, protocolo, status")
         .single();
       if (error) {
+        await logger("CREATE_ABSENCE", error, "DATABASE", "P1");
         throw ausenciaDbError(error, "insert_ausencia", gate.correlationId);
       }
 
