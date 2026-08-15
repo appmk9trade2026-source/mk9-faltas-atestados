@@ -82,6 +82,7 @@ async function evaluateOperationalAlert(incidentId: string, context: LogContext)
     const recentReadyAlerts = recentReadyRes?.count || 0;
 
     if (recentReadyAlerts >= ALERT_CONFIG.GLOBAL_RATE_LIMIT_PER_HOUR) {
+      // Usamos upsert aqui para garantir que a decisão seja registrada sem criar múltiplos registros se o incidente ocorrer em rajada
       await logAlertDecision(incidentId, incident.fingerprint, incident.severity, "SUPPRESSED", "RATE_LIMIT", context.traceId);
       return;
     }
