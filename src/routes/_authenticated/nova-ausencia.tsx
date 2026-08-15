@@ -2428,7 +2428,7 @@ function NovaAusenciaPage() {
                   <Card className="border border-border/60 p-5">
                     <div className="mb-4 flex items-center gap-2">
                       <UploadCloud className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                      <h2 className="text-base font-semibold">Anexar Documento</h2>
+                      <h2 className="text-base font-semibold">Anexar Documento {tipoSelecionado?.exige_documento && <span className="text-red-500">*</span>}</h2>
                     </div>
 
                     {anexoExistenteVisivel && (
