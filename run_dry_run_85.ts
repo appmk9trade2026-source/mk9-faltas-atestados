@@ -12,6 +12,7 @@ async function main() {
       fingerprint: "TEST_FINGERPRINT_85",
       severity: "P0",
       status: "OPEN",
+      module: "INFRA",
       metadata: { trace_id: traceId }
     })
     .select()
