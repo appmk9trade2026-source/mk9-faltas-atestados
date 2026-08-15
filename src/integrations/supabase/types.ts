@@ -5875,44 +5875,25 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      log_audit_event:
-        | {
-            Args: {
-              _acao: Database["public"]["Enums"]["audit_action"]
-              _antes?: Json
-              _depois?: Json
-              _empresa_id?: string
-              _entidade?: string
-              _ip?: string
-              _modulo: string
-              _observacoes?: string
-              _origem?: string
-              _projeto_id?: string
-              _registro_id?: string
-              _sucesso?: boolean
-              _user_agent?: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              _acao: Database["public"]["Enums"]["audit_action"]
-              _antes?: Json
-              _depois?: Json
-              _empresa_id?: string
-              _entidade?: string
-              _ip?: string
-              _modulo: string
-              _observacoes?: string
-              _origem?: string
-              _projeto_id?: string
-              _registro_id?: string
-              _sucesso?: boolean
-              _trace_id?: string
-              _user_agent?: string
-            }
-            Returns: string
-          }
+      log_audit_event: {
+        Args: {
+          _acao: Database["public"]["Enums"]["audit_action"]
+          _antes?: Json
+          _depois?: Json
+          _empresa_id?: string
+          _entidade?: string
+          _ip?: string
+          _modulo: string
+          _observacoes?: string
+          _origem?: string
+          _projeto_id?: string
+          _registro_id?: string
+          _sucesso?: boolean
+          _trace_id?: string
+          _user_agent?: string
+        }
+        Returns: string
+      }
       log_permission_denied: {
         Args: {
           _code: string
