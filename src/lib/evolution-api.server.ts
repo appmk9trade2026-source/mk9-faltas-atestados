@@ -8,6 +8,53 @@ export function normalizeEvolutionNumber(telefone: string): string {
   return telefone.replace(/\D/g, "");
 }
 
+export async function checkEvolutionNumber(args: {
+  baseUrl: string;
+  apiKey: string;
+  instance: string;
+  telefone: string;
+  timeoutMs: number;
+}): Promise<{ ok: true; exists: boolean } | { ok: false; status: number | null; message: string }> {
+  // Endpoint: GET {BASE}/chat/whatsappNumber/{instance}?number={number}
+  const normalizedNumber = normalizeEvolutionNumber(args.telefone);
+  const url = `${args.baseUrl.replace(/\/+$/, "")}/chat/whatsappNumber/${encodeURIComponent(args.instance)}?number=${normalizedNumber}`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), args.timeoutMs);
+
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        apikey: args.apiKey,
+        "content-type": "application/json",
+      },
+      signal: controller.signal,
+    });
+    const raw = await res.text();
+    let parsed: any = null;
+    try { parsed = raw ? JSON.parse(raw) : null; } catch { /* ignore */ }
+
+    if (res.status === 200 || res.status === 201) {
+      // Formato esperado v2: { "exists": true, "jid": "...", "number": "..." }
+      // ou se for um array ou objeto aninhado dependendo da versao
+      const exists = !!(parsed?.exists || (Array.isArray(parsed) && parsed[0]?.exists));
+      return { ok: true, exists };
+    }
+    
+    // Se for 400 ou 404, geralmente significa que o numero nao existe ou instancia deslogada
+    if (res.status === 400 || res.status === 404) {
+      return { ok: true, exists: false };
+    }
+
+    return { ok: false, status: res.status, message: raw.slice(0, 200) };
+  } catch (err: any) {
+    const status = err?.name === "AbortError" ? 408 : null;
+    return { ok: false, status, message: (err?.message ?? "network error").slice(0, 500) };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function sendEvolutionText(args: {
   baseUrl: string;
   apiKey: string;
