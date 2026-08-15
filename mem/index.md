@@ -6,6 +6,8 @@
 
 ## Memories
 - [Stabilization Manifest](mem://reference/stabilization-manifest.md) — Roadmap for general stability and regression hardening.
+- [Stabilization Stage 2](mem://reference/stabilization-stage2.md) — Detailed roadmap for Stage 2 (Regression Protection).
 - [Home Protection Guardrail](mem://constraints/home-protection-guardrail.md) — Permanent restriction on src/routes/index.tsx usage.
+
 
 
