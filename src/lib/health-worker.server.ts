@@ -92,13 +92,18 @@ async function processSingleItem(item: any, config: any, dryRun: boolean) {
       .select("*")
       .eq("channel", item.channel)
       .eq("environment", config.environment)
-      .eq("active", true)
-      .or(`verified_at.not.is.null,and(admin_verified.eq.true,provider_check_capability.eq.NOT_SUPPORTED)`);
+      .eq("active", true);
+
+    const filtered = (recipients as any[] || []).filter(r => {
+      const isVerified = r.verified_at !== null;
+      const isAdminVerified = r.admin_verified === true && r.provider_check_capability === 'NOT_SUPPORTED';
+      return isVerified || isAdminVerified;
+    });
 
     // Guardrail P0: Em SANDBOX, apenas is_test_recipient
     const eligibleRecipients = config.environment === 'SANDBOX' 
-      ? (recipients || []).filter(r => r.is_test_recipient)
-      : (recipients || []);
+      ? filtered.filter(r => (r as any).is_test_recipient)
+      : filtered;
 
     if (eligibleRecipients.length === 0) {
       await finalizeItem(item.id, "FAILED", item.attempt_count, "NO_VERIFIED_RECIPIENTS");
