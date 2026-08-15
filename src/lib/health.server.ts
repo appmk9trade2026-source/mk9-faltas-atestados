@@ -1,6 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { LogContext } from "./observability.server";
-import { crypto } from "crypto";
 
 /**
  * Filtros de incidentes - NÃO criar incidentes para erros esperados.
