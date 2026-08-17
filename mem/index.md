@@ -5,6 +5,8 @@
 - Stabilization Mode: Feature freeze active. Focus on non-regression. (See mem://reference/stabilization-manifest)
 
 ## Memories
+- [P0 Etapa 8.13 - TR-8-REAL-006](mem://features/p0-etapa-8-13-homologacao-tr6.md) — Protocolo de execução autorizada do TR-8-REAL-006 em Sandbox.
+- [P0 Etapa 8.12 - Certificação Recipient](mem://features/p0-etapa-8-12-certificacao-recipient.md) — Auditoria do destinatário TR-8-REAL-005 e prontidão para TR-8-REAL-006.
 - [P0 Etapa 8.11 - TR-8-REAL-005](mem://features/p0-etapa-8-11-homologacao-tr5.md) — Protocolo de autorização e execução do teste final em Sandbox.
 - [P0 Etapa 8.10 - Certificação Recipient](mem://features/p0-etapa-8-10-certificacao-recipient.md) — Certificação do destinatário técnico para o TR-8-REAL-005.
 - [P0 Etapa 8.9 - Homologação Canal](mem://features/p0-etapa-8-9-homologacao-canal.md) — Auditoria forense da instância Evolution e histórico de sucesso.
