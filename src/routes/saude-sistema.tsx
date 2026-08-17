@@ -646,9 +646,6 @@ function DetailField({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Label({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <span className={cn("block font-medium", className)}>{children}</span>;
-}
 
 function AdminVerifyAction({ recipient, onSuccess }: { recipient: any; onSuccess: () => void }) {
   const [reason, setReason] = useState("");
