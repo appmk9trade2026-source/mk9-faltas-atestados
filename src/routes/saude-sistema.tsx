@@ -29,18 +29,18 @@ export const Route = createFileRoute("/saude-sistema")({
 function SaudeSistemaPage() {
   const { roles, loading } = useSession();
   
-  if (loading) return null;
-  if (!roles.includes("super_admin")) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-
   const [searchTraceId, setSearchTraceId] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [filterSeverity, setFilterSeverity] = useState<string>("ALL");
   const [filterPeriod, setFilterPeriod] = useState<string>("24h");
   const [selectedIncident, setSelectedIncident] = useState<IncidentRow | null>(null);
   const queryClient = useQueryClient();
+
+  if (loading) return null;
+  if (!roles.includes("super_admin")) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   
   const configQ = useQuery({
     queryKey: ["notification-config"],
