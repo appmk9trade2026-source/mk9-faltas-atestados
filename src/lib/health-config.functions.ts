@@ -8,6 +8,102 @@ const configSchema = z.object({
   kill_switch_enabled: z.boolean(),
 });
 
+const addRecipientSchema = z.object({
+  label: z.string().min(1, "Label é obrigatório"),
+  destination: z.string().min(8, "Número inválido"),
+  environment: z.literal("SANDBOX"),
+  is_technical: z.boolean().refine(v => v === true, "Deve ser confirmado como técnico"),
+  is_active_wa: z.boolean().refine(v => v === true, "Deve confirmar WhatsApp ativo"),
+});
+
+export const addTechnicalRecipient = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => addRecipientSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    // 1. Verificação de permissão (Super Admin only)
+    const { data: isAdmin } = await supabaseAdmin.rpc('has_role', { 
+      _user_id: context.userId, 
+      _role: 'super_admin' as any
+    });
+    if (!isAdmin) throw new Error("Unauthorized: Super Admin required");
+
+    // 2. Normalização canônica (apenas dígitos)
+    const normalized = data.destination.replace(/\D/g, "");
+    if (normalized.length < 8) throw new Error("Número inválido após normalização");
+
+    // 3. Verificação de duplicidade lógica
+    const { data: existing } = await supabaseAdmin
+      .from("operational_notification_recipients")
+      .select("id, active")
+      .eq("destination", normalized)
+      .maybeSingle();
+
+    if (existing) {
+      if (existing.active) {
+        throw new Error("Este número já está cadastrado e ativo.");
+      }
+      // Se existia mas estava inativo, reativamos com novos dados
+      const { data: updated, error: updateErr } = await supabaseAdmin
+        .from("operational_notification_recipients")
+        .update({
+          label: data.label,
+          active: true,
+          environment: 'SANDBOX',
+          is_test_recipient: true,
+          admin_verified: false, // Reset verification on update
+          updated_at: new Date().toISOString(),
+          trace_id: `ADD-TECH-${Date.now()}`
+        } as any)
+        .eq("id", existing.id)
+        .select()
+        .single();
+      
+      if (updateErr) throw updateErr;
+
+      await supabaseAdmin.from("operational_notification_recipient_audit" as any).insert({
+        recipient_id: existing.id,
+        actor_id: context.userId,
+        action: "REACTIVATE_TECHNICAL_RECIPIENT",
+        after_state: updated,
+        trace_id: updated.trace_id
+      } as any);
+
+      return updated;
+    }
+
+    // 4. Inserção de novo
+    const { data: inserted, error: insertErr } = await supabaseAdmin
+      .from("operational_notification_recipients")
+      .insert({
+        label: data.label,
+        destination: normalized,
+        channel: 'WHATSAPP',
+        environment: 'SANDBOX',
+        active: true,
+        is_test_recipient: true,
+        admin_verified: false,
+        severity_scope: ['P0', 'P1'],
+        provider_check_capability: 'NOT_SUPPORTED',
+        trace_id: `ADD-TECH-${Date.now()}`
+      } as any)
+      .select()
+      .single();
+
+    if (insertErr) throw insertErr;
+
+    // 5. Audit Trail (Sem PII no log de ação, apenas ID do recipient)
+    await supabaseAdmin.from("operational_notification_recipient_audit" as any).insert({
+      recipient_id: inserted.id,
+      actor_id: context.userId,
+      action: "CREATE_TECHNICAL_RECIPIENT",
+      after_state: { label: inserted.label, env: inserted.environment },
+      trace_id: inserted.trace_id
+    } as any);
+
+    return inserted;
+  });
+
+
 export const getNotificationConfig = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
