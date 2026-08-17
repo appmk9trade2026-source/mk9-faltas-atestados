@@ -183,7 +183,7 @@ function SaudeSistemaPage() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
                       <div className="space-y-0.5">
-                        <Label className="text-sm">Kill Switch Global</Label>
+                        <span className="text-sm font-medium">Kill Switch Global</span>
                         <p className="text-xs text-muted-foreground">Bloqueia todos os envios externos se desativado.</p>
                       </div>
                       <AlertDialog>
@@ -220,7 +220,7 @@ function SaudeSistemaPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-sm">Ambiente de Notificação</Label>
+                      <span className="text-sm font-medium">Ambiente de Notificação</span>
                       <Select 
                         value={configQ.data?.environment} 
                         onValueChange={(val: any) => {
