@@ -22,6 +22,13 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/saude-sistema")({
+  beforeLoad: async ({ context }) => {
+    // Apenas Super Admins podem acessar esta rota
+    const roles = (context as any).roles || [];
+    if (!roles.includes("super_admin")) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   component: SaudeSistemaPage,
 });
 
