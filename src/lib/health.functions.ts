@@ -4,12 +4,26 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 /**
+ * Helper canônico para exigir Super Admin em server functions de Saúde.
+ */
+async function requireSuperAdmin(ctx: { userId: string }) {
+  const { data: isAdmin, error } = await supabaseAdmin.rpc('has_role', { 
+    _user_id: ctx.userId, 
+    _role: 'super_admin' as any
+  });
+  if (error || !isAdmin) {
+    throw new Error("Unauthorized: Super Admin required");
+  }
+}
+
+/**
  * Dispara manualmente o worker de notificações - Super Admin Only
  */
 export const triggerNotificationWorker = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { dryRun?: boolean } = {}) => data)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await requireSuperAdmin(context);
     const { processNotificationOutbox } = await import("./health-worker.server");
     return processNotificationOutbox(data.dryRun);
   });
@@ -37,8 +51,7 @@ export interface ConsolidatedHealth {
 export const getSystemHealth = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<ConsolidatedHealth> => {
-    // 1. Verificação de permissão (Super Admin only)
-    // Nota: O middleware de auth e a verificação de has_role devem estar ativos.
+    await requireSuperAdmin(context);
     
     const now = new Date();
     const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000).toISOString();
@@ -178,6 +191,7 @@ export const listHealthIncidents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => listIncidentsSchema.parse(data))
   .handler(async ({ data: filters, context }) => {
+    await requireSuperAdmin(context);
     let query = supabaseAdmin
       .from("operational_health_incidents")
       .select(`
