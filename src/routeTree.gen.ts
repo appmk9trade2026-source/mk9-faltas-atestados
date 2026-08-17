@@ -16,7 +16,6 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthNovaSenhaRouteImport } from './routes/auth_.nova-senha'
 import { Route as AuthenticatedUsuariosRouteImport } from './routes/_authenticated/usuarios'
-import { Route as AuthenticatedSaudeRouteImport } from './routes/_authenticated/saude'
 import { Route as AuthenticatedRoadmapRouteImport } from './routes/_authenticated/roadmap'
 import { Route as AuthenticatedRelatoriosRouteImport } from './routes/_authenticated/relatorios'
 import { Route as AuthenticatedQualidadeLancamentosRouteImport } from './routes/_authenticated/qualidade-lancamentos'
@@ -119,11 +118,6 @@ const AuthNovaSenhaRoute = AuthNovaSenhaRouteImport.update({
 const AuthenticatedUsuariosRoute = AuthenticatedUsuariosRouteImport.update({
   id: '/usuarios',
   path: '/usuarios',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSaudeRoute = AuthenticatedSaudeRouteImport.update({
-  id: '/saude',
-  path: '/saude',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedRoadmapRoute = AuthenticatedRoadmapRouteImport.update({
@@ -561,7 +555,6 @@ export interface FileRoutesByFullPath {
   '/qualidade-lancamentos': typeof AuthenticatedQualidadeLancamentosRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/roadmap': typeof AuthenticatedRoadmapRoute
-  '/saude': typeof AuthenticatedSaudeRoute
   '/usuarios': typeof AuthenticatedUsuariosRouteWithChildren
   '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/admin/hardening': typeof AuthenticatedAdminHardeningRoute
@@ -638,7 +631,6 @@ export interface FileRoutesByTo {
   '/qualidade-lancamentos': typeof AuthenticatedQualidadeLancamentosRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/roadmap': typeof AuthenticatedRoadmapRoute
-  '/saude': typeof AuthenticatedSaudeRoute
   '/usuarios': typeof AuthenticatedUsuariosRouteWithChildren
   '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/admin/hardening': typeof AuthenticatedAdminHardeningRoute
@@ -717,7 +709,6 @@ export interface FileRoutesById {
   '/_authenticated/qualidade-lancamentos': typeof AuthenticatedQualidadeLancamentosRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/roadmap': typeof AuthenticatedRoadmapRoute
-  '/_authenticated/saude': typeof AuthenticatedSaudeRoute
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRouteWithChildren
   '/auth_/nova-senha': typeof AuthNovaSenhaRoute
   '/_authenticated/admin/hardening': typeof AuthenticatedAdminHardeningRoute
@@ -797,7 +788,6 @@ export interface FileRouteTypes {
     | '/qualidade-lancamentos'
     | '/relatorios'
     | '/roadmap'
-    | '/saude'
     | '/usuarios'
     | '/auth/nova-senha'
     | '/admin/hardening'
@@ -874,7 +864,6 @@ export interface FileRouteTypes {
     | '/qualidade-lancamentos'
     | '/relatorios'
     | '/roadmap'
-    | '/saude'
     | '/usuarios'
     | '/auth/nova-senha'
     | '/admin/hardening'
@@ -952,7 +941,6 @@ export interface FileRouteTypes {
     | '/_authenticated/qualidade-lancamentos'
     | '/_authenticated/relatorios'
     | '/_authenticated/roadmap'
-    | '/_authenticated/saude'
     | '/_authenticated/usuarios'
     | '/auth_/nova-senha'
     | '/_authenticated/admin/hardening'
@@ -1057,13 +1045,6 @@ declare module '@tanstack/react-router' {
       path: '/usuarios'
       fullPath: '/usuarios'
       preLoaderRoute: typeof AuthenticatedUsuariosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/saude': {
-      id: '/_authenticated/saude'
-      path: '/saude'
-      fullPath: '/saude'
-      preLoaderRoute: typeof AuthenticatedSaudeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/roadmap': {
@@ -1712,7 +1693,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedQualidadeLancamentosRoute: typeof AuthenticatedQualidadeLancamentosRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedRoadmapRoute: typeof AuthenticatedRoadmapRoute
-  AuthenticatedSaudeRoute: typeof AuthenticatedSaudeRoute
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRouteWithChildren
   AuthenticatedAdminHardeningRoute: typeof AuthenticatedAdminHardeningRoute
   AuthenticatedAdministracaoAuditoriaForenseRoute: typeof AuthenticatedAdministracaoAuditoriaForenseRoute
@@ -1761,7 +1741,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedQualidadeLancamentosRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedRoadmapRoute: AuthenticatedRoadmapRoute,
-  AuthenticatedSaudeRoute: AuthenticatedSaudeRoute,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRouteWithChildren,
   AuthenticatedAdminHardeningRoute: AuthenticatedAdminHardeningRoute,
   AuthenticatedAdministracaoAuditoriaForenseRoute:
