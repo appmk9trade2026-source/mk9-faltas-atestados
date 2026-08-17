@@ -4,18 +4,25 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { configSchema, addRecipientSchema } from "@/lib/health-config.schemas";
 
-
+/**
+ * Helper canônico para exigir Super Admin em server functions.
+ */
+async function requireSuperAdmin(ctx: { userId: string }) {
+  const { data: isAdmin, error } = await supabaseAdmin.rpc('has_role', { 
+    _user_id: ctx.userId, 
+    _role: 'super_admin' as any
+  });
+  if (error || !isAdmin) {
+    throw new Error("Unauthorized: Super Admin required");
+  }
+}
 
 export const addTechnicalRecipient = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => addRecipientSchema.parse(data))
   .handler(async ({ data, context }) => {
     // 1. Verificação de permissão (Super Admin only)
-    const { data: isAdmin } = await supabaseAdmin.rpc('has_role', { 
-      _user_id: context.userId, 
-      _role: 'super_admin' as any
-    });
-    if (!isAdmin) throw new Error("Unauthorized: Super Admin required");
+    await requireSuperAdmin(context);
 
     // 2. Normalização canônica (apenas dígitos)
     const normalized = data.destination.replace(/\D/g, "");
@@ -50,7 +57,7 @@ export const addTechnicalRecipient = createServerFn({ method: "POST" })
       
       if (updateErr) throw updateErr;
 
-      await supabaseAdmin.from("operational_notification_recipient_audit" as any).insert({
+      await supabaseAdmin.from("operational_notification_recipient_audit").insert({
         recipient_id: existing.id,
         actor_id: context.userId,
         action: "REACTIVATE_TECHNICAL_RECIPIENT",
@@ -81,8 +88,8 @@ export const addTechnicalRecipient = createServerFn({ method: "POST" })
 
     if (insertErr) throw insertErr;
 
-    // 5. Audit Trail (Sem PII no log de ação, apenas ID do recipient)
-    await supabaseAdmin.from("operational_notification_recipient_audit" as any).insert({
+    // 5. Audit Trail
+    await supabaseAdmin.from("operational_notification_recipient_audit").insert({
       recipient_id: inserted.id,
       actor_id: context.userId,
       action: "CREATE_TECHNICAL_RECIPIENT",
@@ -93,10 +100,10 @@ export const addTechnicalRecipient = createServerFn({ method: "POST" })
     return inserted;
   });
 
-
 export const getNotificationConfig = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
+  .handler(async ({ context }) => {
+    await requireSuperAdmin(context);
     const { data, error } = await supabaseAdmin
       .from("operational_notification_config")
       .select("*")
@@ -109,6 +116,7 @@ export const updateNotificationConfig = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => configSchema.parse(data))
   .handler(async ({ data, context }) => {
+    await requireSuperAdmin(context);
     const { data: before } = await supabaseAdmin
       .from("operational_notification_config")
       .select("*")
@@ -140,7 +148,8 @@ export const updateNotificationConfig = createServerFn({ method: "POST" })
 
 export const listNotificationRecipients = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
+  .handler(async ({ context }) => {
+    await requireSuperAdmin(context);
     const { data, error } = await supabaseAdmin
       .from("operational_notification_recipients")
       .select("*")
@@ -151,7 +160,8 @@ export const listNotificationRecipients = createServerFn({ method: "GET" })
 
 export const validateNotificationGoLive = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
+  .handler(async ({ context }) => {
+    await requireSuperAdmin(context);
     const { data: config } = await supabaseAdmin
       .from("operational_notification_config")
       .select("*")
@@ -192,11 +202,8 @@ export const adminVerifyRecipient = createServerFn({ method: "POST" })
     traceId: z.string()
   }).parse(data))
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await supabaseAdmin.rpc('has_role', { 
-      _user_id: context.userId, 
-      _role: 'admin' as any
-    });
-    if (!isAdmin) throw new Error("Unauthorized: Super Admin required");
+    // CORREÇÃO: Usando super_admin canônico (idêntico a addTechnicalRecipient)
+    await requireSuperAdmin(context);
 
     const { data: before } = await supabaseAdmin
       .from("operational_notification_recipients")
@@ -226,7 +233,7 @@ export const adminVerifyRecipient = createServerFn({ method: "POST" })
 
     if (error) throw error;
 
-    await supabaseAdmin.from("operational_notification_recipient_audit" as any).insert({
+    await supabaseAdmin.from("operational_notification_recipient_audit").insert({
       recipient_id: data.recipientId,
       actor_id: context.userId,
       action: "ADMIN_VERIFY",
@@ -246,11 +253,8 @@ export const revokeAdminVerification = createServerFn({ method: "POST" })
     reason: z.string().min(5)
   }).parse(data))
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await supabaseAdmin.rpc('has_role', { 
-      _user_id: context.userId, 
-      _role: 'admin' as any
-    });
-    if (!isAdmin) throw new Error("Unauthorized: Super Admin required");
+    // CORREÇÃO: Usando super_admin canônico
+    await requireSuperAdmin(context);
 
     const { data: before } = await supabaseAdmin
       .from("operational_notification_recipients")
@@ -273,7 +277,7 @@ export const revokeAdminVerification = createServerFn({ method: "POST" })
 
     if (error) throw error;
 
-    await supabaseAdmin.from("operational_notification_recipient_audit" as any).insert({
+    await supabaseAdmin.from("operational_notification_recipient_audit").insert({
       recipient_id: data.recipientId,
       actor_id: context.userId,
       action: "ADMIN_REVOKE",
