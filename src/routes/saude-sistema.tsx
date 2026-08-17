@@ -740,6 +740,8 @@ function AddTechnicalRecipientAction({ onSuccess }: { onSuccess: () => void }) {
   const [destination, setDestination] = useState("");
   const [isTechnical, setIsTechnical] = useState(false);
   const [isActiveWa, setIsActiveWa] = useState(false);
+  const [environment, setEnvironment] = useState<"SANDBOX" | "PRODUCTION">("SANDBOX");
+  const [isProductionConfirmed, setIsProductionConfirmed] = useState(false);
 
   const addM = useMutation({
     mutationFn: addTechnicalRecipient,
@@ -749,6 +751,8 @@ function AddTechnicalRecipientAction({ onSuccess }: { onSuccess: () => void }) {
       setDestination("");
       setIsTechnical(false);
       setIsActiveWa(false);
+      setEnvironment("SANDBOX");
+      setIsProductionConfirmed(false);
       onSuccess();
       toast.success("Destinatário técnico cadastrado com sucesso.");
     },
@@ -766,7 +770,7 @@ function AddTechnicalRecipientAction({ onSuccess }: { onSuccess: () => void }) {
         <DialogHeader>
           <DialogTitle>Novo Destinatário Técnico</DialogTitle>
           <DialogDescription>
-            Cadastre um número para testes em ambiente SANDBOX. Envio real bloqueado nesta etapa.
+            Cadastre um número para testes em ambiente SANDBOX ou alertas reais em PRODUCTION.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -791,13 +795,26 @@ function AddTechnicalRecipientAction({ onSuccess }: { onSuccess: () => void }) {
           </div>
           <div className="space-y-2">
             <Label className="text-xs">Ambiente</Label>
-            <Select value="SANDBOX" disabled>
+            <Select value={environment} onValueChange={(val: any) => setEnvironment(val)}>
               <SelectTrigger className="text-sm h-9"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="SANDBOX">SANDBOX</SelectItem>
+                <SelectItem value="SANDBOX">SANDBOX (Testes)</SelectItem>
+                <SelectItem value="PRODUCTION">PRODUCTION (Real)</SelectItem>
               </SelectContent>
             </Select>
           </div>
+          {environment === 'PRODUCTION' && (
+            <div className="flex items-start space-x-2 pt-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
+              <Checkbox 
+                id="is_prod_confirm" 
+                checked={isProductionConfirmed} 
+                onCheckedChange={(v) => setIsProductionConfirmed(!!v)} 
+              />
+              <label htmlFor="is_prod_confirm" className="text-[11px] leading-tight text-amber-900 font-medium">
+                Confirmo que este destinatário técnico está autorizado a receber alertas críticos P0 do ambiente de Produção.
+              </label>
+            </div>
+          )}
           <div className="flex items-start space-x-2 pt-2">
             <Checkbox 
               id="is_tech" 
@@ -823,11 +840,11 @@ function AddTechnicalRecipientAction({ onSuccess }: { onSuccess: () => void }) {
           <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancelar</Button>
           <Button 
             size="sm" 
-            disabled={!label || !destination || !isTechnical || !isActiveWa || addM.isPending}
+            disabled={!label || !destination || !isTechnical || !isActiveWa || (environment === 'PRODUCTION' && !isProductionConfirmed) || addM.isPending}
             onClick={() => addM.mutate({ data: {
               label,
               destination,
-              environment: "SANDBOX",
+              environment,
               is_technical: isTechnical,
               is_active_wa: isActiveWa
             }})}
