@@ -685,7 +685,7 @@ function ChecklistTab() {
       </Card>
       <div className="flex justify-end">
         <Button variant="outline" size="sm" asChild>
-          <Link to="/saude"><Activity className="mr-1.5 h-3.5 w-3.5" /> Ver saúde do sistema</Link>
+          <Link to="/saude-sistema"><Activity className="mr-1.5 h-3.5 w-3.5" /> Ver saúde do sistema</Link>
         </Button>
       </div>
     </>
