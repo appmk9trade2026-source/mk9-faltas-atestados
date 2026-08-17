@@ -29,33 +29,31 @@ export const Route = createFileRoute("/saude-sistema")({
 function SaudeSistemaPage() {
   const { roles, loading } = useSession();
   
-  if (loading) return null;
-  if (!roles.includes("super_admin")) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-
   const [searchTraceId, setSearchTraceId] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [filterSeverity, setFilterSeverity] = useState<string>("ALL");
   const [filterPeriod, setFilterPeriod] = useState<string>("24h");
   const [selectedIncident, setSelectedIncident] = useState<IncidentRow | null>(null);
   const queryClient = useQueryClient();
-  
+
+  const isSuperAdmin = roles.includes("super_admin");
+
   const configQ = useQuery({
     queryKey: ["notification-config"],
     queryFn: () => getNotificationConfig({}),
+    enabled: !loading && isSuperAdmin,
   });
 
   const recipientsQ = useQuery({
     queryKey: ["notification-recipients"],
     queryFn: () => listNotificationRecipients({}),
+    enabled: !loading && isSuperAdmin,
   });
 
   const validateQ = useQuery({
     queryKey: ["validate-go-live"],
     queryFn: () => validateNotificationGoLive({}),
-    enabled: !!configQ.data,
+    enabled: !loading && isSuperAdmin && !!configQ.data,
   });
 
   const updateConfigM = useMutation({
@@ -81,6 +79,7 @@ function SaudeSistemaPage() {
     queryKey: ["health-consolidated"],
     queryFn: () => getSystemHealth({}),
     refetchInterval: 60000,
+    enabled: !loading && isSuperAdmin,
   });
 
   const incidentsQ = useQuery({
@@ -93,7 +92,14 @@ function SaudeSistemaPage() {
         traceId: searchTraceId || undefined
       } 
     }),
+    enabled: !loading && isSuperAdmin,
   });
+
+  if (loading) return null;
+  if (!isSuperAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
