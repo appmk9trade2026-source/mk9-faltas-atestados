@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { useSession } from "@/hooks/use-session";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { getSystemHealth, listHealthIncidents, type IncidentRow, triggerNotificationWorker } from "@/lib/health.functions";
@@ -26,6 +27,14 @@ export const Route = createFileRoute("/saude-sistema")({
 });
 
 function SaudeSistemaPage() {
+  const { roles, loading } = useSession();
+  
+  if (loading) return null;
+  if (!roles.includes("super_admin")) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+
   const [searchTraceId, setSearchTraceId] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [filterSeverity, setFilterSeverity] = useState<string>("ALL");

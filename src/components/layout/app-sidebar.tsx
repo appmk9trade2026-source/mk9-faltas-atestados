@@ -131,7 +131,7 @@ const SECTIONS: Section[] = [
   {
     id: "administracao",
     label: "Administração",
-    urls: ["/usuarios", "/configuracoes", "/operacoes", "/acessos", "/administracao/permissoes", "/administracao/coordenacao", "/administracao/pendencias-supervisor", "/administracao/integridade-dados", "/administracao/auditoria-forense", "/administracao/investigacoes", "/administracao/vinculos-manuais", "/administracao/historico-senhas"],
+    urls: ["/usuarios", "/configuracoes", "/saude-sistema", "/operacoes", "/acessos", "/administracao/permissoes", "/administracao/coordenacao", "/administracao/pendencias-supervisor", "/administracao/integridade-dados", "/administracao/auditoria-forense", "/administracao/investigacoes", "/administracao/vinculos-manuais", "/administracao/historico-senhas"],
   },
   {
     id: "sistema",
