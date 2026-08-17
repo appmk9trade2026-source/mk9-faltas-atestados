@@ -1,20 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { z } from "zod";
+import { configSchema, addRecipientSchema } from "@/lib/health-config.schemas";
 
-const configSchema = z.object({
-  environment: z.enum(['DISABLED', 'SANDBOX', 'PRODUCTION']),
-  kill_switch_enabled: z.boolean(),
-});
-
-const addRecipientSchema = z.object({
-  label: z.string().min(1, "Label é obrigatório"),
-  destination: z.string().min(8, "Número inválido"),
-  environment: z.literal("SANDBOX"),
-  is_technical: z.boolean().refine(v => v === true, "Deve ser confirmado como técnico"),
-  is_active_wa: z.boolean().refine(v => v === true, "Deve confirmar WhatsApp ativo"),
-});
 
 export const addTechnicalRecipient = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
