@@ -1,0 +1,1 @@
+UPDATE public.operational_notification_recipients SET active = false, verification_reason = 'RECIPIENT_NOT_FOUND_BY_PROVIDER (HTTP 400 em TR-8-REAL-006)', updated_at = now() WHERE destination = '5511984242681';
