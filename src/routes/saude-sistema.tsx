@@ -3,11 +3,12 @@ import { useSession } from "@/hooks/use-session";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/app-shell";
 import { getSystemHealth, listHealthIncidents, type IncidentRow, triggerNotificationWorker } from "@/lib/health.functions";
-import { getNotificationConfig, updateNotificationConfig, listNotificationRecipients, validateNotificationGoLive, adminVerifyRecipient, revokeAdminVerification } from "@/lib/health-config.functions";
+import { getNotificationConfig, updateNotificationConfig, listNotificationRecipients, validateNotificationGoLive, adminVerifyRecipient, revokeAdminVerification, addTechnicalRecipient } from "@/lib/health-config.functions";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ShieldCheck, ShieldAlert, AlertTriangle, CheckCircle2, XCircle, Bell, Settings2, Trash2, Eye } from "lucide-react";
+import { ShieldCheck, ShieldAlert, AlertTriangle, CheckCircle2, XCircle, Bell, Settings2, Trash2, Eye, Plus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -282,12 +283,16 @@ function SaudeSistemaPage() {
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0">
                 <div>
                   <CardTitle className="text-base">Destinatários Técnicos</CardTitle>
                   <p className="text-xs text-muted-foreground">Homologação manual permitida para check NOT_SUPPORTED.</p>
                 </div>
+                {isSuperAdmin && (
+                  <AddTechnicalRecipientAction onSuccess={() => queryClient.invalidateQueries({ queryKey: ["notification-recipients"] })} />
+                )}
               </CardHeader>
+
               <CardContent>
                 <Table>
                   <TableHeader>
@@ -725,9 +730,109 @@ function RevokeVerifyAction({ recipient, onSuccess }: { recipient: any; onSucces
     </Button>
   );
 }
+function AddTechnicalRecipientAction({ onSuccess }: { onSuccess: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [label, setLabel] = useState("");
+  const [destination, setDestination] = useState("");
+  const [isTechnical, setIsTechnical] = useState(false);
+  const [isActiveWa, setIsActiveWa] = useState(false);
 
+  const addM = useMutation({
+    mutationFn: addTechnicalRecipient,
+    onSuccess: () => {
+      setOpen(false);
+      setLabel("");
+      setDestination("");
+      setIsTechnical(false);
+      setIsActiveWa(false);
+      onSuccess();
+      toast.success("Destinatário técnico cadastrado com sucesso.");
+    },
+    onError: (err: any) => toast.error(err.message)
+  });
 
-
-
-
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" className="h-8 gap-2">
+          <Plus className="h-3.5 w-3.5" /> Adicionar Destinatário Técnico
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Novo Destinatário Técnico</DialogTitle>
+          <DialogDescription>
+            Cadastre um número para testes em ambiente SANDBOX. Envio real bloqueado nesta etapa.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="space-y-2">
+            <Label className="text-xs">Identificação (Label)</Label>
+            <Input 
+              placeholder="Ex: Celular Técnico Homologação" 
+              value={label} 
+              onChange={e => setLabel(e.target.value)} 
+              className="text-sm"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs">Número WhatsApp</Label>
+            <Input 
+              placeholder="+55 (11) 99999-9999" 
+              value={destination} 
+              onChange={e => setDestination(e.target.value)} 
+              className="text-sm"
+            />
+            <p className="text-[10px] text-muted-foreground italic">Será normalizado automaticamente para apenas dígitos.</p>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs">Ambiente</Label>
+            <Select value="SANDBOX" disabled>
+              <SelectTrigger className="text-sm h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="SANDBOX">SANDBOX</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-start space-x-2 pt-2">
+            <Checkbox 
+              id="is_tech" 
+              checked={isTechnical} 
+              onCheckedChange={(v) => setIsTechnical(!!v)} 
+            />
+            <label htmlFor="is_tech" className="text-[11px] leading-tight text-muted-foreground">
+              Este número é exclusivamente técnico e está autorizado para receber mensagens de homologação.
+            </label>
+          </div>
+          <div className="flex items-start space-x-2">
+            <Checkbox 
+              id="is_wa" 
+              checked={isActiveWa} 
+              onCheckedChange={(v) => setIsActiveWa(!!v)} 
+            />
+            <label htmlFor="is_wa" className="text-[11px] leading-tight text-muted-foreground">
+              Confirmo que o WhatsApp está ativo neste aparelho e disponível para teste.
+            </label>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button 
+            size="sm" 
+            disabled={!label || !destination || !isTechnical || !isActiveWa || addM.isPending}
+            onClick={() => addM.mutate({ data: {
+              label,
+              destination,
+              environment: "SANDBOX",
+              is_technical: isTechnical,
+              is_active_wa: isActiveWa
+            }})}
+          >
+            Cadastrar Destinatário
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
