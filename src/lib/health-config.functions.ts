@@ -45,7 +45,7 @@ export const addTechnicalRecipient = createServerFn({ method: "POST" })
         .update({
           label: data.label,
           active: true,
-          environment: 'SANDBOX',
+          environment: data.environment,
           is_test_recipient: true,
           admin_verified: false, // Reset verification on update
           updated_at: new Date().toISOString(),
@@ -75,7 +75,7 @@ export const addTechnicalRecipient = createServerFn({ method: "POST" })
         label: data.label,
         destination: normalized,
         channel: 'WHATSAPP',
-        environment: 'SANDBOX',
+        environment: data.environment,
         active: true,
         is_test_recipient: true,
         admin_verified: false,
@@ -213,9 +213,9 @@ export const adminVerifyRecipient = createServerFn({ method: "POST" })
 
     if (!before) throw new Error("Recipient not found");
 
-    if (before.environment === 'PRODUCTION') {
-      throw new Error("Admin Verification restricted to SANDBOX recipients in this stage");
-    }
+    // Auditoria de Produção agora permitida administrativamente
+    // Mas mantemos alerta no front
+
 
     const { data: after, error } = await supabaseAdmin
       .from("operational_notification_recipients")
