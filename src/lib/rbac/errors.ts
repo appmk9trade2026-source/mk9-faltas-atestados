@@ -13,6 +13,7 @@ export const RBAC_ERROR_CODES = [
   "INVALID_PAYLOAD",
   "RESOURCE_NOT_FOUND",
   "CONFLICT",
+  "ALREADY_COMMITTED",
   "RATE_LIMITED",
   "TECHNICAL_ERROR",
 ] as const;
@@ -51,6 +52,7 @@ const FRIENDLY: Record<RbacErrorCode, string> = {
   INVALID_PAYLOAD: "Os dados enviados são inválidos.",
   RESOURCE_NOT_FOUND: "Registro não encontrado.",
   CONFLICT: "Operação em conflito com o estado atual do registro.",
+  ALREADY_COMMITTED: "Lançamento confirmado. O registro já havia sido processado com sucesso.",
   RATE_LIMITED: "Muitas tentativas em pouco tempo. Aguarde alguns instantes.",
   TECHNICAL_ERROR: "Não foi possível concluir a operação devido a uma falha técnica.",
 };
@@ -64,6 +66,7 @@ const CODES_COM_DETALHE = new Set<RbacErrorCode>([
   "CONFLICT",
   "INVALID_PAYLOAD",
   "RESOURCE_NOT_FOUND",
+  "ALREADY_COMMITTED",
   // Escopo: o servidor devolve a razão exata (projeto/supervisor/colaborador
   // fora da hierarquia). É informação de negócio, não detalhe técnico.
   "PROJECT_SCOPE_DENIED",

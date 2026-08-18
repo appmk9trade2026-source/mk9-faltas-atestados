@@ -17,13 +17,18 @@ import { Separator } from "@/components/ui/separator";
 interface ConflitoInfo {
   id: string;
   tipo: string;
+  tipo_detalhe?: string | null;
   data_inicio: string;
   data_fim: string;
-  registrado_por: string;
-  registrado_em: string;
+  registrado_por?: string;
+  registrado_em?: string;
+  created_at?: string;
   protocolo: string | null;
   status: string;
-  registrado_por_nome: string | null;
+  registrado_por_nome?: string | null;
+  registrador_nome?: string | null;
+  registrador_role?: string | null;
+  origem_registro?: string;
 }
 
 interface ConflitoAusenciaDialogProps {
@@ -60,7 +65,7 @@ export function ConflitoAusenciaDialog({
             <DialogTitle className="text-xl">Conflito de Ausências Detectado</DialogTitle>
           </div>
           <DialogDescription className="text-base text-foreground/80">
-            Foi encontrada uma <strong>{conflito.tipo}</strong> já registrada para este colaborador no mesmo período.
+            Foi encontrada uma <strong>{conflito.tipo_detalhe || conflito.tipo}</strong> já registrada para este colaborador no mesmo período.
             Como deseja proceder?
           </DialogDescription>
         </DialogHeader>
@@ -79,20 +84,30 @@ export function ConflitoAusenciaDialog({
             
             <div className="grid grid-cols-2 gap-y-2 text-sm">
               <div className="text-muted-foreground">Tipo:</div>
-              <div className="font-medium">{conflito.tipo}</div>
+              <div className="font-medium">{conflito.tipo_detalhe || conflito.tipo}</div>
               
               <div className="text-muted-foreground">Período:</div>
               <div className="font-medium">
                 {format(new Date(conflito.data_inicio), "dd/MM/yyyy")} até {format(new Date(conflito.data_fim), "dd/MM/yyyy")}
               </div>
               
-              <div className="text-muted-foreground">Registrado por:</div>
-              <div className="font-medium">{conflito.registrado_por_nome || "Sistema"}</div>
+              <div className="text-muted-foreground">Lançado por:</div>
+              <div className="font-medium">
+                {conflito.registrador_nome || conflito.registrado_por_nome || "Sistema"} 
+                {conflito.registrador_role && ` (${conflito.registrador_role})`}
+              </div>
               
               <div className="text-muted-foreground">Data lançamento:</div>
               <div className="font-medium">
-                {format(new Date(conflito.registrado_em), "dd/MM/yyyy HH:mm")}
+                {format(new Date(conflito.created_at || conflito.registrado_em || new Date()), "dd/MM/yyyy HH:mm")}
               </div>
+
+              {conflito.origem_registro && (
+                <>
+                  <div className="text-muted-foreground">Origem:</div>
+                  <div className="font-medium capitalize">{conflito.origem_registro.toLowerCase().replace(/_/g, " ")}</div>
+                </>
+              )}
 
               {conflito.protocolo && (
                 <>

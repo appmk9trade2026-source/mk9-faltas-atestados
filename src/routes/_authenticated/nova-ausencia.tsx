@@ -1368,11 +1368,21 @@ function NovaAusenciaPage() {
           console.log(`[P0-DIAGNOSTIC] Iniciando createAusencia via server function. Correlation: ${finalCorrelationId}`);
           const res = await createFn({ data: { ...payload, correlation_id: finalCorrelationId } });
           console.log(`[P0-DIAGNOSTIC] createAusencia sucesso:`, res);
+          
+          // Tratar idempotência (ALREADY_COMMITTED) como sucesso
+          const isAlreadyCommitted = (res as any)?.code === "ALREADY_COMMITTED";
+          if (isAlreadyCommitted) {
+            console.log(`[IDEMPOTENCY] Frontend recebeu ALREADY_COMMITTED para corr=${finalCorrelationId}`);
+            toast.info("Lançamento confirmado.", {
+              description: "O registro já havia sido processado anteriormente com sucesso."
+            });
+          }
+
           return {
             manual: !!values.modo_manual,
             colaboradorCriado: !!(res as { colaborador_criado?: boolean } | undefined)?.colaborador_criado,
           };
-      } catch (err) {
+        } catch (err) {
         // Compensação de storage para criação
         if (arquivo_url) {
           console.warn(`[P0-ORPHAN-PREVENTION] Falha na criação. Tentando remover arquivo via Client e Server: ${arquivo_url}. Erro: ${err instanceof Error ? err.message : String(err)}`);
@@ -1410,10 +1420,30 @@ function NovaAusenciaPage() {
 
     onError: (err: unknown) => {
       const traceId = (globalThis as any).__manualCorrelationId || "unknown";
+      
+      // HTML GUARD: Proteção contra respostas brutas (Vite/Cloudflare)
+      const rawError = err instanceof Error ? err.message : String(err);
+      const isHtml = rawError.trim().toLowerCase().startsWith("<!doctype html>") || rawError.includes("<html");
+      
+      if (isHtml) {
+        console.error("[HTML_GUARD] Resposta HTML detectada no frontend. Sanitizando erro.", { traceId });
+        toast.error("Não foi possível confirmar a resposta do servidor.", {
+          description: "A operação pode ter sido concluída. Verifique o histórico de lançamentos antes de tentar novamente.",
+          action: {
+            label: "Copiar Ref",
+            onClick: () => {
+              navigator.clipboard.writeText(traceId);
+              toast.success("Referência copiada para o suporte.");
+            }
+          }
+        });
+        return;
+      }
+
       console.error("[NovaAusencia] Falha ao salvar ausência:", {
         correlation_id: traceId,
         error: err,
-        message: err instanceof Error ? err.message : String(err)
+        message: rawError
       });
       
       const { title, description, correlationId } = friendlyRbacError(err);
@@ -1571,7 +1601,7 @@ function NovaAusenciaPage() {
                               data_fim: dataFim || v.data_inicio,
                               tipo: tipo as any,
                               origem_registro: v.modo_manual ? "MANUAL" : "AUTOMATICO",
-                              manual_matricula: v.modo_manual ? v.manual_matricula : null,
+                              manual_matricula: v.modo_manual ? v.manual_matricula : matriculaInput.trim(),
                               empresa_id: v.modo_manual ? v.empresa_id : null,
                               projeto_id: v.modo_manual ? v.projeto_id : null,
                               _supervisor_id: null,
@@ -1579,13 +1609,14 @@ function NovaAusenciaPage() {
                           });
 
                           if (confs && confs.length > 0) {
+                            console.log("[P0-DIAGNOSTIC] Conflito detectado via checkConflitosFn:", confs);
                             setConflitos(confs);
                             setPendingValues(v);
                             setConflitoDialogOpen(true);
                             return;
                           }
                         } catch (err) {
-                          console.error("Erro ao verificar conflitos:", err);
+                          console.error("[P0-DIAGNOSTIC] Erro ao verificar conflitos:", err);
                         }
                       }
 
@@ -1595,7 +1626,7 @@ function NovaAusenciaPage() {
                         );
                         return;
                       }
-                      console.log("DEBUG: Iniciando mutate com os valores:", v);
+                      console.log("[P0-DIAGNOSTIC] Iniciando mutate com os valores:", v);
                       salvarMut.mutate(v);
                     })(e).catch(() => {
                       // Scroll to first error

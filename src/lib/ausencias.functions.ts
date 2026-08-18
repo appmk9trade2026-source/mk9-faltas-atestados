@@ -173,11 +173,52 @@ async function checkConflitosSeguro(
 
   // Filtragem P0: Garantir que registros excluídos ou cancelados não bloqueiem novos lançamentos
   // mesmo que a RPC original no banco não tenha sido atualizada.
-  return (conflitos || []).filter((c: any) => {
+  const ativos = (conflitos || []).filter((c: any) => {
     const status = (c.status || "").toUpperCase();
     const statusDoc = (c.status_documental || "ATIVO").toUpperCase();
     return status !== "CANCELADO" && status !== "SUBSTITUIDA" && statusDoc !== "EXCLUIDO";
   });
+
+  // Enriquecimento de Duplicidade: Buscar metadados para UX amigável.
+  if (ativos.length > 0) {
+    const conf = ativos[0];
+    const { data: metadados, error: metaErr } = await supabase
+      .from("ausencias")
+      .select(`
+        id, 
+        protocolo, 
+        tipo_detalhe, 
+        data_inicio, 
+        data_fim, 
+        created_at, 
+        origem_registro,
+        registrado_por:criado_por_usuario_id (
+          id,
+          nome,
+          papel:user_roles!inner(role)
+        )
+      `)
+      .eq("id", conf.ausencia_id)
+      .maybeSingle();
+
+    if (!metaErr && metadados) {
+      // Formatar para o frontend sem vazar PII desnecessário
+      const registrador = (metadados.registrado_por as any);
+      return [{
+        ...conf,
+        protocolo: metadados.protocolo,
+        tipo_detalhe: metadados.tipo_detalhe,
+        data_inicio: metadados.data_inicio,
+        data_fim: metadados.data_fim,
+        created_at: metadados.created_at,
+        origem_registro: metadados.origem_registro,
+        registrador_nome: registrador?.nome || "Sistema",
+        registrador_role: registrador?.papel?.[0]?.role || "AUTOMATICO"
+      }];
+    }
+  }
+
+  return ativos;
 }
 
 function toInvalidPayload(err: unknown): Error {
@@ -372,6 +413,37 @@ export const createAusencia = createServerFn({ method: "POST" })
     };
 
     try {
+      // 0. Idempotência: Verificar se o correlation_id já foi processado com sucesso.
+      const correlationId = (data as any).correlation_id;
+      if (correlationId) {
+        const { data: existing, error: findErr } = await context.supabase
+          .from("audit_logs")
+          .select("registro_id, depois")
+          .eq("modulo", "ausencias")
+          .eq("acao", "AUSENCIA_CRIADA_POR_SUPERVISOR")
+          .ilike("observacoes", `%[corr=${correlationId}]%`)
+          .maybeSingle();
+
+        if (existing?.registro_id) {
+          console.log(`[IDEMPOTENCY] Replay detectado para corr=${correlationId}. Retornando sucesso ALREADY_COMMITTED.`);
+          // Buscar o protocolo original para retornar uma resposta completa.
+          const { data: original } = await context.supabase
+            .from("ausencias")
+            .select("id, protocolo, colaborador_id, origem_registro")
+            .eq("id", existing.registro_id)
+            .maybeSingle();
+
+          return {
+            id: original?.id || existing.registro_id,
+            protocolo: original?.protocolo,
+            colaborador_id: original?.colaborador_id,
+            colaborador_criado: false,
+            code: "ALREADY_COMMITTED",
+            message: "Lançamento confirmado. O registro já havia sido processado com sucesso."
+          };
+        }
+      }
+
       // ETAPA 9 — RESOLVE_COLABORADOR
       const isManual = data.origem_registro === "MANUAL";
       const request = getRequest();
@@ -539,7 +611,12 @@ export const createAusencia = createServerFn({ method: "POST" })
     if (conflitos.length > 0) {
       const conf = conflitos[0];
       await logger("CHECK_CONFLICT", `Conflito detectado com protocolo ${conf.protocolo}`, "DUPLICITY", "P2");
-      throw new Error(`CONFLICT: Já existe um lançamento de ${conf.tipo} para este período (Protocolo: ${conf.protocolo}).`);
+      
+      // Construir mensagem enriquecida
+      const dataBr = conf.created_at ? format(new Date(conf.created_at), "dd/MM/yyyy 'às' HH:mm") : "";
+      const infoText = `Protocolo: ${conf.protocolo} | Tipo: ${conf.tipo_detalhe || conf.tipo} | Lançado por: ${conf.registrador_nome} (${conf.registrador_role}) em ${dataBr}.`;
+      
+      throw new Error(`CONFLICT: Já existe um lançamento ativo para este período. ${infoText}`);
     }
 
     // 7. mutação — RLS + trigger de supervisor continuam ativos como 2ª camada
