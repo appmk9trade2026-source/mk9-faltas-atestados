@@ -1368,11 +1368,21 @@ function NovaAusenciaPage() {
           console.log(`[P0-DIAGNOSTIC] Iniciando createAusencia via server function. Correlation: ${finalCorrelationId}`);
           const res = await createFn({ data: { ...payload, correlation_id: finalCorrelationId } });
           console.log(`[P0-DIAGNOSTIC] createAusencia sucesso:`, res);
+          
+          // Tratar idempotência (ALREADY_COMMITTED) como sucesso
+          const isAlreadyCommitted = (res as any)?.code === "ALREADY_COMMITTED";
+          if (isAlreadyCommitted) {
+            console.log(`[IDEMPOTENCY] Frontend recebeu ALREADY_COMMITTED para corr=${finalCorrelationId}`);
+            toast.info("Lançamento confirmado.", {
+              description: "O registro já havia sido processado anteriormente com sucesso."
+            });
+          }
+
           return {
             manual: !!values.modo_manual,
             colaboradorCriado: !!(res as { colaborador_criado?: boolean } | undefined)?.colaborador_criado,
           };
-      } catch (err) {
+        } catch (err) {
         // Compensação de storage para criação
         if (arquivo_url) {
           console.warn(`[P0-ORPHAN-PREVENTION] Falha na criação. Tentando remover arquivo via Client e Server: ${arquivo_url}. Erro: ${err instanceof Error ? err.message : String(err)}`);
@@ -1410,10 +1420,30 @@ function NovaAusenciaPage() {
 
     onError: (err: unknown) => {
       const traceId = (globalThis as any).__manualCorrelationId || "unknown";
+      
+      // HTML GUARD: Proteção contra respostas brutas (Vite/Cloudflare)
+      const rawError = err instanceof Error ? err.message : String(err);
+      const isHtml = rawError.trim().toLowerCase().startsWith("<!doctype html>") || rawError.includes("<html");
+      
+      if (isHtml) {
+        console.error("[HTML_GUARD] Resposta HTML detectada no frontend. Sanitizando erro.", { traceId });
+        toast.error("Não foi possível confirmar a resposta do servidor.", {
+          description: "A operação pode ter sido concluída. Verifique o histórico de lançamentos antes de tentar novamente.",
+          action: {
+            label: "Copiar Ref",
+            onClick: () => {
+              navigator.clipboard.writeText(traceId);
+              toast.success("Referência copiada para o suporte.");
+            }
+          }
+        });
+        return;
+      }
+
       console.error("[NovaAusencia] Falha ao salvar ausência:", {
         correlation_id: traceId,
         error: err,
-        message: err instanceof Error ? err.message : String(err)
+        message: rawError
       });
       
       const { title, description, correlationId } = friendlyRbacError(err);
