@@ -1601,7 +1601,7 @@ function NovaAusenciaPage() {
                               data_fim: dataFim || v.data_inicio,
                               tipo: tipo as any,
                               origem_registro: v.modo_manual ? "MANUAL" : "AUTOMATICO",
-                              manual_matricula: v.modo_manual ? v.manual_matricula : null,
+                              manual_matricula: v.modo_manual ? v.manual_matricula : matriculaInput.trim(),
                               empresa_id: v.modo_manual ? v.empresa_id : null,
                               projeto_id: v.modo_manual ? v.projeto_id : null,
                               _supervisor_id: null,
@@ -1609,13 +1609,14 @@ function NovaAusenciaPage() {
                           });
 
                           if (confs && confs.length > 0) {
+                            console.log("[P0-DIAGNOSTIC] Conflito detectado via checkConflitosFn:", confs);
                             setConflitos(confs);
                             setPendingValues(v);
                             setConflitoDialogOpen(true);
                             return;
                           }
                         } catch (err) {
-                          console.error("Erro ao verificar conflitos:", err);
+                          console.error("[P0-DIAGNOSTIC] Erro ao verificar conflitos:", err);
                         }
                       }
 
@@ -1625,7 +1626,7 @@ function NovaAusenciaPage() {
                         );
                         return;
                       }
-                      console.log("DEBUG: Iniciando mutate com os valores:", v);
+                      console.log("[P0-DIAGNOSTIC] Iniciando mutate com os valores:", v);
                       salvarMut.mutate(v);
                     })(e).catch(() => {
                       // Scroll to first error
