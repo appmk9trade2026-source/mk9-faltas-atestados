@@ -6285,24 +6285,45 @@ export type Database = {
         }[]
       }
       restaurar_preferencias_padrao: { Args: never; Returns: number }
-      retificar_ausencia: {
-        Args: {
-          p_arquivo?: Json
-          p_ausencia_id: string
-          p_cid?: string
-          p_data_inicio: string
-          p_e_erro_supervisor?: boolean
-          p_motivo?: string
-          p_motivo_categoria?: string
-          p_motivo_operacional: string
-          p_observacao?: string
-          p_opcao_periodo_id: string
-          p_tipo_ausencia_id: string
-          p_tipo_detalhe?: string
-          p_updated_at_check?: string
-        }
-        Returns: Json
-      }
+      retificar_ausencia:
+        | {
+            Args: {
+              p_arquivo?: Json
+              p_ausencia_id: string
+              p_cid?: string
+              p_data_inicio: string
+              p_e_erro_supervisor?: boolean
+              p_motivo?: string
+              p_motivo_categoria?: string
+              p_motivo_operacional: string
+              p_observacao?: string
+              p_opcao_periodo_id: string
+              p_tipo_ausencia_id: string
+              p_tipo_detalhe?: string
+              p_updated_at_check?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_arquivo?: Json
+              p_ausencia_id: string
+              p_cid?: string
+              p_data_inicio: string
+              p_e_erro_supervisor?: boolean
+              p_horario_fim?: string
+              p_horario_inicio?: string
+              p_motivo?: string
+              p_motivo_categoria?: string
+              p_motivo_operacional: string
+              p_observacao?: string
+              p_opcao_periodo_id: string
+              p_tipo_ausencia_id: string
+              p_tipo_detalhe?: string
+              p_updated_at_check?: string
+            }
+            Returns: Json
+          }
       retificar_ausencia_old_v2: {
         Args: {
           p_arquivo?: Json

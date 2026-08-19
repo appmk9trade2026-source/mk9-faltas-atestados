@@ -24,6 +24,8 @@ const retificarSchema = z.object({
   cid: z.string().trim().max(20).nullable().optional(),
   tipo_detalhe: z.string().trim().max(150).nullable().optional(),
   observacao: z.string().trim().max(500).nullable().optional(),
+  horario_inicio: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/).nullable().optional(),
+  horario_fim: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/).nullable().optional(),
   arquivo: z
     .object({
       path: z.string().trim().min(1).max(500),
@@ -78,6 +80,8 @@ export const retificarAusencia = createServerFn({ method: "POST" })
         p_updated_at_check: data.updated_at_check ?? null,
         p_motivo_categoria: data.motivo_categoria ?? null,
         p_e_erro_supervisor: data.e_erro_supervisor ?? null,
+        p_horario_inicio: data.horario_inicio ?? null,
+        p_horario_fim: data.horario_fim ?? null,
       } as never,
     );
     if (error) throw new Error(mapRetificacaoError(error.message));

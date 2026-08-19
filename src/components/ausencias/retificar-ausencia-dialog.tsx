@@ -62,6 +62,8 @@ export type AusenciaRetificavel = {
   empresa?: { nome: string } | null;
   projeto?: { nome: string } | null;
   e_erro_supervisor?: boolean | null;
+  horario_inicio?: string | null;
+  horario_fim?: string | null;
 };
 
 type TipoOpt = {
@@ -72,7 +74,7 @@ type TipoOpt = {
   permite_cid: boolean;
 };
 
-type PeriodoOpt = { id: string; nome: string; quantidade_dias: number | null };
+type PeriodoOpt = { id: string; nome: string; quantidade_dias: number | null; tipo_periodo: string };
 
 function fmtDate(d?: string | null) {
   if (!d) return "—";
@@ -106,6 +108,8 @@ export function RetificarAusenciaDialog({
   const [motivoCategoria, setMotivoCategoria] = useState<string>("");
   const [eErroSupervisor, setEErroSupervisor] = useState<boolean | null>(null);
   const [cid, setCid] = useState("");
+  const [horarioInicio, setHorarioInicio] = useState("");
+  const [horarioFim, setHorarioFim] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [confirmando, setConfirmando] = useState(false);
   const [agora, setAgora] = useState(() => new Date());
@@ -119,6 +123,8 @@ export function RetificarAusenciaDialog({
     setMotivoCategoria("");
     setEErroSupervisor(ausencia.e_erro_supervisor ?? null);
     setCid(ausencia.cid ?? "");
+    setHorarioInicio(ausencia.horario_inicio ?? "");
+    setHorarioFim(ausencia.horario_fim ?? "");
     setFile(null);
     setConfirmando(false);
   }, [open, ausencia]);
@@ -169,6 +175,13 @@ export function RetificarAusenciaDialog({
     [tiposQ.data, tipoId],
   );
 
+  const periodoSelecionado = useMemo(
+    () => periodosQ.data?.find((p) => p.id === periodoId) ?? null,
+    [periodosQ.data, periodoId],
+  );
+
+  const isMeioPeriodo = periodoSelecionado?.tipo_periodo === "MEIO_PERIODO";
+
   const prazo = ausencia ? prazoRetificacao(ausencia.created_at, agora) : null;
   const bloqueadoPorPrazo = !podeIgnorarPrazo && !!prazo?.expirado;
 
@@ -180,6 +193,8 @@ export function RetificarAusenciaDialog({
       periodoId !== (ausencia.opcao_periodo_id ?? "") ||
       dataInicio !== ausencia.data_inicio ||
       !!file ||
+      horarioInicio !== (ausencia.horario_inicio ?? "") ||
+      horarioFim !== (ausencia.horario_fim ?? "") ||
       (podeVerCid && (cid || "") !== (ausencia.cid ?? "")));
 
   const podeSalvar =
@@ -191,7 +206,8 @@ export function RetificarAusenciaDialog({
     motivoOperacional.trim().length >= 10 &&
     !!motivoCategoria &&
     mudouAlgo &&
-    (!exigeDocumento || temAnexo);
+    (!exigeDocumento || temAnexo) &&
+    (!isMeioPeriodo || (!!horarioInicio && !!horarioFim && horarioInicio < horarioFim));
 
   const mut = useMutation({
     mutationFn: async () => {
@@ -217,6 +233,8 @@ export function RetificarAusenciaDialog({
           e_erro_supervisor: eErroSupervisor === null ? undefined : eErroSupervisor,
           updated_at_check: ausencia.updated_at,
           cid: podeVerCid && cid.trim() ? cid.trim().toUpperCase() : null,
+          horario_inicio: isMeioPeriodo ? horarioInicio : null,
+          horario_fim: isMeioPeriodo ? horarioFim : null,
           arquivo,
         },
       });
@@ -341,6 +359,34 @@ export function RetificarAusenciaDialog({
             />
           </div>
 
+          {isMeioPeriodo && (
+            <>
+              <div className="space-y-2">
+                <Label>Horário inicial</Label>
+                <Input
+                  type="time"
+                  value={horarioInicio}
+                  onChange={(e) => setHorarioInicio(e.target.value)}
+                  disabled={bloqueadoPorPrazo}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Horário final</Label>
+                <Input
+                  type="time"
+                  value={horarioFim}
+                  onChange={(e) => setHorarioFim(e.target.value)}
+                  disabled={bloqueadoPorPrazo}
+                />
+                {horarioInicio && horarioFim && horarioInicio >= horarioFim && (
+                  <p className="text-[10px] font-bold text-destructive uppercase tracking-tighter">
+                    O horário final deve ser posterior ao inicial.
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+
           {podeVerCid && tipoSelecionado?.permite_cid && (
             <div className="space-y-2">
               <Label>CID (opcional)</Label>
@@ -445,6 +491,16 @@ export function RetificarAusenciaDialog({
                     <span className="line-through opacity-50">{fmtDate(ausencia.data_inicio)}</span>
                     <ArrowRight className="h-3 w-3" />
                     <span>{fmtDate(dataInicio)}</span>
+                  </div>
+                </div>
+              )}
+              {isMeioPeriodo && (horarioInicio !== (ausencia.horario_inicio ?? "") || horarioFim !== (ausencia.horario_fim ?? "")) && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Horários</span>
+                  <div className="flex items-center gap-2 font-medium">
+                    <span className="line-through opacity-50">{ausencia.horario_inicio || "—"} - {ausencia.horario_fim || "—"}</span>
+                    <ArrowRight className="h-3 w-3" />
+                    <span>{horarioInicio} - {horarioFim}</span>
                   </div>
                 </div>
               )}
