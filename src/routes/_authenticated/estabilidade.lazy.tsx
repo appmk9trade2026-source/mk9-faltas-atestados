@@ -128,7 +128,7 @@ function StabilizationAuditPage() {
               <div>
                 <h1 className="text-3xl font-bold tracking-tight uppercase">CRM MK9 — PROGRAMA DE ESTABILIZAÇÃO</h1>
                 <p className="text-sm text-muted-foreground font-bold uppercase tracking-wider">
-                  RODADA 2 — ETAPA 2: HOMOLOGAÇÃO OPERACIONAL — SUPERVISOR / OCORRÊNCIA DE PONTO
+                  RODADA 2 — ETAPA 2A: EXECUÇÃO EFETIVA DOS TESTES — SUPERVISOR / OCORRÊNCIA DE PONTO
                 </p>
                 <div className="flex gap-2 mt-1">
                   <Badge variant="secondary" className="font-mono text-[10px]">
@@ -150,11 +150,11 @@ function StabilizationAuditPage() {
             </div>
           </div>
           
-          <Alert className="bg-slate-50 border-slate-200 dark:bg-slate-900/50 dark:border-slate-800">
-            <Info className="h-4 w-4 text-primary" />
-            <AlertTitle className="text-primary font-bold text-xs uppercase tracking-wider">OBJETIVO DA ETAPA</AlertTitle>
-            <AlertDescription className="text-muted-foreground text-sm leading-relaxed">
-              Homologar o fluxo de Ocorrência de Ponto exatamente pela perspectiva de um Supervisor autorizado, comprovando persistência, upload privado, idempotência, RBAC/RLS e auditoria.
+          <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/50">
+            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <AlertTitle className="text-amber-800 dark:text-amber-300 font-bold text-xs uppercase tracking-wider">AVISO DE EXECUÇÃO</AlertTitle>
+            <AlertDescription className="text-amber-700 dark:text-amber-400 text-sm leading-relaxed">
+              A preparação terminou. Agora execute efetivamente a bateria de 15 testes (SUP-OCC-001 a 015) para comprovar a estabilidade do fluxo de Ocorrência.
             </AlertDescription>
           </Alert>
         </header>
@@ -283,11 +283,11 @@ function StabilizationAuditPage() {
                 <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
               </div>
-              <span className="text-slate-500 text-[9px] font-bold tracking-widest uppercase">RELATÓRIO FINAL OBRIGATÓRIO — RODADA 2 — ETAPA 2</span>
+              <span className="text-slate-500 text-[9px] font-bold tracking-widest uppercase">RELATÓRIO FINAL OBRIGATÓRIO — RODADA 2 — ETAPA 2A — EXECUÇÃO SUPERVISOR</span>
             </div>
             <CardContent className="p-6 space-y-4 opacity-80 overflow-y-auto max-h-[500px]">
               <div className="flex justify-between border-b border-slate-900 pb-2">
-                <span className="text-emerald-500 font-bold tracking-tighter uppercase">RODADA 2 — ETAPA 2: SUPERVISOR / OCORRÊNCIA</span>
+                <span className="text-emerald-500 font-bold tracking-tighter uppercase">RODADA 2 — ETAPA 2A: EXECUÇÃO SUPERVISOR</span>
                 <span className="text-slate-400">AUDIT RUN: RUN-20260819-P0-002</span>
               </div>
               
