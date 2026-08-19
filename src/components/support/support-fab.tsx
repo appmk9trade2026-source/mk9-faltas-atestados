@@ -14,12 +14,19 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useSupport } from "./support-provider";
 import { useSession } from "@/hooks/use-session";
 import { useQuery } from "@tanstack/react-query";
 import { getUnreadSupportCount } from "@/lib/support.functions";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { SupportAvatar } from "./support-avatar";
 
 export function SupportFAB() {
   const { openSupport } = useSupport();
@@ -89,22 +96,37 @@ export function SupportFAB() {
   }
 
   const trigger = (
-    <Button
-      size={isMobile ? "icon" : "default"}
-      className={cn(
-        "fixed bottom-6 right-6 shadow-2xl z-50 rounded-full gap-2 transition-all duration-300 hover:scale-110 active:scale-95",
-        isMobile ? "h-14 w-14" : "h-12 px-6"
-      )}
-      aria-label="Suporte Interno"
-    >
-      <MessageSquare className={cn("h-5 w-5", !isMobile && "mr-1")} />
-      {!isMobile && <span className="font-bold tracking-tight">Suporte</span>}
-      {unreadCount > 0 && (
-        <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full border-2 border-white animate-in zoom-in">
-          {unreadCount > 9 ? "+9" : unreadCount}
-        </span>
-      )}
-    </Button>
+    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 group">
+      <Button
+        size="icon"
+        className={cn(
+          "shadow-2xl rounded-full transition-all duration-300 hover:scale-110 active:scale-95 bg-transparent border-0 h-14 w-14 p-0 overflow-visible hover:ring-4 hover:ring-primary/10",
+          unreadCount > 0 && "animate-pulse"
+        )}
+        aria-label="Suporte MK9"
+      >
+        <SupportAvatar className="w-full h-full" isOnline={true} />
+        
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-black min-w-[20px] h-5 flex items-center justify-center rounded-full border-2 border-white shadow-lg z-10 px-1 animate-in zoom-in">
+            {unreadCount > 9 ? "+9" : unreadCount}
+          </span>
+        )}
+      </Button>
+    </div>
+  );
+
+  const desktopTrigger = (
+    <TooltipProvider>
+      <Tooltip delayDuration={300}>
+        <TooltipTrigger asChild>
+          {trigger}
+        </TooltipTrigger>
+        <TooltipContent side="left" className="font-bold text-xs bg-primary text-white border-primary">
+          Suporte MK9
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 
   if (isMobile) {
@@ -143,7 +165,7 @@ export function SupportFAB() {
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+      <PopoverTrigger asChild>{desktopTrigger}</PopoverTrigger>
       <PopoverContent className="w-64 p-2 shadow-2xl border-primary/20" align="end" sideOffset={16}>
         <div className="grid gap-1">
           <div className="px-3 py-2 border-b mb-1 flex items-center justify-between">
