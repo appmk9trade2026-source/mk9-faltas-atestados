@@ -202,23 +202,25 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
         throw new Error("Falha ao obter confirmação da criação da ocorrência.");
       }
 
-      // 5. Log de auditoria
-      const obsAuditoria = data.colaborador_manual 
-        ? `Lançamento manual para matrícula ${data.manual_matricula}: ${newOcorrencia.protocolo} (Ausência: ${newOcorrencia.ausencia_id})`
-        : `Nova ocorrência de ponto protocolada: ${newOcorrencia.protocolo} (Ausência: ${newOcorrencia.ausencia_id})`;
-
-      await supabaseAdmin.rpc("log_audit_event", {
-        _modulo: "ocorrencias",
-        _acao: "LANCAMENTO",
-        _entidade: "Ocorrência Ponto",
-        _registro_id: newOcorrencia.id,
-        _empresa_id: data.empresa_id,
-        _projeto_id: data.projeto_id,
-        _usuario_id: context.userId,
-        _sucesso: true,
-        _observacoes: obsAuditoria,
-        _origem: "server"
-      } as any);
+      // 5. Log de auditoria (somente se não for um replay)
+      if (!newOcorrencia.idempotency_replay) {
+        const obsAuditoria = data.colaborador_manual 
+          ? `Lançamento manual para matrícula ${data.manual_matricula}: ${newOcorrencia.protocolo} (Ausência: ${newOcorrencia.ausencia_id})`
+          : `Nova ocorrência de ponto protocolada: ${newOcorrencia.protocolo} (Ausência: ${newOcorrencia.ausencia_id})`;
+  
+        await supabaseAdmin.rpc("log_audit_event", {
+          _modulo: "ocorrencias",
+          _acao: "LANCAMENTO",
+          _entidade: "Ocorrência Ponto",
+          _registro_id: newOcorrencia.id,
+          _empresa_id: data.empresa_id,
+          _projeto_id: data.projeto_id,
+          _usuario_id: context.userId,
+          _sucesso: true,
+          _observacoes: obsAuditoria,
+          _origem: "server"
+        } as any);
+      }
 
       return newOcorrencia;
     } catch (err: any) {
@@ -260,10 +262,10 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
 
       // Mapeamento de erro amigável
       if (err.code === "23505") {
-        throw new Error(`CONFLICT: Esta ocorrência já foi protocolada anteriormente. Protocolo: ${traceId}`);
+        throw new Error(`CONFLICT: Esta ocorrência já foi protocolada anteriormente. correlation_id: ${correlationId}`);
       }
       
-      throw new Error(`TECHNICAL_ERROR: Não foi possível processar o lançamento. Referência: ${traceId}`);
+      throw new Error(`TECHNICAL_ERROR: Não foi possível processar o lançamento. Referência: ${correlationId}`);
     }
   });
 
