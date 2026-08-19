@@ -55,13 +55,13 @@ import { Painel360 } from "@/components/processamento/painel-360";
 export const Route = createFileRoute("/_authenticated/processamento")({
   beforeLoad: async ({ context }) => {
     // PROTEÇÃO P0: Bloqueio estrito de acesso para perfis não administrativos
-    const { data: roles } = await context.supabase
+    const { data: roles } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", context.auth.user.id);
+      .eq("user_id", (context as any).userId);
     
-    const userRoles = roles?.map(r => r.role) || [];
-    const hasAccess = userRoles.some(r => ["super_admin", "rh", "compliance"].includes(r));
+    const userRoles = roles?.map((r: any) => r.role) || [];
+    const hasAccess = userRoles.some((r: any) => ["super_admin", "rh", "compliance"].includes(r));
 
     if (!hasAccess) {
       throw new Error("UNAUTHORIZED: Acesso restrito ao RH e Administradores.");
