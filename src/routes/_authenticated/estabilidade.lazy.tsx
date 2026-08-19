@@ -280,41 +280,40 @@ function StabilizationAuditPage() {
                 <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
               </div>
-              <span className="text-slate-500 text-[9px] font-bold tracking-widest uppercase">RELATÓRIO FINAL OBRIGATÓRIO — RODADA 2</span>
+              <span className="text-slate-500 text-[9px] font-bold tracking-widest uppercase">RELATÓRIO FINAL OBRIGATÓRIO — RODADA 2 — ETAPA 1</span>
             </div>
             <CardContent className="p-6 space-y-4 opacity-80 overflow-y-auto max-h-[400px]">
               <div className="flex justify-between border-b border-slate-900 pb-2">
-                <span className="text-emerald-500 font-bold tracking-tighter">BASELINE: RUN-20260819-P0-001-R1</span>
-                <span className="text-slate-400">STATUS: EM HOMOLOGAÇÃO</span>
+                <span className="text-emerald-500 font-bold tracking-tighter">AUDIT RUN: RUN-20260819-P0-002</span>
+                <span className="text-slate-400">STATUS: BASELINE TÉCNICO PASS</span>
               </div>
               
               <div className="space-y-4">
                 <div className="border-l-2 border-emerald-500 pl-3 py-1">
-                  <p className="text-emerald-400 font-bold mb-1 underline tracking-widest">ESTADO CONHECIDO</p>
-                  <p>Nova Ausência: <span className="text-emerald-500 font-bold">HOMOLOGADA</span></p>
-                  <p>Meio Período Server: <span className="text-emerald-500">PASS (Rodada 1.1)</span></p>
-                  <p>Observabilidade: <span className="text-emerald-500">PASS (Query Opt)</span></p>
-                  <p>Home Guardrail: <span className="text-emerald-500">PASS (Redirect)</span></p>
+                  <p className="text-emerald-400 font-bold mb-1 underline tracking-widest">BUILD & TYPESCRIPT</p>
+                  <p>TypeScript (TSC): <span className="text-emerald-500">PASS</span></p>
+                  <p>Build (Vite): <span className="text-emerald-500">PASS</span></p>
+                  <p>Server Bundle: <span className="text-emerald-500">PASS</span></p>
+                  <p>Drift Baseline: <span className="text-slate-300">NONE (Preserved)</span></p>
                 </div>
 
-                <div className="border-l-2 border-blue-500 pl-3 py-1">
-                  <p className="text-blue-400 font-bold mb-1 underline tracking-widest">OBJETIVOS RODADA 2</p>
-                  <div className="grid grid-cols-1 gap-1 text-[9px]">
-                    <p>1. Supervisor: Ocorrência / Storage Privado</p>
-                    <p>2. RH: Processamento / Concorrência / Retry</p>
-                    <p>3. Super Admin: Matriz de Perfis / RBAC</p>
-                    <p>4. Regressão: Nova Ausência (Congelada)</p>
-                  </div>
+                <div className="border-l-2 border-emerald-500 pl-3 py-1">
+                  <p className="text-emerald-400 font-bold mb-1 underline tracking-widest">NOVA AUSÊNCIA (SMOKE)</p>
+                  <p>Regressão: <span className="text-emerald-500">PASS</span></p>
+                  <p>Zod/Schema: <span className="text-emerald-500">PASS</span></p>
+                  <p>RBAC: <span className="text-emerald-500">PASS</span></p>
                 </div>
 
-                <div className="border-l-2 border-amber-500 pl-3 py-1 bg-amber-950/10">
-                  <p className="text-amber-400 font-bold mb-1 underline tracking-widest">REGRA #1: CONGELAMENTO</p>
-                  <p className="text-[9px] italic">NÃO modificar fluxos homologados em R1.1 salvo regressão P0 comprovada.</p>
+                <div className="border-l-2 border-blue-500 pl-3 py-1 bg-blue-950/10">
+                  <p className="text-blue-400 font-bold mb-1 underline tracking-widest">PRONTIDÃO OPERACIONAL</p>
+                  <p>Ocorrência Pre-check: <span className="text-emerald-500">READY</span></p>
+                  <p>Processamento Pre-check: <span className="text-emerald-500">READY</span></p>
+                  <p>RBAC Admin Matrix: <span className="text-emerald-500">PASS</span></p>
                 </div>
 
                 <div className="border-t border-slate-900 pt-3">
-                  <p className="text-blue-500 font-bold">DECISÃO: AGUARDANDO EVIDÊNCIAS OPERACIONAIS</p>
-                  <p className="text-slate-400 mt-1 italic">AUDIT_RUN_ID: RUN-20260819-P0-002 (PRE-FLIGHT)</p>
+                  <p className="text-emerald-500 font-bold uppercase tracking-tighter">DECISÃO: RODADA_2_EXECUTION_GATE = READY</p>
+                  <p className="text-slate-400 mt-1 italic">PRÓXIMA ETAPA: SIMULAÇÃO SUPERVISOR / OCORRÊNCIA</p>
                 </div>
               </div>
 
