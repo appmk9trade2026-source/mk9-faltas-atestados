@@ -4188,6 +4188,205 @@ export type Database = {
           },
         ]
       }
+      support_attachments: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string | null
+          mime_type: string
+          original_filename: string
+          size_bytes: number
+          storage_path: string
+          ticket_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          mime_type: string
+          original_filename: string
+          size_bytes: number
+          storage_path: string
+          ticket_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string | null
+          mime_type?: string
+          original_filename?: string
+          size_bytes?: number
+          storage_path?: string
+          ticket_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_attachments_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "support_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_attachments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_messages: {
+        Row: {
+          created_at: string
+          edited_at: string | null
+          id: string
+          message: string
+          message_type: Database["public"]["Enums"]["support_message_type"]
+          sender_user_id: string | null
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string
+          edited_at?: string | null
+          id?: string
+          message: string
+          message_type?: Database["public"]["Enums"]["support_message_type"]
+          sender_user_id?: string | null
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string
+          edited_at?: string | null
+          id?: string
+          message?: string
+          message_type?: Database["public"]["Enums"]["support_message_type"]
+          sender_user_id?: string | null
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_ticket_events: {
+        Row: {
+          actor_user_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          new_value: string | null
+          previous_value: string | null
+          ticket_id: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          new_value?: string | null
+          previous_value?: string | null
+          ticket_id: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          new_value?: string | null
+          previous_value?: string | null
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ticket_events_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          assigned_role: Database["public"]["Enums"]["app_role"] | null
+          assigned_user_id: string | null
+          category: string
+          closed_at: string | null
+          created_at: string
+          description: string
+          first_response_at: string | null
+          id: string
+          priority: Database["public"]["Enums"]["support_priority"]
+          protocol: string
+          related_entity_id: string | null
+          related_entity_type: string | null
+          related_protocol: string | null
+          requester_role: Database["public"]["Enums"]["app_role"]
+          requester_user_id: string
+          resolved_at: string | null
+          safe_code: string | null
+          source_route: string | null
+          status: Database["public"]["Enums"]["support_status"]
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_role?: Database["public"]["Enums"]["app_role"] | null
+          assigned_user_id?: string | null
+          category: string
+          closed_at?: string | null
+          created_at?: string
+          description: string
+          first_response_at?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["support_priority"]
+          protocol: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          related_protocol?: string | null
+          requester_role: Database["public"]["Enums"]["app_role"]
+          requester_user_id: string
+          resolved_at?: string | null
+          safe_code?: string | null
+          source_route?: string | null
+          status?: Database["public"]["Enums"]["support_status"]
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_role?: Database["public"]["Enums"]["app_role"] | null
+          assigned_user_id?: string | null
+          category?: string
+          closed_at?: string | null
+          created_at?: string
+          description?: string
+          first_response_at?: string | null
+          id?: string
+          priority?: Database["public"]["Enums"]["support_priority"]
+          protocol?: string
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          related_protocol?: string | null
+          requester_role?: Database["public"]["Enums"]["app_role"]
+          requester_user_id?: string
+          resolved_at?: string | null
+          safe_code?: string | null
+          source_route?: string | null
+          status?: Database["public"]["Enums"]["support_status"]
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tipo_ausencia_opcoes_periodo: {
         Row: {
           ativo: boolean
@@ -6968,6 +7167,15 @@ export type Database = {
         | "SUSPENSO"
         | "CONCLUIDO"
         | "CANCELADO"
+      support_message_type: "TEXTO" | "SISTEMA" | "ANEXO"
+      support_priority: "BAIXA" | "NORMAL" | "ALTA" | "URGENTE"
+      support_status:
+        | "ABERTO"
+        | "EM_ATENDIMENTO"
+        | "AGUARDANDO_USUARIO"
+        | "AGUARDANDO_SUPORTE"
+        | "RESOLVIDO"
+        | "FECHADO"
       tipo_alvo_plano: "PROJETO" | "COLABORADOR" | "SUPERVISOR"
       tipo_ausencia:
         | "FALTA"
@@ -7479,6 +7687,16 @@ export const Constants = {
         "SUSPENSO",
         "CONCLUIDO",
         "CANCELADO",
+      ],
+      support_message_type: ["TEXTO", "SISTEMA", "ANEXO"],
+      support_priority: ["BAIXA", "NORMAL", "ALTA", "URGENTE"],
+      support_status: [
+        "ABERTO",
+        "EM_ATENDIMENTO",
+        "AGUARDANDO_USUARIO",
+        "AGUARDANDO_SUPORTE",
+        "RESOLVIDO",
+        "FECHADO",
       ],
       tipo_alvo_plano: ["PROJETO", "COLABORADOR", "SUPERVISOR"],
       tipo_ausencia: ["FALTA", "ATESTADO", "DECLARACAO", "SUSPENSAO", "OUTROS"],
