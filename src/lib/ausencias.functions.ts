@@ -425,17 +425,27 @@ export const createAusencia = createServerFn({ method: "POST" })
     // 5. hidratar snapshot de tipo/período pelo backend
     const [tipoRes, opcaoRes, userSnapshot] = await Promise.all([
       context.supabase.from("tipos_ausencia" as never).select("id, codigo, nome, ativo").eq("id", data.tipo_ausencia_id).maybeSingle(),
-      context.supabase.from("opcoes_periodo_ausencia" as never).select("id, codigo, nome, quantidade_dias").eq("id", data.opcao_periodo_id).maybeSingle(),
+      context.supabase.from("opcoes_periodo_ausencia" as never).select("id, codigo, nome, quantidade_dias, tipo_periodo").eq("id", data.opcao_periodo_id).maybeSingle(),
       getSnapshot(context.supabase, context.userId),
     ]);
     const tipo = tipoRes.data as { codigo: string; nome: string; ativo: boolean } | null;
-    const opcao = opcaoRes.data as { codigo: string; nome: string; quantidade_dias: number | null } | null;
+    const opcao = opcaoRes.data as { codigo: string; nome: string; quantidade_dias: number | null; tipo_periodo: string } | null;
     if (!tipo?.ativo) throw new Error("INVALID_PAYLOAD: tipo de ausência inexistente ou inativo");
     if (!opcao) throw new Error("INVALID_PAYLOAD: opção de período inexistente");
 
     const dias = opcao.quantidade_dias ?? 1;
     const dataFim = new Date(data.data_inicio + "T00:00:00");
     dataFim.setDate(dataFim.getDate() + Math.max(dias - 1, 0));
+
+    // GAP B Fix: Validação canônica de Meio Período (Etapa 3 do plano)
+    if (opcao.tipo_periodo === "MEIO_PERIODO") {
+      if (!data.horario_inicio || !data.horario_fim) {
+        throw new Error("INVALID_PAYLOAD: Informe um horário inicial e final válidos para o meio período.");
+      }
+      if (data.horario_inicio >= data.horario_fim) {
+        throw new Error("INVALID_PAYLOAD: O horário inicial deve ser menor que o horário final.");
+      }
+    }
 
     const tipoBase =
       tipo.codigo.startsWith("ATESTADO") ? "ATESTADO"

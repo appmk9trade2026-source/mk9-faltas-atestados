@@ -272,8 +272,8 @@ const schema = z
     const email = (v.manual_email ?? "").trim();
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) req("manual_email", "E-mail inválido.");
 
-    // ETAPA 3 e 4: Validação de horários para Meio Período - movida para a UI 
-    // devido a dependências de hooks (tiposAusencia, opcoesPeriodo) no contexto do componente.
+    // ETAPA 3 e 4: Validação de horários para Meio Período
+    // O schema do servidor já realiza a validação P0, mas a UI fornece feedback imediato.
   });
 
 type FormData = z.infer<typeof schema>;
