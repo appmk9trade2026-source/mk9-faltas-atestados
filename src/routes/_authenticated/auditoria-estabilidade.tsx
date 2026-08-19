@@ -12,7 +12,10 @@ export const Route = createFileRoute('/_authenticated/auditoria-estabilidade')({
     if (!session) {
       throw redirect({
         to: '/auth',
-        search: { redirect: location.href },
+        search: { 
+          // @ts-ignore - 'redirect' search param is common for auth redirects
+          redirect: location.href 
+        },
       });
     }
 
