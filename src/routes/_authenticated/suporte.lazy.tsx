@@ -1,4 +1,5 @@
 import { createLazyFileRoute } from '@tanstack/react-router';
+import { useState } from 'react';
 import { AppShell } from "@/components/layout/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,16 +18,19 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getTickets } from "@/lib/support.functions";
+import { NovoChamadoDialog } from "@/components/support/novo-chamado-dialog";
 
 export const Route = createLazyFileRoute('/_authenticated/suporte')({
   component: SupportPage,
 });
 
 function SupportPage() {
+  const [isNovoChamadoOpen, setIsNovoChamadoOpen] = useState(false);
   const { data: tickets = [], isLoading } = useQuery({
     queryKey: ['support-tickets'],
     queryFn: () => getTickets(),
   });
+
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -57,10 +61,11 @@ function SupportPage() {
               Gerencie seus chamados e acompanhe resoluções técnicas.
             </p>
           </div>
-          <Button className="w-full md:w-auto gap-2">
+          <Button className="w-full md:w-auto gap-2" onClick={() => setIsNovoChamadoOpen(true)}>
             <Plus className="w-4 h-4" />
             Novo Chamado
           </Button>
+
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -164,7 +169,12 @@ function SupportPage() {
             )}
           </main>
         </div>
+        <NovoChamadoDialog 
+          open={isNovoChamadoOpen} 
+          onOpenChange={setIsNovoChamadoOpen} 
+        />
       </div>
     </AppShell>
+
   );
 }

@@ -70,13 +70,16 @@ export function NovoChamadoDialog({ open, onOpenChange, context }: NovoChamadoDi
   const mutation = useMutation({
     mutationFn: (values: FormValues) => 
       createTicket({
-        ...values,
-        source_route: context?.sourceRoute,
-        related_entity_type: context?.entityType,
-        related_entity_id: context?.entityId,
-        related_protocol: context?.protocol,
-        safe_code: context?.safeCode,
+        data: {
+          ...values,
+          source_route: context?.sourceRoute,
+          related_entity_type: context?.entityType,
+          related_entity_id: context?.entityId,
+          related_protocol: context?.protocol,
+          safe_code: context?.safeCode,
+        }
       }),
+
     onSuccess: () => {
       toast.success("Chamado aberto com sucesso!");
       queryClient.invalidateQueries({ queryKey: ["support-tickets"] });
