@@ -625,6 +625,48 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_stability_results: {
+        Row: {
+          evidence: string | null
+          flow_id: string
+          gate_id: string
+          id: string
+          recommended_fix: string | null
+          root_cause: string | null
+          severity: Database["public"]["Enums"]["stability_severity"]
+          status: Database["public"]["Enums"]["stability_status"]
+          trace_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          evidence?: string | null
+          flow_id: string
+          gate_id: string
+          id?: string
+          recommended_fix?: string | null
+          root_cause?: string | null
+          severity?: Database["public"]["Enums"]["stability_severity"]
+          status?: Database["public"]["Enums"]["stability_status"]
+          trace_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          evidence?: string | null
+          flow_id?: string
+          gate_id?: string
+          id?: string
+          recommended_fix?: string | null
+          root_cause?: string | null
+          severity?: Database["public"]["Enums"]["stability_severity"]
+          status?: Database["public"]["Enums"]["stability_status"]
+          trace_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       ausencia_contestacoes: {
         Row: {
           ausencia_id: string
@@ -6874,6 +6916,8 @@ export type Database = {
         | "UX"
         | "DOCUMENTACAO"
       session_status: "ATIVA" | "ENCERRADA" | "EXPIRADA" | "REVOGADA"
+      stability_severity: "P0" | "P1" | "P2" | "P3" | "N/A"
+      stability_status: "NOT_TESTED" | "PASS" | "GAP" | "BLOCKED"
       status_ausencia: "PENDENTE" | "LANCADO" | "SUBSTITUIDA" | "CANCELADO"
       status_comunicacao: "RASCUNHO" | "APROVADO" | "ENVIADO" | "ERRO"
       status_ocorrencia: "PENDENTE" | "APROVADA" | "REPROVADA" | "CANCELADA"
@@ -7383,6 +7427,8 @@ export const Constants = {
         "DOCUMENTACAO",
       ],
       session_status: ["ATIVA", "ENCERRADA", "EXPIRADA", "REVOGADA"],
+      stability_severity: ["P0", "P1", "P2", "P3", "N/A"],
+      stability_status: ["NOT_TESTED", "PASS", "GAP", "BLOCKED"],
       status_ausencia: ["PENDENTE", "LANCADO", "SUBSTITUIDA", "CANCELADO"],
       status_comunicacao: ["RASCUNHO", "APROVADO", "ENVIADO", "ERRO"],
       status_ocorrencia: ["PENDENTE", "APROVADA", "REPROVADA", "CANCELADA"],
