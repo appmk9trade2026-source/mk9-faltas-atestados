@@ -104,7 +104,6 @@ export function SupportFAB() {
         unreadCount > 0 && "animate-pulse"
       )}
       aria-label="Suporte MK9"
-      onClick={() => isMobile && setIsOpen(true)}
     >
       <div className="relative pointer-events-none flex items-center gap-2">
         <MessageSquare className={cn("w-5 h-5", isMobile && "w-6 h-6")} />
@@ -122,7 +121,7 @@ export function SupportFAB() {
     <TooltipProvider>
       <Tooltip delayDuration={300}>
         <TooltipTrigger asChild>
-          {trigger}
+          <div>{trigger}</div>
         </TooltipTrigger>
         <TooltipContent side="left" className="font-bold text-xs bg-primary text-white border-primary z-[70]">
           Suporte MK9
@@ -134,7 +133,9 @@ export function SupportFAB() {
   if (isMobile) {
     return (
       <Drawer open={isOpen} onOpenChange={setIsOpen}>
-        {trigger}
+        <DrawerTrigger asChild>
+          {trigger}
+        </DrawerTrigger>
         <DrawerContent className="p-4 pb-8">
           <DrawerHeader>
             <DrawerTitle className="flex items-center gap-2 text-primary font-black uppercase tracking-tighter">
