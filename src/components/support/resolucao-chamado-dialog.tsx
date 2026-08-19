@@ -16,6 +16,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import {
   Select,
@@ -31,8 +32,6 @@ import { resolveTicket } from "@/lib/support.functions";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Loader2, BookOpen } from "lucide-react";
 import { getArticles } from "@/lib/knowledge.functions";
-import { Checkbox } from "@/components/ui/checkbox";
-
 
 const formSchema = z.object({
   category: z.string({
@@ -42,7 +41,6 @@ const formSchema = z.object({
   internalNotes: z.string().optional(),
   linkArticleId: z.string().optional(),
 });
-
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -70,7 +68,6 @@ export function ResolucaoChamadoDialog({ open, onOpenChange, ticketId }: Resoluc
     enabled: open
   });
 
-
   const mutation = useMutation({
     mutationFn: (values: FormValues) => 
       resolveTicket({
@@ -79,14 +76,12 @@ export function ResolucaoChamadoDialog({ open, onOpenChange, ticketId }: Resoluc
           ...values,
         }
       }),
-
     onSuccess: () => {
       toast.success("Chamado resolvido com sucesso!");
       queryClient.invalidateQueries({ queryKey: ["support-tickets"] });
       form.reset();
       onOpenChange(false);
     },
-
     onError: (error: any) => {
       toast.error(error.message || "Erro ao resolver chamado");
     },
@@ -167,11 +162,10 @@ export function ResolucaoChamadoDialog({ open, onOpenChange, ticketId }: Resoluc
                   </FormControl>
                   <FormMessage />
                 </FormItem>
-                </FormItem>
               )}
             />
-            <FormField
 
+            <FormField
               control={form.control}
               name="linkArticleId"
               render={({ field }) => (
@@ -202,7 +196,6 @@ export function ResolucaoChamadoDialog({ open, onOpenChange, ticketId }: Resoluc
                 </FormItem>
               )}
             />
-
 
             <DialogFooter className="pt-4">
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
