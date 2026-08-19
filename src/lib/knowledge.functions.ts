@@ -143,7 +143,7 @@ export const createArticleFromTicket = createServerFn({ method: "POST" })
       .eq('user_id', user.id)
       .single();
 
-    const isAdmin = roles?.role === 'super_admin' || roles?.role === 'admin';
+    const isAdmin = roles?.role === 'super_admin';
     if (!isAdmin) throw new Error("Permission denied: Only admins can create knowledge base articles.");
 
     // Sanitização de PII (Exemplo básico por enquanto)
