@@ -128,7 +128,7 @@ function StabilizationAuditPage() {
               <div>
                 <h1 className="text-3xl font-bold tracking-tight uppercase tracking-tighter">CRM MK9 — PROGRAMA DE ESTABILIZAÇÃO</h1>
                 <p className="text-sm text-muted-foreground font-black uppercase tracking-widest">
-                  RODADA 3 — ETAPA 3.1: EXECUÇÃO FORENSE DA BATERIA STRICT_IDEMPOTENCY
+                  RODADA 3 — ETAPA 3.1A: EXECUÇÃO EFETIVA E COLETA DE EVIDÊNCIAS — STRICT_IDEMPOTENCY
                 </p>
                 <div className="flex gap-2 mt-1">
                   <Badge variant="secondary" className="font-mono text-[10px] bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950">
@@ -152,9 +152,9 @@ function StabilizationAuditPage() {
           
           <Alert className="bg-slate-50 border-slate-200 dark:bg-slate-950/20 dark:border-slate-800">
             <ClipboardCheck className="h-4 w-4 text-primary" />
-            <AlertTitle className="text-slate-900 dark:text-slate-100 font-black text-xs uppercase tracking-widest">OBJETIVO: EXECUÇÃO DOS TESTES IDEMP-001 A IDEMP-008</AlertTitle>
+            <AlertTitle className="text-slate-900 dark:text-slate-100 font-black text-xs uppercase tracking-widest">OBJETIVO: EXECUÇÃO DOS CENÁRIOS IDEMP-001 A IDEMP-008</AlertTitle>
             <AlertDescription className="text-slate-700 dark:text-slate-400 text-sm leading-relaxed font-medium">
-              Executar efetivamente a bateria forense e coletar evidências comportamentais para decidir se STRICT_IDEMPOTENCY pode ser fechado. A implementação não constitui homologação antecipada.
+              Executar efetivamente os cenários IDEMP-001 a IDEMP-008 em ambiente controlado e coletar evidências reais (request, response, correlation_id, registro, storage, replay, concorrência). A inspeção estática não constitui PASS.
             </AlertDescription>
           </Alert>
         </header>
@@ -287,7 +287,7 @@ function StabilizationAuditPage() {
             </div>
             <CardContent className="p-6 space-y-4 opacity-90 overflow-y-auto max-h-[600px]">
               <div className="flex justify-between border-b border-slate-900 pb-2">
-                <span className="text-emerald-500 font-black tracking-tighter uppercase">RODADA 3 — ETAPA 3.1: EXECUÇÃO FORENSE STRICT_IDEMPOTENCY — EM EXECUÇÃO</span>
+                <span className="text-emerald-500 font-black tracking-tighter uppercase">RODADA 3 — ETAPA 3.1A: EXECUÇÃO EFETIVA STRICT_IDEMPOTENCY — EM EXECUÇÃO</span>
                 <span className="text-slate-400 font-mono">AUDIT RUN: RUN-20260819-P0-003</span>
               </div>
               
