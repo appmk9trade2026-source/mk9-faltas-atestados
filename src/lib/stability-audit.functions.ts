@@ -6,7 +6,7 @@ export const getStabilityResults = createServerFn({ method: "GET" })
   .handler(async () => {
     const { data, error } = await supabase
       .from('audit_stability_results')
-      .select('*')
+      .select('flow_id, gate_id, status, severity, evidence, root_cause, recommended_fix, trace_id, updated_at')
       .order('flow_id', { ascending: true })
       .order('gate_id', { ascending: true });
 
