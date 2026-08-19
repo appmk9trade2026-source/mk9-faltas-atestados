@@ -24,7 +24,7 @@ import {
   Activity
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { getTicketMessages, getRelatedArticles, createArticleFromTicket } from "@/lib/support.functions";
+import { getTicketMessages, getRelatedArticles, createArticleFromTicket, getCategoryLabel } from "@/lib/support.functions";
 import { summarizeTicket, suggestDiagnosis, suggestReply } from "@/lib/ai-copilot.functions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -197,7 +197,7 @@ export function TicketDetailsDrawer({ open, onOpenChange, ticket }: TicketDetail
 
                 {/* Description */}
                 <section className="space-y-2">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Descrição do Problema</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Descrição do Problema • {getCategoryLabel(ticket.category)}</h4>
                   <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                     {ticket.description}
                   </p>
