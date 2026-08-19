@@ -28,8 +28,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { resolveTicket } from "@/lib/support.functions";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { Loader2, BookOpen } from "lucide-react";
+import { getArticles } from "@/lib/knowledge.functions";
+import { Checkbox } from "@/components/ui/checkbox";
+
 
 const formSchema = z.object({
   category: z.string({
@@ -37,7 +40,9 @@ const formSchema = z.object({
   }),
   summary: z.string().min(10, "O resumo da solução deve ter pelo menos 10 caracteres"),
   internalNotes: z.string().optional(),
+  linkArticleId: z.string().optional(),
 });
+
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -55,8 +60,16 @@ export function ResolucaoChamadoDialog({ open, onOpenChange, ticketId }: Resoluc
       category: "",
       summary: "",
       internalNotes: "",
+      linkArticleId: "",
     },
   });
+
+  const { data: articles = [] } = useQuery({
+    queryKey: ['kb-articles-published'],
+    queryFn: () => getArticles({ data: { status: 'PUBLISHED' } }),
+    enabled: open
+  });
+
 
   const mutation = useMutation({
     mutationFn: (values: FormValues) => 
@@ -155,7 +168,38 @@ export function ResolucaoChamadoDialog({ open, onOpenChange, ticketId }: Resoluc
                   <FormMessage />
                 </FormItem>
               )}
+            <FormField
+              control={form.control}
+              name="linkArticleId"
+              render={({ field }) => (
+                <FormItem className="space-y-2 pt-2 border-t border-dashed">
+                  <FormLabel className="flex items-center gap-2 text-[10px] font-black uppercase text-muted-foreground tracking-widest">
+                    <BookOpen className="w-3 h-3 text-primary" />
+                    Vincular Artigo da Base (Opcional)
+                  </FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="h-9 text-xs">
+                        <SelectValue placeholder="Selecione um artigo existente..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhum</SelectItem>
+                      {articles.map((art) => (
+                        <SelectItem key={art.id} value={art.id} className="text-xs">
+                          {art.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription className="text-[9px]">
+                    Vincular o artigo ajudará a equipe a encontrar soluções similares no futuro.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
+
 
             <DialogFooter className="pt-4">
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
