@@ -100,10 +100,9 @@ export function SupportFAB() {
     return (
       <Drawer open={isOpen} onOpenChange={setIsOpen}>
         <DrawerTrigger asChild>
-          <Button
-            size="default"
+          <button
             className={cn(
-              "fixed bottom-6 right-6 z-[60] shadow-2xl rounded-full transition-all duration-300 hover:scale-105 active:scale-95 bg-primary text-primary-foreground h-12 w-12 p-0 justify-center shadow-2xl overflow-visible hover:ring-4 hover:ring-primary/10",
+              "fixed bottom-6 right-6 z-[60] shadow-2xl rounded-full transition-all duration-300 hover:scale-105 active:scale-95 bg-[#006BA6] text-white h-12 w-12 flex items-center justify-center overflow-visible hover:ring-4 hover:ring-[#006BA6]/10 border-none cursor-pointer",
               unreadCount > 0 && "animate-pulse"
             )}
             aria-label="Suporte MK9"
@@ -116,7 +115,7 @@ export function SupportFAB() {
                 </span>
               )}
             </div>
-          </Button>
+          </button>
         </DrawerTrigger>
         <DrawerContent className="p-4 pb-8">
           <DrawerHeader>
@@ -151,10 +150,9 @@ export function SupportFAB() {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button
-          size="default"
+        <button
           className={cn(
-            "fixed bottom-6 right-6 z-[60] shadow-2xl rounded-full transition-all duration-300 hover:scale-105 active:scale-95 bg-primary text-primary-foreground h-12 px-4 flex items-center gap-2 overflow-visible hover:ring-4 hover:ring-primary/10",
+            "fixed bottom-6 right-6 z-[60] shadow-2xl rounded-full transition-all duration-300 hover:scale-105 active:scale-95 bg-[#006BA6] text-white h-12 px-4 flex items-center gap-2 overflow-visible hover:ring-4 hover:ring-[#006BA6]/10 border-none cursor-pointer",
             unreadCount > 0 && "animate-pulse"
           )}
           aria-label="Suporte MK9"
@@ -168,7 +166,7 @@ export function SupportFAB() {
             )}
             <span className="font-bold tracking-tight">Suporte</span>
           </div>
-        </Button>
+        </button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-2 shadow-2xl border-primary/20 z-[70]" align="end" sideOffset={16}>
         <div className="grid gap-1">
