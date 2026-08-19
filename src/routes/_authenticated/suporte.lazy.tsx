@@ -25,6 +25,8 @@ import { useNavigate } from '@tanstack/react-router';
 import { useSupport } from "@/components/support/support-provider";
 import { reopenTicket, assignTicket } from "@/lib/support.functions";
 import { toast } from "sonner";
+import { TicketDetailsDrawer } from "@/components/support/ticket-details-drawer";
+
 
 export const Route = createLazyFileRoute('/_authenticated/suporte')({
   component: SupportPage,
@@ -33,7 +35,10 @@ export const Route = createLazyFileRoute('/_authenticated/suporte')({
 function SupportPage() {
   const [isNovoChamadoOpen, setIsNovoChamadoOpen] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
   const [isResolucaoOpen, setIsResolucaoOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -172,7 +177,15 @@ function SupportPage() {
               </Card>
             ) : (
               tickets.map((ticket: any) => (
-                <Card key={ticket.id} className="hover:border-primary/50 transition-colors cursor-pointer group">
+                <Card 
+                  key={ticket.id} 
+                  className="hover:border-primary/50 transition-colors cursor-pointer group"
+                  onClick={() => {
+                    setSelectedTicket(ticket);
+                    setIsDetailsOpen(true);
+                  }}
+                >
+
                   <CardContent className="p-4">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="space-y-2">
@@ -278,6 +291,12 @@ function SupportPage() {
             ticketId={selectedTicketId}
           />
         )}
+        <TicketDetailsDrawer 
+          open={isDetailsOpen}
+          onOpenChange={setIsDetailsOpen}
+          ticket={selectedTicket}
+        />
+
       </div>
     </AppShell>
   );

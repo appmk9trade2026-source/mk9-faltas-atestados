@@ -1,13 +1,8 @@
 import { useState, useEffect } from "react";
 import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
-  DrawerFooter,
-} from "@/components/ui/card"; // Usando Card como fallback se Drawer não existir ou shadcn/ui custom
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
@@ -167,7 +162,7 @@ export function TicketDetailsDrawer({ open, onOpenChange, ticket }: TicketDetail
           </div>
         </ScrollArea>
 
-        <DrawerFooter className="p-6 border-t bg-slate-50/50 dark:bg-slate-900/50">
+        <div className="p-6 border-t bg-slate-50/50 dark:bg-slate-900/50 flex items-center gap-2">
           <div className="flex items-center gap-2">
             <Button className="flex-1 gap-2" size="sm">
               <MessageSquare className="w-4 h-4" />
@@ -177,7 +172,7 @@ export function TicketDetailsDrawer({ open, onOpenChange, ticket }: TicketDetail
               <Button variant="outline" size="sm">Resolver</Button>
             )}
           </div>
-        </DrawerFooter>
+        </div>
       </SheetContent>
     </Sheet>
   );

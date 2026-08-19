@@ -264,3 +264,26 @@ export const assignTicket = createServerFn({ method: "POST" })
 
     return ticket;
   });
+
+export const getAgentMetrics = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .select('status, assigned_user_id, resolved_at, created_at')
+      .eq('assigned_user_id', user.id);
+
+    if (error) throw new Error(error.message);
+
+    const resolved = data.filter(t => t.status === 'RESOLVIDO').length;
+    const pending = data.filter(t => t.status === 'EM_ATENDIMENTO').length;
+    
+    return {
+      resolved,
+      pending,
+      total: data.length
+    };
+  });
+
