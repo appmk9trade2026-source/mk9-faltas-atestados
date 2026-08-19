@@ -239,6 +239,19 @@ function SupportPage() {
                             Assumir
                           </Button>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTicket(ticket);
+                            setIsDetailsOpen(true);
+                          }}
+                        >
+                          <History className="w-4 h-4 text-muted-foreground" />
+                        </Button>
+
                         {ticket.assigned_user_id && ticket.status !== 'RESOLVIDO' && (
                           <Button 
                             variant="ghost" 
