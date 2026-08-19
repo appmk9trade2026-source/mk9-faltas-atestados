@@ -128,33 +128,33 @@ function StabilizationAuditPage() {
               <div>
                 <h1 className="text-3xl font-bold tracking-tight uppercase tracking-tighter">CRM MK9 — PROGRAMA DE ESTABILIZAÇÃO</h1>
                 <p className="text-sm text-muted-foreground font-black uppercase tracking-widest">
-                  RODADA 3 — ETAPA 3.1A: EXECUÇÃO EFETIVA E COLETA DE EVIDÊNCIAS — STRICT_IDEMPOTENCY
+                  CRM MK9 — INCIDENTE P0/P1 — RETIFICAÇÃO DE AUSÊNCIA
                 </p>
                 <div className="flex gap-2 mt-1">
                   <Badge variant="secondary" className="font-mono text-[10px] bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950">
-                    AUDIT RUN ATUAL: RUN-20260819-P0-003
+                    DIAGNÓSTICO FORENSE ANTES DE QUALQUER CORREÇÃO
                   </Badge>
-                  <Badge variant="outline" className="font-mono text-[10px] border-emerald-500/50 text-emerald-600">
-                    BASELINE PROTEGIDO: RUN-20260819-P0-002-FINAL
+                  <Badge variant="outline" className="font-mono text-[10px] border-red-500/50 text-red-600">
+                    SEVERIDADE: P0/P1
                   </Badge>
                 </div>
               </div>
             </div>
             <div className="text-right flex flex-col items-end gap-1">
               <Badge variant="outline" className="font-mono text-[9px] bg-slate-50 dark:bg-slate-900">
-                GAP SOB TESTE: OCORRENCIA / STRICT_IDEMPOTENCY / P2 / OPEN_MONITORED
+                INCIDENTE: RETIFICAÇÃO DE AUSÊNCIA
               </Badge>
-              <Badge variant="outline" className="font-mono text-[9px] text-emerald-600 border-emerald-500/30">
-                EXECUÇÃO_FORENSE = EM_ANDAMENTO
+              <Badge variant="outline" className="font-mono text-[9px] text-red-600 border-red-500/30">
+                ESTADO: EM_DIAGNÓSTICO_FORENSE
               </Badge>
             </div>
           </div>
           
           <Alert className="bg-slate-50 border-slate-200 dark:bg-slate-950/20 dark:border-slate-800">
             <ClipboardCheck className="h-4 w-4 text-primary" />
-            <AlertTitle className="text-slate-900 dark:text-slate-100 font-black text-xs uppercase tracking-widest">OBJETIVO: EXECUÇÃO DOS CENÁRIOS IDEMP-001 A IDEMP-008</AlertTitle>
+            <AlertTitle className="text-slate-900 dark:text-slate-100 font-black text-xs uppercase tracking-widest text-red-600">ALERTA: FALHA REAL NO FLUXO DE RETIFICAÇÃO</AlertTitle>
             <AlertDescription className="text-slate-700 dark:text-slate-400 text-sm leading-relaxed font-medium">
-              Executar efetivamente os cenários IDEMP-001 a IDEMP-008 em ambiente controlado e coletar evidências reais (request, response, correlation_id, registro, storage, replay, concorrência). A inspeção estática não constitui PASS.
+              Identificado erro crítico: UI retorna "Não foi possível retificar" ao converter 1 DIA (FALTA) para MEIO PERÍODO (ATESTADO). Diagnosticar causa raiz real (Zod, Storage, RBAC, RPC ou Contract Mismatch) antes de qualquer correção.
             </AlertDescription>
           </Alert>
         </header>
@@ -283,56 +283,59 @@ function StabilizationAuditPage() {
                 <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
               </div>
-              <span className="text-slate-500 text-[9px] font-black tracking-widest uppercase">RELATÓRIO DE EXECUÇÃO — RODADA 3 — STRICT IDEMPOTENCY / OCORRÊNCIA</span>
+              <span className="text-slate-500 text-[9px] font-black tracking-widest uppercase">RELATÓRIO FINAL OBRIGATÓRIO — INCIDENTE: RETIFICAÇÃO DE AUSÊNCIA</span>
             </div>
             <CardContent className="p-6 space-y-4 opacity-90 overflow-y-auto max-h-[600px]">
               <div className="flex justify-between border-b border-slate-900 pb-2">
-                <span className="text-emerald-500 font-black tracking-tighter uppercase">RODADA 3 — ETAPA 3.1A: EXECUÇÃO EFETIVA STRICT_IDEMPOTENCY — EM EXECUÇÃO</span>
-                <span className="text-slate-400 font-mono">AUDIT RUN: RUN-20260819-P0-003</span>
+                <span className="text-red-500 font-black tracking-tighter uppercase">DIAGNÓSTICO FORENSE — RETIFICAÇÃO — EM ANDAMENTO</span>
+                <span className="text-slate-400 font-mono">INCIDENTE P0/P1</span>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-[9px]">
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">DIAGNÓSTICO IDEMPOTÊNCIA</p>
-                  <p>Correlation ID Flow: <span className="text-emerald-500 font-mono">CLIENT_SIDE_STABLE</span></p>
-                  <p>Backend Enforcement: <span className="text-emerald-500 font-mono">UNIQUE_CONSTRAINT / RPC</span></p>
-                  <p>Contract: <span className="text-emerald-500 font-mono">ALREADY_COMMITTED</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest uppercase">Persistência</p>
+                  <p>Retificação persistida: <span className="text-slate-400">AGUARDANDO...</span></p>
+                  <p>Registro original alterado: <span className="text-slate-400">AGUARDANDO...</span></p>
+                  <p>Documento enviado: <span className="text-slate-400">AGUARDANDO...</span></p>
+                  <p>Objeto órfão: <span className="text-slate-400">AGUARDANDO...</span></p>
+                  <p>Audit Event: <span className="text-slate-400">AGUARDANDO...</span></p>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">VALIDAÇÃO DE STORAGE</p>
-                  <p>Private Bucket: <span className="text-emerald-500 font-black">PASS</span></p>
-                  <p>Path Stability: <span className="text-emerald-500 font-black">PASS</span></p>
-                  <p>Orphan Prevention: <span className="text-emerald-500 font-black">ACTIVE</span></p>
-                  <p>RLS Storage: <span className="text-emerald-500 font-black">PASS</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest uppercase">Pipeline Status</p>
+                  <p>Frontend Validation: <span className="text-slate-400">AGUARDANDO...</span></p>
+                  <p>Meio Período Contract: <span className="text-slate-400">AGUARDANDO...</span></p>
+                  <p>Storage/Bucket: <span className="text-slate-400">AGUARDANDO...</span></p>
+                  <p>Server Function / Zod: <span className="text-slate-400">AGUARDANDO...</span></p>
+                  <p>RBAC / RLS / RPC: <span className="text-slate-400">AGUARDANDO...</span></p>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">BATERIA IDEMP-001/008</p>
-                  <p>Logical Commits: <span className="text-slate-400 font-black">WAITING_EVIDENCE</span></p>
-                  <p>Replay Handling: <span className="text-slate-400 font-black">WAITING_EVIDENCE</span></p>
-                  <p>Audit Idempotency: <span className="text-slate-400 font-black">WAITING_EVIDENCE</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest uppercase">Falha / Root Cause</p>
+                  <p>Último estágio OK: <span className="text-slate-400">[...]</span></p>
+                  <p>Primeiro erro: <span className="text-slate-400">[...]</span></p>
+                  <p>Classificação: <span className="text-slate-400">PENDENTE</span></p>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">BASELINE REGRESSION</p>
-                  <p>Nova Ausência (FROZEN): <span className="text-emerald-500">PRESERVED</span></p>
-                  <p>Processamento (FROZEN): <span className="text-emerald-500">PRESERVED</span></p>
-                  <p>RBAC Integrity: <span className="text-emerald-500 font-black">PASS</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest uppercase">Baseline Integrity</p>
+                  <p>RUN-20260819-P0-002-FINAL: <span className="text-emerald-500">PROTEGIDO</span></p>
+                  <p>RUN-20260819-P0-003: <span className="text-emerald-500">ISOLADO</span></p>
+                  <p>Guardrails Ativos: <span className="text-emerald-500 font-black">SIM</span></p>
                 </div>
               </div>
 
               <div className="border-t border-slate-900 pt-3 flex flex-col gap-1">
-                <p className="text-amber-500 font-black uppercase tracking-tighter flex items-center gap-2 text-[10px]">
+                <p className="text-red-500 font-black uppercase tracking-tighter flex items-center gap-2 text-[10px]">
                   <Activity className="w-3 h-3" />
-                  RODADA 3 — EXECUTANDO BATERIA FORENSE IDEMP-001 A IDEMP-008.
+                  INCIDENTE P0/P1 — EXECUTANDO ETAPAS 1 A 9 DO DIAGNÓSTICO FORENSE.
                 </p>
-                <p className="text-slate-400 italic font-bold text-[9px]">ESTADO: COLETANDO EVIDÊNCIAS COMPORTAMENTAIS. NÃO ALTERAR IMPLEMENTAÇÃO DURANTE A BATERIA.</p>
+                <p className="text-slate-400 italic font-bold text-[9px]">ESTADO: ANALISANDO CONTRATO UI-BACKEND E STORAGE PATHS. NÃO APLICAR CORREÇÕES AINDA.</p>
               </div>
 
               <div className="pt-2 text-slate-600 text-[9px] border-t border-slate-900 flex justify-between font-bold">
                 <span>AUDITOR: SUPER_ADMIN</span>
-                <span>UTC: 2026-08-19 16:45:00</span>
+                <span>UTC: 2026-08-19 18:16:00</span>
               </div>
             </CardContent>
           </Card>
