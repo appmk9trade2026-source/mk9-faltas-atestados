@@ -26,10 +26,6 @@ import { useSupport } from "@/components/support/support-provider";
 import { reopenTicket } from "@/lib/support.functions";
 import { toast } from "sonner";
 
-
-
-
-
 export const Route = createLazyFileRoute('/_authenticated/suporte')({
   component: SupportPage,
 });
@@ -39,13 +35,12 @@ function SupportPage() {
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [isResolucaoOpen, setIsResolucaoOpen] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: tickets = [], isLoading } = useQuery({
-
     queryKey: ['support-tickets'],
     queryFn: () => getTickets(),
   });
-
 
   const getStatusBadge = (status: string, slaStatus?: string) => {
     if (slaStatus === 'ATRASADO') {
@@ -93,7 +88,6 @@ function SupportPage() {
     );
   };
 
-
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'URGENTE': return 'text-red-500';
@@ -113,20 +107,19 @@ function SupportPage() {
               Gerencie seus chamados e acompanhe resoluções técnicas.
             </p>
           </div>
-          <Button className="w-full md:w-auto gap-2" onClick={() => setIsNovoChamadoOpen(true)}>
-            <Plus className="w-4 h-4" />
-            Novo Chamado
-          </Button>
-          <Button variant="outline" className="w-full md:w-auto gap-2" onClick={() => navigate({ to: '/suporte/dashboard' })}>
-            <BarChart3 className="w-4 h-4" />
-            Dashboard
-          </Button>
-
-
+          <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+            <Button className="w-full md:w-auto gap-2" onClick={() => setIsNovoChamadoOpen(true)}>
+              <Plus className="w-4 h-4" />
+              Novo Chamado
+            </Button>
+            <Button variant="outline" className="w-full md:w-auto gap-2" onClick={() => navigate({ to: '/suporte/dashboard' })}>
+              <BarChart3 className="w-4 h-4" />
+              Dashboard
+            </Button>
+          </div>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar / Filtros */}
           <aside className="space-y-6">
             <Card>
               <CardHeader className="pb-3">
@@ -166,7 +159,6 @@ function SupportPage() {
             </Card>
           </aside>
 
-          {/* Lista de Chamados */}
           <main className="lg:col-span-3 space-y-4">
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
@@ -191,7 +183,6 @@ function SupportPage() {
                             {ticket.priority}
                           </Badge>
                           {getSLALabel(ticket)}
-
                         </div>
                         <h3 className="font-bold text-base group-hover:text-primary transition-colors">{ticket.subject}</h3>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-muted-foreground font-medium">
@@ -220,10 +211,7 @@ function SupportPage() {
                             variant="outline" 
                             size="sm" 
                             className="text-xs font-bold"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              // Lógica de assumir existente no lib/support.functions
-                            }}
+                            onClick={(e) => e.stopPropagation()}
                           >
                             Assumir
                           </Button>
@@ -262,8 +250,6 @@ function SupportPage() {
                           </Button>
                         )}
                       </div>
-
-
                     </div>
                   </CardContent>
                 </Card>
@@ -283,8 +269,6 @@ function SupportPage() {
           />
         )}
       </div>
-
     </AppShell>
-
   );
 }
