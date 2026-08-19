@@ -39,10 +39,12 @@ export const createTicket = createServerFn({ method: "POST" })
       .from('support_tickets')
       .insert({
         ...data,
+        protocol: 'PENDING', // O trigger do banco substituirá, mas o TS exige
         requester_user_id: user.id,
         requester_role: roles.role,
         status: 'ABERTO'
-      })
+      } as any) // Cast temporário para evitar erro de excess/missing properties com o trigger
+
       .select()
       .single();
 
