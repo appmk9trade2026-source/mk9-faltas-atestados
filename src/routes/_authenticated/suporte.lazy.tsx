@@ -14,11 +14,14 @@ import {
   CheckCircle2, 
   AlertCircle,
   User,
-  History
+  History,
+  BarChart3
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getTickets } from "@/lib/support.functions";
 import { NovoChamadoDialog } from "@/components/support/novo-chamado-dialog";
+import { useNavigate } from '@tanstack/react-router';
+
 
 export const Route = createLazyFileRoute('/_authenticated/suporte')({
   component: SupportPage,
@@ -26,7 +29,9 @@ export const Route = createLazyFileRoute('/_authenticated/suporte')({
 
 function SupportPage() {
   const [isNovoChamadoOpen, setIsNovoChamadoOpen] = useState(false);
+  const navigate = useNavigate();
   const { data: tickets = [], isLoading } = useQuery({
+
     queryKey: ['support-tickets'],
     queryFn: () => getTickets(),
   });
@@ -102,6 +107,11 @@ function SupportPage() {
             <Plus className="w-4 h-4" />
             Novo Chamado
           </Button>
+          <Button variant="outline" className="w-full md:w-auto gap-2" onClick={() => navigate({ to: '/_authenticated/suporte/dashboard' })}>
+            <BarChart3 className="w-4 h-4" />
+            Dashboard
+          </Button>
+
 
         </header>
 
