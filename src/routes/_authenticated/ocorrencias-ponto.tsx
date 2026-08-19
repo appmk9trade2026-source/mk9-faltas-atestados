@@ -162,11 +162,28 @@ function OcorrenciasPontoPage() {
       toast.success("Ocorrência protocolada com sucesso!");
     },
     onError: (error: any) => {
-      const isHtml = typeof error.message === 'string' && error.message.trim().startsWith('<!DOCTYPE');
-      const friendlyMessage = isHtml 
-        ? "Erro Crítico: Resposta inesperada do servidor (HTML). Tente novamente." 
-        : (error.message || "Erro desconhecido ao protocolar ocorrência.");
-      toast.error(friendlyMessage);
+      const { getFriendlyErrorMessage } = import("@/lib/utils");
+      // Como o import é async, tratamos localmente ou usamos o util já carregado se possível
+      // Mas para ser síncrono no onError, vamos usar a lógica expandida
+      const message = error.message || "";
+      const isHtml = typeof message === 'string' && (message.trim().startsWith('<!DOCTYPE') || message.trim().startsWith('<html'));
+      
+      if (isHtml) {
+        toast.error("Erro Crítico: Resposta inesperada do servidor (HTML).");
+        return;
+      }
+
+      if (typeof message === 'string' && message.includes('"code"') && message.includes('"path"')) {
+         try {
+           const parsed = JSON.parse(message);
+           if (Array.isArray(parsed) && parsed[0]?.message) {
+             toast.error(`Falha de validação: ${parsed[0].message}`);
+             return;
+           }
+         } catch(e) {}
+      }
+      
+      toast.error(message.replace(/TECHNICAL_ERROR:|CONFLICT:|INVALID_PAYLOAD:/g, "").trim() || "Erro ao criar ocorrência.");
     },
   });
 
