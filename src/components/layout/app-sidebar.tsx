@@ -102,7 +102,7 @@ const items: Item[] = [
   { title: "Ocorrência Ponto", url: "/ocorrencias-ponto", icon: Fingerprint, roles: ["super_admin", "rh", "coordenador", "supervisor"] },
 
   { title: "Hardening & Produção", url: "/admin/hardening", icon: Gauge, roles: ["super_admin"] },
-
+  { title: "Auditoria de Estabilidade", url: "/estabilidade", icon: ShieldCheck, roles: ["super_admin"] },
 ];
 
 
@@ -131,7 +131,7 @@ const SECTIONS: Section[] = [
   {
     id: "administracao",
     label: "Administração",
-    urls: ["/usuarios", "/configuracoes", "/saude-sistema", "/operacoes", "/acessos", "/administracao/permissoes", "/administracao/coordenacao", "/administracao/pendencias-supervisor", "/administracao/integridade-dados", "/administracao/auditoria-forense", "/administracao/investigacoes", "/administracao/vinculos-manuais", "/administracao/historico-senhas"],
+    urls: ["/usuarios", "/configuracoes", "/saude-sistema", "/operacoes", "/acessos", "/administracao/permissoes", "/administracao/coordenacao", "/administracao/pendencias-supervisor", "/administracao/integridade-dados", "/administracao/auditoria-forense", "/administracao/investigacoes", "/administracao/vinculos-manuais", "/administracao/historico-senhas", "/estabilidade"],
   },
   {
     id: "sistema",

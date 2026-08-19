@@ -32,6 +32,7 @@ import { Route as AuthenticatedNotificacoesRouteImport } from './routes/_authent
 import { Route as AuthenticatedInteligenciaRouteImport } from './routes/_authenticated/inteligencia'
 import { Route as AuthenticatedHomologacaoRouteImport } from './routes/_authenticated/homologacao'
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
+import { Route as AuthenticatedEstabilidadeRouteImport } from './routes/_authenticated/estabilidade'
 import { Route as AuthenticatedDocumentacaoRouteImport } from './routes/_authenticated/documentacao'
 import { Route as AuthenticatedDeployRouteImport } from './routes/_authenticated/deploy'
 import { Route as AuthenticatedDashboardExecutivoRouteImport } from './routes/_authenticated/dashboard-executivo'
@@ -209,6 +210,14 @@ const AuthenticatedHistoricoRoute = AuthenticatedHistoricoRouteImport.update({
   path: '/historico',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEstabilidadeRoute =
+  AuthenticatedEstabilidadeRouteImport.update({
+    id: '/estabilidade',
+    path: '/estabilidade',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/estabilidade.lazy').then((d) => d.Route),
+  )
 const AuthenticatedDocumentacaoRoute =
   AuthenticatedDocumentacaoRouteImport.update({
     id: '/documentacao',
@@ -539,6 +548,7 @@ export interface FileRoutesByFullPath {
   '/dashboard-executivo': typeof AuthenticatedDashboardExecutivoRoute
   '/deploy': typeof AuthenticatedDeployRoute
   '/documentacao': typeof AuthenticatedDocumentacaoRoute
+  '/estabilidade': typeof AuthenticatedEstabilidadeRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/homologacao': typeof AuthenticatedHomologacaoRoute
   '/inteligencia': typeof AuthenticatedInteligenciaRouteWithChildren
@@ -615,6 +625,7 @@ export interface FileRoutesByTo {
   '/dashboard-executivo': typeof AuthenticatedDashboardExecutivoRoute
   '/deploy': typeof AuthenticatedDeployRoute
   '/documentacao': typeof AuthenticatedDocumentacaoRoute
+  '/estabilidade': typeof AuthenticatedEstabilidadeRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/homologacao': typeof AuthenticatedHomologacaoRoute
   '/inteligencia': typeof AuthenticatedInteligenciaRouteWithChildren
@@ -693,6 +704,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard-executivo': typeof AuthenticatedDashboardExecutivoRoute
   '/_authenticated/deploy': typeof AuthenticatedDeployRoute
   '/_authenticated/documentacao': typeof AuthenticatedDocumentacaoRoute
+  '/_authenticated/estabilidade': typeof AuthenticatedEstabilidadeRoute
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
   '/_authenticated/homologacao': typeof AuthenticatedHomologacaoRoute
   '/_authenticated/inteligencia': typeof AuthenticatedInteligenciaRouteWithChildren
@@ -772,6 +784,7 @@ export interface FileRouteTypes {
     | '/dashboard-executivo'
     | '/deploy'
     | '/documentacao'
+    | '/estabilidade'
     | '/historico'
     | '/homologacao'
     | '/inteligencia'
@@ -848,6 +861,7 @@ export interface FileRouteTypes {
     | '/dashboard-executivo'
     | '/deploy'
     | '/documentacao'
+    | '/estabilidade'
     | '/historico'
     | '/homologacao'
     | '/inteligencia'
@@ -925,6 +939,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard-executivo'
     | '/_authenticated/deploy'
     | '/_authenticated/documentacao'
+    | '/_authenticated/estabilidade'
     | '/_authenticated/historico'
     | '/_authenticated/homologacao'
     | '/_authenticated/inteligencia'
@@ -1157,6 +1172,13 @@ declare module '@tanstack/react-router' {
       path: '/historico'
       fullPath: '/historico'
       preLoaderRoute: typeof AuthenticatedHistoricoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/estabilidade': {
+      id: '/_authenticated/estabilidade'
+      path: '/estabilidade'
+      fullPath: '/estabilidade'
+      preLoaderRoute: typeof AuthenticatedEstabilidadeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/documentacao': {
@@ -1677,6 +1699,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardExecutivoRoute: typeof AuthenticatedDashboardExecutivoRoute
   AuthenticatedDeployRoute: typeof AuthenticatedDeployRoute
   AuthenticatedDocumentacaoRoute: typeof AuthenticatedDocumentacaoRoute
+  AuthenticatedEstabilidadeRoute: typeof AuthenticatedEstabilidadeRoute
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
   AuthenticatedHomologacaoRoute: typeof AuthenticatedHomologacaoRoute
   AuthenticatedInteligenciaRoute: typeof AuthenticatedInteligenciaRouteWithChildren
@@ -1724,6 +1747,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardExecutivoRoute: AuthenticatedDashboardExecutivoRoute,
   AuthenticatedDeployRoute: AuthenticatedDeployRoute,
   AuthenticatedDocumentacaoRoute: AuthenticatedDocumentacaoRoute,
+  AuthenticatedEstabilidadeRoute: AuthenticatedEstabilidadeRoute,
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
   AuthenticatedHomologacaoRoute: AuthenticatedHomologacaoRoute,
   AuthenticatedInteligenciaRoute: AuthenticatedInteligenciaRouteWithChildren,
