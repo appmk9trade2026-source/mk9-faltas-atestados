@@ -144,23 +144,26 @@ function StabilizationAuditPage() {
                 </p>
                 <div className="flex gap-2 mt-1">
                   <Badge variant="secondary" className="font-mono text-[10px] bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950">
-                    STATUS: INICIALIZAÇÃO_FASE_6
+                    STATUS: OBSERVABILIDADE_INCIDENTES_ATIVA
                   </Badge>
                   <Badge variant="outline" className="font-mono text-[10px] border-blue-500/50 text-blue-600">
                     OBJETIVO: INTELIGÊNCIA_DE_INCIDENTES
                   </Badge>
-
+                  <Link from="/_authenticated/estabilidade" to="/_authenticated/suporte/incidentes">
+                    <Badge variant="outline" className="font-mono text-[10px] border-emerald-500/50 text-emerald-600 cursor-pointer hover:bg-emerald-50">
+                      CENTRAL_DE_INCIDENTES →
+                    </Badge>
+                  </Link>
                 </div>
               </div>
             </div>
             <div className="text-right flex flex-col items-end gap-1">
               <Badge variant="outline" className="font-mono text-[9px] bg-slate-50 dark:bg-slate-900">
-                AUDIT_RUN: RUN-20260819-P0-006-INIT
+                AUDIT_RUN: RUN-20260819-P0-006-HML
               </Badge>
               <Badge variant="outline" className="font-mono text-[9px] text-emerald-600 border-emerald-500/30">
-                ESTADO: MODELAGEM_DE_DADOS_APROVADA
+                ESTADO: DETECÇÃO_DETERMINISTICA_HOMOLOGADA
               </Badge>
-
             </div>
           </div>
           
