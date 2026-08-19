@@ -128,14 +128,14 @@ function StabilizationAuditPage() {
               <div>
                 <h1 className="text-3xl font-bold tracking-tight uppercase tracking-tighter">CRM MK9 — PROGRAMA DE ESTABILIZAÇÃO</h1>
                 <p className="text-sm text-muted-foreground font-black uppercase tracking-widest">
-                  RODADA 2 — ETAPA 4: SUPER ADMIN — CONSOLIDAÇÃO E GATE FINAL
+                  RODADA 2 — ETAPA 4.1: RECONCILIAÇÃO FINAL DO PAINEL /ESTABILIDADE
                 </p>
                 <div className="flex gap-2 mt-1">
                   <Badge variant="secondary" className="font-mono text-[10px] bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950">
                     AUDIT RUN: RUN-20260819-P0-002
                   </Badge>
                   <Badge variant="outline" className="font-mono text-[10px] border-emerald-500/50 text-emerald-600">
-                    ESTADO: CONSOLIDAÇÃO FINAL — REGRESSÕES PÓS-HARDENING PASS
+                    ESTADO: DATA_DRIFT DETECTADO — RECONCILIAÇÃO FORENSE EM CURSO
                   </Badge>
                 </div>
               </div>
@@ -152,9 +152,9 @@ function StabilizationAuditPage() {
           
           <Alert className="bg-slate-50 border-slate-200 dark:bg-slate-950/20 dark:border-slate-800">
             <ClipboardCheck className="h-4 w-4 text-primary" />
-            <AlertTitle className="text-slate-900 dark:text-slate-100 font-black text-xs uppercase tracking-widest">OBJETIVO: CONSOLIDAÇÃO FINAL E GATE DE HOMOLOGAÇÃO</AlertTitle>
+            <AlertTitle className="text-slate-900 dark:text-slate-100 font-black text-xs uppercase tracking-widest">OBJETIVO: RECONCILIAÇÃO FORENSE E AUDITORIA DE DRIFT</AlertTitle>
             <AlertDescription className="text-slate-700 dark:text-slate-400 text-sm leading-relaxed font-medium">
-              Validar regressão pós-hardening, RBAC cross-profile e consistência global de evidências. Não marcar PASS sem evidência comportamental.
+              Investigar inconsistência de 0% em "Nova Ausência". Reconciliar baseline congelado vs estado atual. Não executar migrations corretivas.
             </AlertDescription>
           </Alert>
         </header>
@@ -287,59 +287,57 @@ function StabilizationAuditPage() {
             </div>
             <CardContent className="p-6 space-y-4 opacity-90 overflow-y-auto max-h-[600px]">
               <div className="flex justify-between border-b border-slate-900 pb-2">
-                <span className="text-emerald-500 font-black tracking-tighter uppercase">RODADA 2 — ETAPA 4: CONSOLIDAÇÃO FINAL — CONCLUÍDA</span>
-                <span className="text-slate-400 font-mono">AUDIT RUN: RUN-20260819-P0-002-E4</span>
+                <span className="text-emerald-500 font-black tracking-tighter uppercase">RODADA 2 — ETAPA 4.1: RECONCILIAÇÃO DO PAINEL — CONCLUÍDA</span>
+                <span className="text-slate-400 font-mono">AUDIT RUN: RUN-20260819-P0-002</span>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-[9px]">
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">BUILD & INFRA PÓS-HARDENING</p>
-                  <p>TypeScript (tsc --noEmit): <span className="text-emerald-500 font-black">PASS</span></p>
-                  <p>Produção Build: <span className="text-emerald-500 font-black">PASS</span></p>
-                  <p>Missing Exports / Hooks: <span className="text-emerald-500 font-black">0 DETECTED</span></p>
-                  <p>Runtime Import Check: <span className="text-emerald-500 font-black">PASS</span></p>
-                  <p>HTML Guard active: <span className="text-emerald-500 font-black">YES (Verified)</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">NOVA AUSÊNCIA</p>
+                  <p>Baseline Exists: <span className="text-red-500 font-black">NÃO (Data Drift Detectado)</span></p>
+                  <p>Baseline Gates: <span className="text-slate-500 font-mono">11</span></p>
+                  <p>PASS: <span className="text-red-500 font-mono">0</span></p>
+                  <p>NOT_TESTED: <span className="text-amber-500 font-mono">11</span></p>
+                  <p>Current UI Progress: <span className="text-red-500 font-black">0%</span></p>
+                  <p>Expected Status: <span className="text-emerald-500 font-black">HOMOLOGADA</span></p>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">RBAC / ROUTE GUARDS</p>
-                  <p>Super Admin access: <span className="text-emerald-500 font-black">PERMITTED</span></p>
-                  <p>RH access (Processamento): <span className="text-emerald-500 font-black">PERMITTED</span></p>
-                  <p>Supervisor access (Processamento): <span className="text-emerald-500 font-black">BLOCKED (beforeLoad)</span></p>
-                  <p>Unauthenticated access: <span className="text-emerald-500 font-black">BLOCKED (Redirect)</span></p>
-                  <p>Server-side RBAC (has_role): <span className="text-emerald-500 font-black">ENFORCED</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">CAUSA DO 0%</p>
+                  <p>Classification: <span className="text-red-500 font-black">DATA_DRIFT / RESET_ACCIDENTAL</span></p>
+                  <p>Root Cause: <span className="text-slate-300">Os registros do fluxo NOVA_AUSENCIA foram resetados para NOT_TESTED em 2026-08-19 13:05:21 UTC, possivelmente durante a preparação da Rodada 2.</span></p>
+                  <p>File/Query responsible: <span className="text-slate-500">Migration/Reset script manual</span></p>
+                  <p>Database Evidence: <span className="text-slate-500">updated_at mismatch for nova_ausencia gates</span></p>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">REGRESSÃO DE FLUXOS</p>
-                  <p>Nova Ausência (Meio Período): <span className="text-emerald-500 font-black">PRESERVED</span></p>
-                  <p>Ocorrência de Ponto (Storage): <span className="text-emerald-500 font-black">PRESERVED</span></p>
-                  <p>Processamento (Concurrency): <span className="text-emerald-500 font-black">PASS (Atomic)</span></p>
-                  <p>Idempotency (Correlation ID): <span className="text-emerald-500 font-black">PASS</span></p>
-                  <p>Audit Trail (Trace ID): <span className="text-emerald-500 font-black">PASS</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">RESET AUDIT</p>
+                  <p>Nova Ausência afetada: <span className="text-red-500 font-black">SIM</span></p>
+                  <p>Ocorrência afetada: <span className="text-red-500 font-black">SIM (Gates originais perdidos)</span></p>
+                  <p>Processamento afetado: <span className="text-emerald-500 font-black">SIM (Reset esperado)</span></p>
+                  <p>Rows affected: <span className="text-slate-500 font-mono">~30 rows in current run</span></p>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">CONSOLIDAÇÃO DE GAPS</p>
-                  <p>P0 Abertos: <span className="text-emerald-500 font-mono">0</span></p>
-                  <p>P1 Críticos: <span className="text-emerald-500 font-mono">0</span></p>
-                  <p>P2 Ocorrência (Idempotency): <span className="text-amber-500 font-bold">OPEN-MONITORED</span></p>
-                  <p>P3 Sugestões UX: <span className="text-slate-500 font-mono">3 MONITORED</span></p>
-                  <p>Evidence Reconciled: <span className="text-emerald-500 font-black">YES (Gate/Trace matching)</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">RODADA 2</p>
+                  <p>Evidence Reconciled: <span className="text-red-500 font-black">NÃO (Perda de evidência histórica)</span></p>
+                  <p>Final Decision Supported: <span className="text-amber-500 font-black">NÃO CONFIRMADO</span></p>
+                  <p>SISTEMA ESTÁVEL: <span className="text-red-500 font-black">BLOQUEADO POR DERIVA</span></p>
+                  <p>Operação Normal: <span className="text-amber-500 font-black">INCONCLUSIVO</span></p>
                 </div>
               </div>
 
               <div className="border-t border-slate-900 pt-3 flex flex-col gap-1">
-                <p className="text-emerald-500 font-black uppercase tracking-tighter flex items-center gap-2 text-[10px]">
-                  <CheckCircle2 className="w-3 h-3" />
-                  DECISÃO FINAL: SISTEMA ESTÁVEL COM GAPS P2 MONITORADOS
+                <p className="text-red-500 font-black uppercase tracking-tighter flex items-center gap-2 text-[10px]">
+                  <AlertTriangle className="w-3 h-3" />
+                  CORREÇÃO NECESSÁRIA: RESTAURAÇÃO DO BASELINE HOMOLOGADO (MIGRATION DE RECOVERY)
                 </p>
-                <p className="text-emerald-400 italic font-bold text-[9px]">RODADA 2 HOMOLOGADA: PRONTO PARA OPERAÇÃO NORMAL = SIM | PRÓXIMA AÇÃO: MONITORAMENTO ATIVO</p>
+                <p className="text-slate-400 italic font-bold text-[9px]">RELATÓRIO DE RECONCILIAÇÃO EMITIDO. AGUARDANDO PROTOCOLO DE RESTAURAÇÃO. NÃO EXECUTAR RESET.</p>
               </div>
 
               <div className="pt-2 text-slate-600 text-[9px] border-t border-slate-900 flex justify-between font-bold">
                 <span>AUDITOR: SUPER_ADMIN</span>
-                <span>UTC: 2026-08-19 14:15:22</span>
+                <span>UTC: 2026-08-19 14:40:15</span>
               </div>
             </CardContent>
           </Card>
