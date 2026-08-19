@@ -328,7 +328,11 @@ const AuthenticatedSuporteConhecimentoRoute =
     id: '/conhecimento',
     path: '/conhecimento',
     getParentRoute: () => AuthenticatedSuporteRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/suporte.conhecimento.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedInteligenciaSupervisoresRoute =
   AuthenticatedInteligenciaSupervisoresRouteImport.update({
     id: '/supervisores',
