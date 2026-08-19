@@ -96,24 +96,25 @@ export function SupportFAB() {
   }
 
   const trigger = (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 group">
-      <Button
-        size="icon"
-        className={cn(
-          "shadow-2xl rounded-full transition-all duration-300 hover:scale-110 active:scale-95 bg-primary text-primary-foreground h-14 w-14 p-0 overflow-visible hover:ring-4 hover:ring-primary/10 flex items-center justify-center",
-          unreadCount > 0 && "animate-pulse"
-        )}
-        aria-label="Suporte MK9"
-      >
-        <MessageSquare className="w-7 h-7" />
-        
+    <Button
+      size="default"
+      className={cn(
+        "fixed bottom-6 right-6 z-50 shadow-2xl rounded-full transition-all duration-300 hover:scale-105 active:scale-95 bg-primary text-primary-foreground h-12 px-4 flex items-center gap-2 overflow-visible hover:ring-4 hover:ring-primary/10",
+        isMobile && "h-12 w-12 p-0 justify-center",
+        unreadCount > 0 && "animate-pulse"
+      )}
+      aria-label="Suporte MK9"
+    >
+      <div className="relative">
+        <MessageSquare className={cn("w-5 h-5", isMobile && "w-6 h-6")} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-black min-w-[20px] h-5 flex items-center justify-center rounded-full border-2 border-white shadow-lg z-10 px-1 animate-in zoom-in">
+          <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[9px] font-black min-w-[18px] h-4.5 flex items-center justify-center rounded-full border-2 border-white shadow-lg z-10 px-1">
             {unreadCount > 9 ? "+9" : unreadCount}
           </span>
         )}
-      </Button>
-    </div>
+      </div>
+      {!isMobile && <span className="font-bold tracking-tight">Suporte</span>}
+    </Button>
   );
 
   const desktopTrigger = (
