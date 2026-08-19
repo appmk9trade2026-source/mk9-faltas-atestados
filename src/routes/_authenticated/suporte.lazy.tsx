@@ -211,7 +211,17 @@ function SupportPage() {
                             variant="outline" 
                             size="sm" 
                             className="text-xs font-bold"
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              try {
+                                await assignTicket({ data: { ticketId: ticket.id } });
+                                toast.success("Você assumiu este chamado.");
+                                queryClient.invalidateQueries({ queryKey: ["support-tickets"] });
+                              } catch (err: any) {
+                                toast.error(err.message);
+                              }
+                            }}
+
                           >
                             Assumir
                           </Button>
