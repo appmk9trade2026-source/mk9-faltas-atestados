@@ -162,7 +162,25 @@ function OcorrenciasPontoPage() {
       toast.success("Ocorrência protocolada com sucesso!");
     },
     onError: (error: any) => {
-      toast.error(`Erro ao criar ocorrência: ${error.message}`);
+      const message = error.message || "";
+      const isHtml = typeof message === 'string' && (message.trim().startsWith('<!DOCTYPE') || message.trim().startsWith('<html'));
+      
+      if (isHtml) {
+        toast.error("Erro Crítico: Resposta inesperada do servidor (HTML).");
+        return;
+      }
+
+      if (typeof message === 'string' && message.includes('"code"') && message.includes('"path"')) {
+         try {
+           const parsed = JSON.parse(message);
+           if (Array.isArray(parsed) && parsed[0]?.message) {
+             toast.error(`Falha de validação: ${parsed[0].message}`);
+             return;
+           }
+         } catch(e) {}
+      }
+      
+      toast.error(message.replace(/TECHNICAL_ERROR:|CONFLICT:|INVALID_PAYLOAD:/g, "").trim() || "Erro ao criar ocorrência.");
     },
   });
 
@@ -176,7 +194,13 @@ function OcorrenciasPontoPage() {
       toast.success("Ocorrência processada com sucesso!");
     },
     onError: (error: any) => {
-      toast.error(`Erro ao processar: ${error.message}`);
+      const message = error.message || "";
+      const isHtml = typeof message === 'string' && (message.trim().startsWith('<!DOCTYPE') || message.trim().startsWith('<html'));
+      if (isHtml) {
+        toast.error("Erro Crítico: Resposta inesperada do servidor (HTML).");
+        return;
+      }
+      toast.error(`Erro ao processar: ${message.replace(/TECHNICAL_ERROR:|CONFLICT:|INVALID_PAYLOAD:/g, "").trim()}`);
     },
   });
 
@@ -257,7 +281,9 @@ function OcorrenciasPontoPage() {
       });
 
     } catch (error: any) {
-      toast.error(`Erro no upload: ${error.message}`);
+      const message = error.message || "";
+      const isHtml = typeof message === 'string' && (message.trim().startsWith('<!DOCTYPE') || message.trim().startsWith('<html'));
+      toast.error(isHtml ? "Erro Crítico: Falha no upload (HTML)." : `Erro no upload: ${message}`);
     } finally {
       setIsUploading(false);
     }
