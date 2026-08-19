@@ -6172,6 +6172,19 @@ export type Database = {
           total_exec_time_ms: number
         }[]
       }
+      detect_potential_incidents: {
+        Args: { _threshold_potential?: number; _window_minutes?: number }
+        Returns: {
+          category: string
+          fingerprint: string
+          first_detected: string
+          last_detected: string
+          safe_code: string
+          source_module: string
+          ticket_count: number
+          user_count: number
+        }[]
+      }
       detectar_conflitos_ausencia: {
         Args: {
           _colaborador_id: string
