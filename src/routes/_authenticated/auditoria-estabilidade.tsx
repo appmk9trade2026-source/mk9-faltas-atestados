@@ -19,7 +19,7 @@ export const Route = createFileRoute('/_authenticated/auditoria-estabilidade')({
     // Check for super_admin role using the has_role RPC
     const { data: isSuperAdmin } = await supabase.rpc('has_role', {
       _user_id: session.user.id,
-      _role: 'admin' // In this system 'admin' is the top role; if 'super_admin' exists as a literal enum value in public.app_role, use it.
+      _role: 'super_admin'
     });
 
     if (!isSuperAdmin) {
