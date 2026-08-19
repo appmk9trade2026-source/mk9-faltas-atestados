@@ -100,12 +100,13 @@ export function SupportFAB() {
     return (
       <Drawer open={isOpen} onOpenChange={setIsOpen}>
         <DrawerTrigger asChild>
-          <button
+          <div
             className={cn(
               "fixed bottom-6 right-6 z-[60] shadow-2xl rounded-full transition-all duration-300 hover:scale-105 active:scale-95 bg-[#006BA6] text-white h-12 w-12 flex items-center justify-center overflow-visible hover:ring-4 hover:ring-[#006BA6]/10 border-none cursor-pointer",
               unreadCount > 0 && "animate-pulse"
             )}
             aria-label="Suporte MK9"
+            onClick={() => setIsOpen(true)}
           >
             <div className="relative pointer-events-none flex items-center justify-center">
               <MessageSquare className="w-6 h-6" />
@@ -115,7 +116,7 @@ export function SupportFAB() {
                 </span>
               )}
             </div>
-          </button>
+          </div>
         </DrawerTrigger>
         <DrawerContent className="p-4 pb-8">
           <DrawerHeader>
@@ -148,12 +149,13 @@ export function SupportFAB() {
   }
 
   const trigger = (
-    <button
+    <div
       className={cn(
         "fixed bottom-6 right-6 z-[60] shadow-2xl rounded-full transition-all duration-300 hover:scale-105 active:scale-95 bg-[#006BA6] text-white h-12 px-4 flex items-center gap-2 overflow-visible hover:ring-4 hover:ring-[#006BA6]/10 border-none cursor-pointer",
         unreadCount > 0 && "animate-pulse"
       )}
       aria-label="Suporte MK9"
+      onClick={() => setIsOpen(true)}
     >
       <div className="relative pointer-events-none flex items-center gap-2">
         <MessageSquare className="w-5 h-5" />
@@ -164,22 +166,13 @@ export function SupportFAB() {
         )}
         <span className="font-bold tracking-tight">Suporte</span>
       </div>
-    </button>
+    </div>
   );
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <TooltipProvider>
-          <Tooltip delayDuration={300}>
-            <TooltipTrigger asChild>
-              {trigger}
-            </TooltipTrigger>
-            <TooltipContent side="left" className="font-bold text-xs bg-primary text-white border-primary z-[70]">
-              Suporte MK9
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        {trigger}
       </PopoverTrigger>
       <PopoverContent className="w-64 p-2 shadow-2xl border-primary/20 z-[70]" align="end" sideOffset={16}>
         <div className="grid gap-1">
