@@ -126,7 +126,9 @@ const AuthenticatedSuporteRoute = AuthenticatedSuporteRouteImport.update({
   id: '/suporte',
   path: '/suporte',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/_authenticated/suporte.lazy').then((d) => d.Route),
+)
 const AuthenticatedRoadmapRoute = AuthenticatedRoadmapRouteImport.update({
   id: '/roadmap',
   path: '/roadmap',
