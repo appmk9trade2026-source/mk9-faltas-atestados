@@ -53,6 +53,20 @@ import { Painel360 } from "@/components/processamento/painel-360";
 
 
 export const Route = createFileRoute("/_authenticated/processamento")({
+  beforeLoad: async ({ context }) => {
+    // PROTEÇÃO P0: Bloqueio estrito de acesso para perfis não administrativos
+    const { data: roles } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.auth.user.id);
+    
+    const userRoles = roles?.map(r => r.role) || [];
+    const hasAccess = userRoles.some(r => ["super_admin", "rh", "compliance"].includes(r));
+
+    if (!hasAccess) {
+      throw new Error("UNAUTHORIZED: Acesso restrito ao RH e Administradores.");
+    }
+  },
   head: () => ({ meta: [{ title: "Central de Processamento · CRM MK9" }] }),
   component: CentralProcessamentoPage,
 });
