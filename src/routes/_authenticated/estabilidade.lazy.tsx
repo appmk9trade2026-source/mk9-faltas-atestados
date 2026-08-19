@@ -128,33 +128,33 @@ function StabilizationAuditPage() {
               <div>
                 <h1 className="text-3xl font-bold tracking-tight uppercase tracking-tighter">CRM MK9 — PROGRAMA DE ESTABILIZAÇÃO</h1>
                 <p className="text-sm text-muted-foreground font-black uppercase tracking-widest">
-                  RODADA 2 — ETAPA 4.2.1: DASHBOARD RECONCILIATION — RESOLVIDO
+                  RODADA 2 — ETAPA 4.3: ENCERRAMENTO FORMAL E CONGELAMENTO DO BASELINE CONSOLIDADO
                 </p>
                 <div className="flex gap-2 mt-1">
                   <Badge variant="secondary" className="font-mono text-[10px] bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950">
-                    AUDIT RUN: RUN-20260819-P0-002
+                    AUDIT RUN ATUAL: RUN-20260819-P0-002
                   </Badge>
                   <Badge variant="outline" className="font-mono text-[10px] border-emerald-500/50 text-emerald-600">
-                    ESTADO: DASHBOARD RECONCILIADO — VISUAL MATCHING DATABASE
+                    BASELINE FINAL PROPOSTO: RUN-20260819-P0-002-FINAL
                   </Badge>
                 </div>
               </div>
             </div>
             <div className="text-right flex flex-col items-end gap-1">
               <Badge variant="outline" className="font-mono text-[9px] bg-slate-50 dark:bg-slate-900">
-                BASELINE: RUN-20260819-P0-001-R1
+                BASELINE DE ORIGEM: RUN-20260819-P0-001-R1
               </Badge>
               <Badge variant="outline" className="font-mono text-[9px] text-emerald-600 border-emerald-500/30">
-                RODADA_2_CONSOLIDATION = ACTIVE
+                RODADA_2_CONSOLIDATION = COMPLETE
               </Badge>
             </div>
           </div>
           
           <Alert className="bg-slate-50 border-slate-200 dark:bg-slate-950/20 dark:border-slate-800">
             <ClipboardCheck className="h-4 w-4 text-primary" />
-            <AlertTitle className="text-slate-900 dark:text-slate-100 font-black text-xs uppercase tracking-widest">OBJETIVO: RECONCILIAÇÃO VISUAL E CORREÇÃO DE DIVERGÊNCIA</AlertTitle>
+            <AlertTitle className="text-slate-900 dark:text-slate-100 font-black text-xs uppercase tracking-widest">OBJETIVO: FECHAMENTO FORMAL DA RODADA 2</AlertTitle>
             <AlertDescription className="text-slate-700 dark:text-slate-400 text-sm leading-relaxed font-medium">
-              Correção concluída da divergência entre banco e UI. O progresso de "Nova Ausência" agora reflete fielmente os dados recuperados da Etapa 4.2.
+              Executar o fechamento formal com base em evidências reais persistidas. Somente congelar o baseline se todos os gates de encerramento forem satisfeitos. Não iniciar Rodada 3.
             </AlertDescription>
           </Alert>
         </header>
