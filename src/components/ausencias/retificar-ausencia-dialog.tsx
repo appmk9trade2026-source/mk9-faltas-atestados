@@ -535,6 +535,11 @@ export function RetificarAusenciaDialog({
                       <Badge variant="outline">{h.tipo_anterior_nome ?? "—"}</Badge>
                       <span className="text-muted-foreground">→</span>
                       <Badge>{h.tipo_novo_nome ?? "—"}</Badge>
+                      {h.horario_inicio_novo && (
+                        <Badge variant="secondary" className="font-mono text-[10px]">
+                          {h.horario_inicio_novo.slice(0, 5)} - {h.horario_fim_novo?.slice(0, 5)}
+                        </Badge>
+                      )}
                       <span className="text-xs text-muted-foreground">
                         {new Date(h.retificado_em).toLocaleString("pt-BR")} · {h.papel_usuario}
                       </span>
