@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { ShieldCheck, ClipboardCheck, Database, Lock, AlertCircle, CheckCircle2, Search, Activity, FileJson, Info } from 'lucide-react';
+import { ShieldCheck, ClipboardCheck, Database, Lock, AlertCircle, CheckCircle2, Search, Activity, FileJson, Info, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
