@@ -165,72 +165,81 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
     }
 
     // 4. Iniciar transação para criação da ocorrência e ausência vinculada
+    const traceId = (data as any).correlation_id || crypto.randomUUID();
+    
     try {
+      const { data: result, error: transError } = await context.supabase.rpc("criar_ocorrencia_ponto_ambev", {
+        _empresa_id: data.empresa_id,
+        _projeto_id: data.projeto_id,
+        _colaborador_id: (data.colaborador_id as any) || null,
+        _colaborador_manual: data.colaborador_manual,
+        _manual_matricula: (data.manual_matricula as any) || null,
+        _manual_nome: (data.manual_nome as any) || null,
+        _supervisor_usuario_id: data.supervisor_usuario_id,
+        _data_ocorrencia: data.data_ocorrencia as any,
+        _motivo: data.motivo,
+        _justificativa: data.justificativa,
+        _arquivo_url: data.arquivo_url,
+        _arquivo_nome: (data.arquivo_nome as any) || null,
+        _registrado_por: context.userId
+      });
 
+      if (transError) {
+        throw transError;
+      }
 
-    const { data: result, error: transError } = await context.supabase.rpc("criar_ocorrencia_ponto_ambev", {
-      _empresa_id: data.empresa_id,
-      _projeto_id: data.projeto_id,
-      _colaborador_id: (data.colaborador_id as any) || null,
-      _colaborador_manual: data.colaborador_manual,
-      _manual_matricula: (data.manual_matricula as any) || null,
-      _manual_nome: (data.manual_nome as any) || null,
-      _supervisor_usuario_id: data.supervisor_usuario_id,
-      _data_ocorrencia: data.data_ocorrencia as any,
-      _motivo: data.motivo,
-      _justificativa: data.justificativa,
-      _arquivo_url: data.arquivo_url,
-      _arquivo_nome: (data.arquivo_nome as any) || null,
-      _registrado_por: context.userId
-    });
+      const newOcorrencia = result as { 
+        id: string; 
+        protocolo: string; 
+        ausencia_id: string; 
+        ausencia_protocolo: string 
+      };
 
+      if (!newOcorrencia || !newOcorrencia.id) {
+        throw new Error("Falha ao obter confirmação da criação da ocorrência.");
+      }
 
-    if (transError) {
-      console.error("[Ocorrências] Erro na RPC criar_ocorrencia_ponto_ambev:", transError);
-      throw new Error(`Falha ao protocolar ocorrência: ${transError.message}`);
-    }
+      // 5. Log de auditoria
+      const obsAuditoria = data.colaborador_manual 
+        ? `Lançamento manual para matrícula ${data.manual_matricula}: ${newOcorrencia.protocolo} (Ausência: ${newOcorrencia.ausencia_id})`
+        : `Nova ocorrência de ponto protocolada: ${newOcorrencia.protocolo} (Ausência: ${newOcorrencia.ausencia_id})`;
 
-    const newOcorrencia = result as { 
-      id: string; 
-      protocolo: string; 
-      ausencia_id: string; 
-      ausencia_protocolo: string 
-    };
+      await supabaseAdmin.rpc("log_audit_event", {
+        _modulo: "ocorrencias",
+        _acao: "LANCAMENTO",
+        _entidade: "Ocorrência Ponto",
+        _registro_id: newOcorrencia.id,
+        _empresa_id: data.empresa_id,
+        _projeto_id: data.projeto_id,
+        _usuario_id: context.userId,
+        _sucesso: true,
+        _observacoes: obsAuditoria,
+        _origem: "server"
+      } as any);
 
-    if (!newOcorrencia || !newOcorrencia.id) {
-      throw new Error("Falha ao obter confirmação da criação da ocorrência.");
-    }
-
-    // 5. Log de auditoria (feito via supabaseAdmin para garantir privilégio se necessário)
-    const obsAuditoria = data.colaborador_manual 
-      ? `Lançamento manual para matrícula ${data.manual_matricula}: ${newOcorrencia.protocolo} (Ausência: ${newOcorrencia.ausencia_id})`
-      : `Nova ocorrência de ponto protocolada: ${newOcorrencia.protocolo} (Ausência: ${newOcorrencia.ausencia_id})`;
-
-    await supabaseAdmin.rpc("log_audit_event", {
-      _modulo: "ocorrencias",
-      _acao: "LANCAMENTO",
-      _entidade: "Ocorrência Ponto",
-      _registro_id: newOcorrencia.id,
-      _empresa_id: data.empresa_id,
-      _projeto_id: data.projeto_id,
-      _usuario_id: context.userId,
-      _sucesso: true,
-      _observacoes: obsAuditoria,
-      _origem: "server"
-    } as any);
-
-    return newOcorrencia;
-    } catch (err) {
+      return newOcorrencia;
+    } catch (err: any) {
+      // 6. Observabilidade e Tratamento de Erro P0
+      const { logAppError } = await import("./observability.server");
+      
+      const category: any = err.code === "23505" ? "DUPLICITY" : 
+                            (err.message?.includes("permissão") || err.code === "42501") ? "RLS" : "DATABASE";
+      
+      await logAppError({
+        traceId,
+        userId: context.userId,
+        module: "ocorrencias",
+        operation: "criarOcorrencia",
+        stage: "persistence",
+        category,
+        severity: "P1",
+        metadata: { ...data, arquivo_url: "[PROTECTED]" }
+      }, err);
 
       // Compensação segura para evitar órfãos em projetos AMBEV
       if (data.arquivo_url) {
         console.warn(`[P0-ORPHAN-PREVENTION] Falha na criação da ocorrência. Tentando remover objeto órfão: ${data.arquivo_url}`);
         try {
-          // Extrair o path relativo se necessário (a URL pode ser completa ou relativa)
-          // Na maioria das vezes no storage.from().remove() passamos o path relativo.
-          const urlParts = data.arquivo_url.split('/');
-          const fileName = urlParts[urlParts.length - 1];
-          // Se for path completo do bucket
           const relativePath = data.arquivo_url.includes('atestados/') 
             ? data.arquivo_url.split('atestados/')[1] 
             : data.arquivo_url;
@@ -240,7 +249,13 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
           console.error("[P0-ORPHAN-PREVENTION] Falha ao remover objeto órfão na ocorrência:", storageErr);
         }
       }
-      throw err;
+
+      // Mapeamento de erro amigável
+      if (err.code === "23505") {
+        throw new Error(`CONFLICT: Esta ocorrência já foi protocolada anteriormente. Protocolo: ${traceId}`);
+      }
+      
+      throw new Error(`TECHNICAL_ERROR: Não foi possível processar o lançamento. Referência: ${traceId}`);
     }
   });
 
