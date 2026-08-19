@@ -151,7 +151,7 @@ function StabilizationAuditPage() {
             <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             <AlertTitle className="text-blue-800 dark:text-blue-300 font-bold text-xs uppercase tracking-wider">OBJETIVO OPERACIONAL</AlertTitle>
             <AlertDescription className="text-blue-700 dark:text-blue-400 text-sm leading-relaxed">
-              Homologar operacionalmente os fluxos de Ocorrência de Ponto e Processamento Interno sob a perspectiva de Supervisor, RH e Super Admin, mantendo Nova Ausência como baseline de regressão congelado.
+              Certificar o estado técnico atual (Build, TypeScript, Server Bundle) imediatamente antes dos testes operacionais por Supervisor, RH e Super Admin. Baseline Nova Ausência permanece congelado.
             </AlertDescription>
           </Alert>
         </header>
