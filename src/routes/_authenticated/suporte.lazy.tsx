@@ -20,7 +20,9 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { getTickets } from "@/lib/support.functions";
 import { NovoChamadoDialog } from "@/components/support/novo-chamado-dialog";
+import { ResolucaoChamadoDialog } from "@/components/support/resolucao-chamado-dialog";
 import { useNavigate } from '@tanstack/react-router';
+
 
 
 export const Route = createLazyFileRoute('/_authenticated/suporte')({
@@ -29,7 +31,10 @@ export const Route = createLazyFileRoute('/_authenticated/suporte')({
 
 function SupportPage() {
   const [isNovoChamadoOpen, setIsNovoChamadoOpen] = useState(false);
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [isResolucaoOpen, setIsResolucaoOpen] = useState(false);
   const navigate = useNavigate();
+
   const { data: tickets = [], isLoading } = useQuery({
 
     queryKey: ['support-tickets'],
@@ -206,11 +211,34 @@ function SupportPage() {
                             <span className="text-xs font-bold">{ticket.assigned?.email.split('@')[0]}</span>
                           </div>
                         ) : (
-                          <Button variant="outline" size="sm" className="text-xs font-bold">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-xs font-bold"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Lógica de assumir existente no lib/support.functions
+                            }}
+                          >
                             Assumir
                           </Button>
                         )}
+                        {ticket.assigned_user_id && ticket.status !== 'RESOLVIDO' && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedTicketId(ticket.id);
+                              setIsResolucaoOpen(true);
+                            }}
+                          >
+                            Resolver
+                          </Button>
+                        )}
                       </div>
+
                     </div>
                   </CardContent>
                 </Card>
@@ -222,7 +250,15 @@ function SupportPage() {
           open={isNovoChamadoOpen} 
           onOpenChange={setIsNovoChamadoOpen} 
         />
+        {selectedTicketId && (
+          <ResolucaoChamadoDialog
+            open={isResolucaoOpen}
+            onOpenChange={setIsResolucaoOpen}
+            ticketId={selectedTicketId}
+          />
+        )}
       </div>
+
     </AppShell>
 
   );
