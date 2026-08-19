@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import { NovoChamadoDialog } from "./novo-chamado-dialog";
 import { useLocation } from "@tanstack/react-router";
+import { SupportFAB } from "./support-fab";
 
 export interface SupportContextData {
   sourceRoute: string;
@@ -34,8 +35,11 @@ export function SupportProvider({ children }: { children: ReactNode }) {
   return (
     <SupportContext.Provider value={{ openSupport }}>
       {children}
+      <SupportFAB />
       <NovoChamadoDialog 
         open={isOpen} 
+        onOpenChange={setIsOpen} 
+
         onOpenChange={setIsOpen} 
         context={context} 
       />
