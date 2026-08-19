@@ -95,46 +95,28 @@ export function SupportFAB() {
     });
   }
 
-  const trigger = (
-    <Button
-      size="default"
-      className={cn(
-        "fixed bottom-6 right-6 z-[60] shadow-2xl rounded-full transition-all duration-300 hover:scale-105 active:scale-95 bg-primary text-primary-foreground h-12 px-4 flex items-center gap-2 overflow-visible hover:ring-4 hover:ring-primary/10",
-        isMobile && "h-12 w-12 p-0 justify-center",
-        unreadCount > 0 && "animate-pulse"
-      )}
-      aria-label="Suporte MK9"
-    >
-      <div className="relative pointer-events-none flex items-center gap-2">
-        <MessageSquare className={cn("w-5 h-5", isMobile && "w-6 h-6")} />
-        {unreadCount > 0 && (
-          <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[9px] font-black min-w-[18px] h-4.5 flex items-center justify-center rounded-full border-2 border-white shadow-lg z-10 px-1">
-            {unreadCount > 9 ? "+9" : unreadCount}
-          </span>
-        )}
-        {!isMobile && <span className="font-bold tracking-tight">Suporte</span>}
-      </div>
-    </Button>
-  );
-
-  const desktopTrigger = (
-    <TooltipProvider>
-      <Tooltip delayDuration={300}>
-        <TooltipTrigger asChild>
-          <div>{trigger}</div>
-        </TooltipTrigger>
-        <TooltipContent side="left" className="font-bold text-xs bg-primary text-white border-primary z-[70]">
-          Suporte MK9
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
 
   if (isMobile) {
     return (
       <Drawer open={isOpen} onOpenChange={setIsOpen}>
         <DrawerTrigger asChild>
-          {trigger}
+          <Button
+            size="default"
+            className={cn(
+              "fixed bottom-6 right-6 z-[60] shadow-2xl rounded-full transition-all duration-300 hover:scale-105 active:scale-95 bg-primary text-primary-foreground h-12 w-12 p-0 justify-center shadow-2xl overflow-visible hover:ring-4 hover:ring-primary/10",
+              unreadCount > 0 && "animate-pulse"
+            )}
+            aria-label="Suporte MK9"
+          >
+            <div className="relative pointer-events-none flex items-center justify-center">
+              <MessageSquare className="w-6 h-6" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[9px] font-black min-w-[18px] h-4.5 flex items-center justify-center rounded-full border-2 border-white shadow-lg z-10 px-1">
+                  {unreadCount > 9 ? "+9" : unreadCount}
+                </span>
+              )}
+            </div>
+          </Button>
         </DrawerTrigger>
         <DrawerContent className="p-4 pb-8">
           <DrawerHeader>
@@ -169,7 +151,24 @@ export function SupportFAB() {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        {desktopTrigger}
+        <Button
+          size="default"
+          className={cn(
+            "fixed bottom-6 right-6 z-[60] shadow-2xl rounded-full transition-all duration-300 hover:scale-105 active:scale-95 bg-primary text-primary-foreground h-12 px-4 flex items-center gap-2 overflow-visible hover:ring-4 hover:ring-primary/10",
+            unreadCount > 0 && "animate-pulse"
+          )}
+          aria-label="Suporte MK9"
+        >
+          <div className="relative pointer-events-none flex items-center gap-2">
+            <MessageSquare className="w-5 h-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[9px] font-black min-w-[18px] h-4.5 flex items-center justify-center rounded-full border-2 border-white shadow-lg z-10 px-1">
+                {unreadCount > 9 ? "+9" : unreadCount}
+              </span>
+            )}
+            <span className="font-bold tracking-tight">Suporte</span>
+          </div>
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-2 shadow-2xl border-primary/20 z-[70]" align="end" sideOffset={16}>
         <div className="grid gap-1">
