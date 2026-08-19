@@ -32,6 +32,7 @@ import { Route as AuthenticatedNotificacoesRouteImport } from './routes/_authent
 import { Route as AuthenticatedInteligenciaRouteImport } from './routes/_authenticated/inteligencia'
 import { Route as AuthenticatedHomologacaoRouteImport } from './routes/_authenticated/homologacao'
 import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
+import { Route as AuthenticatedEstabilidadeRouteImport } from './routes/_authenticated/estabilidade'
 import { Route as AuthenticatedDocumentacaoRouteImport } from './routes/_authenticated/documentacao'
 import { Route as AuthenticatedDeployRouteImport } from './routes/_authenticated/deploy'
 import { Route as AuthenticatedDashboardExecutivoRouteImport } from './routes/_authenticated/dashboard-executivo'
@@ -41,7 +42,6 @@ import { Route as AuthenticatedComunicacoesRouteImport } from './routes/_authent
 import { Route as AuthenticatedColaboradoresRouteImport } from './routes/_authenticated/colaboradores'
 import { Route as AuthenticatedBiExecutivoRouteImport } from './routes/_authenticated/bi-executivo'
 import { Route as AuthenticatedAusenciasRouteImport } from './routes/_authenticated/ausencias'
-import { Route as AuthenticatedAuditoriaEstabilidadeRouteImport } from './routes/_authenticated/auditoria-estabilidade'
 import { Route as AuthenticatedAuditoriaRouteImport } from './routes/_authenticated/auditoria'
 import { Route as AuthenticatedAssistenteRouteImport } from './routes/_authenticated/assistente'
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
@@ -210,6 +210,14 @@ const AuthenticatedHistoricoRoute = AuthenticatedHistoricoRouteImport.update({
   path: '/historico',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEstabilidadeRoute =
+  AuthenticatedEstabilidadeRouteImport.update({
+    id: '/estabilidade',
+    path: '/estabilidade',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/estabilidade.lazy').then((d) => d.Route),
+  )
 const AuthenticatedDocumentacaoRoute =
   AuthenticatedDocumentacaoRouteImport.update({
     id: '/documentacao',
@@ -261,16 +269,6 @@ const AuthenticatedAusenciasRoute = AuthenticatedAusenciasRouteImport.update({
   path: '/ausencias',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAuditoriaEstabilidadeRoute =
-  AuthenticatedAuditoriaEstabilidadeRouteImport.update({
-    id: '/auditoria-estabilidade',
-    path: '/auditoria-estabilidade',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any).lazy(() =>
-    import('./routes/_authenticated/auditoria-estabilidade.lazy').then(
-      (d) => d.Route,
-    ),
-  )
 const AuthenticatedAuditoriaRoute = AuthenticatedAuditoriaRouteImport.update({
   id: '/auditoria',
   path: '/auditoria',
@@ -541,7 +539,6 @@ export interface FileRoutesByFullPath {
   '/alertas': typeof AuthenticatedAlertasRoute
   '/assistente': typeof AuthenticatedAssistenteRoute
   '/auditoria': typeof AuthenticatedAuditoriaRoute
-  '/auditoria-estabilidade': typeof AuthenticatedAuditoriaEstabilidadeRoute
   '/ausencias': typeof AuthenticatedAusenciasRoute
   '/bi-executivo': typeof AuthenticatedBiExecutivoRoute
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
@@ -551,6 +548,7 @@ export interface FileRoutesByFullPath {
   '/dashboard-executivo': typeof AuthenticatedDashboardExecutivoRoute
   '/deploy': typeof AuthenticatedDeployRoute
   '/documentacao': typeof AuthenticatedDocumentacaoRoute
+  '/estabilidade': typeof AuthenticatedEstabilidadeRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/homologacao': typeof AuthenticatedHomologacaoRoute
   '/inteligencia': typeof AuthenticatedInteligenciaRouteWithChildren
@@ -619,7 +617,6 @@ export interface FileRoutesByTo {
   '/alertas': typeof AuthenticatedAlertasRoute
   '/assistente': typeof AuthenticatedAssistenteRoute
   '/auditoria': typeof AuthenticatedAuditoriaRoute
-  '/auditoria-estabilidade': typeof AuthenticatedAuditoriaEstabilidadeRoute
   '/ausencias': typeof AuthenticatedAusenciasRoute
   '/bi-executivo': typeof AuthenticatedBiExecutivoRoute
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
@@ -628,6 +625,7 @@ export interface FileRoutesByTo {
   '/dashboard-executivo': typeof AuthenticatedDashboardExecutivoRoute
   '/deploy': typeof AuthenticatedDeployRoute
   '/documentacao': typeof AuthenticatedDocumentacaoRoute
+  '/estabilidade': typeof AuthenticatedEstabilidadeRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/homologacao': typeof AuthenticatedHomologacaoRoute
   '/inteligencia': typeof AuthenticatedInteligenciaRouteWithChildren
@@ -697,7 +695,6 @@ export interface FileRoutesById {
   '/_authenticated/alertas': typeof AuthenticatedAlertasRoute
   '/_authenticated/assistente': typeof AuthenticatedAssistenteRoute
   '/_authenticated/auditoria': typeof AuthenticatedAuditoriaRoute
-  '/_authenticated/auditoria-estabilidade': typeof AuthenticatedAuditoriaEstabilidadeRoute
   '/_authenticated/ausencias': typeof AuthenticatedAusenciasRoute
   '/_authenticated/bi-executivo': typeof AuthenticatedBiExecutivoRoute
   '/_authenticated/colaboradores': typeof AuthenticatedColaboradoresRoute
@@ -707,6 +704,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard-executivo': typeof AuthenticatedDashboardExecutivoRoute
   '/_authenticated/deploy': typeof AuthenticatedDeployRoute
   '/_authenticated/documentacao': typeof AuthenticatedDocumentacaoRoute
+  '/_authenticated/estabilidade': typeof AuthenticatedEstabilidadeRoute
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
   '/_authenticated/homologacao': typeof AuthenticatedHomologacaoRoute
   '/_authenticated/inteligencia': typeof AuthenticatedInteligenciaRouteWithChildren
@@ -777,7 +775,6 @@ export interface FileRouteTypes {
     | '/alertas'
     | '/assistente'
     | '/auditoria'
-    | '/auditoria-estabilidade'
     | '/ausencias'
     | '/bi-executivo'
     | '/colaboradores'
@@ -787,6 +784,7 @@ export interface FileRouteTypes {
     | '/dashboard-executivo'
     | '/deploy'
     | '/documentacao'
+    | '/estabilidade'
     | '/historico'
     | '/homologacao'
     | '/inteligencia'
@@ -855,7 +853,6 @@ export interface FileRouteTypes {
     | '/alertas'
     | '/assistente'
     | '/auditoria'
-    | '/auditoria-estabilidade'
     | '/ausencias'
     | '/bi-executivo'
     | '/colaboradores'
@@ -864,6 +861,7 @@ export interface FileRouteTypes {
     | '/dashboard-executivo'
     | '/deploy'
     | '/documentacao'
+    | '/estabilidade'
     | '/historico'
     | '/homologacao'
     | '/inteligencia'
@@ -932,7 +930,6 @@ export interface FileRouteTypes {
     | '/_authenticated/alertas'
     | '/_authenticated/assistente'
     | '/_authenticated/auditoria'
-    | '/_authenticated/auditoria-estabilidade'
     | '/_authenticated/ausencias'
     | '/_authenticated/bi-executivo'
     | '/_authenticated/colaboradores'
@@ -942,6 +939,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard-executivo'
     | '/_authenticated/deploy'
     | '/_authenticated/documentacao'
+    | '/_authenticated/estabilidade'
     | '/_authenticated/historico'
     | '/_authenticated/homologacao'
     | '/_authenticated/inteligencia'
@@ -1176,6 +1174,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHistoricoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/estabilidade': {
+      id: '/_authenticated/estabilidade'
+      path: '/estabilidade'
+      fullPath: '/estabilidade'
+      preLoaderRoute: typeof AuthenticatedEstabilidadeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/documentacao': {
       id: '/_authenticated/documentacao'
       path: '/documentacao'
@@ -1237,13 +1242,6 @@ declare module '@tanstack/react-router' {
       path: '/ausencias'
       fullPath: '/ausencias'
       preLoaderRoute: typeof AuthenticatedAusenciasRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/auditoria-estabilidade': {
-      id: '/_authenticated/auditoria-estabilidade'
-      path: '/auditoria-estabilidade'
-      fullPath: '/auditoria-estabilidade'
-      preLoaderRoute: typeof AuthenticatedAuditoriaEstabilidadeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/auditoria': {
@@ -1692,7 +1690,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAlertasRoute: typeof AuthenticatedAlertasRoute
   AuthenticatedAssistenteRoute: typeof AuthenticatedAssistenteRoute
   AuthenticatedAuditoriaRoute: typeof AuthenticatedAuditoriaRoute
-  AuthenticatedAuditoriaEstabilidadeRoute: typeof AuthenticatedAuditoriaEstabilidadeRoute
   AuthenticatedAusenciasRoute: typeof AuthenticatedAusenciasRoute
   AuthenticatedBiExecutivoRoute: typeof AuthenticatedBiExecutivoRoute
   AuthenticatedColaboradoresRoute: typeof AuthenticatedColaboradoresRoute
@@ -1702,6 +1699,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardExecutivoRoute: typeof AuthenticatedDashboardExecutivoRoute
   AuthenticatedDeployRoute: typeof AuthenticatedDeployRoute
   AuthenticatedDocumentacaoRoute: typeof AuthenticatedDocumentacaoRoute
+  AuthenticatedEstabilidadeRoute: typeof AuthenticatedEstabilidadeRoute
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
   AuthenticatedHomologacaoRoute: typeof AuthenticatedHomologacaoRoute
   AuthenticatedInteligenciaRoute: typeof AuthenticatedInteligenciaRouteWithChildren
@@ -1740,8 +1738,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAlertasRoute: AuthenticatedAlertasRoute,
   AuthenticatedAssistenteRoute: AuthenticatedAssistenteRoute,
   AuthenticatedAuditoriaRoute: AuthenticatedAuditoriaRoute,
-  AuthenticatedAuditoriaEstabilidadeRoute:
-    AuthenticatedAuditoriaEstabilidadeRoute,
   AuthenticatedAusenciasRoute: AuthenticatedAusenciasRoute,
   AuthenticatedBiExecutivoRoute: AuthenticatedBiExecutivoRoute,
   AuthenticatedColaboradoresRoute: AuthenticatedColaboradoresRoute,
@@ -1751,6 +1747,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardExecutivoRoute: AuthenticatedDashboardExecutivoRoute,
   AuthenticatedDeployRoute: AuthenticatedDeployRoute,
   AuthenticatedDocumentacaoRoute: AuthenticatedDocumentacaoRoute,
+  AuthenticatedEstabilidadeRoute: AuthenticatedEstabilidadeRoute,
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
   AuthenticatedHomologacaoRoute: AuthenticatedHomologacaoRoute,
   AuthenticatedInteligenciaRoute: AuthenticatedInteligenciaRouteWithChildren,
