@@ -84,7 +84,10 @@ export const retificarAusencia = createServerFn({ method: "POST" })
         p_horario_fim: data.horario_fim ?? null,
       } as never,
     );
-    if (error) throw new Error(mapRetificacaoError(error.message));
+    if (error) {
+      console.error("[retificarAusencia] RPC Error:", error);
+      throw new Error(mapRetificacaoError(error.message));
+    }
     return result as {
       ok: boolean;
       ausencia_id: string;
@@ -110,7 +113,7 @@ export const listarRetificacoes = createServerFn({ method: "POST" })
     const { data: rows, error } = await context.supabase
       .from("ausencia_retificacoes" as never)
       .select(
-        "id, ausencia_id, protocolo, tipo_anterior_nome, tipo_novo_nome, periodo_anterior_nome, periodo_novo_nome, data_inicio_anterior, data_inicio_nova, data_fim_anterior, data_fim_nova, usuario_id, papel_usuario, retificado_em, motivo_operacional, observacao",
+        "id, ausencia_id, protocolo, tipo_anterior_nome, tipo_novo_nome, periodo_anterior_nome, periodo_novo_nome, data_inicio_anterior, data_inicio_nova, data_fim_anterior, data_fim_nova, horario_inicio_anterior, horario_inicio_novo, horario_fim_anterior, horario_fim_novo, usuario_id, papel_usuario, retificado_em, motivo_operacional, observacao",
       )
       .eq("ausencia_id", data.ausencia_id)
       .order("retificado_em", { ascending: false });
