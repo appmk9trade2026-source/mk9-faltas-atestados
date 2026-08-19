@@ -21,12 +21,13 @@ export const ocorrenciaPontoSchema = z.object({
   manual_matricula: z.string().trim().max(50).optional().nullable(),
   manual_nome: z.string().trim().max(255).optional().nullable(),
   supervisor_usuario_id: uuid,
-  data_ocorrencia: iso,
+  data_ocorrencia: z.string(), // ISO string ou date string
   motivo: z.string().trim().min(5).max(200),
   justificativa: z.string().trim().min(10).max(2000),
   arquivo_url: z.string().trim().min(1, "Evidência é obrigatória"),
   arquivo_nome: z.string().trim().max(255).optional(),
   ausencia_id: uuid.nullable().optional(),
+  correlation_id: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (data.colaborador_manual) {
     if (!data.manual_matricula) {
@@ -164,8 +165,8 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
       if (colab.supervisor_usuario_id !== data.supervisor_usuario_id) throw new Error("Colaborador não pertence ao supervisor selecionado.");
     }
 
-    // 4. Iniciar transação para criação da ocorrência e ausência vinculada
-    const traceId = (data as any).correlation_id || crypto.randomUUID();
+    // 4. Iniciar transação para criação da ocorrência e ausência vinculada com idempotência
+    const correlationId = data.correlation_id || `REQ-${crypto.randomUUID()}`;
     
     try {
       const { data: result, error: transError } = await context.supabase.rpc("criar_ocorrencia_ponto_ambev", {
@@ -181,7 +182,8 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
         _justificativa: data.justificativa,
         _arquivo_url: data.arquivo_url,
         _arquivo_nome: (data.arquivo_nome as any) || null,
-        _registrado_por: context.userId
+        _registrado_por: context.userId,
+        _correlation_id: correlationId
       });
 
       if (transError) {
@@ -192,7 +194,8 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
         id: string; 
         protocolo: string; 
         ausencia_id: string; 
-        ausencia_protocolo: string 
+        ausencia_protocolo: string;
+        idempotency_replay?: boolean;
       };
 
       if (!newOcorrencia || !newOcorrencia.id) {
@@ -225,8 +228,13 @@ export const criarOcorrencia = createServerFn({ method: "POST" })
       const category: any = err.code === "23505" ? "DUPLICITY" : 
                             (err.message?.includes("permissão") || err.code === "42501") ? "RLS" : "DATABASE";
       
+      // Se for duplicidade detectada pelo banco, retornamos o contrato de idempotência
+      if (err.code === "23505") {
+        throw new Error(`ALREADY_COMMITTED: Esta ocorrência já foi protocolada. correlation_id: ${correlationId}`);
+      }
+
       await logAppError({
-        traceId,
+        traceId: correlationId,
         userId: context.userId,
         module: "ocorrencias",
         operation: "criarOcorrencia",

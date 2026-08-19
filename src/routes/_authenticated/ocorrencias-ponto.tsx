@@ -170,6 +170,16 @@ function OcorrenciasPontoPage() {
         return;
       }
 
+      if (message.includes("ALREADY_COMMITTED")) {
+        toast.success("Esta ocorrência já foi registrada com sucesso anteriormente.");
+        queryClient.invalidateQueries({ queryKey: ["ocorrencias-ponto"] });
+        setIsNewDialogOpen(false);
+        form.reset();
+        setManualMode(false);
+        setSelectedFile(null);
+        return;
+      }
+
       if (typeof message === 'string' && message.includes('"code"') && message.includes('"path"')) {
          try {
            const parsed = JSON.parse(message);
@@ -180,7 +190,7 @@ function OcorrenciasPontoPage() {
          } catch(e) {}
       }
       
-      toast.error(message.replace(/TECHNICAL_ERROR:|CONFLICT:|INVALID_PAYLOAD:/g, "").trim() || "Erro ao criar ocorrência.");
+      toast.error(message.replace(/TECHNICAL_ERROR:|CONFLICT:|INVALID_PAYLOAD:|ALREADY_COMMITTED:/g, "").trim() || "Erro ao criar ocorrência.");
     },
   });
 
@@ -244,6 +254,8 @@ function OcorrenciasPontoPage() {
       return;
     }
 
+    const correlationId = `REQ-${crypto.randomUUID()}`;
+
     try {
       setIsUploading(true);
       
@@ -268,6 +280,7 @@ function OcorrenciasPontoPage() {
         colaborador_id: data.colaborador_manual ? null : (data.colaborador_id || null),
         arquivo_url: filePath, // Persistir o path relativo em vez da URL pública
         arquivo_nome: selectedFile.name,
+        correlation_id: correlationId,
       }, {
         onError: async () => {
           // Compensação de storage
