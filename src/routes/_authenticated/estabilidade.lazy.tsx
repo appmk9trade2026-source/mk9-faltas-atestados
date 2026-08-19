@@ -1,4 +1,4 @@
-import { createLazyFileRoute } from '@tanstack/react-router';
+import { createLazyFileRoute, Link } from '@tanstack/react-router';
 import { ShieldCheck, ClipboardCheck, Database, Lock, AlertCircle, CheckCircle2, Search, Activity, FileJson, Info, RefreshCw, AlertTriangle, ChevronRight, ExternalLink, MessageSquare, Bot } from 'lucide-react';
 import { SupportHelpButton } from "@/components/support/support-help-button";
 
