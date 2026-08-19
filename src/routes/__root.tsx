@@ -13,7 +13,9 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeProvider, themeInitScript } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { SupportProvider } from "@/components/support/support-provider";
 import { supabase } from "@/integrations/supabase/client";
+
 
 function NotFoundComponent() {
   return (
@@ -156,9 +158,12 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <Outlet />
-        <Toaster richColors position="top-right" />
+        <SupportProvider>
+          <Outlet />
+          <Toaster richColors position="top-right" />
+        </SupportProvider>
       </ThemeProvider>
+
     </QueryClientProvider>
   );
 }

@@ -4,7 +4,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { alterarStatusAusencia, processarAusenciaInterno, deleteAusencia } from "@/lib/ausencias.functions";
 
-import { friendlyRbacError } from "@/lib/rbac/errors";
+import { friendlyRbacError, parseRbacError } from "@/lib/rbac/errors";
+import { SupportHelpButton } from "@/components/support/support-help-button";
+import { useSupport } from "@/components/support/support-provider";
+
 import {
   identidadeBuscaTexto,
   labelMatriculaColaborador,
@@ -36,6 +39,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { RetificarAusenciaDialog } from "@/components/ausencias/retificar-ausencia-dialog";
+
 
 import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
@@ -288,6 +292,8 @@ function AusenciasPage() {
     roles.includes("super_admin") || roles.includes("rh") || roles.includes("supervisor") || roles.includes("coordenador");
   const podeLancar = roles.includes("super_admin") || roles.includes("rh") || roles.includes("coordenador");
   const queryClient = useQueryClient();
+  const { openSupport } = useSupport();
+
   const podeExcluir = hasPermission(PERMISSION_MAP.deleteAbsence) || roles.includes("super_admin") || roles.includes("rh");
 
   const [search, setSearch] = useState("");
@@ -515,11 +521,25 @@ function AusenciasPage() {
       setExcluirConfirmado(false);
     },
     onError: (err: unknown) => {
+      const errData = parseRbacError(err);
       const friendly = friendlyRbacError(err);
       toast.error(friendly.title, { 
-        description: friendly.description || "Erro técnico na exclusão segura."
+        description: friendly.description || "Erro técnico na exclusão segura.",
+        action: errData.code === "TECHNICAL_ERROR" || errData.code === "UNKNOWN" ? {
+          label: "Ajuda",
+          onClick: () => openSupport({
+            sourceModule: "Ausências",
+            entityType: "ausencia",
+            entityId: confirmExcluir?.id,
+            protocol: confirmExcluir?.protocolo || undefined,
+
+            safeCode: errData.correlationId || "SAFE-ERR-DEL",
+            suggestedCategory: "ERRO_SISTEMA"
+          })
+        } : undefined
       });
     },
+
   });
 
 
@@ -547,7 +567,7 @@ function AusenciasPage() {
   }
 
   return (
-    <AppShell title="Ausências" breadcrumb={["Operações", "Ausências"]}>
+    <AppShell title="Ausências" breadcrumb={["Operações", "Ausências"]} actions={<SupportHelpButton context={{ sourceModule: "Ausências" }} />}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           Registros de faltas, atestados, declarações e demais ausências. Nenhum

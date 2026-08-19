@@ -37,7 +37,11 @@ import {
 } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
+import { SupportHelpButton } from "@/components/support/support-help-button";
+import { useSupport } from "@/components/support/support-provider";
+import { parseRbacError } from "@/lib/rbac/errors";
 import { ProcessamentoCard } from "@/components/processamento/processamento-card";
+
 import { AusenciaCardData, StatusProcessamento } from "@/components/processamento/types";
 import { calcularPrioridade, getSlaStatus } from "@/components/processamento/utils";
 import { differenceInDays, format } from "date-fns";
@@ -89,7 +93,9 @@ function KpiCard({ title, value, icon: Icon, color }: any) {
 
 function CentralProcessamentoPage() {
   const { user } = useSession();
+  const { openSupport } = useSupport();
   const queryClient = useQueryClient();
+
   const [search, setSearch] = useState("");
   const [detalhesAbertos, setDetalhesAbertos] = useState(false);
   const [registroSelecionado, setRegistroSelecionado] = useState<AusenciaCardData | null>(null);
@@ -229,13 +235,36 @@ function CentralProcessamentoPage() {
     },
 
     onError: (e: any) => {
+      const errData = parseRbacError(e);
       if (typeof e.message === 'string' && e.message.trim().startsWith('<!DOCTYPE html>')) {
-        toast.error("Erro Crítico: Resposta inesperada do servidor (HTML). A sessão pode ter expirado ou o sistema está instável.");
+        toast.error("Erro Crítico: Resposta inesperada do servidor (HTML).", {
+          action: {
+            label: "Ajuda",
+            onClick: () => openSupport({
+              sourceModule: "Central de Processamento",
+              safeCode: "HTML-ERR-PROC",
+              suggestedCategory: "ERRO_SISTEMA"
+            })
+          }
+        });
         console.error("HTML Guard detectou crash de runtime:", e.message);
       } else {
-        toast.error(e.message || "Erro ao iniciar processamento.");
+        toast.error("Erro ao iniciar processamento.", {
+          description: e.message || "Erro técnico na atribuição.",
+          action: errData.code === "TECHNICAL_ERROR" || errData.code === "UNKNOWN" ? {
+            label: "Ajuda",
+            onClick: () => openSupport({
+              sourceModule: "Central de Processamento",
+              entityType: "ausencia",
+              entityId: registroSelecionado?.id,
+              safeCode: errData.correlationId || "SAFE-ERR-PROC",
+              suggestedCategory: "ERRO_SISTEMA"
+            })
+          } : undefined
+        });
       }
     }
+
   });
 
   const iniciarGrupoMut = useMutation({
@@ -349,7 +378,7 @@ function CentralProcessamentoPage() {
   };
 
   return (
-    <AppShell title="Central de Processamento" breadcrumb={["Operações", "Central de Processamento"]}>
+    <AppShell title="Central de Processamento" breadcrumb={["Operações", "Central de Processamento"]} actions={<SupportHelpButton context={{ sourceModule: "Central de Processamento" }} />}>
       <div className="space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
           <KpiCard title="Minha Fila" value={(ausenciasQ.data || []).filter(a => a.responsavel_processamento_id === user?.id && a.status_processamento === 'EM_PROCESSAMENTO').length} icon={User} color="bg-indigo-50 text-indigo-600" />

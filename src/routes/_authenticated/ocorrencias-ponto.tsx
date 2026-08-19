@@ -26,6 +26,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { SupportHelpButton } from "@/components/support/support-help-button";
+import { useSupport } from "@/components/support/support-provider";
+import { parseRbacError } from "@/lib/rbac/errors";
+
 
 import { AppShell } from "@/components/layout/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -99,7 +103,9 @@ const AMBEV_EMPRESA_ID = "0a6c2ac6-2872-47a0-b818-b4660ef81244";
 
 function OcorrenciasPontoPage() {
   const { user, roles } = useSession();
+  const { openSupport } = useSupport();
   const queryClient = useQueryClient();
+
   const [isNewDialogOpen, setIsNewDialogOpen] = useState(false);
   const [isProcessDialogOpen, setIsProcessDialogOpen] = useState(false);
   const [selectedOcorrencia, setSelectedOcorrencia] = useState<any>(null);
@@ -162,11 +168,21 @@ function OcorrenciasPontoPage() {
       toast.success("Ocorrência protocolada com sucesso!");
     },
     onError: (error: any) => {
+      const errData = parseRbacError(error);
       const message = error.message || "";
       const isHtml = typeof message === 'string' && (message.trim().startsWith('<!DOCTYPE') || message.trim().startsWith('<html'));
       
       if (isHtml) {
-        toast.error("Erro Crítico: Resposta inesperada do servidor (HTML).");
+        toast.error("Erro Crítico: Resposta inesperada do servidor (HTML).", {
+          action: {
+            label: "Ajuda",
+            onClick: () => openSupport({
+              sourceModule: "Ocorrências de Ponto",
+              safeCode: "HTML-ERR-CREATE",
+              suggestedCategory: "ERRO_SISTEMA"
+            })
+          }
+        });
         return;
       }
 
@@ -180,18 +196,19 @@ function OcorrenciasPontoPage() {
         return;
       }
 
-      if (typeof message === 'string' && message.includes('"code"') && message.includes('"path"')) {
-         try {
-           const parsed = JSON.parse(message);
-           if (Array.isArray(parsed) && parsed[0]?.message) {
-             toast.error(`Falha de validação: ${parsed[0].message}`);
-             return;
-           }
-         } catch(e) {}
-      }
-      
-      toast.error(message.replace(/TECHNICAL_ERROR:|CONFLICT:|INVALID_PAYLOAD:|ALREADY_COMMITTED:/g, "").trim() || "Erro ao criar ocorrência.");
+      toast.error("Erro ao criar ocorrência.", {
+        description: message.replace(/TECHNICAL_ERROR:|CONFLICT:|INVALID_PAYLOAD:|ALREADY_COMMITTED:/g, "").trim(),
+        action: errData.code === "TECHNICAL_ERROR" || errData.code === "UNKNOWN" ? {
+          label: "Ajuda",
+          onClick: () => openSupport({
+            sourceModule: "Ocorrências de Ponto",
+            safeCode: errData.correlationId || "SAFE-ERR-CREATE",
+            suggestedCategory: "ERRO_SISTEMA"
+          })
+        } : undefined
+      });
     },
+
   });
 
   const processMutation = useMutation({
@@ -204,14 +221,39 @@ function OcorrenciasPontoPage() {
       toast.success("Ocorrência processada com sucesso!");
     },
     onError: (error: any) => {
+      const errData = parseRbacError(error);
       const message = error.message || "";
       const isHtml = typeof message === 'string' && (message.trim().startsWith('<!DOCTYPE') || message.trim().startsWith('<html'));
+      
       if (isHtml) {
-        toast.error("Erro Crítico: Resposta inesperada do servidor (HTML).");
+        toast.error("Erro Crítico: Resposta inesperada do servidor (HTML).", {
+          action: {
+            label: "Ajuda",
+            onClick: () => openSupport({
+              sourceModule: "Ocorrências de Ponto",
+              safeCode: "HTML-ERR-PROC",
+              suggestedCategory: "ERRO_SISTEMA"
+            })
+          }
+        });
         return;
       }
-      toast.error(`Erro ao processar: ${message.replace(/TECHNICAL_ERROR:|CONFLICT:|INVALID_PAYLOAD:/g, "").trim()}`);
+
+      toast.error("Não foi possível processar a ocorrência.", {
+        description: message.replace(/TECHNICAL_ERROR:|CONFLICT:|INVALID_PAYLOAD:/g, "").trim(),
+        action: errData.code === "TECHNICAL_ERROR" || errData.code === "UNKNOWN" ? {
+          label: "Ajuda",
+          onClick: () => openSupport({
+            sourceModule: "Ocorrências de Ponto",
+            entityType: "ocorrencia_ponto",
+            entityId: selectedOcorrencia?.id,
+            safeCode: errData.correlationId || "SAFE-ERR-PROC",
+            suggestedCategory: "ERRO_SISTEMA"
+          })
+        } : undefined
+      });
     },
+
   });
 
   const handleViewEvidence = async (pathOrUrl: string) => {
@@ -344,7 +386,8 @@ function OcorrenciasPontoPage() {
   const numColaboradores = colaboradores?.length || 0;
 
   return (
-    <AppShell title="Ocorrências de Ponto AMBEV">
+    <AppShell title="Ocorrências de Ponto AMBEV" actions={<SupportHelpButton context={{ sourceModule: "Ocorrências de Ponto" }} />}>
+
       <div className="space-y-6">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>

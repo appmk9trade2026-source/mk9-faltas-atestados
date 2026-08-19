@@ -1,10 +1,13 @@
 import { createLazyFileRoute } from '@tanstack/react-router';
-import { ShieldCheck, ClipboardCheck, Database, Lock, AlertCircle, CheckCircle2, Search, Activity, FileJson, Info, RefreshCw, AlertTriangle, ChevronRight, ExternalLink } from 'lucide-react';
+import { ShieldCheck, ClipboardCheck, Database, Lock, AlertCircle, CheckCircle2, Search, Activity, FileJson, Info, RefreshCw, AlertTriangle, ChevronRight, ExternalLink, MessageSquare } from 'lucide-react';
+import { SupportHelpButton } from "@/components/support/support-help-button";
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AppShell } from "@/components/layout/app-shell";
+
 import { useQuery } from "@tanstack/react-query";
 import { getStabilityResults } from "@/lib/stability-audit.functions";
 import { useState } from "react";
@@ -413,6 +416,8 @@ function StabilizationAuditPage() {
         </Drawer>
       </div>
     </AppShell>
+
+
   );
 }
 
