@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { AppShell } from "@/components/layout/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
-import { getSupportStats } from "@/lib/support.functions";
+import { getSupportStats, getTicketsByModule } from "@/lib/support.functions";
 import { 
   BarChart3, 
   Clock, 
@@ -30,11 +30,17 @@ export const Route = createFileRoute('/_authenticated/suporte/dashboard')({
 });
 
 function SupportDashboardPage() {
-  const { data: stats, isLoading } = useQuery({
+  const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['support-dashboard-stats'],
     queryFn: () => getSupportStats(),
     refetchInterval: 30000,
   });
+
+  const { data: moduleData = [], isLoading: moduleLoading } = useQuery({
+    queryKey: ['support-module-stats'],
+    queryFn: () => getTicketsByModule(),
+  });
+
 
   const kpis = [
     { 
@@ -144,13 +150,14 @@ function SupportDashboardPage() {
             </CardHeader>
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={[
-                  { name: 'Nova Ausência', value: 12 },
-                  { name: 'Retificação', value: 5 },
-                  { name: 'Ocorrência', value: 8 },
-                  { name: 'Processamento', value: 3 },
-                  { name: 'Permissão', value: 2 },
+                <BarChart data={moduleData.length > 0 ? moduleData : [
+                  { name: 'Nova Ausência', value: 0 },
+                  { name: 'Retificação', value: 0 },
+                  { name: 'Ocorrência', value: 0 },
+                  { name: 'Processamento', value: 0 },
+                  { name: 'Permissão', value: 0 },
                 ]}>
+
                   <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.1} />
                   <XAxis dataKey="name" fontSize={10} axisLine={false} tickLine={false} />
                   <YAxis fontSize={10} axisLine={false} tickLine={false} />

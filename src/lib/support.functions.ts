@@ -22,16 +22,21 @@ export const getSupportStats = createServerFn({ method: "GET" })
 
 export const getTicketsByModule = createServerFn({ method: "GET" })
   .handler(async () => {
-    // Busca chamados e agrupa por módulo
     const { data, error } = await supabase
       .from('support_tickets')
       .select('category, status');
       
     if (error) throw new Error(error.message);
     
-    // Agrupamento básico client-side para esta fase, pode ser movido para RPC futuramente
-    return data;
+    const counts = data.reduce((acc: Record<string, number>, curr) => {
+      const module = curr.category || 'Outros';
+      acc[module] = (acc[module] || 0) + 1;
+      return acc;
+    }, {});
+
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
   });
+
 
 export const resolveTicket = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({
@@ -69,6 +74,39 @@ export const resolveTicket = createServerFn({ method: "POST" })
 
     return ticket;
   });
+
+export const reopenTicket = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({
+    ticketId: z.string().uuid(),
+  }).parse(data))
+  .handler(async ({ data }) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const { data: ticket, error } = await supabase
+      .from('support_tickets')
+      .update({
+        status: 'ABERTO',
+        resolved_at: null,
+        reopened_at: new Date().toISOString(),
+        sla_status: 'NO_PRAZO',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', data.ticketId)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    await supabase.from('support_ticket_events').insert({
+      ticket_id: data.ticketId,
+      actor_user_id: user.id,
+      event_type: 'TICKET_REOPENED'
+    });
+
+    return ticket;
+  });
+
 
 
 export const createTicket = createServerFn({ method: "POST" })

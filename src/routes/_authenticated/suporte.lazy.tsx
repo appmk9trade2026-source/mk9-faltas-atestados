@@ -22,6 +22,9 @@ import { getTickets } from "@/lib/support.functions";
 import { NovoChamadoDialog } from "@/components/support/novo-chamado-dialog";
 import { ResolucaoChamadoDialog } from "@/components/support/resolucao-chamado-dialog";
 import { useNavigate } from '@tanstack/react-router';
+import { useSupport } from "@/components/support/support-provider";
+import { reopenTicket } from "@/lib/support.functions";
+
 
 
 
@@ -237,7 +240,27 @@ function SupportPage() {
                             Resolver
                           </Button>
                         )}
+                        {ticket.status === 'RESOLVIDO' && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-xs font-bold"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              try {
+                                await reopenTicket({ data: { ticketId: ticket.id } });
+                                toast.success("Chamado reaberto.");
+                                queryClient.invalidateQueries({ queryKey: ["support-tickets"] });
+                              } catch (err: any) {
+                                toast.error(err.message);
+                              }
+                            }}
+                          >
+                            Reabrir
+                          </Button>
+                        )}
                       </div>
+
 
                     </div>
                   </CardContent>
