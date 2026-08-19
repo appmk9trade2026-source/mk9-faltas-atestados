@@ -324,9 +324,9 @@ function StabilizationAuditPage() {
               <div className="border-t border-slate-900 pt-3 flex flex-col gap-1">
                 <p className="text-emerald-500 font-bold uppercase tracking-tighter flex items-center gap-2">
                   <CheckCircle2 className="w-3 h-3" />
-                  ESTADO FINAL: OCORRÊNCIA HOMOLOGADA COM GAPS
+                  ESTADO FINAL: EM HOMOLOGAÇÃO OPERACIONAL RH
                 </p>
-                <p className="text-slate-400 italic font-bold">DECISÃO: PRONTO PARA OPERAÇÃO NORMAL = SIM | ETAPA 3 = AUTORIZADA</p>
+                <p className="text-slate-400 italic font-bold">DECISÃO: PRONTO PARA OPERAÇÃO NORMAL = PENDING | ETAPA 4 = AGUARDANDO ETAPA 3</p>
               </div>
 
               <div className="pt-2 text-slate-600 text-[9px] border-t border-slate-900 flex justify-between">
