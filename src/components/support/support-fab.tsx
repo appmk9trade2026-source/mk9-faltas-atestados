@@ -104,6 +104,7 @@ export function SupportFAB() {
         unreadCount > 0 && "animate-pulse"
       )}
       aria-label="Suporte MK9"
+      onClick={() => isMobile && setIsOpen(true)}
     >
       <div className="relative pointer-events-none flex items-center gap-2">
         <MessageSquare className={cn("w-5 h-5", isMobile && "w-6 h-6")} />
@@ -133,7 +134,7 @@ export function SupportFAB() {
   if (isMobile) {
     return (
       <Drawer open={isOpen} onOpenChange={setIsOpen}>
-        <DrawerTrigger asChild>{trigger}</DrawerTrigger>
+        {trigger}
         <DrawerContent className="p-4 pb-8">
           <DrawerHeader>
             <DrawerTitle className="flex items-center gap-2 text-primary font-black uppercase tracking-tighter">
@@ -166,7 +167,9 @@ export function SupportFAB() {
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>{desktopTrigger}</PopoverTrigger>
+      <PopoverTrigger asChild>
+        {desktopTrigger}
+      </PopoverTrigger>
       <PopoverContent className="w-64 p-2 shadow-2xl border-primary/20 z-[70]" align="end" sideOffset={16}>
         <div className="grid gap-1">
           <div className="px-3 py-2 border-b mb-1 flex items-center justify-between">
