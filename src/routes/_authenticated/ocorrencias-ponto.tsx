@@ -162,7 +162,11 @@ function OcorrenciasPontoPage() {
       toast.success("Ocorrência protocolada com sucesso!");
     },
     onError: (error: any) => {
-      toast.error(`Erro ao criar ocorrência: ${error.message}`);
+      const isHtml = typeof error.message === 'string' && error.message.trim().startsWith('<!DOCTYPE');
+      const friendlyMessage = isHtml 
+        ? "Erro Crítico: Resposta inesperada do servidor (HTML). Tente novamente." 
+        : (error.message || "Erro desconhecido ao protocolar ocorrência.");
+      toast.error(friendlyMessage);
     },
   });
 
