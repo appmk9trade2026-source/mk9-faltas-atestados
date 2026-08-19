@@ -98,24 +98,21 @@ export function SupportFAB() {
   const trigger = (
     <Button
       size="default"
-      asChild={false}
       className={cn(
-        "fixed bottom-6 right-6 z-50 shadow-2xl rounded-full transition-all duration-300 hover:scale-105 active:scale-95 bg-primary text-primary-foreground h-12 px-4 flex items-center gap-2 overflow-visible hover:ring-4 hover:ring-primary/10",
+        "fixed bottom-6 right-6 z-[60] shadow-2xl rounded-full transition-all duration-300 hover:scale-105 active:scale-95 bg-primary text-primary-foreground h-12 px-4 flex items-center gap-2 overflow-visible hover:ring-4 hover:ring-primary/10",
         isMobile && "h-12 w-12 p-0 justify-center",
         unreadCount > 0 && "animate-pulse"
       )}
       aria-label="Suporte MK9"
     >
-      <div>
-        <div className="relative pointer-events-none">
-          <MessageSquare className={cn("w-5 h-5", isMobile && "w-6 h-6")} />
-          {unreadCount > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[9px] font-black min-w-[18px] h-4.5 flex items-center justify-center rounded-full border-2 border-white shadow-lg z-10 px-1">
-              {unreadCount > 9 ? "+9" : unreadCount}
-            </span>
-          )}
-        </div>
-        {!isMobile && <span className="font-bold tracking-tight pointer-events-none">Suporte</span>}
+      <div className="relative pointer-events-none flex items-center gap-2">
+        <MessageSquare className={cn("w-5 h-5", isMobile && "w-6 h-6")} />
+        {unreadCount > 0 && (
+          <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[9px] font-black min-w-[18px] h-4.5 flex items-center justify-center rounded-full border-2 border-white shadow-lg z-10 px-1">
+            {unreadCount > 9 ? "+9" : unreadCount}
+          </span>
+        )}
+        {!isMobile && <span className="font-bold tracking-tight">Suporte</span>}
       </div>
     </Button>
   );
@@ -126,7 +123,7 @@ export function SupportFAB() {
         <TooltipTrigger asChild>
           {trigger}
         </TooltipTrigger>
-        <TooltipContent side="left" className="font-bold text-xs bg-primary text-white border-primary">
+        <TooltipContent side="left" className="font-bold text-xs bg-primary text-white border-primary z-[70]">
           Suporte MK9
         </TooltipContent>
       </Tooltip>
@@ -170,7 +167,7 @@ export function SupportFAB() {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>{desktopTrigger}</PopoverTrigger>
-      <PopoverContent className="w-64 p-2 shadow-2xl border-primary/20" align="end" sideOffset={16}>
+      <PopoverContent className="w-64 p-2 shadow-2xl border-primary/20 z-[70]" align="end" sideOffset={16}>
         <div className="grid gap-1">
           <div className="px-3 py-2 border-b mb-1 flex items-center justify-between">
              <span className="text-[10px] font-black uppercase tracking-widest text-primary">Suporte Interno</span>
