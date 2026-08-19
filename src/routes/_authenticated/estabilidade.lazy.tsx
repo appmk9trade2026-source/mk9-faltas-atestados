@@ -126,32 +126,35 @@ function StabilizationAuditPage() {
             <div className="flex items-center gap-3">
               <ShieldCheck className="w-10 h-10 text-primary" />
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">CRM MK9 — PROGRAMA DE ESTABILIZAÇÃO</h1>
-                <p className="text-sm text-muted-foreground font-semibold uppercase tracking-[0.2em]">
-                  RODADA 2 — ETAPA 1: BASELINE TÉCNICO
+                <h1 className="text-3xl font-bold tracking-tight uppercase">CRM MK9 — PROGRAMA DE ESTABILIZAÇÃO</h1>
+                <p className="text-sm text-muted-foreground font-bold uppercase tracking-wider">
+                  RODADA 2 — ETAPA 2: HOMOLOGAÇÃO OPERACIONAL — SUPERVISOR / OCORRÊNCIA DE PONTO
                 </p>
                 <div className="flex gap-2 mt-1">
                   <Badge variant="secondary" className="font-mono text-[10px]">
-                    BASELINE: RUN-20260819-P0-001-R1
+                    AUDIT RUN: RUN-20260819-P0-002
                   </Badge>
-                  <Badge variant="outline" className="font-mono text-[10px] border-emerald-500/50 text-emerald-600">
-                    STATUS: OPERACIONAL
+                  <Badge variant="outline" className="font-mono text-[10px] border-slate-500/50">
+                    BASELINE CONGELADO: RUN-20260819-P0-001-R1
                   </Badge>
                 </div>
               </div>
             </div>
-            <div className="text-right">
-              <Badge variant="outline" className="font-mono text-[10px]">
-                ROTA: /estabilidade
+            <div className="text-right flex flex-col items-end gap-1">
+              <Badge variant="outline" className="font-mono text-[9px] bg-slate-50 dark:bg-slate-900">
+                RODADA_2_EXECUTION_GATE = READY
+              </Badge>
+              <Badge variant="outline" className="font-mono text-[9px] text-emerald-600 border-emerald-500/30">
+                READY_FOR_SUPERVISOR_TEST = SIM
               </Badge>
             </div>
           </div>
           
-          <Alert className="bg-blue-50/50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-900/50">
-            <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            <AlertTitle className="text-blue-800 dark:text-blue-300 font-bold text-xs uppercase tracking-wider">OBJETIVO OPERACIONAL</AlertTitle>
-            <AlertDescription className="text-blue-700 dark:text-blue-400 text-sm leading-relaxed">
-              Certificar o estado técnico atual (Build, TypeScript, Server Bundle) imediatamente antes dos testes operacionais por Supervisor, RH e Super Admin. Baseline Nova Ausência permanece congelado.
+          <Alert className="bg-slate-50 border-slate-200 dark:bg-slate-900/50 dark:border-slate-800">
+            <Info className="h-4 w-4 text-primary" />
+            <AlertTitle className="text-primary font-bold text-xs uppercase tracking-wider">OBJETIVO DA ETAPA</AlertTitle>
+            <AlertDescription className="text-muted-foreground text-sm leading-relaxed">
+              Homologar o fluxo de Ocorrência de Ponto exatamente pela perspectiva de um Supervisor autorizado, comprovando persistência, upload privado, idempotência, RBAC/RLS e auditoria.
             </AlertDescription>
           </Alert>
         </header>
@@ -280,41 +283,53 @@ function StabilizationAuditPage() {
                 <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
               </div>
-              <span className="text-slate-500 text-[9px] font-bold tracking-widest uppercase">RELATÓRIO FINAL OBRIGATÓRIO — RODADA 2 — ETAPA 1</span>
+              <span className="text-slate-500 text-[9px] font-bold tracking-widest uppercase">RELATÓRIO FINAL OBRIGATÓRIO — RODADA 2 — ETAPA 2</span>
             </div>
-            <CardContent className="p-6 space-y-4 opacity-80 overflow-y-auto max-h-[400px]">
+            <CardContent className="p-6 space-y-4 opacity-80 overflow-y-auto max-h-[500px]">
               <div className="flex justify-between border-b border-slate-900 pb-2">
-                <span className="text-emerald-500 font-bold tracking-tighter">AUDIT RUN: RUN-20260819-P0-002</span>
-                <span className="text-slate-400">STATUS: BASELINE TÉCNICO PASS</span>
+                <span className="text-emerald-500 font-bold tracking-tighter uppercase">RODADA 2 — ETAPA 2: SUPERVISOR / OCORRÊNCIA</span>
+                <span className="text-slate-400">AUDIT RUN: RUN-20260819-P0-002</span>
               </div>
               
-              <div className="space-y-4">
-                <div className="border-l-2 border-emerald-500 pl-3 py-1">
-                  <p className="text-emerald-400 font-bold mb-1 underline tracking-widest">BUILD & TYPESCRIPT</p>
-                  <p>TypeScript (TSC): <span className="text-emerald-500">PASS</span></p>
-                  <p>Build (Vite): <span className="text-emerald-500">PASS</span></p>
-                  <p>Server Bundle: <span className="text-emerald-500">PASS</span></p>
-                  <p>Drift Baseline: <span className="text-slate-300">NONE (Preserved)</span></p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-[9px]">
+                <div className="space-y-2">
+                  <p className="text-slate-400 font-bold border-b border-slate-800 pb-1">MAPEAMENTO</p>
+                  <p>Route: <span className="text-slate-300">[...]</span></p>
+                  <p>Handler: <span className="text-slate-300">[...]</span></p>
+                  <p>Schema: <span className="text-slate-300">[...]</span></p>
+                  <p>Server Function: <span className="text-slate-300">[...]</span></p>
+                  <p>Storage: <span className="text-slate-300">[...]</span></p>
                 </div>
 
-                <div className="border-l-2 border-emerald-500 pl-3 py-1">
-                  <p className="text-emerald-400 font-bold mb-1 underline tracking-widest">NOVA AUSÊNCIA (SMOKE)</p>
-                  <p>Regressão: <span className="text-emerald-500">PASS</span></p>
-                  <p>Zod/Schema: <span className="text-emerald-500">PASS</span></p>
-                  <p>RBAC: <span className="text-emerald-500">PASS</span></p>
+                <div className="space-y-2">
+                  <p className="text-slate-400 font-bold border-b border-slate-800 pb-1">HAPPY PATH</p>
+                  <p>Form Validation: <span className="text-slate-500 italic">WAITING</span></p>
+                  <p>Server/DB: <span className="text-slate-500 italic">WAITING</span></p>
+                  <p>UI Confirmation: <span className="text-slate-500 italic">WAITING</span></p>
                 </div>
 
-                <div className="border-l-2 border-blue-500 pl-3 py-1 bg-blue-950/10">
-                  <p className="text-blue-400 font-bold mb-1 underline tracking-widest">PRONTIDÃO OPERACIONAL</p>
-                  <p>Ocorrência Pre-check: <span className="text-emerald-500">READY</span></p>
-                  <p>Processamento Pre-check: <span className="text-emerald-500">READY</span></p>
-                  <p>RBAC Admin Matrix: <span className="text-emerald-500">PASS</span></p>
+                <div className="space-y-2">
+                  <p className="text-slate-400 font-bold border-b border-slate-800 pb-1">RESILIÊNCIA & ERROS</p>
+                  <p>Double-click Guard: <span className="text-slate-500 italic">WAITING</span></p>
+                  <p>Idempotency: <span className="text-slate-500 italic">WAITING</span></p>
+                  <p>HTML Guard: <span className="text-slate-500 italic">WAITING</span></p>
+                  <p>Zod Sanitization: <span className="text-slate-500 italic">WAITING</span></p>
                 </div>
 
-                <div className="border-t border-slate-900 pt-3">
-                  <p className="text-emerald-500 font-bold uppercase tracking-tighter">DECISÃO: RODADA_2_EXECUTION_GATE = READY</p>
-                  <p className="text-slate-400 mt-1 italic">PRÓXIMA ETAPA: SIMULAÇÃO SUPERVISOR / OCORRÊNCIA</p>
+                <div className="space-y-2">
+                  <p className="text-slate-400 font-bold border-b border-slate-800 pb-1">SEGURANÇA (RBAC/RLS)</p>
+                  <p>Supervisor Scope: <span className="text-slate-500 italic">WAITING</span></p>
+                  <p>Out-of-Scope: <span className="text-slate-500 italic">WAITING</span></p>
+                  <p>Audit Event: <span className="text-slate-500 italic">WAITING</span></p>
                 </div>
+              </div>
+
+              <div className="border-t border-slate-900 pt-3 flex flex-col gap-1">
+                <p className="text-amber-500 font-bold uppercase tracking-tighter flex items-center gap-2">
+                  <RefreshCw className="w-3 h-3 animate-spin-slow" />
+                  ESTADO ATUAL: EM HOMOLOGAÇÃO OPERACIONAL
+                </p>
+                <p className="text-slate-400 italic">DECISÃO FINAL: AGUARDANDO EVIDÊNCIAS DA ETAPA 2</p>
               </div>
 
               <div className="pt-2 text-slate-600 text-[9px] border-t border-slate-900 flex justify-between">
