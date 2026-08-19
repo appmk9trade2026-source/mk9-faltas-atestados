@@ -5,3 +5,5 @@ export const Route = createFileRoute('/')({
     throw redirect({ to: '/dashboard', replace: true });
   },
 });
+
+
