@@ -107,7 +107,7 @@ function SupportPage() {
             <Plus className="w-4 h-4" />
             Novo Chamado
           </Button>
-          <Button variant="outline" className="w-full md:w-auto gap-2" onClick={() => navigate({ to: '/_authenticated/suporte/dashboard' })}>
+          <Button variant="outline" className="w-full md:w-auto gap-2" onClick={() => navigate({ to: '/suporte/dashboard' })}>
             <BarChart3 className="w-4 h-4" />
             Dashboard
           </Button>
