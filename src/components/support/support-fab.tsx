@@ -100,13 +100,12 @@ export function SupportFAB() {
     return (
       <Drawer open={isOpen} onOpenChange={setIsOpen}>
         <DrawerTrigger asChild>
-          <div
+          <button
             className={cn(
               "fixed bottom-6 right-6 z-[60] shadow-2xl rounded-full transition-all duration-300 hover:scale-105 active:scale-95 bg-[#006BA6] text-white h-12 w-12 flex items-center justify-center overflow-visible hover:ring-4 hover:ring-[#006BA6]/10 border-none cursor-pointer",
               unreadCount > 0 && "animate-pulse"
             )}
             aria-label="Suporte MK9"
-            onClick={() => setIsOpen(true)}
           >
             <div className="relative pointer-events-none flex items-center justify-center">
               <MessageSquare className="w-6 h-6" />
@@ -116,7 +115,7 @@ export function SupportFAB() {
                 </span>
               )}
             </div>
-          </div>
+          </button>
         </DrawerTrigger>
         <DrawerContent className="p-4 pb-8">
           <DrawerHeader>
@@ -148,33 +147,38 @@ export function SupportFAB() {
     );
   }
 
-  const trigger = (
-    <div
-      className={cn(
-        "fixed bottom-6 right-6 z-[60] shadow-2xl rounded-full transition-all duration-300 hover:scale-105 active:scale-95 bg-[#006BA6] text-white h-12 px-4 flex items-center gap-2 overflow-visible hover:ring-4 hover:ring-[#006BA6]/10 border-none cursor-pointer",
-        unreadCount > 0 && "animate-pulse"
-      )}
-      aria-label="Suporte MK9"
-      onClick={() => setIsOpen(true)}
-    >
-      <div className="relative pointer-events-none flex items-center gap-2">
-        <MessageSquare className="w-5 h-5" />
-        {unreadCount > 0 && (
-          <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[9px] font-black min-w-[18px] h-4.5 flex items-center justify-center rounded-full border-2 border-white shadow-lg z-10 px-1">
-            {unreadCount > 9 ? "+9" : unreadCount}
-          </span>
-        )}
-        <span className="font-bold tracking-tight">Suporte</span>
-      </div>
-    </div>
-  );
-
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        {trigger}
-      </PopoverTrigger>
-      <PopoverContent className="w-64 p-2 shadow-2xl border-primary/20 z-[70]" align="end" sideOffset={16}>
+    <div className="fixed bottom-6 right-6 z-[60]">
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <TooltipProvider>
+          <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
+              <PopoverTrigger asChild>
+                <button
+                  className={cn(
+                    "shadow-2xl rounded-full transition-all duration-300 hover:scale-105 active:scale-95 bg-[#006BA6] text-white h-12 px-4 flex items-center gap-2 overflow-visible hover:ring-4 hover:ring-[#006BA6]/10 border-none cursor-pointer",
+                    unreadCount > 0 && "animate-pulse"
+                  )}
+                  aria-label="Suporte MK9"
+                >
+                  <div className="relative pointer-events-none flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[9px] font-black min-w-[18px] h-4.5 flex items-center justify-center rounded-full border-2 border-white shadow-lg z-10 px-1">
+                        {unreadCount > 9 ? "+9" : unreadCount}
+                      </span>
+                    )}
+                    <span className="font-bold tracking-tight">Suporte</span>
+                  </div>
+                </button>
+              </PopoverTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="left" className="font-bold text-xs bg-primary text-white border-primary z-[70]">
+              Suporte MK9
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <PopoverContent className="w-64 p-2 shadow-2xl border-primary/20 z-[70]" align="end" sideOffset={16}>
         <div className="grid gap-1">
           <div className="px-3 py-2 border-b mb-1 flex items-center justify-between">
              <span className="text-[10px] font-black uppercase tracking-widest text-primary">Suporte Interno</span>
@@ -196,6 +200,7 @@ export function SupportFAB() {
           ))}
         </div>
       </PopoverContent>
-    </Popover>
+      </Popover>
+    </div>
   );
 }
