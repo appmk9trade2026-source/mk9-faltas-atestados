@@ -24,7 +24,7 @@ export const ocorrenciaPontoSchema = z.object({
   data_ocorrencia: iso,
   motivo: z.string().trim().min(5).max(200),
   justificativa: z.string().trim().min(10).max(2000),
-  arquivo_url: z.string().trim().url("URL de anexo inválida"),
+  arquivo_url: z.string().trim().min(1, "Evidência é obrigatória"),
   arquivo_nome: z.string().trim().max(255).optional(),
   ausencia_id: uuid.nullable().optional(),
 }).superRefine((data, ctx) => {
