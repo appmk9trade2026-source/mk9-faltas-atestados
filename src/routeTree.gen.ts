@@ -266,7 +266,11 @@ const AuthenticatedAuditoriaEstabilidadeRoute =
     id: '/auditoria-estabilidade',
     path: '/auditoria-estabilidade',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/auditoria-estabilidade.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedAuditoriaRoute = AuthenticatedAuditoriaRouteImport.update({
   id: '/auditoria',
   path: '/auditoria',
