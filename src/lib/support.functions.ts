@@ -1,0 +1,163 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/integrations/supabase/types";
+
+// Tipos baseados no banco
+export type SupportPriority = Database['public']['Enums']['support_priority'];
+export type SupportStatus = Database['public']['Enums']['support_status'];
+export type SupportMessageType = Database['public']['Enums']['support_message_type'];
+
+export const createTicket = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({
+    category: z.string(),
+    priority: z.enum(['BAIXA', 'NORMAL', 'ALTA', 'URGENTE'] as const),
+    subject: z.string().min(5),
+    description: z.string().min(10),
+    source_route: z.string().optional(),
+    related_entity_type: z.string().optional(),
+    related_entity_id: z.string().uuid().optional(),
+    related_protocol: z.string().optional(),
+    safe_code: z.string().optional(),
+  }).parse(data))
+  .handler(async ({ data, context }) => {
+    // Pegar o usuário logado via contexto Supabase
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    // Buscar o perfil/role do usuário (assumindo a existência de user_roles ou similar)
+    // Para simplificar nesta fase, vamos tentar inferir ou usar metadados
+    const { data: roles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!roles) throw new Error("User has no role assigned");
+
+    const { data: ticket, error } = await supabase
+      .from('support_tickets')
+      .insert({
+        ...data,
+        requester_user_id: user.id,
+        requester_role: roles.role,
+        status: 'ABERTO'
+      })
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    // Registrar evento inicial
+    await supabase.from('support_ticket_events').insert({
+      ticket_id: ticket.id,
+      actor_user_id: user.id,
+      event_type: 'TICKET_CREATED'
+    });
+
+    return ticket;
+  });
+
+export const getTickets = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .select(`
+        *,
+        requester:requester_user_id(id, email),
+        assigned:assigned_user_id(id, email)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error(error.message);
+    return data;
+  });
+
+export const getTicketMessages = createServerFn({ method: "GET" })
+  .inputValidator((data) => z.object({ ticketId: z.string().uuid() }).parse(data))
+  .handler(async ({ data }) => {
+    const { data: messages, error } = await supabase
+      .from('support_messages')
+      .select('*')
+      .eq('ticket_id', data.ticketId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw new Error(error.message);
+    return messages;
+  });
+
+export const sendMessage = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({
+    ticketId: z.string().uuid(),
+    message: z.string().min(1),
+    messageType: z.enum(['TEXTO', 'SISTEMA', 'ANEXO'] as const).default('TEXTO')
+  }).parse(data))
+  .handler(async ({ data }) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const { data: msg, error } = await supabase
+      .from('support_messages')
+      .insert({
+        ticket_id: data.ticketId,
+        sender_user_id: user.id,
+        message: data.message,
+        message_type: data.messageType
+      })
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    // Atualizar timestamp do ticket
+    await supabase
+      .from('support_tickets')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', data.ticketId);
+
+    return msg;
+  });
+
+export const assignTicket = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({
+    ticketId: z.string().uuid()
+  }).parse(data))
+  .handler(async ({ data }) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const { data: roles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!roles) throw new Error("User has no role assigned");
+
+    // Verificar concorrência (somente um assume)
+    const { data: ticket, error } = await supabase
+      .from('support_tickets')
+      .update({
+        assigned_user_id: user.id,
+        assigned_role: roles.role,
+        status: 'EM_ATENDIMENTO',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', data.ticketId)
+      .is('assigned_user_id', null)
+      .select()
+      .single();
+
+    if (error || !ticket) {
+      throw new Error("Este chamado já foi assumido por outro atendente.");
+    }
+
+    await supabase.from('support_ticket_events').insert({
+      ticket_id: data.ticketId,
+      actor_user_id: user.id,
+      event_type: 'TICKET_ASSIGNED',
+      new_value: user.id
+    });
+
+    return ticket;
+  });
