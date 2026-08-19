@@ -112,7 +112,7 @@ function SupportDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-black text-primary">
-                {formatTime(stats?.avg_first_response_seconds)}
+                {formatTime(stats?.avg_first_response_seconds ?? null)}
               </div>
               <p className="text-[10px] text-muted-foreground mt-1">
                 Meta: &lt; 4h (Prioridade Normal)
@@ -128,7 +128,7 @@ function SupportDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-black text-primary">
-                {formatTime(stats?.avg_resolution_seconds)}
+                {formatTime(stats?.avg_resolution_seconds ?? null)}
               </div>
               <p className="text-[10px] text-muted-foreground mt-1">
                 Meta: &lt; 24h (Prioridade Normal)
