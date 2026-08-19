@@ -128,14 +128,14 @@ function StabilizationAuditPage() {
               <div>
                 <h1 className="text-3xl font-bold tracking-tight uppercase">CRM MK9 — PROGRAMA DE ESTABILIZAÇÃO</h1>
                 <p className="text-sm text-muted-foreground font-bold uppercase tracking-wider">
-                  RODADA 2 — ETAPA 2B: EXECUTAR AGORA A BATERIA SUP-OCC-001 → SUP-OCC-015
+                  RODADA 2 — ETAPA 3: HOMOLOGAÇÃO OPERACIONAL — RH / PROCESSAMENTO INTERNO
                 </p>
                 <div className="flex gap-2 mt-1">
                   <Badge variant="secondary" className="font-mono text-[10px]">
                     AUDIT RUN: RUN-20260819-P0-002
                   </Badge>
                   <Badge variant="outline" className="font-mono text-[10px] border-slate-500/50">
-                    ESTADO ATUAL: AGUARDANDO EVIDÊNCIAS
+                    ESTADO ATUAL: ETAPA 3 AUTORIZADA — AGUARDANDO EVIDÊNCIAS RH
                   </Badge>
                 </div>
               </div>
@@ -145,16 +145,16 @@ function StabilizationAuditPage() {
                 RODADA_2_EXECUTION_GATE = READY
               </Badge>
               <Badge variant="outline" className="font-mono text-[9px] text-emerald-600 border-emerald-500/30">
-                READY_FOR_SUPERVISOR_TEST = SIM
+                READY_FOR_RH_TEST = SIM
               </Badge>
             </div>
           </div>
           
           <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-900/50">
             <ClipboardCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            <AlertTitle className="text-blue-800 dark:text-blue-300 font-bold text-xs uppercase tracking-wider">OBJETIVO DESTA EXECUÇÃO</AlertTitle>
+            <AlertTitle className="text-blue-800 dark:text-blue-300 font-bold text-xs uppercase tracking-wider">OBJETIVO: HOMOLOGAÇÃO RH / PROCESSAMENTO</AlertTitle>
             <AlertDescription className="text-blue-700 dark:text-blue-400 text-sm leading-relaxed">
-              EXECUTAR efetivamente todos os testes (SUP-OCC-001 → 015) e coletar evidência técnica verificável. Código existente NÃO é evidência.
+              Executar a homologação operacional REAL do Processamento Interno (RH-PROC-001 → 016). Uma ação lógica = no máximo uma mutação.
             </AlertDescription>
           </Alert>
         </header>
@@ -283,29 +283,29 @@ function StabilizationAuditPage() {
                 <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
               </div>
-              <span className="text-slate-500 text-[9px] font-bold tracking-widest uppercase">RELATÓRIO FINAL OBRIGATÓRIO — RODADA 2 — ETAPA 2B — EXECUÇÃO FORENSE SUPERVISOR</span>
+              <span className="text-slate-500 text-[9px] font-bold tracking-widest uppercase">RELATÓRIO FINAL OBRIGATÓRIO — RODADA 2 — ETAPA 3 — RH / PROCESSAMENTO INTERNO</span>
             </div>
             <CardContent className="p-6 space-y-4 opacity-80 overflow-y-auto max-h-[500px]">
               <div className="flex justify-between border-b border-slate-900 pb-2">
-                <span className="text-emerald-500 font-bold tracking-tighter uppercase">RODADA 2 — ETAPA 2B: EXECUÇÃO FORENSE</span>
+                <span className="text-emerald-500 font-bold tracking-tighter uppercase">RODADA 2 — ETAPA 3: RH / PROCESSAMENTO</span>
                 <span className="text-slate-400">AUDIT RUN: RUN-20260819-P0-002</span>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-[9px]">
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-bold border-b border-slate-800 pb-1">RESULTADOS SUP-OCC</p>
-                  <p>SUP-OCC-001 (Happy Path): <span className="text-emerald-500 font-bold">PASS</span></p>
-                  <p>SUP-OCC-002 (JPG Storage): <span className="text-emerald-500 font-bold">PASS</span></p>
-                  <p>SUP-OCC-005 (Double Click): <span className="text-emerald-500 font-bold">PASS</span></p>
-                  <p>SUP-OCC-007 (Lost Response): <span className="text-amber-500 font-bold">GAP (P2)</span></p>
-                  <p>SUP-OCC-010 (Zod Server): <span className="text-emerald-500 font-bold">PASS</span></p>
+                  <p className="text-slate-400 font-bold border-b border-slate-800 pb-1">RESULTADOS RH-PROC</p>
+                  <p>RH-PROC-001 (Happy Path): <span className="text-slate-500">NOT_TESTED</span></p>
+                  <p>RH-PROC-002 (Concurrency Claim): <span className="text-slate-500">NOT_TESTED</span></p>
+                  <p>RH-PROC-006 (Double Click): <span className="text-slate-500">NOT_TESTED</span></p>
+                  <p>RH-PROC-007 (Lost Response): <span className="text-slate-500">NOT_TESTED</span></p>
+                  <p>RH-PROC-011 (Supervisor Block): <span className="text-slate-500">NOT_TESTED</span></p>
                 </div>
 
                 <div className="space-y-2">
                   <p className="text-slate-400 font-bold border-b border-slate-800 pb-1">CONTABILIDADE FORENSE</p>
-                  <p>Database Records: <span className="text-slate-300 font-mono">1 (Single Commit)</span></p>
-                  <p>Orphan Objects: <span className="text-emerald-500 font-mono">0</span></p>
-                  <p>Audit Events: <span className="text-slate-300 font-mono">OK (Correlation Linked)</span></p>
+                  <p>Winner Count: <span className="text-slate-500 font-mono">WAITING (Target: 1)</span></p>
+                  <p>Duplicate Mutations: <span className="text-slate-500 font-mono">0</span></p>
+                  <p>Audit Trail: <span className="text-slate-500 font-mono">PENDING CLAIM CHAIN</span></p>
                 </div>
 
                 <div className="space-y-2">
@@ -324,9 +324,9 @@ function StabilizationAuditPage() {
               <div className="border-t border-slate-900 pt-3 flex flex-col gap-1">
                 <p className="text-emerald-500 font-bold uppercase tracking-tighter flex items-center gap-2">
                   <CheckCircle2 className="w-3 h-3" />
-                  ESTADO FINAL: OCORRÊNCIA HOMOLOGADA COM GAPS
+                  ESTADO FINAL: EM HOMOLOGAÇÃO OPERACIONAL RH
                 </p>
-                <p className="text-slate-400 italic font-bold">DECISÃO: PRONTO PARA OPERAÇÃO NORMAL = SIM | ETAPA 3 = AUTORIZADA</p>
+                <p className="text-slate-400 italic font-bold">DECISÃO: PRONTO PARA OPERAÇÃO NORMAL = PENDING | ETAPA 4 = AGUARDANDO ETAPA 3</p>
               </div>
 
               <div className="pt-2 text-slate-600 text-[9px] border-t border-slate-900 flex justify-between">
