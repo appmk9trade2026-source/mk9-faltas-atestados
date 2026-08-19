@@ -110,6 +110,7 @@ export function RetificarAusenciaDialog({
   const [cid, setCid] = useState("");
   const [horarioInicio, setHorarioInicio] = useState("");
   const [horarioFim, setHorarioFim] = useState("");
+  const [ultimoErroTrace, setUltimoErroTrace] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [confirmando, setConfirmando] = useState(false);
   const [agora, setAgora] = useState(() => new Date());
@@ -127,6 +128,7 @@ export function RetificarAusenciaDialog({
     setHorarioFim(ausencia.horario_fim ?? "");
     setFile(null);
     setConfirmando(false);
+    setUltimoErroTrace(null);
   }, [open, ausencia]);
 
   useEffect(() => {
@@ -248,8 +250,12 @@ export function RetificarAusenciaDialog({
       onOpenChange(false);
     },
     onError: (err: unknown) => {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      const traceId = crypto.randomUUID().split("-")[0].toUpperCase();
+      setUltimoErroTrace(traceId);
+      
       toast.error("Não foi possível retificar", {
-        description: err instanceof Error ? err.message : String(err),
+        description: `Erro: ${errorMsg} (Safe Code: ${traceId})`,
       });
       setConfirmando(false);
     },
