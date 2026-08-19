@@ -312,7 +312,11 @@ const AuthenticatedSuporteIncidentesRoute =
     id: '/incidentes',
     path: '/incidentes',
     getParentRoute: () => AuthenticatedSuporteRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/suporte.incidentes.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedSuporteDashboardRoute =
   AuthenticatedSuporteDashboardRouteImport.update({
     id: '/dashboard',

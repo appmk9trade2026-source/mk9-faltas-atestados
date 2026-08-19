@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createLazyFileRoute } from '@tanstack/react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useServerFn } from '@tanstack/react-start';
 import { 
@@ -46,7 +46,7 @@ import {
 } from "@/components/ui/select";
 import { useState } from 'react';
 
-export const Route = createFileRoute('/_authenticated/suporte/incidentes')({
+export const Route = createLazyFileRoute('/_authenticated/suporte/incidentes')({
   component: IncidentesDashboard,
 });
 
