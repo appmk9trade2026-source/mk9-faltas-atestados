@@ -283,55 +283,60 @@ function StabilizationAuditPage() {
                 <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
               </div>
-              <span className="text-slate-500 text-[9px] font-bold tracking-widest uppercase">RELATÓRIO FINAL OBRIGATÓRIO — RODADA 2 — ETAPA 3 — RH / PROCESSAMENTO INTERNO</span>
+              <span className="text-slate-500 text-[9px] font-black tracking-widest uppercase">RELATÓRIO FINAL OBRIGATÓRIO — RODADA 2 — ETAPA 3A — EXECUÇÃO FORENSE RH / PROCESSAMENTO</span>
             </div>
-            <CardContent className="p-6 space-y-4 opacity-80 overflow-y-auto max-h-[500px]">
+            <CardContent className="p-6 space-y-4 opacity-90 overflow-y-auto max-h-[600px]">
               <div className="flex justify-between border-b border-slate-900 pb-2">
-                <span className="text-emerald-500 font-bold tracking-tighter uppercase">RODADA 2 — ETAPA 3: RH / PROCESSAMENTO</span>
-                <span className="text-slate-400">AUDIT RUN: RUN-20260819-P0-002</span>
+                <span className="text-emerald-500 font-black tracking-tighter uppercase">RODADA 2 — ETAPA 3A: RH / PROCESSAMENTO</span>
+                <span className="text-slate-400 font-mono">AUDIT RUN: RUN-20260819-P0-002</span>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-[9px]">
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-bold border-b border-slate-800 pb-1">RESULTADOS RH-PROC</p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">TESTES RH-PROC</p>
                   <p>RH-PROC-001 (Happy Path): <span className="text-slate-500">NOT_TESTED</span></p>
-                  <p>RH-PROC-002 (Concurrency Claim): <span className="text-slate-500">NOT_TESTED</span></p>
-                  <p>RH-PROC-006 (Double Click): <span className="text-slate-500">NOT_TESTED</span></p>
-                  <p>RH-PROC-007 (Lost Response): <span className="text-slate-500">NOT_TESTED</span></p>
+                  <p>RH-PROC-002 (Concurrency): <span className="text-slate-500 font-bold text-amber-500">WAITING P0 SCENARIO</span></p>
+                  <p>RH-PROC-004 (Lost Response): <span className="text-slate-500">NOT_TESTED</span></p>
+                  <p>RH-PROC-007 (Retry Claim): <span className="text-slate-500">NOT_TESTED</span></p>
                   <p>RH-PROC-011 (Supervisor Block): <span className="text-slate-500">NOT_TESTED</span></p>
+                  <p>RH-PROC-013 (HTML Guard): <span className="text-slate-500">NOT_TESTED</span></p>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-bold border-b border-slate-800 pb-1">CONTABILIDADE FORENSE</p>
-                  <p>Winner Count: <span className="text-slate-500 font-mono">WAITING (Target: 1)</span></p>
-                  <p>Duplicate Mutations: <span className="text-slate-500 font-mono">0</span></p>
-                  <p>Audit Trail: <span className="text-slate-500 font-mono">PENDING CLAIM CHAIN</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">CONCORRÊNCIA / LOST RESPONSE</p>
+                  <p>Winner Count: <span className="text-slate-600 font-mono">WAITING (Target: 1)</span></p>
+                  <p>Duplicate Claims: <span className="text-slate-600 font-mono">PENDING</span></p>
+                  <p>Final Owner Count: <span className="text-slate-600 font-mono">PENDING</span></p>
+                  <p>Retry Convergence: <span className="text-slate-600 font-mono">PENDING</span></p>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-bold border-b border-slate-800 pb-1">SEGURANÇA</p>
-                  <p>RBAC/RLS Scope: <span className="text-emerald-500 font-bold">PASS</span></p>
-                  <p>PII Leakage: <span className="text-emerald-500 font-bold">NÃO</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">SEGURANÇA & CONSISTÊNCIA</p>
+                  <p>RBAC Server-side: <span className="text-slate-500">PENDING EVIDENCE</span></p>
+                  <p>RLS Scope: <span className="text-slate-500">PENDING EVIDENCE</span></p>
+                  <p>Multiple Owners: <span className="text-slate-600 font-mono">0 (Baseline)</span></p>
+                  <p>Orphan Claims: <span className="text-slate-600 font-mono">0 (Baseline)</span></p>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-bold border-b border-slate-800 pb-1">REGRESSÃO BASELINE</p>
-                  <p>TypeScript / Build: <span className="text-emerald-500 font-bold">PASS</span></p>
-                  <p>Nova Ausência: <span className="text-emerald-500 font-bold">PRESERVED</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">REGRESSÃO & INFRA</p>
+                  <p>TypeScript / Build: <span className="text-emerald-500 font-black">PASS</span></p>
+                  <p>Nova Ausência: <span className="text-emerald-500 font-black">PRESERVED</span></p>
+                  <p>Ocorrência P2: <span className="text-amber-500 font-bold">OPEN-MONITORED</span></p>
                 </div>
               </div>
 
               <div className="border-t border-slate-900 pt-3 flex flex-col gap-1">
-                <p className="text-emerald-500 font-bold uppercase tracking-tighter flex items-center gap-2">
-                  <CheckCircle2 className="w-3 h-3" />
-                  ESTADO FINAL: EM HOMOLOGAÇÃO OPERACIONAL RH
+                <p className="text-emerald-500 font-black uppercase tracking-tighter flex items-center gap-2 text-[10px]">
+                  <Activity className="w-3 h-3" />
+                  ESTADO FINAL: EXECUÇÃO FORENSE EM CURSO
                 </p>
-                <p className="text-slate-400 italic font-bold">DECISÃO: PRONTO PARA OPERAÇÃO NORMAL = PENDING | ETAPA 4 = AGUARDANDO ETAPA 3</p>
+                <p className="text-slate-400 italic font-bold text-[9px]">DECISÃO: PRONTO PARA OPERAÇÃO = NÃO | ETAPA 4 SUPER ADMIN = BLOQUEADA</p>
               </div>
 
-              <div className="pt-2 text-slate-600 text-[9px] border-t border-slate-900 flex justify-between">
+              <div className="pt-2 text-slate-600 text-[9px] border-t border-slate-900 flex justify-between font-bold">
                 <span>AUDITOR: SUPER_ADMIN</span>
-                <span>UTC: {new Date().toISOString()}</span>
+                <span>UTC: 2026-08-19 13:48:13</span>
               </div>
             </CardContent>
           </Card>
