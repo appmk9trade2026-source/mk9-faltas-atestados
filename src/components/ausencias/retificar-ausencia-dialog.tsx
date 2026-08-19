@@ -110,6 +110,7 @@ export function RetificarAusenciaDialog({
   const [cid, setCid] = useState("");
   const [horarioInicio, setHorarioInicio] = useState("");
   const [horarioFim, setHorarioFim] = useState("");
+  const [ultimoErroTrace, setUltimoErroTrace] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [confirmando, setConfirmando] = useState(false);
   const [agora, setAgora] = useState(() => new Date());
@@ -127,6 +128,7 @@ export function RetificarAusenciaDialog({
     setHorarioFim(ausencia.horario_fim ?? "");
     setFile(null);
     setConfirmando(false);
+    setUltimoErroTrace(null);
   }, [open, ausencia]);
 
   useEffect(() => {
@@ -248,8 +250,12 @@ export function RetificarAusenciaDialog({
       onOpenChange(false);
     },
     onError: (err: unknown) => {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      const traceId = crypto.randomUUID().split("-")[0].toUpperCase();
+      setUltimoErroTrace(traceId);
+      
       toast.error("Não foi possível retificar", {
-        description: err instanceof Error ? err.message : String(err),
+        description: `Erro: ${errorMsg} (Safe Code: ${traceId})`,
       });
       setConfirmando(false);
     },
@@ -529,6 +535,11 @@ export function RetificarAusenciaDialog({
                       <Badge variant="outline">{h.tipo_anterior_nome ?? "—"}</Badge>
                       <span className="text-muted-foreground">→</span>
                       <Badge>{h.tipo_novo_nome ?? "—"}</Badge>
+                      {h.horario_inicio_novo && (
+                        <Badge variant="secondary" className="font-mono text-[10px]">
+                          {h.horario_inicio_novo.slice(0, 5)} - {h.horario_fim_novo?.slice(0, 5)}
+                        </Badge>
+                      )}
                       <span className="text-xs text-muted-foreground">
                         {new Date(h.retificado_em).toLocaleString("pt-BR")} · {h.papel_usuario}
                       </span>

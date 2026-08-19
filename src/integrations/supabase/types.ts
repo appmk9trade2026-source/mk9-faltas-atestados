@@ -777,6 +777,10 @@ export type Database = {
           data_inicio_anterior: string | null
           data_inicio_nova: string | null
           empresa_id: string
+          horario_fim_anterior: string | null
+          horario_fim_novo: string | null
+          horario_inicio_anterior: string | null
+          horario_inicio_novo: string | null
           id: string
           motivo_operacional: string
           observacao: string | null
@@ -806,6 +810,10 @@ export type Database = {
           data_inicio_anterior?: string | null
           data_inicio_nova?: string | null
           empresa_id: string
+          horario_fim_anterior?: string | null
+          horario_fim_novo?: string | null
+          horario_inicio_anterior?: string | null
+          horario_inicio_novo?: string | null
           id?: string
           motivo_operacional: string
           observacao?: string | null
@@ -835,6 +843,10 @@ export type Database = {
           data_inicio_anterior?: string | null
           data_inicio_nova?: string | null
           empresa_id?: string
+          horario_fim_anterior?: string | null
+          horario_fim_novo?: string | null
+          horario_inicio_anterior?: string | null
+          horario_inicio_novo?: string | null
           id?: string
           motivo_operacional?: string
           observacao?: string | null
@@ -5916,6 +5928,10 @@ export type Database = {
           data_inicio_anterior: string | null
           data_inicio_nova: string | null
           empresa_id: string
+          horario_fim_anterior: string | null
+          horario_fim_novo: string | null
+          horario_inicio_anterior: string | null
+          horario_inicio_novo: string | null
           id: string
           motivo_operacional: string
           observacao: string | null
