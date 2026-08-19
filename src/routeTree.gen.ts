@@ -48,6 +48,7 @@ import { Route as AuthenticatedAssistenteRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
 import { Route as AuthenticatedAcessosRouteImport } from './routes/_authenticated/acessos'
 import { Route as AuthenticatedComunicacoesIndexRouteImport } from './routes/_authenticated/comunicacoes.index'
+import { Route as AuthenticatedSuporteIncidentesRouteImport } from './routes/_authenticated/suporte.incidentes'
 import { Route as AuthenticatedSuporteDashboardRouteImport } from './routes/_authenticated/suporte.dashboard'
 import { Route as AuthenticatedSuporteConhecimentoRouteImport } from './routes/_authenticated/suporte.conhecimento'
 import { Route as AuthenticatedInteligenciaSupervisoresRouteImport } from './routes/_authenticated/inteligencia.supervisores'
@@ -305,6 +306,12 @@ const AuthenticatedComunicacoesIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedComunicacoesRoute,
+  } as any)
+const AuthenticatedSuporteIncidentesRoute =
+  AuthenticatedSuporteIncidentesRouteImport.update({
+    id: '/incidentes',
+    path: '/incidentes',
+    getParentRoute: () => AuthenticatedSuporteRoute,
   } as any)
 const AuthenticatedSuporteDashboardRoute =
   AuthenticatedSuporteDashboardRouteImport.update({
@@ -624,6 +631,7 @@ export interface FileRoutesByFullPath {
   '/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
   '/suporte/conhecimento': typeof AuthenticatedSuporteConhecimentoRouteWithChildren
   '/suporte/dashboard': typeof AuthenticatedSuporteDashboardRoute
+  '/suporte/incidentes': typeof AuthenticatedSuporteIncidentesRoute
   '/comunicacoes/': typeof AuthenticatedComunicacoesIndexRoute
   '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
   '/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
@@ -704,6 +712,7 @@ export interface FileRoutesByTo {
   '/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
   '/suporte/conhecimento': typeof AuthenticatedSuporteConhecimentoRouteWithChildren
   '/suporte/dashboard': typeof AuthenticatedSuporteDashboardRoute
+  '/suporte/incidentes': typeof AuthenticatedSuporteIncidentesRoute
   '/comunicacoes': typeof AuthenticatedComunicacoesIndexRoute
   '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
   '/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
@@ -788,6 +797,7 @@ export interface FileRoutesById {
   '/_authenticated/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
   '/_authenticated/suporte/conhecimento': typeof AuthenticatedSuporteConhecimentoRouteWithChildren
   '/_authenticated/suporte/dashboard': typeof AuthenticatedSuporteDashboardRoute
+  '/_authenticated/suporte/incidentes': typeof AuthenticatedSuporteIncidentesRoute
   '/_authenticated/comunicacoes/': typeof AuthenticatedComunicacoesIndexRoute
   '/_authenticated/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
   '/_authenticated/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
@@ -872,6 +882,7 @@ export interface FileRouteTypes {
     | '/inteligencia/supervisores'
     | '/suporte/conhecimento'
     | '/suporte/dashboard'
+    | '/suporte/incidentes'
     | '/comunicacoes/'
     | '/comunicacoes/whatsapp/configuracao'
     | '/comunicacoes/whatsapp/dead-letter'
@@ -952,6 +963,7 @@ export interface FileRouteTypes {
     | '/inteligencia/supervisores'
     | '/suporte/conhecimento'
     | '/suporte/dashboard'
+    | '/suporte/incidentes'
     | '/comunicacoes'
     | '/comunicacoes/whatsapp/configuracao'
     | '/comunicacoes/whatsapp/dead-letter'
@@ -1035,6 +1047,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inteligencia/supervisores'
     | '/_authenticated/suporte/conhecimento'
     | '/_authenticated/suporte/dashboard'
+    | '/_authenticated/suporte/incidentes'
     | '/_authenticated/comunicacoes/'
     | '/_authenticated/comunicacoes/whatsapp/configuracao'
     | '/_authenticated/comunicacoes/whatsapp/dead-letter'
@@ -1338,6 +1351,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/comunicacoes/'
       preLoaderRoute: typeof AuthenticatedComunicacoesIndexRouteImport
       parentRoute: typeof AuthenticatedComunicacoesRoute
+    }
+    '/_authenticated/suporte/incidentes': {
+      id: '/_authenticated/suporte/incidentes'
+      path: '/incidentes'
+      fullPath: '/suporte/incidentes'
+      preLoaderRoute: typeof AuthenticatedSuporteIncidentesRouteImport
+      parentRoute: typeof AuthenticatedSuporteRoute
     }
     '/_authenticated/suporte/dashboard': {
       id: '/_authenticated/suporte/dashboard'
@@ -1770,12 +1790,14 @@ const AuthenticatedSuporteConhecimentoRouteWithChildren =
 interface AuthenticatedSuporteRouteChildren {
   AuthenticatedSuporteConhecimentoRoute: typeof AuthenticatedSuporteConhecimentoRouteWithChildren
   AuthenticatedSuporteDashboardRoute: typeof AuthenticatedSuporteDashboardRoute
+  AuthenticatedSuporteIncidentesRoute: typeof AuthenticatedSuporteIncidentesRoute
 }
 
 const AuthenticatedSuporteRouteChildren: AuthenticatedSuporteRouteChildren = {
   AuthenticatedSuporteConhecimentoRoute:
     AuthenticatedSuporteConhecimentoRouteWithChildren,
   AuthenticatedSuporteDashboardRoute: AuthenticatedSuporteDashboardRoute,
+  AuthenticatedSuporteIncidentesRoute: AuthenticatedSuporteIncidentesRoute,
 }
 
 const AuthenticatedSuporteRouteWithChildren =
