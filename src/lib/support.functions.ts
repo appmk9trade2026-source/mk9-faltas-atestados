@@ -348,3 +348,19 @@ export const getAgentMetrics = createServerFn({ method: "GET" })
     };
   });
 
+export const getUnreadSupportCount = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return 0;
+
+    const { count, error } = await supabase
+      .from('support_tickets')
+      .select('*', { count: 'exact', head: true })
+      .eq('requester_user_id', user.id)
+      .in('status', ['ABERTO', 'EM_ATENDIMENTO', 'AGUARDANDO_USUARIO']);
+
+    if (error) return 0;
+    return count || 0;
+  });
+
+
