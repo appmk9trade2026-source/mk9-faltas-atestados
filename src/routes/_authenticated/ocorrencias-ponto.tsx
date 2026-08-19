@@ -281,7 +281,9 @@ function OcorrenciasPontoPage() {
       });
 
     } catch (error: any) {
-      toast.error(`Erro no upload: ${error.message}`);
+      const message = error.message || "";
+      const isHtml = typeof message === 'string' && (message.trim().startsWith('<!DOCTYPE') || message.trim().startsWith('<html'));
+      toast.error(isHtml ? "Erro Crítico: Falha no upload (HTML)." : `Erro no upload: ${message}`);
     } finally {
       setIsUploading(false);
     }
