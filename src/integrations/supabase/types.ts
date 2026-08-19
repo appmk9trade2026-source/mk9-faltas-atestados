@@ -2476,6 +2476,7 @@ export type Database = {
           ausencia_id: string | null
           colaborador_id: string | null
           colaborador_manual: boolean | null
+          correlation_id: string | null
           created_at: string
           data_ocorrencia: string
           empresa_id: string
@@ -2501,6 +2502,7 @@ export type Database = {
           ausencia_id?: string | null
           colaborador_id?: string | null
           colaborador_manual?: boolean | null
+          correlation_id?: string | null
           created_at?: string
           data_ocorrencia: string
           empresa_id: string
@@ -2526,6 +2528,7 @@ export type Database = {
           ausencia_id?: string | null
           colaborador_id?: string | null
           colaborador_manual?: boolean | null
+          correlation_id?: string | null
           created_at?: string
           data_ocorrencia?: string
           empresa_id?: string
@@ -5566,24 +5569,44 @@ export type Database = {
         }
         Returns: string
       }
-      criar_ocorrencia_ponto_ambev: {
-        Args: {
-          _arquivo_nome: string
-          _arquivo_url: string
-          _colaborador_id: string
-          _colaborador_manual: boolean
-          _data_ocorrencia: string
-          _empresa_id: string
-          _justificativa: string
-          _manual_matricula: string
-          _manual_nome: string
-          _motivo: string
-          _projeto_id: string
-          _registrado_por: string
-          _supervisor_usuario_id: string
-        }
-        Returns: Json
-      }
+      criar_ocorrencia_ponto_ambev:
+        | {
+            Args: {
+              _arquivo_nome: string
+              _arquivo_url: string
+              _colaborador_id: string
+              _colaborador_manual: boolean
+              _data_ocorrencia: string
+              _empresa_id: string
+              _justificativa: string
+              _manual_matricula: string
+              _manual_nome: string
+              _motivo: string
+              _projeto_id: string
+              _registrado_por: string
+              _supervisor_usuario_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _arquivo_nome: string
+              _arquivo_url: string
+              _colaborador_id: string
+              _colaborador_manual: boolean
+              _correlation_id?: string
+              _data_ocorrencia: string
+              _empresa_id: string
+              _justificativa: string
+              _manual_matricula: string
+              _manual_nome: string
+              _motivo: string
+              _projeto_id: string
+              _registrado_por: string
+              _supervisor_usuario_id: string
+            }
+            Returns: Json
+          }
       cron_healthcheck: { Args: never; Returns: Json }
       cron_refresh_bi_absenteismo_tick: { Args: never; Returns: Json }
       cron_run_escalonamentos_tick: { Args: never; Returns: undefined }
