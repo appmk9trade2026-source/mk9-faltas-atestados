@@ -149,7 +149,7 @@ function StabilizationAuditPage() {
                   <Badge variant="outline" className="font-mono text-[10px] border-blue-500/50 text-blue-600">
                     OBJETIVO: INTELIGÊNCIA_DE_INCIDENTES
                   </Badge>
-                  <Link from="/_authenticated/estabilidade" to="/_authenticated/suporte/incidentes">
+                  <Link to="/suporte/incidentes">
                     <Badge variant="outline" className="font-mono text-[10px] border-emerald-500/50 text-emerald-600 cursor-pointer hover:bg-emerald-50">
                       CENTRAL_DE_INCIDENTES →
                     </Badge>
