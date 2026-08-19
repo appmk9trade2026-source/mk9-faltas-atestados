@@ -703,22 +703,13 @@ export const createAusencia = createServerFn({ method: "POST" })
 
 
 // ==================== UPDATE ====================
-const updatePayloadSchema = z.discriminatedUnion("origem_registro", [
-  autoPayloadSchema.extend({ id: uuid }),
-  manualPayloadSchema.extend({ id: uuid }),
-]);
 
 /**
  * Reatribui o processamento de uma ausência para o usuário logado.
  */
 export const reatribuirProcessamentoAdm = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => {
-    return z.object({
-      ausencia_id: uuid,
-      responsavel_anterior_id: uuid,
-    }).parse(data);
-  })
+  .inputValidator((data: unknown) => reatribuirProcessamentoSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { data: res, error } = await context.supabase.rpc("reatribuir_processamento_ausencia", {
       _ausencia_id: data.ausencia_id,
@@ -1053,14 +1044,7 @@ export const alterarStatusAusencia = createServerFn({ method: "POST" })
  */
 export const processarAusenciaInterno = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => {
-    const uuid = z.string().uuid();
-    return z.object({
-      ausencia_id: uuid,
-      novo_status: z.enum(["AGUARDANDO", "EM_PROCESSAMENTO", "PROCESSADO"]),
-      observacao: z.string().trim().max(1000).nullable().optional(),
-    }).parse(data);
-  })
+  .inputValidator((data: unknown) => processamentoStatusSchema.parse(data))
   .handler(async ({ data, context }) => {
     // Validação de Papel (RH, Compliance, Admin)
     const { data: roles } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
@@ -1090,9 +1074,7 @@ export const processarAusenciaInterno = createServerFn({ method: "POST" })
  */
 export const iniciarProcessamentoAdm = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => {
-    return z.object({ ausencia_id: uuid }).parse(data);
-  })
+  .inputValidator((data: unknown) => iniciarProcessamentoSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { data: res, error } = await context.supabase.rpc("iniciar_processamento_ausencia", {
       _ausencia_id: data.ausencia_id,
@@ -1107,13 +1089,7 @@ export const iniciarProcessamentoAdm = createServerFn({ method: "POST" })
  */
 export const iniciarProcessamentoGrupoAdm = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => {
-    return z.object({ 
-      colaborador_id: uuid.nullable().optional(),
-      colaborador_matricula: z.string().optional(),
-      projeto_id: uuid 
-    }).parse(data);
-  })
+  .inputValidator((data: unknown) => iniciarGrupoSchema.parse(data))
   .handler(async ({ data, context }) => {
     // Busca registros elegíveis do grupo
     let query = context.supabase
@@ -1159,12 +1135,7 @@ export const iniciarProcessamentoGrupoAdm = createServerFn({ method: "POST" })
  */
 export const concluirProcessamentoAdm = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => {
-    return z.object({
-      ausencia_id: uuid,
-      observacao: z.string().trim().max(1000).nullable().optional(),
-    }).parse(data);
-  })
+  .inputValidator((data: unknown) => concluirProcessamentoSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { data: res, error } = await context.supabase.rpc("concluir_processamento_ausencia", {
       _ausencia_id: data.ausencia_id,
