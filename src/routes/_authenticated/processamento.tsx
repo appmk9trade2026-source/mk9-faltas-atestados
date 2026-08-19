@@ -323,12 +323,35 @@ function CentralProcessamentoPage() {
     },
 
     onError: (e: any) => {
+      const errData = parseRbacError(e);
       if (typeof e.message === 'string' && e.message.trim().startsWith('<!DOCTYPE html>')) {
-        toast.error("Erro Crítico: Resposta inesperada do servidor (HTML).");
+        toast.error("Erro Crítico: Resposta inesperada do servidor (HTML).", {
+          action: {
+            label: "Ajuda",
+            onClick: () => openSupport({
+              sourceModule: "Central de Processamento",
+              safeCode: "HTML-ERR-CONCLUDE",
+              suggestedCategory: "ERRO_SISTEMA"
+            })
+          }
+        });
       } else {
-        toast.error(e.message || "Erro ao concluir processamento.");
+        toast.error("Erro ao concluir processamento.", {
+          description: e.message || "Erro técnico na conclusão.",
+          action: errData.code === "TECHNICAL_ERROR" || errData.code === "UNKNOWN" ? {
+            label: "Ajuda",
+            onClick: () => openSupport({
+              sourceModule: "Central de Processamento",
+              entityType: "ausencia",
+              entityId: registroSelecionado?.id,
+              safeCode: errData.correlationId || "SAFE-ERR-CONCLUDE",
+              suggestedCategory: "ERRO_SISTEMA"
+            })
+          } : undefined
+        });
       }
     }
+
   });
 
   const reatribuirMut = useMutation({
