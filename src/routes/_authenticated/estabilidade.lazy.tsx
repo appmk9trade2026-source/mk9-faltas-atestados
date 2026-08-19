@@ -1,10 +1,15 @@
 import { createLazyFileRoute } from '@tanstack/react-router';
-import { ShieldCheck, ClipboardCheck, Database, Lock, AlertCircle, CheckCircle2, Search, Activity, FileJson, Info, RefreshCw, AlertTriangle, ChevronRight, ExternalLink } from 'lucide-react';
+import { ShieldCheck, ClipboardCheck, Database, Lock, AlertCircle, CheckCircle2, Search, Activity, FileJson, Info, RefreshCw, AlertTriangle, ChevronRight, ExternalLink, MessageSquare } from 'lucide-react';
+import { SupportHelpButton } from "@/components/support/support-help-button";
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useSupport } from "@/components/support/support-provider";
 import { AppShell } from "@/components/layout/app-shell";
+
+
 import { useQuery } from "@tanstack/react-query";
 import { getStabilityResults } from "@/lib/stability-audit.functions";
 import { useState } from "react";
@@ -77,6 +82,8 @@ function Fingerprint(props: any) {
 }
 
 function StabilizationAuditPage() {
+  const { openSupport } = useSupport();
+
   const { data: auditResults = [], isLoading } = useQuery({
     queryKey: ['stability-results'],
     queryFn: () => getStabilityResults(),
@@ -117,7 +124,12 @@ function StabilizationAuditPage() {
   };
 
   return (
-    <AppShell title="Programa de Estabilização" breadcrumb={["Administração", "Auditoria de Estabilidade"]}>
+    <AppShell 
+      title="Programa de Estabilização MK9" 
+      breadcrumb={["Admin", "Estabilização"]}
+      actions={<SupportHelpButton context={{ sourceModule: "Painel Estabilização" }} />}
+    >
+
       <div className="space-y-8 max-w-6xl mx-auto pb-20">
         
         {/* Header Section */}

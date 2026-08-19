@@ -61,7 +61,12 @@ function initials(name: string) {
  */
 export const EmbeddedAppShellContext = createContext(false);
 
-type AppShellProps = { title: string; breadcrumb?: string[]; children: ReactNode };
+type AppShellProps = { 
+  title: string; 
+  breadcrumb?: string[]; 
+  children: ReactNode;
+  actions?: ReactNode;
+};
 
 export function AppShell(props: AppShellProps) {
   const embedded = useContext(EmbeddedAppShellContext);
@@ -71,7 +76,8 @@ export function AppShell(props: AppShellProps) {
   return <AppShellFull {...props} />;
 }
 
-function AppShellFull({ title, breadcrumb, children }: AppShellProps) {
+function AppShellFull({ title, breadcrumb, children, actions }: AppShellProps) {
+
   const { profile, roles, primaryRole } = useSession();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -202,9 +208,11 @@ function AppShellFull({ title, breadcrumb, children }: AppShellProps) {
 
         <main className="flex-1 p-6">
           <div className="mx-auto w-full max-w-6xl space-y-6">
-            <div>
+            <div className="flex items-center justify-between gap-4">
               <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+              {actions && <div className="flex items-center gap-2">{actions}</div>}
             </div>
+
             {children}
           </div>
         </main>

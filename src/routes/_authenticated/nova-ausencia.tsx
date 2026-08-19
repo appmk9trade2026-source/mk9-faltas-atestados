@@ -110,7 +110,9 @@ import { ConflitoAusenciaDialog } from "@/components/ausencias/conflito-ausencia
 
 
 import { DadosColaboradorFields } from "@/components/ausencias/dados-colaborador-fields";
+import { useSupport } from "@/components/support/support-provider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 import {
   BuscaSkeleton,
   BuscaStatus,
@@ -122,6 +124,8 @@ import {
   type FiltroChip,
 } from "@/components/busca/busca-assistida";
 import { logEvent } from "@/lib/observability";
+import { SupportHelpButton } from "@/components/support/support-help-button";
+
 
 const formatPhoneBR = formatTelefone;
 
@@ -423,6 +427,9 @@ function NovaAusenciaPage() {
       acidente_observacoes: "",
     },
   });
+
+  const { openSupport } = useSupport();
+
 
   const colaboradorId = form.watch("colaborador_id");
   const dataInicio = form.watch("data_inicio");
@@ -1446,19 +1453,30 @@ function NovaAusenciaPage() {
         message: rawError
       });
       
+      const errData = parseRbacError(err);
       const { title, description, correlationId } = friendlyRbacError(err);
       
+      const finalCorr = correlationId || traceId;
+
       toast.error(title, {
         description: description || "Verifique os dados e tente novamente.",
-        action: (correlationId || traceId) ? {
+        action: errData.code === "TECHNICAL_ERROR" || errData.code === "UNKNOWN" || isHtml ? {
+          label: "Ajuda",
+          onClick: () => openSupport({
+            sourceModule: "Nova Ausência",
+            safeCode: finalCorr,
+            suggestedCategory: "ERRO_SISTEMA"
+          })
+        } : (finalCorr ? {
           label: "Copiar Ref",
           onClick: () => {
-            navigator.clipboard.writeText(correlationId || traceId);
+            navigator.clipboard.writeText(finalCorr);
             toast.success("Referência copiada para o suporte.");
           }
-        } : undefined
+        } : undefined)
       });
     },
+
   });
 
   if (sessionLoading) {
@@ -1514,7 +1532,7 @@ function NovaAusenciaPage() {
           : "text-red-600 dark:text-red-400";
 
   return (
-    <AppShell title={title} breadcrumb={crumb}>
+    <AppShell title={title} breadcrumb={crumb} actions={<SupportHelpButton context={{ sourceModule: "Nova Ausência" }} />}>
       <div className="mx-auto w-full max-w-5xl">
         <Card className="overflow-hidden p-0 shadow-lg">
           {/* Cabeçalho em gradiente MK9 */}
@@ -1523,13 +1541,18 @@ function NovaAusenciaPage() {
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25 backdrop-blur">
                 <ClipboardList className="h-6 w-6" aria-hidden />
               </div>
-              <div className="min-w-0">
-                <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-                  Lançamento de Faltas e Atestados
-                </h1>
-                <p className="mt-1 text-sm text-white/85">Sistema de registro conforme CLT</p>
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
+                      Lançamento de Faltas e Atestados
+                    </h1>
+                    <p className="mt-1 text-sm text-white/85">Sistema de registro conforme CLT</p>
+                  </div>
+                </div>
               </div>
             </div>
+
           </div>
 
           <div className="space-y-6 p-4 sm:p-6 md:p-8">

@@ -49,10 +49,12 @@ interface NovoChamadoDialogProps {
   onOpenChange: (open: boolean) => void;
   context?: {
     sourceRoute?: string;
+    sourceModule?: string;
     entityType?: string;
     entityId?: string;
     protocol?: string;
     safeCode?: string;
+    suggestedCategory?: string;
   };
 }
 
@@ -61,10 +63,18 @@ export function NovoChamadoDialog({ open, onOpenChange, context }: NovoChamadoDi
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      category: "",
       priority: "NORMAL",
       subject: "",
       description: "",
     },
+  });
+
+  // Atualizar categoria se sugerida
+  useState(() => {
+    if (context?.suggestedCategory) {
+      form.setValue("category", context.suggestedCategory);
+    }
   });
 
   const mutation = useMutation({
@@ -86,6 +96,7 @@ export function NovoChamadoDialog({ open, onOpenChange, context }: NovoChamadoDi
       form.reset();
       onOpenChange(false);
     },
+
     onError: (error: any) => {
       toast.error(error.message || "Erro ao abrir chamado");
     },
@@ -191,15 +202,33 @@ export function NovoChamadoDialog({ open, onOpenChange, context }: NovoChamadoDi
               )}
             />
 
-            {context?.protocol && (
-              <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-md border border-dashed text-[10px] space-y-1">
-                <p className="font-black uppercase text-primary tracking-widest">Contexto Vinculado</p>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Protocolo: {context.protocol}</span>
-                  {context.safeCode && <span>Safe Code: {context.safeCode}</span>}
+            {(context?.protocol || context?.sourceModule || context?.safeCode) && (
+              <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-md border border-dashed text-[10px] space-y-1.5">
+                <p className="font-black uppercase text-primary tracking-widest text-[9px]">Contexto Operacional Vinculado</p>
+                
+                <div className="grid grid-cols-2 gap-2 text-muted-foreground">
+                  {context?.sourceModule && (
+                    <div>
+                      <span className="font-bold">Módulo:</span> {context.sourceModule}
+                    </div>
+                  )}
+                  {context?.protocol && (
+                    <div>
+                      <span className="font-bold">Relacionado a:</span> {context.protocol}
+                    </div>
+                  )}
+                  {context?.safeCode && (
+                    <div className="col-span-2">
+                      <span className="font-bold">Código de Diagnóstico:</span> <span className="font-mono text-destructive">{context.safeCode}</span>
+                    </div>
+                  )}
                 </div>
+                <p className="text-[8px] italic opacity-70 border-t border-slate-200 dark:border-slate-800 pt-1 mt-1">
+                  * Informações técnicas de diagnóstico serão anexadas automaticamente ao chamado para agilizar o atendimento.
+                </p>
               </div>
             )}
+
 
             <DialogFooter className="pt-4">
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
