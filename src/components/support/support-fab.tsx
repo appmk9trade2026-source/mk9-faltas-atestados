@@ -98,7 +98,7 @@ export function SupportFAB() {
   const trigger = (
     <Button
       size="default"
-      asChild
+      asChild={false}
       className={cn(
         "fixed bottom-6 right-6 z-50 shadow-2xl rounded-full transition-all duration-300 hover:scale-105 active:scale-95 bg-primary text-primary-foreground h-12 px-4 flex items-center gap-2 overflow-visible hover:ring-4 hover:ring-primary/10",
         isMobile && "h-12 w-12 p-0 justify-center",
