@@ -303,7 +303,7 @@ function StabilizationAuditPage() {
 
                 <div className="space-y-2">
                   <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest uppercase">Bateria de Testes RET</p>
-                  <p>RET-001 (1D -> Meio Período): <span className="text-emerald-500">PASS</span></p>
+                  <p>RET-001 (1D {"->"} Meio Período): <span className="text-emerald-500">PASS</span></p>
                   <p>RET-002/003 (Missing Hours): <span className="text-emerald-500">BLOCKED_OK</span></p>
                   <p>RET-004 (Logic Time): <span className="text-emerald-500">BLOCKED_OK</span></p>
                   <p>RET-006 (Upload Privado): <span className="text-emerald-500">PASS</span></p>
