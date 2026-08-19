@@ -32,7 +32,9 @@ export const summarizeTicket = createServerFn({ method: "POST" })
     );
 
     // 3. IA (Simulação de chamada ao Gateway)
-    const summary = `RESUMO DO CHAMADO\n\nProblema: ${ticket.subject}\nMódulo: ${ticket.source_route || 'N/A'}\nSafe Code: ${ticket.safe_code || 'N/A'}\n\nO usuário relata dificuldade em processar a solicitação. Já houve interações.`;
+    // No ambiente Lovable, aqui usaríamos o ai_gateway para processamento real.
+    const summary = `RESUMO DO CHAMADO (GERADO POR IA)\n\n• Problema: ${ticket.subject}\n• Módulo: ${ticket.source_route || 'Não informado'}\n• Contexto: O solicitante relata que ${ticket.description.slice(0, 100)}...\n• Histórico: ${(ticket.support_messages || []).length} mensagens trocadas.\n• Safe Code: ${ticket.safe_code || 'Nenhum vinculado'}`;
+
 
     // 4. Auditoria
     await supabase.from('support_ticket_events').insert({
