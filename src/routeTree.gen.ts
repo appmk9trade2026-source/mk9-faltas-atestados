@@ -48,6 +48,7 @@ import { Route as AuthenticatedAssistenteRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
 import { Route as AuthenticatedAcessosRouteImport } from './routes/_authenticated/acessos'
 import { Route as AuthenticatedComunicacoesIndexRouteImport } from './routes/_authenticated/comunicacoes.index'
+import { Route as AuthenticatedSuporteDashboardRouteImport } from './routes/_authenticated/suporte.dashboard'
 import { Route as AuthenticatedInteligenciaSupervisoresRouteImport } from './routes/_authenticated/inteligencia.supervisores'
 import { Route as AuthenticatedInteligenciaQualidadeRouteImport } from './routes/_authenticated/inteligencia.qualidade'
 import { Route as AuthenticatedInteligenciaGovernancaRouteImport } from './routes/_authenticated/inteligencia.governanca'
@@ -302,6 +303,12 @@ const AuthenticatedComunicacoesIndexRoute =
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedComunicacoesRoute,
+  } as any)
+const AuthenticatedSuporteDashboardRoute =
+  AuthenticatedSuporteDashboardRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => AuthenticatedSuporteRoute,
   } as any)
 const AuthenticatedInteligenciaSupervisoresRoute =
   AuthenticatedInteligenciaSupervisoresRouteImport.update({
@@ -573,7 +580,7 @@ export interface FileRoutesByFullPath {
   '/qualidade-lancamentos': typeof AuthenticatedQualidadeLancamentosRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/roadmap': typeof AuthenticatedRoadmapRoute
-  '/suporte': typeof AuthenticatedSuporteRoute
+  '/suporte': typeof AuthenticatedSuporteRouteWithChildren
   '/usuarios': typeof AuthenticatedUsuariosRouteWithChildren
   '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/admin/hardening': typeof AuthenticatedAdminHardeningRoute
@@ -601,6 +608,7 @@ export interface FileRoutesByFullPath {
   '/inteligencia/governanca': typeof AuthenticatedInteligenciaGovernancaRoute
   '/inteligencia/qualidade': typeof AuthenticatedInteligenciaQualidadeRoute
   '/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
+  '/suporte/dashboard': typeof AuthenticatedSuporteDashboardRoute
   '/comunicacoes/': typeof AuthenticatedComunicacoesIndexRoute
   '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
   '/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
@@ -651,7 +659,7 @@ export interface FileRoutesByTo {
   '/qualidade-lancamentos': typeof AuthenticatedQualidadeLancamentosRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/roadmap': typeof AuthenticatedRoadmapRoute
-  '/suporte': typeof AuthenticatedSuporteRoute
+  '/suporte': typeof AuthenticatedSuporteRouteWithChildren
   '/usuarios': typeof AuthenticatedUsuariosRouteWithChildren
   '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/admin/hardening': typeof AuthenticatedAdminHardeningRoute
@@ -678,6 +686,7 @@ export interface FileRoutesByTo {
   '/inteligencia/governanca': typeof AuthenticatedInteligenciaGovernancaRoute
   '/inteligencia/qualidade': typeof AuthenticatedInteligenciaQualidadeRoute
   '/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
+  '/suporte/dashboard': typeof AuthenticatedSuporteDashboardRoute
   '/comunicacoes': typeof AuthenticatedComunicacoesIndexRoute
   '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
   '/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
@@ -731,7 +740,7 @@ export interface FileRoutesById {
   '/_authenticated/qualidade-lancamentos': typeof AuthenticatedQualidadeLancamentosRoute
   '/_authenticated/relatorios': typeof AuthenticatedRelatoriosRoute
   '/_authenticated/roadmap': typeof AuthenticatedRoadmapRoute
-  '/_authenticated/suporte': typeof AuthenticatedSuporteRoute
+  '/_authenticated/suporte': typeof AuthenticatedSuporteRouteWithChildren
   '/_authenticated/usuarios': typeof AuthenticatedUsuariosRouteWithChildren
   '/auth_/nova-senha': typeof AuthNovaSenhaRoute
   '/_authenticated/admin/hardening': typeof AuthenticatedAdminHardeningRoute
@@ -759,6 +768,7 @@ export interface FileRoutesById {
   '/_authenticated/inteligencia/governanca': typeof AuthenticatedInteligenciaGovernancaRoute
   '/_authenticated/inteligencia/qualidade': typeof AuthenticatedInteligenciaQualidadeRoute
   '/_authenticated/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
+  '/_authenticated/suporte/dashboard': typeof AuthenticatedSuporteDashboardRoute
   '/_authenticated/comunicacoes/': typeof AuthenticatedComunicacoesIndexRoute
   '/_authenticated/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
   '/_authenticated/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
@@ -840,6 +850,7 @@ export interface FileRouteTypes {
     | '/inteligencia/governanca'
     | '/inteligencia/qualidade'
     | '/inteligencia/supervisores'
+    | '/suporte/dashboard'
     | '/comunicacoes/'
     | '/comunicacoes/whatsapp/configuracao'
     | '/comunicacoes/whatsapp/dead-letter'
@@ -917,6 +928,7 @@ export interface FileRouteTypes {
     | '/inteligencia/governanca'
     | '/inteligencia/qualidade'
     | '/inteligencia/supervisores'
+    | '/suporte/dashboard'
     | '/comunicacoes'
     | '/comunicacoes/whatsapp/configuracao'
     | '/comunicacoes/whatsapp/dead-letter'
@@ -997,6 +1009,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inteligencia/governanca'
     | '/_authenticated/inteligencia/qualidade'
     | '/_authenticated/inteligencia/supervisores'
+    | '/_authenticated/suporte/dashboard'
     | '/_authenticated/comunicacoes/'
     | '/_authenticated/comunicacoes/whatsapp/configuracao'
     | '/_authenticated/comunicacoes/whatsapp/dead-letter'
@@ -1299,6 +1312,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/comunicacoes/'
       preLoaderRoute: typeof AuthenticatedComunicacoesIndexRouteImport
       parentRoute: typeof AuthenticatedComunicacoesRoute
+    }
+    '/_authenticated/suporte/dashboard': {
+      id: '/_authenticated/suporte/dashboard'
+      path: '/dashboard'
+      fullPath: '/suporte/dashboard'
+      preLoaderRoute: typeof AuthenticatedSuporteDashboardRouteImport
+      parentRoute: typeof AuthenticatedSuporteRoute
     }
     '/_authenticated/inteligencia/supervisores': {
       id: '/_authenticated/inteligencia/supervisores'
@@ -1692,6 +1712,17 @@ const AuthenticatedInteligenciaRouteWithChildren =
     AuthenticatedInteligenciaRouteChildren,
   )
 
+interface AuthenticatedSuporteRouteChildren {
+  AuthenticatedSuporteDashboardRoute: typeof AuthenticatedSuporteDashboardRoute
+}
+
+const AuthenticatedSuporteRouteChildren: AuthenticatedSuporteRouteChildren = {
+  AuthenticatedSuporteDashboardRoute: AuthenticatedSuporteDashboardRoute,
+}
+
+const AuthenticatedSuporteRouteWithChildren =
+  AuthenticatedSuporteRoute._addFileChildren(AuthenticatedSuporteRouteChildren)
+
 interface AuthenticatedUsuariosRouteChildren {
   AuthenticatedUsuariosIdPermissoesRoute: typeof AuthenticatedUsuariosIdPermissoesRoute
 }
@@ -1737,7 +1768,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedQualidadeLancamentosRoute: typeof AuthenticatedQualidadeLancamentosRoute
   AuthenticatedRelatoriosRoute: typeof AuthenticatedRelatoriosRoute
   AuthenticatedRoadmapRoute: typeof AuthenticatedRoadmapRoute
-  AuthenticatedSuporteRoute: typeof AuthenticatedSuporteRoute
+  AuthenticatedSuporteRoute: typeof AuthenticatedSuporteRouteWithChildren
   AuthenticatedUsuariosRoute: typeof AuthenticatedUsuariosRouteWithChildren
   AuthenticatedAdminHardeningRoute: typeof AuthenticatedAdminHardeningRoute
   AuthenticatedAdministracaoAuditoriaForenseRoute: typeof AuthenticatedAdministracaoAuditoriaForenseRoute
@@ -1787,7 +1818,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedQualidadeLancamentosRoute,
   AuthenticatedRelatoriosRoute: AuthenticatedRelatoriosRoute,
   AuthenticatedRoadmapRoute: AuthenticatedRoadmapRoute,
-  AuthenticatedSuporteRoute: AuthenticatedSuporteRoute,
+  AuthenticatedSuporteRoute: AuthenticatedSuporteRouteWithChildren,
   AuthenticatedUsuariosRoute: AuthenticatedUsuariosRouteWithChildren,
   AuthenticatedAdminHardeningRoute: AuthenticatedAdminHardeningRoute,
   AuthenticatedAdministracaoAuditoriaForenseRoute:

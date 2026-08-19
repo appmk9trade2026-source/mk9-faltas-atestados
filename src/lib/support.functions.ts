@@ -7,6 +7,107 @@ import { Database } from "@/integrations/supabase/types";
 export type SupportPriority = Database['public']['Enums']['support_priority'];
 export type SupportStatus = Database['public']['Enums']['support_status'];
 export type SupportMessageType = Database['public']['Enums']['support_message_type'];
+export type SupportSLAStatus = Database['public']['Enums']['support_sla_status'];
+
+export const getSupportStats = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { data, error } = await supabase
+      .from('support_dashboard_kpis')
+      .select('*')
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+  });
+
+export const getTicketsByModule = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .select('category, status');
+      
+    if (error) throw new Error(error.message);
+    
+    const counts = data.reduce((acc: Record<string, number>, curr) => {
+      const module = curr.category || 'Outros';
+      acc[module] = (acc[module] || 0) + 1;
+      return acc;
+    }, {});
+
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  });
+
+
+export const resolveTicket = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({
+    ticketId: z.string().uuid(),
+    category: z.string(),
+    summary: z.string().min(10),
+    internalNotes: z.string().optional()
+  }).parse(data))
+  .handler(async ({ data }) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const { data: ticket, error } = await supabase
+      .from('support_tickets')
+      .update({
+        status: 'RESOLVIDO',
+        resolution_category: data.category,
+        resolution_summary: data.summary,
+        resolution_internal_notes: data.internalNotes,
+        resolved_at: new Date().toISOString(),
+        sla_status: 'CONCLUIDO',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', data.ticketId)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    await supabase.from('support_ticket_events').insert({
+      ticket_id: data.ticketId,
+      actor_user_id: user.id,
+      event_type: 'TICKET_RESOLVED'
+    });
+
+    return ticket;
+  });
+
+export const reopenTicket = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({
+    ticketId: z.string().uuid(),
+  }).parse(data))
+  .handler(async ({ data }) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const { data: ticket, error } = await supabase
+      .from('support_tickets')
+      .update({
+        status: 'ABERTO',
+        resolved_at: null,
+        reopened_at: new Date().toISOString(),
+        sla_status: 'NO_PRAZO',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', data.ticketId)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    await supabase.from('support_ticket_events').insert({
+      ticket_id: data.ticketId,
+      actor_user_id: user.id,
+      event_type: 'TICKET_REOPENED'
+    });
+
+    return ticket;
+  });
+
+
 
 export const createTicket = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({
@@ -163,3 +264,26 @@ export const assignTicket = createServerFn({ method: "POST" })
 
     return ticket;
   });
+
+export const getAgentMetrics = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .select('status, assigned_user_id, resolved_at, created_at')
+      .eq('assigned_user_id', user.id);
+
+    if (error) throw new Error(error.message);
+
+    const resolved = data.filter(t => t.status === 'RESOLVIDO').length;
+    const pending = data.filter(t => t.status === 'EM_ATENDIMENTO').length;
+    
+    return {
+      resolved,
+      pending,
+      total: data.length
+    };
+  });
+
