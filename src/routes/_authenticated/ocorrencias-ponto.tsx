@@ -162,9 +162,6 @@ function OcorrenciasPontoPage() {
       toast.success("Ocorrência protocolada com sucesso!");
     },
     onError: (error: any) => {
-      const { getFriendlyErrorMessage } = import("@/lib/utils");
-      // Como o import é async, tratamos localmente ou usamos o util já carregado se possível
-      // Mas para ser síncrono no onError, vamos usar a lógica expandida
       const message = error.message || "";
       const isHtml = typeof message === 'string' && (message.trim().startsWith('<!DOCTYPE') || message.trim().startsWith('<html'));
       
@@ -197,7 +194,13 @@ function OcorrenciasPontoPage() {
       toast.success("Ocorrência processada com sucesso!");
     },
     onError: (error: any) => {
-      toast.error(`Erro ao processar: ${error.message}`);
+      const message = error.message || "";
+      const isHtml = typeof message === 'string' && (message.trim().startsWith('<!DOCTYPE') || message.trim().startsWith('<html'));
+      if (isHtml) {
+        toast.error("Erro Crítico: Resposta inesperada do servidor (HTML).");
+        return;
+      }
+      toast.error(`Erro ao processar: ${message.replace(/TECHNICAL_ERROR:|CONFLICT:|INVALID_PAYLOAD:/g, "").trim()}`);
     },
   });
 
