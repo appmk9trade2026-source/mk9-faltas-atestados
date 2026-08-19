@@ -41,6 +41,7 @@ import { Route as AuthenticatedComunicacoesRouteImport } from './routes/_authent
 import { Route as AuthenticatedColaboradoresRouteImport } from './routes/_authenticated/colaboradores'
 import { Route as AuthenticatedBiExecutivoRouteImport } from './routes/_authenticated/bi-executivo'
 import { Route as AuthenticatedAusenciasRouteImport } from './routes/_authenticated/ausencias'
+import { Route as AuthenticatedAuditoriaEstabilidadeRouteImport } from './routes/_authenticated/auditoria-estabilidade'
 import { Route as AuthenticatedAuditoriaRouteImport } from './routes/_authenticated/auditoria'
 import { Route as AuthenticatedAssistenteRouteImport } from './routes/_authenticated/assistente'
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
@@ -260,6 +261,12 @@ const AuthenticatedAusenciasRoute = AuthenticatedAusenciasRouteImport.update({
   path: '/ausencias',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAuditoriaEstabilidadeRoute =
+  AuthenticatedAuditoriaEstabilidadeRouteImport.update({
+    id: '/auditoria-estabilidade',
+    path: '/auditoria-estabilidade',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAuditoriaRoute = AuthenticatedAuditoriaRouteImport.update({
   id: '/auditoria',
   path: '/auditoria',
@@ -530,6 +537,7 @@ export interface FileRoutesByFullPath {
   '/alertas': typeof AuthenticatedAlertasRoute
   '/assistente': typeof AuthenticatedAssistenteRoute
   '/auditoria': typeof AuthenticatedAuditoriaRoute
+  '/auditoria-estabilidade': typeof AuthenticatedAuditoriaEstabilidadeRoute
   '/ausencias': typeof AuthenticatedAusenciasRoute
   '/bi-executivo': typeof AuthenticatedBiExecutivoRoute
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
@@ -607,6 +615,7 @@ export interface FileRoutesByTo {
   '/alertas': typeof AuthenticatedAlertasRoute
   '/assistente': typeof AuthenticatedAssistenteRoute
   '/auditoria': typeof AuthenticatedAuditoriaRoute
+  '/auditoria-estabilidade': typeof AuthenticatedAuditoriaEstabilidadeRoute
   '/ausencias': typeof AuthenticatedAusenciasRoute
   '/bi-executivo': typeof AuthenticatedBiExecutivoRoute
   '/colaboradores': typeof AuthenticatedColaboradoresRoute
@@ -684,6 +693,7 @@ export interface FileRoutesById {
   '/_authenticated/alertas': typeof AuthenticatedAlertasRoute
   '/_authenticated/assistente': typeof AuthenticatedAssistenteRoute
   '/_authenticated/auditoria': typeof AuthenticatedAuditoriaRoute
+  '/_authenticated/auditoria-estabilidade': typeof AuthenticatedAuditoriaEstabilidadeRoute
   '/_authenticated/ausencias': typeof AuthenticatedAusenciasRoute
   '/_authenticated/bi-executivo': typeof AuthenticatedBiExecutivoRoute
   '/_authenticated/colaboradores': typeof AuthenticatedColaboradoresRoute
@@ -763,6 +773,7 @@ export interface FileRouteTypes {
     | '/alertas'
     | '/assistente'
     | '/auditoria'
+    | '/auditoria-estabilidade'
     | '/ausencias'
     | '/bi-executivo'
     | '/colaboradores'
@@ -840,6 +851,7 @@ export interface FileRouteTypes {
     | '/alertas'
     | '/assistente'
     | '/auditoria'
+    | '/auditoria-estabilidade'
     | '/ausencias'
     | '/bi-executivo'
     | '/colaboradores'
@@ -916,6 +928,7 @@ export interface FileRouteTypes {
     | '/_authenticated/alertas'
     | '/_authenticated/assistente'
     | '/_authenticated/auditoria'
+    | '/_authenticated/auditoria-estabilidade'
     | '/_authenticated/ausencias'
     | '/_authenticated/bi-executivo'
     | '/_authenticated/colaboradores'
@@ -1220,6 +1233,13 @@ declare module '@tanstack/react-router' {
       path: '/ausencias'
       fullPath: '/ausencias'
       preLoaderRoute: typeof AuthenticatedAusenciasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/auditoria-estabilidade': {
+      id: '/_authenticated/auditoria-estabilidade'
+      path: '/auditoria-estabilidade'
+      fullPath: '/auditoria-estabilidade'
+      preLoaderRoute: typeof AuthenticatedAuditoriaEstabilidadeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/auditoria': {
@@ -1668,6 +1688,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAlertasRoute: typeof AuthenticatedAlertasRoute
   AuthenticatedAssistenteRoute: typeof AuthenticatedAssistenteRoute
   AuthenticatedAuditoriaRoute: typeof AuthenticatedAuditoriaRoute
+  AuthenticatedAuditoriaEstabilidadeRoute: typeof AuthenticatedAuditoriaEstabilidadeRoute
   AuthenticatedAusenciasRoute: typeof AuthenticatedAusenciasRoute
   AuthenticatedBiExecutivoRoute: typeof AuthenticatedBiExecutivoRoute
   AuthenticatedColaboradoresRoute: typeof AuthenticatedColaboradoresRoute
@@ -1715,6 +1736,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAlertasRoute: AuthenticatedAlertasRoute,
   AuthenticatedAssistenteRoute: AuthenticatedAssistenteRoute,
   AuthenticatedAuditoriaRoute: AuthenticatedAuditoriaRoute,
+  AuthenticatedAuditoriaEstabilidadeRoute:
+    AuthenticatedAuditoriaEstabilidadeRoute,
   AuthenticatedAusenciasRoute: AuthenticatedAusenciasRoute,
   AuthenticatedBiExecutivoRoute: AuthenticatedBiExecutivoRoute,
   AuthenticatedColaboradoresRoute: AuthenticatedColaboradoresRoute,
