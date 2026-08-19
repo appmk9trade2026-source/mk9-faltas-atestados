@@ -30,8 +30,10 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { resolveTicket } from "@/lib/support.functions";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { Loader2, BookOpen } from "lucide-react";
+import { Loader2, BookOpen, Sparkles } from "lucide-react";
 import { getArticles } from "@/lib/knowledge.functions";
+import { suggestDiagnosis } from "@/lib/ai-copilot.functions";
+
 
 const formSchema = z.object({
   category: z.string({
@@ -134,8 +136,30 @@ export function ResolucaoChamadoDialog({ open, onOpenChange, ticketId }: Resoluc
               name="summary"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Resumo da Solução *</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Resumo da Solução *</FormLabel>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 text-[9px] gap-1 text-primary hover:text-primary hover:bg-primary/5 font-black uppercase tracking-tighter"
+                      onClick={async () => {
+                        toast.promise(suggestDiagnosis({ data: { ticketId } }), {
+                          loading: 'IA analisando rascunho...',
+                          success: (res) => {
+                            form.setValue('summary', `Diagnóstico sugerido: ${res.hypothesis}\n\nResumo da Solução: `);
+                            return 'Sugestão aplicada';
+                          },
+                          error: 'Falha na IA'
+                        });
+                      }}
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      Sugerir com IA
+                    </Button>
+                  </div>
                   <FormControl>
+
                     <Textarea 
                       placeholder="Descreva o que foi feito..." 
                       className="min-h-[80px] resize-none"
