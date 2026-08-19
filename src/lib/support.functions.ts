@@ -13,7 +13,13 @@ export type SupportStatus = Database['public']['Enums']['support_status'];
 export type SupportMessageType = Database['public']['Enums']['support_message_type'];
 export type SupportSLAStatus = Database['public']['Enums']['support_sla_status'];
 
+export const isAIEnabled = async () => {
+  // Em produção, isso viria de uma tabela de configurações ou feature flag
+  return process.env['SUPPORT_AI_ENABLED'] !== 'false';
+};
+
 export const getSupportStats = createServerFn({ method: "GET" })
+
   .handler(async () => {
     const { data, error } = await supabase
       .from('support_dashboard_kpis')

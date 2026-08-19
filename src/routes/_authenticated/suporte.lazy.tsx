@@ -39,6 +39,7 @@ function SupportPage() {
   const [isResolucaoOpen, setIsResolucaoOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
