@@ -13,6 +13,53 @@ export type SupportStatus = Database['public']['Enums']['support_status'];
 export type SupportMessageType = Database['public']['Enums']['support_message_type'];
 export type SupportSLAStatus = Database['public']['Enums']['support_sla_status'];
 
+export const SUPPORT_CATEGORIES = {
+  AUSENCIA: "Problema com Ausência",
+  RETIFICACAO: "Problema com Retificação",
+  OCORRENCIA_PONTO: "Problema com Ocorrência de Ponto",
+  PROCESSAMENTO_INTERNO: "Processamento Interno",
+  ACESSO_PERMISSAO: "Problema de Acesso / Permissão",
+  ERRO_SISTEMA: "Erro no Sistema",
+  DUVIDA_ORIENTACAO: "Dúvida / Orientação",
+  OUTRO: "Outro"
+} as const;
+
+export type SupportCategory = keyof typeof SUPPORT_CATEGORIES;
+
+// Mapeamento de categorias legadas (para manter compatibilidade com banco que tem strings literais)
+export const LEGACY_CATEGORY_MAP: Record<string, SupportCategory> = {
+  "Problema em Ausência": "AUSENCIA",
+  "Retificação": "RETIFICACAO",
+  "Ocorrência de Ponto": "OCORRENCIA_PONTO",
+  "Processamento Interno": "PROCESSAMENTO_INTERNO",
+  "Acesso / Permissão": "ACESSO_PERMISSAO",
+  "Erro no Sistema": "ERRO_SISTEMA",
+  "Outro": "OUTRO"
+};
+
+export const getCategoryLabel = (cat: string) => {
+  const canonical = (SUPPORT_CATEGORIES[cat as SupportCategory] ? cat : LEGACY_CATEGORY_MAP[cat]) as SupportCategory;
+  return SUPPORT_CATEGORIES[canonical] || cat;
+};
+
+export const getAvailableCategories = (role: string | null) => {
+  const base = [
+    "AUSENCIA",
+    "RETIFICACAO",
+    "OCORRENCIA_PONTO",
+    "ACESSO_PERMISSAO",
+    "ERRO_SISTEMA",
+    "DUVIDA_ORIENTACAO",
+    "OUTRO"
+  ] as SupportCategory[];
+
+  if (role === 'super_admin' || role === 'rh') {
+    return [...base, "PROCESSAMENTO_INTERNO"] as SupportCategory[];
+  }
+
+  return base;
+};
+
 export const isAIEnabled = async () => {
   // Em produção, isso viria de uma tabela de configurações ou feature flag
   return process.env['SUPPORT_AI_ENABLED'] !== 'false';
@@ -131,13 +178,10 @@ export const createTicket = createServerFn({ method: "POST" })
     related_protocol: z.string().optional(),
     safe_code: z.string().optional(),
   }).parse(data))
-  .handler(async ({ data, context }) => {
-    // Pegar o usuário logado via contexto Supabase
+  .handler(async ({ data }) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Unauthorized");
 
-    // Buscar o perfil/role do usuário (assumindo a existência de user_roles ou similar)
-    // Para simplificar nesta fase, vamos tentar inferir ou usar metadados
     const { data: roles } = await supabase
       .from('user_roles')
       .select('role')
@@ -146,22 +190,29 @@ export const createTicket = createServerFn({ method: "POST" })
 
     if (!roles) throw new Error("User has no role assigned");
 
+    // Validação server-side da categoria por perfil
+    const available = getAvailableCategories(roles.role);
+    const canonicalCategory = (SUPPORT_CATEGORIES[data.category as SupportCategory] ? data.category : LEGACY_CATEGORY_MAP[data.category]) as SupportCategory;
+    
+    if (!available.includes(canonicalCategory)) {
+      throw new Error(`Categoria "${data.category}" não permitida para o seu perfil.`);
+    }
+
     const { data: ticket, error } = await supabase
       .from('support_tickets')
       .insert({
         ...data,
-        protocol: 'PENDING', // O trigger do banco substituirá, mas o TS exige
+        category: canonicalCategory, // Salva o valor canônico
+        protocol: 'PENDING',
         requester_user_id: user.id,
         requester_role: roles.role,
         status: 'ABERTO'
-      } as any) // Cast temporário para evitar erro de excess/missing properties com o trigger
-
+      } as any)
       .select()
       .single();
 
     if (error) throw new Error(error.message);
 
-    // Registrar evento inicial
     await supabase.from('support_ticket_events').insert({
       ticket_id: ticket.id,
       actor_user_id: user.id,

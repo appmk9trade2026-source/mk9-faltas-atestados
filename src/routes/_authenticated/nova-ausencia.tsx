@@ -1532,7 +1532,7 @@ function NovaAusenciaPage() {
           : "text-red-600 dark:text-red-400";
 
   return (
-    <AppShell title={title} breadcrumb={crumb} actions={<SupportHelpButton context={{ sourceModule: "Nova Ausência" }} />}>
+    <AppShell title={title} breadcrumb={crumb} actions={<SupportHelpButton context={{ sourceModule: "Nova Ausência", suggestedCategory: "AUSENCIA" }} />}>
       <div className="mx-auto w-full max-w-5xl">
         <Card className="overflow-hidden p-0 shadow-lg">
           {/* Cabeçalho em gradiente MK9 */}

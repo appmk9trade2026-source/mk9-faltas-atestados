@@ -18,7 +18,7 @@ import {
   BarChart3
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getTickets } from "@/lib/support.functions";
+import { getTickets, getCategoryLabel } from "@/lib/support.functions";
 import { NovoChamadoDialog } from "@/components/support/novo-chamado-dialog";
 import { ResolucaoChamadoDialog } from "@/components/support/resolucao-chamado-dialog";
 import { useNavigate } from '@tanstack/react-router';
@@ -206,7 +206,7 @@ function SupportPage() {
                           </span>
                           <span className="flex items-center gap-1.5">
                             <AlertCircle className="w-3 h-3" />
-                            {ticket.category}
+                            {getCategoryLabel(ticket.category)}
                           </span>
                           <span className="flex items-center gap-1.5">
                             <User className="w-3 h-3" />

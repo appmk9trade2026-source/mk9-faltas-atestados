@@ -29,8 +29,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { createTicket } from "@/lib/support.functions";
+import { createTicket, SUPPORT_CATEGORIES, getAvailableCategories, SupportCategory } from "@/lib/support.functions";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSession } from "@/hooks/use-session";
 import { Loader2, Paperclip } from "lucide-react";
 
 const formSchema = z.object({
@@ -60,10 +61,14 @@ interface NovoChamadoDialogProps {
 
 export function NovoChamadoDialog({ open, onOpenChange, context }: NovoChamadoDialogProps) {
   const queryClient = useQueryClient();
+  const { primaryRole } = useSession();
+  
+  const categories = getAvailableCategories(primaryRole);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      category: "",
+      category: context?.suggestedCategory || "",
       priority: "NORMAL",
       subject: "",
       description: "",
@@ -125,20 +130,18 @@ export function NovoChamadoDialog({ open, onOpenChange, context }: NovoChamadoDi
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Categoria *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Problema em Ausência">Problema em Ausência</SelectItem>
-                        <SelectItem value="Retificação">Retificação</SelectItem>
-                        <SelectItem value="Ocorrência de Ponto">Ocorrência de Ponto</SelectItem>
-                        <SelectItem value="Processamento Interno">Processamento Interno</SelectItem>
-                        <SelectItem value="Acesso / Permissão">Acesso / Permissão</SelectItem>
-                        <SelectItem value="Erro no Sistema">Erro no Sistema</SelectItem>
-                        <SelectItem value="Outro">Outro</SelectItem>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {SUPPORT_CATEGORIES[cat as SupportCategory]}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
