@@ -15,7 +15,7 @@ export const getStabilityResults = createServerFn({ method: "GET" })
   });
 
 export const updateStabilityResult = createServerFn({ method: "POST" })
-  .input(z.object({
+  .validator((data: any) => z.object({
     flow_id: z.string(),
     gate_id: z.string(),
     status: z.enum(['NOT_TESTED', 'PASS', 'GAP', 'BLOCKED']),
@@ -24,7 +24,7 @@ export const updateStabilityResult = createServerFn({ method: "POST" })
     root_cause: z.string().optional(),
     recommended_fix: z.string().optional(),
     trace_id: z.string().optional(),
-  }))
+  }).parse(data))
   .handler(async ({ data }) => {
     const { error } = await supabase
       .from('audit_stability_results')
