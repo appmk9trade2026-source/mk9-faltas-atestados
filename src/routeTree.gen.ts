@@ -328,7 +328,11 @@ const AuthenticatedSuporteConhecimentoRoute =
     id: '/conhecimento',
     path: '/conhecimento',
     getParentRoute: () => AuthenticatedSuporteRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/suporte.conhecimento.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedInteligenciaSupervisoresRoute =
   AuthenticatedInteligenciaSupervisoresRouteImport.update({
     id: '/supervisores',
@@ -508,7 +512,11 @@ const AuthenticatedSuporteConhecimentoSlugRoute =
     id: '/$slug',
     path: '/$slug',
     getParentRoute: () => AuthenticatedSuporteConhecimentoRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/suporte.conhecimento.$slug.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedInteligenciaColaboradoresColaboradorIdRoute =
   AuthenticatedInteligenciaColaboradoresColaboradorIdRouteImport.update({
     id: '/colaboradores/$colaboradorId',
