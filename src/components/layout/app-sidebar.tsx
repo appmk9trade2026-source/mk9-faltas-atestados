@@ -100,6 +100,7 @@ const items: Item[] = [
   { title: "Observabilidade", url: "/observabilidade", icon: Gauge, roles: ["super_admin", "compliance"] },
   { title: "Inteligência Analítica", url: "/inteligencia", icon: Sparkles, roles: ["super_admin", "compliance", "rh", "coordenador", "supervisor"] },
   { title: "Ocorrência Ponto", url: "/ocorrencias-ponto", icon: Fingerprint, roles: ["super_admin", "rh", "coordenador", "supervisor"] },
+  { title: "Suporte", url: "/suporte", icon: MessageSquare, roles: ["super_admin", "rh"] },
 
   { title: "Hardening & Produção", url: "/admin/hardening", icon: Gauge, roles: ["super_admin"] },
   { title: "Auditoria de Estabilidade", url: "/estabilidade", icon: ShieldCheck, roles: ["super_admin"] },
@@ -121,7 +122,7 @@ const SECTIONS: Section[] = [
   {
     id: "comunicacao",
     label: "Comunicação",
-    urls: ["/comunicacoes", "/comunicacoes/whatsapp", "/alertas", "/historico", "/notificacoes"],
+    urls: ["/comunicacoes", "/comunicacoes/whatsapp", "/suporte", "/alertas", "/historico", "/notificacoes"],
   },
   {
     id: "analises",
