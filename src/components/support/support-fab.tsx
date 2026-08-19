@@ -26,7 +26,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getUnreadSupportCount } from "@/lib/support.functions";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { SupportAvatar } from "./support-avatar";
+
 
 export function SupportFAB() {
   const { openSupport } = useSupport();
@@ -100,12 +100,12 @@ export function SupportFAB() {
       <Button
         size="icon"
         className={cn(
-          "shadow-2xl rounded-full transition-all duration-300 hover:scale-110 active:scale-95 bg-transparent border-0 h-14 w-14 p-0 overflow-visible hover:ring-4 hover:ring-primary/10",
+          "shadow-2xl rounded-full transition-all duration-300 hover:scale-110 active:scale-95 bg-primary text-primary-foreground h-14 w-14 p-0 overflow-visible hover:ring-4 hover:ring-primary/10 flex items-center justify-center",
           unreadCount > 0 && "animate-pulse"
         )}
         aria-label="Suporte MK9"
       >
-        <SupportAvatar className="w-full h-full" isOnline={true} />
+        <MessageSquare className="w-7 h-7" />
         
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-black min-w-[20px] h-5 flex items-center justify-center rounded-full border-2 border-white shadow-lg z-10 px-1 animate-in zoom-in">
