@@ -47,6 +47,7 @@ import { Route as AuthenticatedAuditoriaRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAssistenteRouteImport } from './routes/_authenticated/assistente'
 import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticated/alertas'
 import { Route as AuthenticatedAcessosRouteImport } from './routes/_authenticated/acessos'
+import { Route as AuthenticatedSuporteIndexRouteImport } from './routes/_authenticated/suporte.index'
 import { Route as AuthenticatedComunicacoesIndexRouteImport } from './routes/_authenticated/comunicacoes.index'
 import { Route as AuthenticatedSuporteIncidentesRouteImport } from './routes/_authenticated/suporte.incidentes'
 import { Route as AuthenticatedSuporteDashboardRouteImport } from './routes/_authenticated/suporte.dashboard'
@@ -130,9 +131,7 @@ const AuthenticatedSuporteRoute = AuthenticatedSuporteRouteImport.update({
   id: '/suporte',
   path: '/suporte',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any).lazy(() =>
-  import('./routes/_authenticated/suporte.lazy').then((d) => d.Route),
-)
+} as any)
 const AuthenticatedRoadmapRoute = AuthenticatedRoadmapRouteImport.update({
   id: '/roadmap',
   path: '/roadmap',
@@ -301,6 +300,14 @@ const AuthenticatedAcessosRoute = AuthenticatedAcessosRouteImport.update({
   path: '/acessos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSuporteIndexRoute =
+  AuthenticatedSuporteIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedSuporteRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/suporte.index.lazy').then((d) => d.Route),
+  )
 const AuthenticatedComunicacoesIndexRoute =
   AuthenticatedComunicacoesIndexRouteImport.update({
     id: '/',
@@ -645,6 +652,7 @@ export interface FileRoutesByFullPath {
   '/suporte/dashboard': typeof AuthenticatedSuporteDashboardRoute
   '/suporte/incidentes': typeof AuthenticatedSuporteIncidentesRoute
   '/comunicacoes/': typeof AuthenticatedComunicacoesIndexRoute
+  '/suporte/': typeof AuthenticatedSuporteIndexRoute
   '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
   '/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
   '/comunicacoes/whatsapp/execucoes': typeof AuthenticatedComunicacoesWhatsappExecucoesRoute
@@ -695,7 +703,6 @@ export interface FileRoutesByTo {
   '/qualidade-lancamentos': typeof AuthenticatedQualidadeLancamentosRoute
   '/relatorios': typeof AuthenticatedRelatoriosRoute
   '/roadmap': typeof AuthenticatedRoadmapRoute
-  '/suporte': typeof AuthenticatedSuporteRouteWithChildren
   '/usuarios': typeof AuthenticatedUsuariosRouteWithChildren
   '/auth/nova-senha': typeof AuthNovaSenhaRoute
   '/admin/hardening': typeof AuthenticatedAdminHardeningRoute
@@ -726,6 +733,7 @@ export interface FileRoutesByTo {
   '/suporte/dashboard': typeof AuthenticatedSuporteDashboardRoute
   '/suporte/incidentes': typeof AuthenticatedSuporteIncidentesRoute
   '/comunicacoes': typeof AuthenticatedComunicacoesIndexRoute
+  '/suporte': typeof AuthenticatedSuporteIndexRoute
   '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
   '/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
   '/comunicacoes/whatsapp/execucoes': typeof AuthenticatedComunicacoesWhatsappExecucoesRoute
@@ -811,6 +819,7 @@ export interface FileRoutesById {
   '/_authenticated/suporte/dashboard': typeof AuthenticatedSuporteDashboardRoute
   '/_authenticated/suporte/incidentes': typeof AuthenticatedSuporteIncidentesRoute
   '/_authenticated/comunicacoes/': typeof AuthenticatedComunicacoesIndexRoute
+  '/_authenticated/suporte/': typeof AuthenticatedSuporteIndexRoute
   '/_authenticated/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
   '/_authenticated/comunicacoes/whatsapp/dead-letter': typeof AuthenticatedComunicacoesWhatsappDeadLetterRoute
   '/_authenticated/comunicacoes/whatsapp/execucoes': typeof AuthenticatedComunicacoesWhatsappExecucoesRoute
@@ -896,6 +905,7 @@ export interface FileRouteTypes {
     | '/suporte/dashboard'
     | '/suporte/incidentes'
     | '/comunicacoes/'
+    | '/suporte/'
     | '/comunicacoes/whatsapp/configuracao'
     | '/comunicacoes/whatsapp/dead-letter'
     | '/comunicacoes/whatsapp/execucoes'
@@ -946,7 +956,6 @@ export interface FileRouteTypes {
     | '/qualidade-lancamentos'
     | '/relatorios'
     | '/roadmap'
-    | '/suporte'
     | '/usuarios'
     | '/auth/nova-senha'
     | '/admin/hardening'
@@ -977,6 +986,7 @@ export interface FileRouteTypes {
     | '/suporte/dashboard'
     | '/suporte/incidentes'
     | '/comunicacoes'
+    | '/suporte'
     | '/comunicacoes/whatsapp/configuracao'
     | '/comunicacoes/whatsapp/dead-letter'
     | '/comunicacoes/whatsapp/execucoes'
@@ -1061,6 +1071,7 @@ export interface FileRouteTypes {
     | '/_authenticated/suporte/dashboard'
     | '/_authenticated/suporte/incidentes'
     | '/_authenticated/comunicacoes/'
+    | '/_authenticated/suporte/'
     | '/_authenticated/comunicacoes/whatsapp/configuracao'
     | '/_authenticated/comunicacoes/whatsapp/dead-letter'
     | '/_authenticated/comunicacoes/whatsapp/execucoes'
@@ -1356,6 +1367,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/acessos'
       preLoaderRoute: typeof AuthenticatedAcessosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/suporte/': {
+      id: '/_authenticated/suporte/'
+      path: '/'
+      fullPath: '/suporte/'
+      preLoaderRoute: typeof AuthenticatedSuporteIndexRouteImport
+      parentRoute: typeof AuthenticatedSuporteRoute
     }
     '/_authenticated/comunicacoes/': {
       id: '/_authenticated/comunicacoes/'
@@ -1803,6 +1821,7 @@ interface AuthenticatedSuporteRouteChildren {
   AuthenticatedSuporteConhecimentoRoute: typeof AuthenticatedSuporteConhecimentoRouteWithChildren
   AuthenticatedSuporteDashboardRoute: typeof AuthenticatedSuporteDashboardRoute
   AuthenticatedSuporteIncidentesRoute: typeof AuthenticatedSuporteIncidentesRoute
+  AuthenticatedSuporteIndexRoute: typeof AuthenticatedSuporteIndexRoute
 }
 
 const AuthenticatedSuporteRouteChildren: AuthenticatedSuporteRouteChildren = {
@@ -1810,6 +1829,7 @@ const AuthenticatedSuporteRouteChildren: AuthenticatedSuporteRouteChildren = {
     AuthenticatedSuporteConhecimentoRouteWithChildren,
   AuthenticatedSuporteDashboardRoute: AuthenticatedSuporteDashboardRoute,
   AuthenticatedSuporteIncidentesRoute: AuthenticatedSuporteIncidentesRoute,
+  AuthenticatedSuporteIndexRoute: AuthenticatedSuporteIndexRoute,
 }
 
 const AuthenticatedSuporteRouteWithChildren =

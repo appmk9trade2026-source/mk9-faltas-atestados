@@ -28,7 +28,7 @@ import { toast } from "sonner";
 import { TicketDetailsDrawer } from "@/components/support/ticket-details-drawer";
 
 
-export const Route = createLazyFileRoute('/_authenticated/suporte')({
+export const Route = createLazyFileRoute('/_authenticated/suporte/')({
   component: SupportPage,
 });
 
