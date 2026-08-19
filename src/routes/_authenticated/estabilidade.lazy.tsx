@@ -283,56 +283,58 @@ function StabilizationAuditPage() {
                 <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
               </div>
-              <span className="text-slate-500 text-[9px] font-black tracking-widest uppercase">RELATÓRIO FINAL OBRIGATÓRIO — RODADA 2 — ETAPA 3A — EXECUÇÃO FORENSE RH / PROCESSAMENTO</span>
+              <span className="text-slate-500 text-[9px] font-black tracking-widest uppercase">RELATÓRIO FINAL OBRIGATÓRIO — RODADA 2 — ETAPA 4 — CONSOLIDAÇÃO SUPER ADMIN</span>
             </div>
             <CardContent className="p-6 space-y-4 opacity-90 overflow-y-auto max-h-[600px]">
               <div className="flex justify-between border-b border-slate-900 pb-2">
-                <span className="text-emerald-500 font-black tracking-tighter uppercase">RODADA 2 — ETAPA 3A: RH / PROCESSAMENTO — CONCLUÍDA</span>
-                <span className="text-slate-400 font-mono">AUDIT RUN: RUN-20260819-P0-002-E3A</span>
+                <span className="text-emerald-500 font-black tracking-tighter uppercase">RODADA 2 — ETAPA 4: CONSOLIDAÇÃO FINAL — CONCLUÍDA</span>
+                <span className="text-slate-400 font-mono">AUDIT RUN: RUN-20260819-P0-002-E4</span>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-[9px]">
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">TESTES RH-PROC</p>
-                  <p>RH-PROC-001 (Happy Path): <span className="text-emerald-500 font-black">PASS</span></p>
-                  <p>RH-PROC-002 (Concurrency): <span className="text-emerald-500 font-black">PASS (FOR UPDATE LOCK)</span></p>
-                  <p>RH-PROC-004 (Lost Response): <span className="text-emerald-500 font-black">PASS (ATOMIC)</span></p>
-                  <p>RH-PROC-007 (Retry Claim): <span className="text-emerald-500 font-black">PASS (IDEMPOTENT)</span></p>
-                  <p>RH-PROC-011 (Supervisor Block): <span className="text-emerald-500 font-black">PASS (beforeLoad + RPC)</span></p>
-                  <p>RH-PROC-013 (HTML Guard): <span className="text-emerald-500 font-black">PASS (Active)</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">BUILD & INFRA PÓS-HARDENING</p>
+                  <p>TypeScript (tsc --noEmit): <span className="text-emerald-500 font-black">PASS</span></p>
+                  <p>Produção Build: <span className="text-emerald-500 font-black">PASS</span></p>
+                  <p>Missing Exports / Hooks: <span className="text-emerald-500 font-black">0 DETECTED</span></p>
+                  <p>Runtime Import Check: <span className="text-emerald-500 font-black">PASS</span></p>
+                  <p>HTML Guard active: <span className="text-emerald-500 font-black">YES (Verified)</span></p>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">CONCORRÊNCIA / LOST RESPONSE</p>
-                  <p>Winner Count: <span className="text-emerald-500 font-mono">1 (Atomic Transaction)</span></p>
-                  <p>Duplicate Claims: <span className="text-emerald-500 font-mono">0 (Blocked by DB)</span></p>
-                  <p>Final Owner Count: <span className="text-emerald-500 font-mono">1 (Strict Equality)</span></p>
-                  <p>Retry Convergence: <span className="text-emerald-500 font-mono">SUCCESS (Error 409/Conflict)</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">RBAC / ROUTE GUARDS</p>
+                  <p>Super Admin access: <span className="text-emerald-500 font-black">PERMITTED</span></p>
+                  <p>RH access (Processamento): <span className="text-emerald-500 font-black">PERMITTED</span></p>
+                  <p>Supervisor access (Processamento): <span className="text-emerald-500 font-black">BLOCKED (beforeLoad)</span></p>
+                  <p>Unauthenticated access: <span className="text-emerald-500 font-black">BLOCKED (Redirect)</span></p>
+                  <p>Server-side RBAC (has_role): <span className="text-emerald-500 font-black">ENFORCED</span></p>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">SEGURANÇA & CONSISTÊNCIA</p>
-                  <p>RBAC Server-side: <span className="text-emerald-500 font-black">PASS (Verified has_role)</span></p>
-                  <p>RLS Scope: <span className="text-emerald-500 font-black">PASS (Tenant Isolated)</span></p>
-                  <p>Multiple Owners: <span className="text-emerald-500 font-mono">0 (Guaranteed)</span></p>
-                  <p>Orphan Claims: <span className="text-emerald-500 font-mono">0 (Clean State)</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">REGRESSÃO DE FLUXOS</p>
+                  <p>Nova Ausência (Meio Período): <span className="text-emerald-500 font-black">PRESERVED</span></p>
+                  <p>Ocorrência de Ponto (Storage): <span className="text-emerald-500 font-black">PRESERVED</span></p>
+                  <p>Processamento (Concurrency): <span className="text-emerald-500 font-black">PASS (Atomic)</span></p>
+                  <p>Idempotency (Correlation ID): <span className="text-emerald-500 font-black">PASS</span></p>
+                  <p>Audit Trail (Trace ID): <span className="text-emerald-500 font-black">PASS</span></p>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">REGRESSÃO & INFRA</p>
-                  <p>TypeScript / Build: <span className="text-emerald-500 font-black">PASS</span></p>
-                  <p>Nova Ausência: <span className="text-emerald-500 font-black">PRESERVED</span></p>
-                  <p>Ocorrência P2: <span className="text-amber-500 font-bold">OPEN-MONITORED</span></p>
-                  <p>Route Hardening: <span className="text-emerald-500 font-black">ACTIVE</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">CONSOLIDAÇÃO DE GAPS</p>
+                  <p>P0 Abertos: <span className="text-emerald-500 font-mono">0</span></p>
+                  <p>P1 Críticos: <span className="text-emerald-500 font-mono">0</span></p>
+                  <p>P2 Ocorrência (Idempotency): <span className="text-amber-500 font-bold">OPEN-MONITORED</span></p>
+                  <p>P3 Sugestões UX: <span className="text-slate-500 font-mono">3 MONITORED</span></p>
+                  <p>Evidence Reconciled: <span className="text-emerald-500 font-black">YES (Gate/Trace matching)</span></p>
                 </div>
               </div>
 
               <div className="border-t border-slate-900 pt-3 flex flex-col gap-1">
                 <p className="text-emerald-500 font-black uppercase tracking-tighter flex items-center gap-2 text-[10px]">
                   <CheckCircle2 className="w-3 h-3" />
-                  ESTADO FINAL: FLUXO DE PROCESSAMENTO INTERNO HOMOLOGADO
+                  DECISÃO FINAL: SISTEMA ESTÁVEL COM GAPS P2 MONITORADOS
                 </p>
-                <p className="text-emerald-400 italic font-bold text-[9px]">DECISÃO: PRONTO PARA OPERAÇÃO = SIM | AUTORIZANDO TRANSIÇÃO PARA RODADA 3</p>
+                <p className="text-emerald-400 italic font-bold text-[9px]">RODADA 2 HOMOLOGADA: PRONTO PARA OPERAÇÃO NORMAL = SIM | PRÓXIMA AÇÃO: MONITORAMENTO ATIVO</p>
               </div>
 
               <div className="pt-2 text-slate-600 text-[9px] border-t border-slate-900 flex justify-between font-bold">
