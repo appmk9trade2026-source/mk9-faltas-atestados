@@ -17,13 +17,15 @@ import {
   History,
   BarChart3
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getTickets } from "@/lib/support.functions";
 import { NovoChamadoDialog } from "@/components/support/novo-chamado-dialog";
 import { ResolucaoChamadoDialog } from "@/components/support/resolucao-chamado-dialog";
 import { useNavigate } from '@tanstack/react-router';
 import { useSupport } from "@/components/support/support-provider";
 import { reopenTicket } from "@/lib/support.functions";
+import { toast } from "sonner";
+
 
 
 
