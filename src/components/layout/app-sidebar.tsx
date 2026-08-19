@@ -124,7 +124,7 @@ const SECTIONS: Section[] = [
   {
     id: "comunicacao",
     label: "Comunicação",
-    urls: ["/comunicacoes", "/comunicacoes/whatsapp", "/suporte", "/alertas", "/historico", "/notificacoes"],
+    urls: ["/comunicacoes", "/comunicacoes/whatsapp", "/suporte", "/suporte/conhecimento", "/alertas", "/historico", "/notificacoes"],
   },
   {
     id: "analises",
