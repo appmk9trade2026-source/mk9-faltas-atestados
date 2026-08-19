@@ -167,8 +167,11 @@ export function ResolucaoChamadoDialog({ open, onOpenChange, ticketId }: Resoluc
                   </FormControl>
                   <FormMessage />
                 </FormItem>
+                </FormItem>
               )}
+            />
             <FormField
+
               control={form.control}
               name="linkArticleId"
               render={({ field }) => (
