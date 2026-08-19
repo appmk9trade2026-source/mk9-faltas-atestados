@@ -129,6 +129,10 @@ export const listarRetificacoes = createServerFn({ method: "POST" })
       data_inicio_nova: string | null;
       data_fim_anterior: string | null;
       data_fim_nova: string | null;
+      horario_inicio_anterior: string | null;
+      horario_inicio_novo: string | null;
+      horario_fim_anterior: string | null;
+      horario_fim_novo: string | null;
       usuario_id: string;
       papel_usuario: string;
       retificado_em: string;
