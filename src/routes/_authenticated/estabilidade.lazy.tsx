@@ -425,12 +425,6 @@ function StabilizationAuditPage() {
         </Drawer>
       </div>
     </AppShell>
-
-
-
-
-
-
   );
 }
 
