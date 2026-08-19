@@ -14,6 +14,19 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { enfileirarNotificacoesAusencia } from "./notificacoes-ausencia.server";
 import { format } from "date-fns";
 import { calculateIntegrityHash, resolveOperationMetadata } from "./integridade-forense.server";
+import { 
+  uuid, 
+  iso, 
+  MANUAL_MOTIVOS, 
+  basePayloadSchema, 
+  updatePayloadSchema,
+  processamentoStatusSchema,
+  iniciarProcessamentoSchema,
+  iniciarGrupoSchema,
+  concluirProcessamentoSchema,
+  reatribuirProcessamentoSchema,
+  manualPayloadSchema
+} from "./ausencias.schemas";
 
 async function getSnapshot(supabase: any, userId: string) {
   const { data, error } = await supabase.rpc("get_user_snapshot", { _user_id: userId });
@@ -23,94 +36,6 @@ async function getSnapshot(supabase: any, userId: string) {
 
 
 type StatusProcessamento = Database["public"]["Enums"]["ausencia_status_processamento"];
-
-
-const uuid = z.string().uuid();
-const iso = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "data inválida");
-
-/** Campos comuns às duas origens (AUTOMATICO e MANUAL). */
-const commonPayloadSchema = z.object({
-  tipo_ausencia_id: uuid,
-  opcao_periodo_id: uuid,
-  data_inicio: iso,
-  localidade: z.string().trim().min(1).max(150),
-  loja_codigo_nome: z.string().trim().min(1).max(150),
-  cid: z.string().trim().max(20).nullable().optional(),
-  acidente_trabalho_trajeto: z.boolean(),
-  motivo: z.string().trim().min(5).max(500),
-  arquivo_url: z.string().trim().max(500).nullable().optional(),
-  arquivo_nome: z.string().trim().max(255).nullable().optional(),
-  arquivo_mime: z.string().trim().max(120).nullable().optional(),
-  arquivo_tamanho: z.number().int().nullable().optional(),
-  // Novos campos de horário para comparecimento parcial (Meio Período)
-  horario_inicio: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/).nullable().optional(),
-  horario_fim: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/).nullable().optional(),
-  // Campos específicos de Acidente de Trabalho (opcionais no schema; obrigatoriedade
-  // é revalidada no handler quando o tipo selecionado é ACIDENTE_TRABALHO).
-  acidente_data: iso.nullable().optional(),
-  acidente_hora: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/).nullable().optional(),
-  acidente_local: z.string().trim().max(200).nullable().optional(),
-  acidente_descricao: z.string().trim().max(2000).nullable().optional(),
-  acidente_atendimento_medico: z.boolean().nullable().optional(),
-  acidente_houve_afastamento: z.boolean().nullable().optional(),
-  acidente_dias_afastamento_inicial: z.union([z.string(), z.number()]).nullable().optional(),
-  acidente_cat_emitida: z.boolean().nullable().optional(),
-  acidente_observacoes: z.string().trim().max(2000).nullable().optional(),
-});
-
-/** Motivos aceitos para o preenchimento manual (sem vínculo com colaborador). */
-export const MANUAL_MOTIVOS = [
-  "COLABORADOR_NAO_ENCONTRADO",
-  "CADASTRO_DESATUALIZADO",
-  "ADMISSAO_RECENTE",
-  "OUTRO",
-] as const;
-
-/** Origem AUTOMATICA — empresa/projeto derivados do colaborador. */
-const autoPayloadSchema = commonPayloadSchema.extend({
-  origem_registro: z.literal("AUTOMATICO"),
-  colaborador_id: uuid,
-});
-
-/** Origem MANUAL — empresa/projeto informados e validados por escopo RBAC. */
-const manualPayloadSchema = commonPayloadSchema.extend({
-  origem_registro: z.literal("MANUAL"),
-  empresa_id: uuid,
-  projeto_id: uuid,
-  manual_motivo: z.enum(MANUAL_MOTIVOS),
-  manual_motivo_detalhe: z.string().trim().max(300).nullable().optional(),
-  manual_nome: z.string().trim().refine(val => {
-    const ok = val.length >= 3;
-    if (!ok) {
-      console.error("ETAPA 8 — LOG DO MANUAL PAYLOAD SCHEMA", {
-        correlation_id: (globalThis as any).__lastCorrelationId || "unknown",
-        etapa: "server-manual-schema",
-        manual_nome_type: typeof val,
-        manual_nome_length: val.length,
-        manual_nome_present: true
-      });
-    }
-    return ok;
-  }, { message: "Informe o nome completo do colaborador (mínimo 3 caracteres)." }).transform(v => v.trim()),
-  manual_matricula: z.string().trim().min(1).max(50),
-  manual_telefone: z.string().trim().max(20).nullable().optional(),
-  manual_whatsapp: z.string().trim().max(20).nullable().optional(),
-  manual_email: z.string().trim().max(150).nullable().optional(),
-  manual_supervisor_nome: z.string().trim().max(150).nullable().optional(),
-  manual_supervisor_telefone: z.string().trim().max(20).nullable().optional(),
-  /**
-   * Supervisor canônico escolhido no formulário (Coordenador).
-   * NÃO é coluna de `ausencias` — vai apenas no `_colaborador` da RPC, que
-   * revalida no servidor se o supervisor pertence à coordenação do usuário.
-   */
-  manual_supervisor_usuario_id: uuid.nullable().optional(),
-
-});
-
-const basePayloadSchema = z.discriminatedUnion("origem_registro", [
-  autoPayloadSchema,
-  manualPayloadSchema,
-]);
 
 type ManualPayload = z.infer<typeof manualPayloadSchema>;
 
@@ -778,22 +703,13 @@ export const createAusencia = createServerFn({ method: "POST" })
 
 
 // ==================== UPDATE ====================
-const updatePayloadSchema = z.discriminatedUnion("origem_registro", [
-  autoPayloadSchema.extend({ id: uuid }),
-  manualPayloadSchema.extend({ id: uuid }),
-]);
 
 /**
  * Reatribui o processamento de uma ausência para o usuário logado.
  */
 export const reatribuirProcessamentoAdm = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => {
-    return z.object({
-      ausencia_id: uuid,
-      responsavel_anterior_id: uuid,
-    }).parse(data);
-  })
+  .inputValidator((data: unknown) => reatribuirProcessamentoSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { data: res, error } = await context.supabase.rpc("reatribuir_processamento_ausencia", {
       _ausencia_id: data.ausencia_id,
@@ -1128,14 +1044,7 @@ export const alterarStatusAusencia = createServerFn({ method: "POST" })
  */
 export const processarAusenciaInterno = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => {
-    const uuid = z.string().uuid();
-    return z.object({
-      ausencia_id: uuid,
-      novo_status: z.enum(["AGUARDANDO", "EM_PROCESSAMENTO", "PROCESSADO"]),
-      observacao: z.string().trim().max(1000).nullable().optional(),
-    }).parse(data);
-  })
+  .inputValidator((data: unknown) => processamentoStatusSchema.parse(data))
   .handler(async ({ data, context }) => {
     // Validação de Papel (RH, Compliance, Admin)
     const { data: roles } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
@@ -1165,9 +1074,7 @@ export const processarAusenciaInterno = createServerFn({ method: "POST" })
  */
 export const iniciarProcessamentoAdm = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => {
-    return z.object({ ausencia_id: uuid }).parse(data);
-  })
+  .inputValidator((data: unknown) => iniciarProcessamentoSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { data: res, error } = await context.supabase.rpc("iniciar_processamento_ausencia", {
       _ausencia_id: data.ausencia_id,
@@ -1182,13 +1089,7 @@ export const iniciarProcessamentoAdm = createServerFn({ method: "POST" })
  */
 export const iniciarProcessamentoGrupoAdm = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => {
-    return z.object({ 
-      colaborador_id: uuid.nullable().optional(),
-      colaborador_matricula: z.string().optional(),
-      projeto_id: uuid 
-    }).parse(data);
-  })
+  .inputValidator((data: unknown) => iniciarGrupoSchema.parse(data))
   .handler(async ({ data, context }) => {
     // Busca registros elegíveis do grupo
     let query = context.supabase
@@ -1234,12 +1135,7 @@ export const iniciarProcessamentoGrupoAdm = createServerFn({ method: "POST" })
  */
 export const concluirProcessamentoAdm = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => {
-    return z.object({
-      ausencia_id: uuid,
-      observacao: z.string().trim().max(1000).nullable().optional(),
-    }).parse(data);
-  })
+  .inputValidator((data: unknown) => concluirProcessamentoSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { data: res, error } = await context.supabase.rpc("concluir_processamento_ausencia", {
       _ausencia_id: data.ausencia_id,
