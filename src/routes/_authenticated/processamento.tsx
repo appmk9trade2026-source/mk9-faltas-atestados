@@ -401,7 +401,7 @@ function CentralProcessamentoPage() {
   };
 
   return (
-    <AppShell title="Central de Processamento" breadcrumb={["Operações", "Central de Processamento"]} actions={<SupportHelpButton context={{ sourceModule: "Central de Processamento" }} />}>
+    <AppShell title="Central de Processamento" breadcrumb={["Operações", "Central de Processamento"]} actions={<SupportHelpButton context={{ sourceModule: "Central de Processamento", suggestedCategory: "PROCESSAMENTO_INTERNO" }} />}>
       <div className="space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
           <KpiCard title="Minha Fila" value={(ausenciasQ.data || []).filter(a => a.responsavel_processamento_id === user?.id && a.status_processamento === 'EM_PROCESSAMENTO').length} icon={User} color="bg-indigo-50 text-indigo-600" />

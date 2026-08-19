@@ -567,7 +567,7 @@ function AusenciasPage() {
   }
 
   return (
-    <AppShell title="Ausências" breadcrumb={["Operações", "Ausências"]} actions={<SupportHelpButton context={{ sourceModule: "Ausências" }} />}>
+    <AppShell title="Ausências" breadcrumb={["Operações", "Ausências"]} actions={<SupportHelpButton context={{ sourceModule: "Ausências", suggestedCategory: "AUSENCIA" }} />}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           Registros de faltas, atestados, declarações e demais ausências. Nenhum

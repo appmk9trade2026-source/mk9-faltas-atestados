@@ -386,7 +386,7 @@ function OcorrenciasPontoPage() {
   const numColaboradores = colaboradores?.length || 0;
 
   return (
-    <AppShell title="Ocorrências de Ponto AMBEV" actions={<SupportHelpButton context={{ sourceModule: "Ocorrências de Ponto" }} />}>
+    <AppShell title="Ocorrências de Ponto AMBEV" actions={<SupportHelpButton context={{ sourceModule: "Ocorrências de Ponto", suggestedCategory: "OCORRENCIA_PONTO" }} />}>
 
       <div className="space-y-6">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
