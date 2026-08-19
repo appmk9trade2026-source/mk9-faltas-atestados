@@ -4239,6 +4239,114 @@ export type Database = {
           },
         ]
       }
+      support_incident_tickets: {
+        Row: {
+          confidence_level: Database["public"]["Enums"]["support_incident_confidence"]
+          created_at: string
+          id: string
+          incident_id: string
+          linked_by: string | null
+          relation_type: Database["public"]["Enums"]["support_incident_relation_type"]
+          ticket_id: string
+        }
+        Insert: {
+          confidence_level?: Database["public"]["Enums"]["support_incident_confidence"]
+          created_at?: string
+          id?: string
+          incident_id: string
+          linked_by?: string | null
+          relation_type?: Database["public"]["Enums"]["support_incident_relation_type"]
+          ticket_id: string
+        }
+        Update: {
+          confidence_level?: Database["public"]["Enums"]["support_incident_confidence"]
+          created_at?: string
+          id?: string
+          incident_id?: string
+          linked_by?: string | null
+          relation_type?: Database["public"]["Enums"]["support_incident_relation_type"]
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_incident_tickets_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "support_incidents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_incident_tickets_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_incidents: {
+        Row: {
+          closed_at: string | null
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          description: string | null
+          detection_source: string
+          first_detected_at: string
+          id: string
+          incident_fingerprint: string
+          incident_protocol: string | null
+          primary_safe_code: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: Database["public"]["Enums"]["support_incident_severity"]
+          source_module: string
+          status: Database["public"]["Enums"]["support_incident_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          closed_at?: string | null
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          description?: string | null
+          detection_source?: string
+          first_detected_at?: string
+          id?: string
+          incident_fingerprint: string
+          incident_protocol?: string | null
+          primary_safe_code?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: Database["public"]["Enums"]["support_incident_severity"]
+          source_module: string
+          status?: Database["public"]["Enums"]["support_incident_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          closed_at?: string | null
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          description?: string | null
+          detection_source?: string
+          first_detected_at?: string
+          id?: string
+          incident_fingerprint?: string
+          incident_protocol?: string | null
+          primary_safe_code?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: Database["public"]["Enums"]["support_incident_severity"]
+          source_module?: string
+          status?: Database["public"]["Enums"]["support_incident_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       support_knowledge_article_feedback: {
         Row: {
           article_id: string
@@ -6064,6 +6172,19 @@ export type Database = {
           total_exec_time_ms: number
         }[]
       }
+      detect_potential_incidents: {
+        Args: { _threshold_potential?: number; _window_minutes?: number }
+        Returns: {
+          category: string
+          fingerprint: string
+          first_detected: string
+          last_detected: string
+          safe_code: string
+          source_module: string
+          ticket_count: number
+          user_count: number
+        }[]
+      }
       detectar_conflitos_ausencia: {
         Args: {
           _colaborador_id: string
@@ -7373,6 +7494,21 @@ export type Database = {
         | "SUPER_ADMIN"
         | "ALL_AUTHORIZED"
       support_article_status: "DRAFT" | "IN_REVIEW" | "PUBLISHED" | "ARCHIVED"
+      support_incident_confidence: "HIGH" | "MEDIUM" | "LOW"
+      support_incident_relation_type:
+        | "AUTO_SUGGESTED"
+        | "HUMAN_CONFIRMED"
+        | "MANUAL"
+        | "REJECTED"
+      support_incident_severity: "P0" | "P1" | "P2" | "P3"
+      support_incident_status:
+        | "POTENTIAL"
+        | "INVESTIGATING"
+        | "CONFIRMED"
+        | "MONITORING"
+        | "RESOLVED"
+        | "CLOSED"
+        | "FALSE_POSITIVE"
       support_message_type: "TEXTO" | "SISTEMA" | "ANEXO"
       support_priority: "BAIXA" | "NORMAL" | "ALTA" | "URGENTE"
       support_sla_status:
@@ -7907,6 +8043,23 @@ export const Constants = {
         "ALL_AUTHORIZED",
       ],
       support_article_status: ["DRAFT", "IN_REVIEW", "PUBLISHED", "ARCHIVED"],
+      support_incident_confidence: ["HIGH", "MEDIUM", "LOW"],
+      support_incident_relation_type: [
+        "AUTO_SUGGESTED",
+        "HUMAN_CONFIRMED",
+        "MANUAL",
+        "REJECTED",
+      ],
+      support_incident_severity: ["P0", "P1", "P2", "P3"],
+      support_incident_status: [
+        "POTENTIAL",
+        "INVESTIGATING",
+        "CONFIRMED",
+        "MONITORING",
+        "RESOLVED",
+        "CLOSED",
+        "FALSE_POSITIVE",
+      ],
       support_message_type: ["TEXTO", "SISTEMA", "ANEXO"],
       support_priority: ["BAIXA", "NORMAL", "ALTA", "URGENTE"],
       support_sla_status: [

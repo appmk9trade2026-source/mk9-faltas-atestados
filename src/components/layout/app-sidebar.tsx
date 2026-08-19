@@ -29,6 +29,7 @@ import {
   Trophy,
   Fingerprint,
   Search,
+  ShieldAlert,
 } from "lucide-react";
 import { APP_VERSION, APP_ENV, APP_ENV_LABEL } from "@/lib/app-meta";
 import {
@@ -101,7 +102,9 @@ const items: Item[] = [
   { title: "Inteligência Analítica", url: "/inteligencia", icon: Sparkles, roles: ["super_admin", "compliance", "rh", "coordenador", "supervisor"] },
   { title: "Ocorrência Ponto", url: "/ocorrencias-ponto", icon: Fingerprint, roles: ["super_admin", "rh", "coordenador", "supervisor"] },
   { title: "Suporte", url: "/suporte", icon: MessageSquare, roles: ["super_admin", "rh", "coordenador", "supervisor", "compliance", "operacao"] },
+  { title: "Dashboard de SLA", url: "/suporte/dashboard", icon: BarChart3, roles: ["super_admin", "rh", "compliance"] },
   { title: "Base de Conhecimento", url: "/suporte/conhecimento", icon: BookOpen, roles: ["super_admin", "rh", "coordenador", "supervisor", "compliance", "operacao"] },
+  { title: "Gestão de Incidentes", url: "/suporte/incidentes", icon: ShieldAlert, roles: ["super_admin", "rh", "compliance"] },
 
 
   { title: "Hardening & Produção", url: "/admin/hardening", icon: Gauge, roles: ["super_admin"] },
