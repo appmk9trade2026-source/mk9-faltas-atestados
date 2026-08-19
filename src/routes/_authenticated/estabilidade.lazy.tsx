@@ -124,7 +124,12 @@ function StabilizationAuditPage() {
   };
 
   return (
-    <AppShell title="Programa de Estabilização" breadcrumb={["Administração", "Auditoria de Estabilidade"]}>
+    <AppShell 
+      title="Programa de Estabilização MK9" 
+      breadcrumb={["Admin", "Estabilização"]}
+      actions={<SupportHelpButton context={{ sourceModule: "Painel Estabilização" }} />}
+    >
+
       <div className="space-y-8 max-w-6xl mx-auto pb-20">
         
         {/* Header Section */}
@@ -419,11 +424,8 @@ function StabilizationAuditPage() {
           </DrawerContent>
         </Drawer>
       </div>
-    <AppShell 
-      title="Programa de Estabilização MK9" 
-      breadcrumb={["Admin", "Estabilização"]}
-      actions={<SupportHelpButton context={{ sourceModule: "Painel Estabilização" }} />}
-    >
+    </AppShell>
+
 
 
 
