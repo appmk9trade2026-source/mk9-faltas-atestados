@@ -302,7 +302,7 @@ function StabilizationAuditPage() {
  
                 <div className="space-y-2">
                   <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest uppercase">TESTE REAL COMPORTAMENTAL</p>
-                  <p>UI -> Server Fn -> Zod: <span className="text-emerald-500 font-black">PASS</span></p>
+                  <p>UI {"->"} Server Fn {"->"} Zod: <span className="text-emerald-500 font-black">PASS</span></p>
                   <p>Upload & Private Storage: <span className="text-emerald-500 font-black">PASS</span></p>
                   <p>RPC & Database Commit: <span className="text-emerald-500 font-black">PASS</span></p>
                   <p>History Insert & Audit: <span className="text-emerald-500 font-black">PASS</span></p>
