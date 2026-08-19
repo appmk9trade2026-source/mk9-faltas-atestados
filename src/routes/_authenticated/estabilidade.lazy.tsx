@@ -135,7 +135,7 @@ function StabilizationAuditPage() {
                     AUDIT RUN: RUN-20260819-P0-002
                   </Badge>
                   <Badge variant="outline" className="font-mono text-[10px] border-emerald-500/50 text-emerald-600">
-                    ESTADO DE ENTRADA: ETAPA 3 INICIADA — RH-PROC-001 → 016 AUTORIZADOS
+                    ESTADO DE SAÍDA: ETAPA 3 CONCLUÍDA — PROCESSAMENTO INTERNO HOMOLOGADO
                   </Badge>
                 </div>
               </div>
