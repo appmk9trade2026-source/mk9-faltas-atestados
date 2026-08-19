@@ -96,14 +96,20 @@ export function SupportFAB() {
   }
 
   const trigger = (
-    <Button
-      size="default"
+    <div
+      role="button"
+      tabIndex={0}
       className={cn(
-        "fixed bottom-6 right-6 z-50 shadow-2xl rounded-full transition-all duration-300 hover:scale-105 active:scale-95 bg-primary text-primary-foreground h-12 px-4 flex items-center gap-2 overflow-visible hover:ring-4 hover:ring-primary/10",
+        "fixed bottom-6 right-6 z-50 shadow-2xl rounded-full transition-all duration-300 hover:scale-105 active:scale-95 bg-primary text-primary-foreground h-12 px-4 flex items-center gap-2 overflow-visible hover:ring-4 hover:ring-primary/10 cursor-pointer",
         isMobile && "h-12 w-12 p-0 justify-center",
         unreadCount > 0 && "animate-pulse"
       )}
       aria-label="Suporte MK9"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          setIsOpen(true);
+        }
+      }}
     >
       <div className="relative pointer-events-none">
         <MessageSquare className={cn("w-5 h-5", isMobile && "w-6 h-6")} />
@@ -114,7 +120,7 @@ export function SupportFAB() {
         )}
       </div>
       {!isMobile && <span className="font-bold tracking-tight pointer-events-none">Suporte</span>}
-    </Button>
+    </div>
   );
 
   const desktopTrigger = (
