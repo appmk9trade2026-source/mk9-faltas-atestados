@@ -39,8 +39,6 @@ export function SupportProvider({ children }: { children: ReactNode }) {
       <NovoChamadoDialog 
         open={isOpen} 
         onOpenChange={setIsOpen} 
-
-        onOpenChange={setIsOpen} 
         context={context} 
       />
     </SupportContext.Provider>
