@@ -419,7 +419,12 @@ function StabilizationAuditPage() {
           </DrawerContent>
         </Drawer>
       </div>
-    </AppShell>
+    <AppShell 
+      title="Programa de Estabilização MK9" 
+      breadcrumb={["Admin", "Estabilização"]}
+      actions={<SupportHelpButton context={{ sourceModule: "Painel Estabilização" }} />}
+    >
+
 
 
 
