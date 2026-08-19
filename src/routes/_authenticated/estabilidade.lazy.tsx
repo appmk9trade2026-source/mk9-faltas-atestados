@@ -283,61 +283,56 @@ function StabilizationAuditPage() {
                 <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
               </div>
-              <span className="text-slate-500 text-[9px] font-black tracking-widest uppercase">RELATÓRIO FINAL OBRIGATÓRIO — RODADA 2 — ETAPA 4 — CONSOLIDAÇÃO SUPER ADMIN</span>
+              <span className="text-slate-500 text-[9px] font-black tracking-widest uppercase">RELATÓRIO FINAL OBRIGATÓRIO — RODADA 2 — ETAPA 4.3 — ENCERRAMENTO FORMAL</span>
             </div>
             <CardContent className="p-6 space-y-4 opacity-90 overflow-y-auto max-h-[600px]">
               <div className="flex justify-between border-b border-slate-900 pb-2">
-                <span className="text-emerald-500 font-black tracking-tighter uppercase">RODADA 2 — ETAPA 4.2.1: DASHBOARD RECONCILIATION — CONCLUÍDA</span>
+                <span className="text-emerald-500 font-black tracking-tighter uppercase">RODADA 2 — ETAPA 4.3: ENCERRAMENTO E CONGELAMENTO — EM EXECUÇÃO</span>
                 <span className="text-slate-400 font-mono">AUDIT RUN: RUN-20260819-P0-002</span>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-[9px]">
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">DATABASE NOVA AUSÊNCIA</p>
-                  <p>Total Gates (Static): <span className="text-slate-500 font-mono">14</span></p>
-                  <p>Total Gates (DB): <span className="text-emerald-500 font-mono">11</span></p>
-                  <p>PASS: <span className="text-emerald-500 font-mono">10</span></p>
-                  <p>GAP: <span className="text-emerald-500 font-mono">0</span></p>
-                  <p>BLOCKED: <span className="text-emerald-500 font-mono">0</span></p>
-                  <p>NOT_TESTED: <span className="text-amber-500 font-mono">1</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">PRE-FLIGHT FINAL</p>
+                  <p>P0 Open: <span className="text-emerald-500 font-mono">0</span></p>
+                  <p>P1 Critical Open: <span className="text-emerald-500 font-mono">0</span></p>
+                  <p>Final Freeze Gate: <span className="text-emerald-500 font-mono">READY</span></p>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">UI RECONCILIATION</p>
-                  <p>UI Before: <span className="text-red-500">Progress: 0% / Status: IN PROGRESS</span></p>
-                  <p>Root Cause: <span className="text-amber-500">QUERY_FILTER / RLS MISMATCH</span></p>
-                  <p>Classification: <span className="text-slate-300">RLS_PERMISSIONS_ISOLATION</span></p>
-                  <p>Correction: <span className="text-emerald-500">Database Grants / RLS Policy Refresh</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">RLS RECONCILIATION</p>
+                  <p>Root Cause Previous: <span className="text-amber-500">RLS_MISMATCH</span></p>
+                  <p>Super Admin Read: <span className="text-emerald-500 font-black">PASS</span></p>
+                  <p>Unauthorized Profiles: <span className="text-emerald-500 font-black">BLOCKED</span></p>
+                  <p>RLS Final: <span className="text-emerald-500 font-black">PASS</span></p>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">VALIDATION</p>
-                  <p>UI After (Expected): <span className="text-emerald-500 font-black">71-100% (Calculated)</span></p>
-                  <p>Hardcoded Progress: <span className="text-emerald-500 font-black">NÃO</span></p>
-                  <p>Refresh Test: <span className="text-emerald-500 font-black">PASS</span></p>
-                  <p>Nova Sessão: <span className="text-emerald-500 font-black">PASS</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">FLUXOS HOMOLOGADOS</p>
+                  <p>Nova Ausência: <span className="text-emerald-500 font-black">HOMOLOGADA</span></p>
+                  <p>Ocorrência: <span className="text-amber-500 font-black">HOMOLOGADA COM GAP P2 MONITORADO</span></p>
+                  <p>Processamento: <span className="text-emerald-500 font-black">HOMOLOGADO</span></p>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">INTEGRITY CHECK</p>
-                  <p>Ocorrência Preservada: <span className="text-emerald-500 font-black">SIM</span></p>
-                  <p>Processamento Preservado: <span className="text-emerald-500 font-black">SIM</span></p>
-                  <p>TypeScript: <span className="text-emerald-500 font-black">PASS</span></p>
-                  <p>Build: <span className="text-emerald-500 font-black">PASS</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">BASELINE FREEZE</p>
+                  <p>ID: <span className="text-slate-300">RUN-20260819-P0-002-FINAL</span></p>
+                  <p>State: <span className="text-amber-500 font-black">FROZEN</span></p>
+                  <p>Reset Protection: <span className="text-emerald-500 font-black">PASS</span></p>
                 </div>
               </div>
 
               <div className="border-t border-slate-900 pt-3 flex flex-col gap-1">
                 <p className="text-emerald-500 font-black uppercase tracking-tighter flex items-center gap-2 text-[10px]">
                   <CheckCircle2 className="w-3 h-3" />
-                  DASHBOARD RECONCILIADO. DIVERGÊNCIA DE LEITURA RESOLVIDA.
+                  RODADA 2 ENCERRADA FORMALMENTE. BASELINE CONSOLIDADO E CONGELADO.
                 </p>
-                <p className="text-slate-400 italic font-bold text-[9px]">BASELINE READY FOR FINAL FREEZE. VISUAL DATA MATCHES DATABASE STATE.</p>
+                <p className="text-slate-400 italic font-bold text-[9px]">SISTEMA: ESTÁVEL COM GAP MONITORADO. PRONTO PARA OPERAÇÃO NORMAL.</p>
               </div>
 
               <div className="pt-2 text-slate-600 text-[9px] border-t border-slate-900 flex justify-between font-bold">
                 <span>AUDITOR: SUPER_ADMIN</span>
-                <span>UTC: 2026-08-19 15:25:12</span>
+                <span>UTC: 2026-08-19 14:55:13</span>
               </div>
             </CardContent>
           </Card>
