@@ -214,7 +214,14 @@ function CentralProcessamentoPage() {
       queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
     },
 
-    onError: (e: any) => toast.error(e.message)
+    onError: (e: any) => {
+      if (typeof e.message === 'string' && e.message.trim().startsWith('<!DOCTYPE html>')) {
+        toast.error("Erro Crítico: Resposta inesperada do servidor (HTML). A sessão pode ter expirado ou o sistema está instável.");
+        console.error("HTML Guard detectou crash de runtime:", e.message);
+      } else {
+        toast.error(e.message || "Erro ao iniciar processamento.");
+      }
+    }
   });
 
   const iniciarGrupoMut = useMutation({
@@ -230,7 +237,13 @@ function CentralProcessamentoPage() {
         toast.error(res.message || "Não foi possível assumir o grupo.");
       }
     },
-    onError: (e: any) => toast.error(e.message)
+    onError: (e: any) => {
+      if (typeof e.message === 'string' && e.message.trim().startsWith('<!DOCTYPE html>')) {
+        toast.error("Erro Crítico: Resposta inesperada do servidor (HTML).");
+      } else {
+        toast.error(e.message || "Erro ao processar grupo.");
+      }
+    }
   });
 
   const concluirMut = useMutation({
@@ -266,7 +279,13 @@ function CentralProcessamentoPage() {
       queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
     },
 
-    onError: (e: any) => toast.error(e.message)
+    onError: (e: any) => {
+      if (typeof e.message === 'string' && e.message.trim().startsWith('<!DOCTYPE html>')) {
+        toast.error("Erro Crítico: Resposta inesperada do servidor (HTML).");
+      } else {
+        toast.error(e.message || "Erro ao concluir processamento.");
+      }
+    }
   });
 
   const reatribuirMut = useMutation({
@@ -288,7 +307,13 @@ function CentralProcessamentoPage() {
       queryClient.invalidateQueries({ queryKey: ["processamento"] });
     },
 
-    onError: (e: any) => toast.error(e.message)
+    onError: (e: any) => {
+      if (typeof e.message === 'string' && e.message.trim().startsWith('<!DOCTYPE html>')) {
+        toast.error("Erro Crítico: Resposta inesperada do servidor (HTML).");
+      } else {
+        toast.error(e.message || "Erro ao reatribuir processamento.");
+      }
+    }
   });
 
   const assumirProximo = () => {
