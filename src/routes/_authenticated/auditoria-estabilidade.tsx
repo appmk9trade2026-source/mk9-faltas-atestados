@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
+import { AppShell } from "@/components/layout/app-shell";
 
 export const Route = createFileRoute('/_authenticated/auditoria-estabilidade')({
   beforeLoad: async ({ location }) => {
@@ -13,13 +14,12 @@ export const Route = createFileRoute('/_authenticated/auditoria-estabilidade')({
       throw redirect({
         to: '/auth',
         search: { 
-          // @ts-ignore - 'redirect' search param is common for auth redirects
+          // @ts-ignore
           redirect: location.href 
         },
       });
     }
 
-    // Check for super_admin role using the has_role RPC
     const { data: isSuperAdmin } = await supabase.rpc('has_role', {
       _user_id: session.user.id,
       _role: 'super_admin'
@@ -36,8 +36,9 @@ export const Route = createFileRoute('/_authenticated/auditoria-estabilidade')({
 
 function StabilizationAuditPage() {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 font-sans text-slate-900 dark:text-slate-100">
-      <div className="max-w-5xl mx-auto space-y-8">
+    <AppShell title="Programa de Estabilização" breadcrumb={["Administração", "Auditoria de Estabilidade"]}>
+      <div className="space-y-8 max-w-5xl mx-auto">
+
         
         {/* Header Section */}
         <header className="space-y-4">
@@ -278,7 +279,7 @@ function StabilizationAuditPage() {
 
         </div>
       </div>
-    </div>
+    </AppShell>
   );
 }
 
