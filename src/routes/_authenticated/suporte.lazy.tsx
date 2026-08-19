@@ -23,7 +23,7 @@ import { NovoChamadoDialog } from "@/components/support/novo-chamado-dialog";
 import { ResolucaoChamadoDialog } from "@/components/support/resolucao-chamado-dialog";
 import { useNavigate } from '@tanstack/react-router';
 import { useSupport } from "@/components/support/support-provider";
-import { reopenTicket } from "@/lib/support.functions";
+import { reopenTicket, assignTicket } from "@/lib/support.functions";
 import { toast } from "sonner";
 
 export const Route = createLazyFileRoute('/_authenticated/suporte')({
