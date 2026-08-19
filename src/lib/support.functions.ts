@@ -7,6 +7,69 @@ import { Database } from "@/integrations/supabase/types";
 export type SupportPriority = Database['public']['Enums']['support_priority'];
 export type SupportStatus = Database['public']['Enums']['support_status'];
 export type SupportMessageType = Database['public']['Enums']['support_message_type'];
+export type SupportSLAStatus = Database['public']['Enums']['support_sla_status'];
+
+export const getSupportStats = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { data, error } = await supabase
+      .from('support_dashboard_kpis')
+      .select('*')
+      .single();
+
+    if (error) throw new Error(error.message);
+    return data;
+  });
+
+export const getTicketsByModule = createServerFn({ method: "GET" })
+  .handler(async () => {
+    // Busca chamados e agrupa por módulo
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .select('category, status');
+      
+    if (error) throw new Error(error.message);
+    
+    // Agrupamento básico client-side para esta fase, pode ser movido para RPC futuramente
+    return data;
+  });
+
+export const resolveTicket = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({
+    ticketId: z.string().uuid(),
+    category: z.string(),
+    summary: z.string().min(10),
+    internalNotes: z.string().optional()
+  }).parse(data))
+  .handler(async ({ data }) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const { data: ticket, error } = await supabase
+      .from('support_tickets')
+      .update({
+        status: 'RESOLVIDO',
+        resolution_category: data.category,
+        resolution_summary: data.summary,
+        resolution_internal_notes: data.internalNotes,
+        resolved_at: new Date().toISOString(),
+        sla_status: 'CONCLUIDO',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', data.ticketId)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    await supabase.from('support_ticket_events').insert({
+      ticket_id: data.ticketId,
+      actor_user_id: user.id,
+      event_type: 'TICKET_RESOLVED'
+    });
+
+    return ticket;
+  });
+
 
 export const createTicket = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({

@@ -4277,6 +4277,33 @@ export type Database = {
           },
         ]
       }
+      support_sla_config: {
+        Row: {
+          created_at: string | null
+          first_response_minutes: number
+          id: string
+          priority: Database["public"]["Enums"]["support_priority"]
+          resolution_minutes: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          first_response_minutes: number
+          id?: string
+          priority: Database["public"]["Enums"]["support_priority"]
+          resolution_minutes: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          first_response_minutes?: number
+          id?: string
+          priority?: Database["public"]["Enums"]["support_priority"]
+          resolution_minutes?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       support_ticket_events: {
         Row: {
           actor_user_id: string | null
@@ -4330,10 +4357,20 @@ export type Database = {
           related_entity_id: string | null
           related_entity_type: string | null
           related_protocol: string | null
+          reopened_at: string | null
           requester_role: Database["public"]["Enums"]["app_role"]
           requester_user_id: string
+          resolution_category: string | null
+          resolution_internal_notes: string | null
+          resolution_summary: string | null
           resolved_at: string | null
           safe_code: string | null
+          sla_first_response_at: string | null
+          sla_paused_at: string | null
+          sla_priority: Database["public"]["Enums"]["support_priority"] | null
+          sla_resolution_at: string | null
+          sla_status: Database["public"]["Enums"]["support_sla_status"] | null
+          sla_total_paused_seconds: number | null
           source_route: string | null
           status: Database["public"]["Enums"]["support_status"]
           subject: string
@@ -4353,10 +4390,20 @@ export type Database = {
           related_entity_id?: string | null
           related_entity_type?: string | null
           related_protocol?: string | null
+          reopened_at?: string | null
           requester_role: Database["public"]["Enums"]["app_role"]
           requester_user_id: string
+          resolution_category?: string | null
+          resolution_internal_notes?: string | null
+          resolution_summary?: string | null
           resolved_at?: string | null
           safe_code?: string | null
+          sla_first_response_at?: string | null
+          sla_paused_at?: string | null
+          sla_priority?: Database["public"]["Enums"]["support_priority"] | null
+          sla_resolution_at?: string | null
+          sla_status?: Database["public"]["Enums"]["support_sla_status"] | null
+          sla_total_paused_seconds?: number | null
           source_route?: string | null
           status?: Database["public"]["Enums"]["support_status"]
           subject: string
@@ -4376,10 +4423,20 @@ export type Database = {
           related_entity_id?: string | null
           related_entity_type?: string | null
           related_protocol?: string | null
+          reopened_at?: string | null
           requester_role?: Database["public"]["Enums"]["app_role"]
           requester_user_id?: string
+          resolution_category?: string | null
+          resolution_internal_notes?: string | null
+          resolution_summary?: string | null
           resolved_at?: string | null
           safe_code?: string | null
+          sla_first_response_at?: string | null
+          sla_paused_at?: string | null
+          sla_priority?: Database["public"]["Enums"]["support_priority"] | null
+          sla_resolution_at?: string | null
+          sla_status?: Database["public"]["Enums"]["support_sla_status"] | null
+          sla_total_paused_seconds?: number | null
           source_route?: string | null
           status?: Database["public"]["Enums"]["support_status"]
           subject?: string
@@ -5253,6 +5310,18 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      support_dashboard_kpis: {
+        Row: {
+          abertos: number | null
+          aguardando_usuario: number | null
+          avg_first_response_seconds: number | null
+          avg_resolution_seconds: number | null
+          em_atendimento: number | null
+          resolvidos_hoje: number | null
+          sem_responsavel: number | null
+        }
+        Relationships: []
       }
       whatsapp_tst_monitor: {
         Row: {
@@ -7169,6 +7238,12 @@ export type Database = {
         | "CANCELADO"
       support_message_type: "TEXTO" | "SISTEMA" | "ANEXO"
       support_priority: "BAIXA" | "NORMAL" | "ALTA" | "URGENTE"
+      support_sla_status:
+        | "NO_PRAZO"
+        | "ATENCAO"
+        | "ATRASADO"
+        | "PAUSADO"
+        | "CONCLUIDO"
       support_status:
         | "ABERTO"
         | "EM_ATENDIMENTO"
@@ -7690,6 +7765,13 @@ export const Constants = {
       ],
       support_message_type: ["TEXTO", "SISTEMA", "ANEXO"],
       support_priority: ["BAIXA", "NORMAL", "ALTA", "URGENTE"],
+      support_sla_status: [
+        "NO_PRAZO",
+        "ATENCAO",
+        "ATRASADO",
+        "PAUSADO",
+        "CONCLUIDO",
+      ],
       support_status: [
         "ABERTO",
         "EM_ATENDIMENTO",

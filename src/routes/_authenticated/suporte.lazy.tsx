@@ -32,15 +32,52 @@ function SupportPage() {
   });
 
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, slaStatus?: string) => {
+    if (slaStatus === 'ATRASADO') {
+      return (
+        <Badge variant="destructive" className="gap-1 animate-pulse">
+          <AlertCircle className="w-3 h-3" />
+          SLA EXCEDIDO
+        </Badge>
+      );
+    }
+
     switch (status) {
       case 'ABERTO': return <Badge variant="outline" className="border-blue-500 text-blue-500">ABERTO</Badge>;
       case 'EM_ATENDIMENTO': return <Badge className="bg-amber-500">EM ATENDIMENTO</Badge>;
+      case 'AGUARDANDO_USUARIO': return <Badge variant="outline" className="border-slate-400 text-slate-500">AGUARDANDO USUÁRIO</Badge>;
       case 'RESOLVIDO': return <Badge className="bg-emerald-500">RESOLVIDO</Badge>;
       case 'FECHADO': return <Badge variant="secondary">FECHADO</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }
   };
+
+  const getSLALabel = (ticket: any) => {
+    if (ticket.status === 'RESOLVIDO' || ticket.status === 'FECHADO') return null;
+    
+    const colors: Record<string, string> = {
+      'NO_PRAZO': 'text-emerald-500',
+      'ATENCAO': 'text-amber-500',
+      'ATRASADO': 'text-red-500',
+      'PAUSADO': 'text-slate-400'
+    };
+
+    const labels: Record<string, string> = {
+      'NO_PRAZO': 'No prazo',
+      'ATENCAO': 'Atenção',
+      'ATRASADO': 'SLA excedido',
+      'PAUSADO': 'SLA pausado'
+    };
+
+    const status = ticket.sla_status || 'NO_PRAZO';
+
+    return (
+      <span className={`flex items-center gap-1 text-[9px] font-black uppercase tracking-widest ${colors[status]}`}>
+        {status === 'NO_PRAZO' ? '🟢' : status === 'ATENCAO' ? '🟡' : '🔴'} {labels[status]}
+      </span>
+    );
+  };
+
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -129,10 +166,12 @@ function SupportPage() {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-xs font-bold text-primary">{ticket.protocol}</span>
-                          {getStatusBadge(ticket.status)}
+                          {getStatusBadge(ticket.status, ticket.sla_status)}
                           <Badge variant="outline" className={`text-[9px] font-bold ${getPriorityColor(ticket.priority)}`}>
                             {ticket.priority}
                           </Badge>
+                          {getSLALabel(ticket)}
+
                         </div>
                         <h3 className="font-bold text-base group-hover:text-primary transition-colors">{ticket.subject}</h3>
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-muted-foreground font-medium">
