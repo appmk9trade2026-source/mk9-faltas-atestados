@@ -98,6 +98,7 @@ export function SupportFAB() {
   const trigger = (
     <Button
       size="default"
+      asChild
       className={cn(
         "fixed bottom-6 right-6 z-50 shadow-2xl rounded-full transition-all duration-300 hover:scale-105 active:scale-95 bg-primary text-primary-foreground h-12 px-4 flex items-center gap-2 overflow-visible hover:ring-4 hover:ring-primary/10",
         isMobile && "h-12 w-12 p-0 justify-center",
@@ -105,15 +106,17 @@ export function SupportFAB() {
       )}
       aria-label="Suporte MK9"
     >
-      <div className="relative">
-        <MessageSquare className={cn("w-5 h-5", isMobile && "w-6 h-6")} />
-        {unreadCount > 0 && (
-          <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[9px] font-black min-w-[18px] h-4.5 flex items-center justify-center rounded-full border-2 border-white shadow-lg z-10 px-1">
-            {unreadCount > 9 ? "+9" : unreadCount}
-          </span>
-        )}
-      </div>
-      {!isMobile && <span className="font-bold tracking-tight">Suporte</span>}
+      <button>
+        <div className="relative">
+          <MessageSquare className={cn("w-5 h-5", isMobile && "w-6 h-6")} />
+          {unreadCount > 0 && (
+            <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[9px] font-black min-w-[18px] h-4.5 flex items-center justify-center rounded-full border-2 border-white shadow-lg z-10 px-1">
+              {unreadCount > 9 ? "+9" : unreadCount}
+            </span>
+          )}
+        </div>
+        {!isMobile && <span className="font-bold tracking-tight">Suporte</span>}
+      </button>
     </Button>
   );
 
