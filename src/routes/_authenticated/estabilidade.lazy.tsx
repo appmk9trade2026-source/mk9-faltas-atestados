@@ -128,33 +128,33 @@ function StabilizationAuditPage() {
               <div>
                 <h1 className="text-3xl font-bold tracking-tight uppercase tracking-tighter">CRM MK9 — PROGRAMA DE ESTABILIZAÇÃO</h1>
                 <p className="text-sm text-muted-foreground font-black uppercase tracking-widest">
-                  RODADA 2 — ETAPA 3A: EXECUÇÃO FORENSE REAL — RH / PROCESSAMENTO INTERNO
+                  RODADA 2 — ETAPA 4: SUPER ADMIN — CONSOLIDAÇÃO E GATE FINAL
                 </p>
                 <div className="flex gap-2 mt-1">
                   <Badge variant="secondary" className="font-mono text-[10px] bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950">
                     AUDIT RUN: RUN-20260819-P0-002
                   </Badge>
                   <Badge variant="outline" className="font-mono text-[10px] border-emerald-500/50 text-emerald-600">
-                    ESTADO DE SAÍDA: ETAPA 3 CONCLUÍDA — PROCESSAMENTO INTERNO HOMOLOGADO
+                    ESTADO: CONSOLIDAÇÃO FINAL — REGRESSÕES PÓS-HARDENING PASS
                   </Badge>
                 </div>
               </div>
             </div>
             <div className="text-right flex flex-col items-end gap-1">
               <Badge variant="outline" className="font-mono text-[9px] bg-slate-50 dark:bg-slate-900">
-                BASELINE CONGELADO: RUN-20260819-P0-001-R1
+                BASELINE: RUN-20260819-P0-001-R1
               </Badge>
               <Badge variant="outline" className="font-mono text-[9px] text-emerald-600 border-emerald-500/30">
-                READY_FOR_FORENSIC_EXECUTION = TRUE
+                RODADA_2_CONSOLIDATION = ACTIVE
               </Badge>
             </div>
           </div>
           
-          <Alert className="bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-900/50">
-            <ClipboardCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-            <AlertTitle className="text-emerald-800 dark:text-emerald-300 font-black text-xs uppercase tracking-widest">AVISO DE EXECUÇÃO: A FASE DE PREPARAÇÃO TERMINOU</AlertTitle>
-            <AlertDescription className="text-emerald-700 dark:text-emerald-400 text-sm leading-relaxed font-medium">
-              AGORA EXECUTE OS TESTES. PASS exige execução observável. NUNCA fabricar evidência. Ocorrência de Ponto = HOMOLOGADA COM GAP P2 OPEN-MONITORED.
+          <Alert className="bg-slate-50 border-slate-200 dark:bg-slate-950/20 dark:border-slate-800">
+            <ClipboardCheck className="h-4 w-4 text-primary" />
+            <AlertTitle className="text-slate-900 dark:text-slate-100 font-black text-xs uppercase tracking-widest">OBJETIVO: CONSOLIDAÇÃO FINAL E GATE DE HOMOLOGAÇÃO</AlertTitle>
+            <AlertDescription className="text-slate-700 dark:text-slate-400 text-sm leading-relaxed font-medium">
+              Validar regressão pós-hardening, RBAC cross-profile e consistência global de evidências. Não marcar PASS sem evidência comportamental.
             </AlertDescription>
           </Alert>
         </header>
