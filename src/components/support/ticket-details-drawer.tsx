@@ -21,6 +21,10 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getTicketMessages, getRelatedArticles, createArticleFromTicket } from "@/lib/support.functions";
+import { summarizeTicket, suggestDiagnosis, suggestReply } from "@/lib/ai-copilot.functions";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Bot, Sparkles, BrainCircuit, MessageSquareCode, Send, Copy, AlertTriangle } from "lucide-react";
+
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -232,8 +236,109 @@ export function TicketDetailsDrawer({ open, onOpenChange, ticket }: TicketDetail
                 )}
               </div>
             </section>
-          </div>
-        </ScrollArea>
+                </TabsContent>
+
+                <TabsContent value="copilot" className="m-0 space-y-6">
+                  <div className="bg-primary/5 rounded-xl p-4 border border-primary/10 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-primary" />
+                      <h4 className="text-xs font-black uppercase tracking-tighter text-primary">Copiloto Inteligente</h4>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                      Assistente de IA para suporte. As sugestões são baseadas na Base de Conhecimento publicada e no contexto do ticket.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-16 flex flex-col gap-1 items-start justify-center text-left hover:bg-primary/5 hover:border-primary/30 transition-all group"
+                      onClick={() => {
+                        toast.promise(summarizeTicket({ data: { ticketId: ticket.id } }), {
+                          loading: 'Gerando resumo...',
+                          success: (res) => {
+                            console.log(res.summary);
+                            return 'Resumo gerado (ver console)';
+                          },
+                          error: 'Erro ao resumir'
+                        });
+                      }}
+                    >
+                      <div className="flex items-center gap-2 text-[10px] font-bold group-hover:text-primary">
+                        <Activity className="w-3.5 h-3.5" />
+                        Resumir Chamado
+                      </div>
+                      <span className="text-[8px] text-muted-foreground font-normal">Sumário executivo do caso</span>
+                    </Button>
+
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-16 flex flex-col gap-1 items-start justify-center text-left hover:bg-primary/5 hover:border-primary/30 transition-all group"
+                      onClick={() => {
+                        toast.promise(suggestDiagnosis({ data: { ticketId: ticket.id } }), {
+                          loading: 'Analisando evidências...',
+                          success: 'Diagnóstico sugerido',
+                          error: 'Erro na análise'
+                        });
+                      }}
+                    >
+                      <div className="flex items-center gap-2 text-[10px] font-bold group-hover:text-primary">
+                        <BrainCircuit className="w-3.5 h-3.5" />
+                        Sugerir Diagnóstico
+                      </div>
+                      <span className="text-[8px] text-muted-foreground font-normal">Identificar causa raiz</span>
+                    </Button>
+
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-16 flex flex-col gap-1 items-start justify-center text-left hover:bg-primary/5 hover:border-primary/30 transition-all group"
+                      onClick={() => {
+                        toast.promise(suggestReply({ data: { ticketId: ticket.id } }), {
+                          loading: 'Preparando rascunho...',
+                          success: 'Resposta sugerida',
+                          error: 'Erro ao gerar resposta'
+                        });
+                      }}
+                    >
+                      <div className="flex items-center gap-2 text-[10px] font-bold group-hover:text-primary">
+                        <MessageSquareCode className="w-3.5 h-3.5" />
+                        Sugerir Resposta
+                      </div>
+                      <span className="text-[8px] text-muted-foreground font-normal">Rascunho para o atendente</span>
+                    </Button>
+
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-16 flex flex-col gap-1 items-start justify-center text-left hover:bg-primary/5 hover:border-primary/30 transition-all group"
+                    >
+                      <div className="flex items-center gap-2 text-[10px] font-bold group-hover:text-primary">
+                        <Send className="w-3.5 h-3.5" />
+                        Escalonamento
+                      </div>
+                      <span className="text-[8px] text-muted-foreground font-normal">Relatório para Nível 2</span>
+                    </Button>
+                  </div>
+
+                  <Alert className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/30">
+                    <AlertTriangle className="h-4 w-4 text-amber-600" />
+                    <AlertTitle className="text-[10px] font-black uppercase tracking-widest text-amber-700">Human-in-the-Loop</AlertTitle>
+                    <AlertDescription className="text-[9px] text-amber-700/80 leading-relaxed font-medium">
+                      IA sugere, Humano decide. O Copiloto não possui autonomia para enviar mensagens ou alterar dados sem sua revisão.
+                    </AlertDescription>
+                  </Alert>
+                </TabsContent>
+
+                <TabsContent value="history" className="m-0 space-y-6">
+                  {/* ... conteúdo existente do histórico ... */}
+                </TabsContent>
+              </div>
+            </ScrollArea>
+          </Tabs>
+
 
         <div className="p-6 border-t bg-slate-50/50 dark:bg-slate-900/50 flex items-center gap-2">
           <div className="flex items-center gap-2">

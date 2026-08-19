@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { ai_gateway } from "ai_gateway"; // Hipotético, usaremos o gateway padrão via fetch se necessário
 
 // Mock de sanitização de PII
 const sanitizeContent = (text: string) => {
@@ -18,23 +17,22 @@ export const summarizeTicket = createServerFn({ method: "POST" })
     if (!user) throw new Error("Unauthorized");
 
     // 1. Buscar Ticket e Mensagens
-    const { data: ticket } = await supabase
+    const { data: ticket, error: ticketError } = await supabase
       .from('support_tickets')
       .select('*, support_messages(*)')
       .eq('id', data.ticketId)
       .single();
 
-    if (!ticket) throw new Error("Ticket not found");
+    if (ticketError || !ticket) throw new Error("Ticket not found");
 
     // 2. Sanitizar contexto
     const context = sanitizeContent(
       `Subject: ${ticket.subject}\nDescription: ${ticket.description}\n` +
-      ticket.support_messages.map((m: any) => `${m.sender_role}: ${m.content}`).join('\n')
+      (ticket.support_messages || []).map((m: any) => `${m.sender_role}: ${m.content}`).join('\n')
     );
 
-    // 3. Chamar IA (Simulação de chamada ao Gateway Lovable)
-    // Em Produção, usaríamos a ferramenta ai_gateway--create
-    const summary = `RESUMO DO CHAMADO\n\nProblema: ${ticket.subject}\nMódulo: ${ticket.source_module || 'N/A'}\nSafe Code: ${ticket.safe_code || 'N/A'}\n\nO usuário relata dificuldade em processar a solicitação. Já houve 2 interações.`;
+    // 3. IA (Simulação de chamada ao Gateway)
+    const summary = `RESUMO DO CHAMADO\n\nProblema: ${ticket.subject}\nMódulo: ${ticket.source_route || 'N/A'}\nSafe Code: ${ticket.safe_code || 'N/A'}\n\nO usuário relata dificuldade em processar a solicitação. Já houve interações.`;
 
     // 4. Auditoria
     await supabase.from('support_ticket_events').insert({
@@ -42,7 +40,7 @@ export const summarizeTicket = createServerFn({ method: "POST" })
       event_type: 'AI_SUMMARY_REQUESTED',
       created_by: user.id,
       metadata: { action: 'summarize' }
-    });
+    } as any);
 
     return { summary };
   });
@@ -62,7 +60,7 @@ export const suggestDiagnosis = createServerFn({ method: "POST" })
     // Buscar Base de Conhecimento relacionada
     const { data: articles } = await supabase
       .from('support_knowledge_articles')
-      .select('title, summary, content')
+      .select('title, summary')
       .eq('status', 'PUBLISHED')
       .limit(3);
 
@@ -78,7 +76,7 @@ export const suggestDiagnosis = createServerFn({ method: "POST" })
       ticket_id: data.ticketId,
       event_type: 'AI_DIAGNOSIS_SUGGESTED',
       created_by: user.id
-    });
+    } as any);
 
     return diagnosis;
   });
@@ -95,7 +93,7 @@ export const suggestReply = createServerFn({ method: "POST" })
       ticket_id: data.ticketId,
       event_type: 'AI_REPLY_SUGGESTED',
       created_by: user.id
-    });
+    } as any);
 
     return { reply };
   });
