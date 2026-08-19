@@ -128,8 +128,11 @@ function StabilizationAuditPage() {
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">CRM MK9 — PROGRAMA DE ESTABILIZAÇÃO</h1>
                 <p className="text-sm text-muted-foreground font-semibold uppercase tracking-[0.2em]">
-                  ETAPA PREVENTIVA — MATRIZ REAL DE HOMOLOGAÇÃO DOS FLUXOS CRÍTICOS
+                  RODADA 1.1 — FECHAMENTO DOS GAPS DA AUDITORIA
                 </p>
+                <Badge variant="secondary" className="mt-1 font-mono text-[10px]">
+                  BASELINE: RUN-20260819-P0-001
+                </Badge>
               </div>
             </div>
             <div className="text-right">
@@ -143,8 +146,7 @@ function StabilizationAuditPage() {
             <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             <AlertTitle className="text-blue-800 dark:text-blue-300 font-bold text-xs uppercase tracking-wider">OBJETIVO OPERACIONAL</AlertTitle>
             <AlertDescription className="text-blue-700 dark:text-blue-400 text-sm leading-relaxed">
-              Usar <code className="font-mono font-bold">/estabilidade</code> como painel técnico real de acompanhamento dos fluxos críticos,
-              sem hardcode de status e sem marcar <span className="text-emerald-600 dark:text-emerald-400 font-bold">PASS</span> antes de existir evidência técnica comprovada.
+              Fechar os dois gaps identificados na Rodada 1 (Observabilidade e Integridade de Meio Período) com alterações mínimas e testes reproduzíveis, garantindo o hardening P0.
             </AlertDescription>
           </Alert>
         </header>
