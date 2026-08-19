@@ -140,34 +140,37 @@ function StabilizationAuditPage() {
               <div>
                 <h1 className="text-3xl font-bold tracking-tight uppercase tracking-tighter">CRM MK9 — CENTRAL DE SUPORTE</h1>
                 <p className="text-sm text-muted-foreground font-black uppercase tracking-widest">
-                  FASE 5.1 — HOMOLOGAÇÃO FINAL ADVERSARIAL DO COPILOTO MK9
+                  FASE 6 — CENTRO DE INTELIGÊNCIA DE INCIDENTES E OBSERVAÇÃO OPERACIONAL
                 </p>
                 <div className="flex gap-2 mt-1">
                   <Badge variant="secondary" className="font-mono text-[10px] bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950">
-                    STATUS: HOMOLOGAÇÃO_FINAL
+                    STATUS: INICIALIZAÇÃO_FASE_6
                   </Badge>
                   <Badge variant="outline" className="font-mono text-[10px] border-blue-500/50 text-blue-600">
-                    OBJETIVO: VALIDAR_COPILOTO_IA
+                    OBJETIVO: INTELIGÊNCIA_DE_INCIDENTES
                   </Badge>
+
                 </div>
               </div>
             </div>
             <div className="text-right flex flex-col items-end gap-1">
               <Badge variant="outline" className="font-mono text-[9px] bg-slate-50 dark:bg-slate-900">
-                AUDIT_RUN: RUN-20260819-P0-005-HML
+                AUDIT_RUN: RUN-20260819-P0-006-INIT
               </Badge>
               <Badge variant="outline" className="font-mono text-[9px] text-emerald-600 border-emerald-500/30">
-                ESTADO: IA_ASSISTIDA_VERIFICADA
+                ESTADO: MODELAGEM_DE_DADOS_APROVADA
               </Badge>
+
             </div>
           </div>
           
           <Alert className="bg-slate-50 border-slate-200 dark:bg-slate-950/20 dark:border-slate-800">
             <Bot className="h-4 w-4 text-primary" />
-            <AlertTitle className="text-slate-900 dark:text-slate-100 font-black text-xs uppercase tracking-widest text-blue-600">CONTEXTO: AUDITORIA DO COPILOTO INTELIGENTE</AlertTitle>
+            <AlertTitle className="text-slate-900 dark:text-slate-100 font-black text-xs uppercase tracking-widest text-blue-600">CONTEXTO: DETECÇÃO E OBSERVABILIDADE DE INCIDENTES</AlertTitle>
             <AlertDescription className="text-slate-700 dark:text-slate-400 text-xs leading-relaxed font-medium">
-              A Fase 5.1 executa o protocolo de homologação final do Copiloto MK9. O foco é garantir que a IA atue estritamente como auxílio à decisão, respeitando RBAC/RLS, mantendo a privacidade de PII e garantindo o gate humano obrigatório antes de qualquer escrita operacional.
+              A Fase 6 estabelece o Centro de Inteligência de Incidentes. O foco é a detecção determinística de falhas sistêmicas através de fingerprints técnicos (Safe Codes) e thresholds de recorrência, garantindo que o Super Admin identifique impactos coletivos sem comprometer a privacidade (PII) ou a autonomia operacional.
             </AlertDescription>
+
           </Alert>
 
         </header>
