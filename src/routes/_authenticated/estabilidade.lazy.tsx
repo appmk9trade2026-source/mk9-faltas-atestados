@@ -126,35 +126,35 @@ function StabilizationAuditPage() {
             <div className="flex items-center gap-3">
               <ShieldCheck className="w-10 h-10 text-primary" />
               <div>
-                <h1 className="text-3xl font-bold tracking-tight uppercase">CRM MK9 — PROGRAMA DE ESTABILIZAÇÃO</h1>
-                <p className="text-sm text-muted-foreground font-bold uppercase tracking-wider">
-                  RODADA 2 — ETAPA 3: HOMOLOGAÇÃO OPERACIONAL — RH / PROCESSAMENTO INTERNO
+                <h1 className="text-3xl font-bold tracking-tight uppercase tracking-tighter">CRM MK9 — PROGRAMA DE ESTABILIZAÇÃO</h1>
+                <p className="text-sm text-muted-foreground font-black uppercase tracking-widest">
+                  RODADA 2 — ETAPA 3A: EXECUÇÃO FORENSE REAL — RH / PROCESSAMENTO INTERNO
                 </p>
                 <div className="flex gap-2 mt-1">
-                  <Badge variant="secondary" className="font-mono text-[10px]">
+                  <Badge variant="secondary" className="font-mono text-[10px] bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950">
                     AUDIT RUN: RUN-20260819-P0-002
                   </Badge>
-                  <Badge variant="outline" className="font-mono text-[10px] border-slate-500/50">
-                    ESTADO ATUAL: ETAPA 3 AUTORIZADA — AGUARDANDO EVIDÊNCIAS RH
+                  <Badge variant="outline" className="font-mono text-[10px] border-emerald-500/50 text-emerald-600">
+                    ESTADO DE ENTRADA: ETAPA 3 INICIADA — RH-PROC-001 → 016 AUTORIZADOS
                   </Badge>
                 </div>
               </div>
             </div>
             <div className="text-right flex flex-col items-end gap-1">
               <Badge variant="outline" className="font-mono text-[9px] bg-slate-50 dark:bg-slate-900">
-                RODADA_2_EXECUTION_GATE = READY
+                BASELINE CONGELADO: RUN-20260819-P0-001-R1
               </Badge>
               <Badge variant="outline" className="font-mono text-[9px] text-emerald-600 border-emerald-500/30">
-                READY_FOR_RH_TEST = SIM
+                READY_FOR_FORENSIC_EXECUTION = TRUE
               </Badge>
             </div>
           </div>
           
-          <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-900/50">
-            <ClipboardCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            <AlertTitle className="text-blue-800 dark:text-blue-300 font-bold text-xs uppercase tracking-wider">OBJETIVO: HOMOLOGAÇÃO RH / PROCESSAMENTO</AlertTitle>
-            <AlertDescription className="text-blue-700 dark:text-blue-400 text-sm leading-relaxed">
-              Executar a homologação operacional REAL do Processamento Interno (RH-PROC-001 → 016). Uma ação lógica = no máximo uma mutação.
+          <Alert className="bg-emerald-50 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-900/50">
+            <ClipboardCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <AlertTitle className="text-emerald-800 dark:text-emerald-300 font-black text-xs uppercase tracking-widest">AVISO DE EXECUÇÃO: A FASE DE PREPARAÇÃO TERMINOU</AlertTitle>
+            <AlertDescription className="text-emerald-700 dark:text-emerald-400 text-sm leading-relaxed font-medium">
+              AGORA EXECUTE OS TESTES. PASS exige execução observável. NUNCA fabricar evidência. Ocorrência de Ponto = HOMOLOGADA COM GAP P2 OPEN-MONITORED.
             </AlertDescription>
           </Alert>
         </header>
