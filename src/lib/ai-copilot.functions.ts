@@ -25,22 +25,15 @@ export const summarizeTicket = createServerFn({ method: "POST" })
 
     if (ticketError || !ticket) throw new Error("Ticket not found");
 
-    // 2. Sanitizar contexto
-    const context = sanitizeContent(
-      `Subject: ${ticket.subject}\nDescription: ${ticket.description}\n` +
-      (ticket.support_messages || []).map((m: any) => `${m.sender_role}: ${m.content}`).join('\n')
-    );
-
-    // 3. IA (Simulação de chamada ao Gateway)
+    // 2. IA (Simulação de chamada ao Gateway)
     // No ambiente Lovable, aqui usaríamos o ai_gateway para processamento real.
     const summary = `RESUMO DO CHAMADO (GERADO POR IA)\n\n• Problema: ${ticket.subject}\n• Módulo: ${ticket.source_route || 'Não informado'}\n• Contexto: O solicitante relata que ${ticket.description.slice(0, 100)}...\n• Histórico: ${(ticket.support_messages || []).length} mensagens trocadas.\n• Safe Code: ${ticket.safe_code || 'Nenhum vinculado'}`;
 
-
-    // 4. Auditoria
+    // 3. Auditoria
     await supabase.from('support_ticket_events').insert({
       ticket_id: data.ticketId,
+      actor_user_id: user.id,
       event_type: 'AI_SUMMARY_REQUESTED',
-      created_by: user.id,
       metadata: { action: 'summarize' }
     } as any);
 
@@ -68,16 +61,16 @@ export const suggestDiagnosis = createServerFn({ method: "POST" })
 
     const diagnosis = {
       symptom: ticket?.description.slice(0, 100),
-      evidence: "Safe Code detectado no histórico.",
-      hypothesis: "Provável instabilidade no RPC de processamento.",
+      evidence: ticket?.safe_code ? `Safe Code ${ticket.safe_code} detectado.` : "Ausência de Safe Code técnico.",
+      hypothesis: "Provável instabilidade ou falha de validação no fluxo de origem.",
       confidence: "MEDIUM",
       relatedArticles: articles?.map(a => a.title) || []
     };
 
     await supabase.from('support_ticket_events').insert({
       ticket_id: data.ticketId,
-      event_type: 'AI_DIAGNOSIS_SUGGESTED',
-      created_by: user.id
+      actor_user_id: user.id,
+      event_type: 'AI_DIAGNOSIS_SUGGESTED'
     } as any);
 
     return diagnosis;
@@ -89,12 +82,12 @@ export const suggestReply = createServerFn({ method: "POST" })
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Unauthorized");
 
-    const reply = "Olá! Identificamos que sua solicitação de ausência já foi processada pelo RH. Por esse motivo, a retificação não está disponível via sistema. Caso precise de ajustes, recomendamos entrar em contato com seu gestor direto.";
+    const reply = "Olá! Identificamos sua solicitação. Com base nas evidências técnicas, estamos encaminhando para a fila de processamento prioritário. Por favor, aguarde a atualização de status no portal.";
 
     await supabase.from('support_ticket_events').insert({
       ticket_id: data.ticketId,
-      event_type: 'AI_REPLY_SUGGESTED',
-      created_by: user.id
+      actor_user_id: user.id,
+      event_type: 'AI_REPLY_SUGGESTED'
     } as any);
 
     return { reply };
