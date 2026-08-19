@@ -128,7 +128,7 @@ function StabilizationAuditPage() {
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">CRM MK9 — PROGRAMA DE ESTABILIZAÇÃO</h1>
                 <p className="text-sm text-muted-foreground font-semibold uppercase tracking-[0.2em]">
-                  RODADA 2 — HOMOLOGAÇÃO OPERACIONAL POR PERFIL
+                  RODADA 2 — ETAPA 1: BASELINE TÉCNICO
                 </p>
                 <div className="flex gap-2 mt-1">
                   <Badge variant="secondary" className="font-mono text-[10px]">
