@@ -49,6 +49,7 @@ import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAcessosRouteImport } from './routes/_authenticated/acessos'
 import { Route as AuthenticatedComunicacoesIndexRouteImport } from './routes/_authenticated/comunicacoes.index'
 import { Route as AuthenticatedSuporteDashboardRouteImport } from './routes/_authenticated/suporte.dashboard'
+import { Route as AuthenticatedSuporteConhecimentoRouteImport } from './routes/_authenticated/suporte.conhecimento'
 import { Route as AuthenticatedInteligenciaSupervisoresRouteImport } from './routes/_authenticated/inteligencia.supervisores'
 import { Route as AuthenticatedInteligenciaQualidadeRouteImport } from './routes/_authenticated/inteligencia.qualidade'
 import { Route as AuthenticatedInteligenciaGovernancaRouteImport } from './routes/_authenticated/inteligencia.governanca'
@@ -308,6 +309,12 @@ const AuthenticatedSuporteDashboardRoute =
   AuthenticatedSuporteDashboardRouteImport.update({
     id: '/dashboard',
     path: '/dashboard',
+    getParentRoute: () => AuthenticatedSuporteRoute,
+  } as any)
+const AuthenticatedSuporteConhecimentoRoute =
+  AuthenticatedSuporteConhecimentoRouteImport.update({
+    id: '/conhecimento',
+    path: '/conhecimento',
     getParentRoute: () => AuthenticatedSuporteRoute,
   } as any)
 const AuthenticatedInteligenciaSupervisoresRoute =
@@ -608,6 +615,7 @@ export interface FileRoutesByFullPath {
   '/inteligencia/governanca': typeof AuthenticatedInteligenciaGovernancaRoute
   '/inteligencia/qualidade': typeof AuthenticatedInteligenciaQualidadeRoute
   '/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
+  '/suporte/conhecimento': typeof AuthenticatedSuporteConhecimentoRoute
   '/suporte/dashboard': typeof AuthenticatedSuporteDashboardRoute
   '/comunicacoes/': typeof AuthenticatedComunicacoesIndexRoute
   '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
@@ -686,6 +694,7 @@ export interface FileRoutesByTo {
   '/inteligencia/governanca': typeof AuthenticatedInteligenciaGovernancaRoute
   '/inteligencia/qualidade': typeof AuthenticatedInteligenciaQualidadeRoute
   '/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
+  '/suporte/conhecimento': typeof AuthenticatedSuporteConhecimentoRoute
   '/suporte/dashboard': typeof AuthenticatedSuporteDashboardRoute
   '/comunicacoes': typeof AuthenticatedComunicacoesIndexRoute
   '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
@@ -768,6 +777,7 @@ export interface FileRoutesById {
   '/_authenticated/inteligencia/governanca': typeof AuthenticatedInteligenciaGovernancaRoute
   '/_authenticated/inteligencia/qualidade': typeof AuthenticatedInteligenciaQualidadeRoute
   '/_authenticated/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
+  '/_authenticated/suporte/conhecimento': typeof AuthenticatedSuporteConhecimentoRoute
   '/_authenticated/suporte/dashboard': typeof AuthenticatedSuporteDashboardRoute
   '/_authenticated/comunicacoes/': typeof AuthenticatedComunicacoesIndexRoute
   '/_authenticated/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
@@ -850,6 +860,7 @@ export interface FileRouteTypes {
     | '/inteligencia/governanca'
     | '/inteligencia/qualidade'
     | '/inteligencia/supervisores'
+    | '/suporte/conhecimento'
     | '/suporte/dashboard'
     | '/comunicacoes/'
     | '/comunicacoes/whatsapp/configuracao'
@@ -928,6 +939,7 @@ export interface FileRouteTypes {
     | '/inteligencia/governanca'
     | '/inteligencia/qualidade'
     | '/inteligencia/supervisores'
+    | '/suporte/conhecimento'
     | '/suporte/dashboard'
     | '/comunicacoes'
     | '/comunicacoes/whatsapp/configuracao'
@@ -1009,6 +1021,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inteligencia/governanca'
     | '/_authenticated/inteligencia/qualidade'
     | '/_authenticated/inteligencia/supervisores'
+    | '/_authenticated/suporte/conhecimento'
     | '/_authenticated/suporte/dashboard'
     | '/_authenticated/comunicacoes/'
     | '/_authenticated/comunicacoes/whatsapp/configuracao'
@@ -1318,6 +1331,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/suporte/dashboard'
       preLoaderRoute: typeof AuthenticatedSuporteDashboardRouteImport
+      parentRoute: typeof AuthenticatedSuporteRoute
+    }
+    '/_authenticated/suporte/conhecimento': {
+      id: '/_authenticated/suporte/conhecimento'
+      path: '/conhecimento'
+      fullPath: '/suporte/conhecimento'
+      preLoaderRoute: typeof AuthenticatedSuporteConhecimentoRouteImport
       parentRoute: typeof AuthenticatedSuporteRoute
     }
     '/_authenticated/inteligencia/supervisores': {
@@ -1713,10 +1733,12 @@ const AuthenticatedInteligenciaRouteWithChildren =
   )
 
 interface AuthenticatedSuporteRouteChildren {
+  AuthenticatedSuporteConhecimentoRoute: typeof AuthenticatedSuporteConhecimentoRoute
   AuthenticatedSuporteDashboardRoute: typeof AuthenticatedSuporteDashboardRoute
 }
 
 const AuthenticatedSuporteRouteChildren: AuthenticatedSuporteRouteChildren = {
+  AuthenticatedSuporteConhecimentoRoute: AuthenticatedSuporteConhecimentoRoute,
   AuthenticatedSuporteDashboardRoute: AuthenticatedSuporteDashboardRoute,
 }
 

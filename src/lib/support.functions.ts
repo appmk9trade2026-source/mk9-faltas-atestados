@@ -2,6 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
+import { getRelatedArticles, createArticleFromTicket } from "./knowledge.functions";
+
+export { getRelatedArticles, createArticleFromTicket };
+
 
 // Tipos baseados no banco
 export type SupportPriority = Database['public']['Enums']['support_priority'];

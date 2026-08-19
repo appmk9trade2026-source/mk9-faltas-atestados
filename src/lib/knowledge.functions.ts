@@ -122,3 +122,67 @@ export const getRelatedArticles = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return articles as KnowledgeArticle[];
   });
+
+export const createArticleFromTicket = createServerFn({ method: "POST" })
+  .inputValidator((data) => z.object({
+    ticketId: z.string().uuid(),
+    title: z.string(),
+    summary: z.string(),
+    category: z.string(),
+    module: z.string().optional(),
+    content: z.record(z.any()),
+  }).parse(data))
+  .handler(async ({ data }) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
+
+    // Verificar se o usuário tem permissão de Super Admin ou Admin antes de processar
+    const { data: roles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+
+    const isAdmin = roles?.role === 'super_admin' || roles?.role === 'admin';
+    if (!isAdmin) throw new Error("Permission denied: Only admins can create knowledge base articles.");
+
+    // Sanitização de PII (Exemplo básico por enquanto)
+    const sanitizedTitle = data.title.replace(/\d{11}/g, '***'); // Remove CPF
+    const slug = sanitizedTitle.toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/--+/g, '-')
+      .trim();
+
+    const { data: article, error } = await supabase
+      .from('support_knowledge_articles')
+      .insert({
+        title: sanitizedTitle,
+        slug: `${slug}-${Date.now().toString().slice(-4)}`,
+        summary: data.summary,
+        content: data.content,
+        category: data.category,
+        source_module: data.module,
+        created_by: user.id,
+        status: 'DRAFT',
+        audience: 'ALL_AUTHORIZED',
+        version: 1
+      })
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    // Criar link com o ticket de origem
+    await supabase
+      .from('support_knowledge_article_links')
+      .insert({
+        article_id: article.id,
+        related_ticket_id: data.ticketId
+      });
+
+    return article as KnowledgeArticle;
+  });
+
