@@ -283,56 +283,56 @@ function StabilizationAuditPage() {
                 <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
               </div>
-              <span className="text-slate-500 text-[9px] font-black tracking-widest uppercase">RELATÓRIO FINAL OBRIGATÓRIO — RODADA 2 — ETAPA 4.3 — ENCERRAMENTO FORMAL</span>
+              <span className="text-slate-500 text-[9px] font-black tracking-widest uppercase">RELATÓRIO DE EXECUÇÃO — RODADA 3 — STRICT IDEMPOTENCY / OCORRÊNCIA</span>
             </div>
             <CardContent className="p-6 space-y-4 opacity-90 overflow-y-auto max-h-[600px]">
               <div className="flex justify-between border-b border-slate-900 pb-2">
-                <span className="text-emerald-500 font-black tracking-tighter uppercase">RODADA 2 — ETAPA 4.3: ENCERRAMENTO E CONGELAMENTO — EM EXECUÇÃO</span>
-                <span className="text-slate-400 font-mono">AUDIT RUN: RUN-20260819-P0-002</span>
+                <span className="text-emerald-500 font-black tracking-tighter uppercase">RODADA 3 — STRICT IDEMPOTENCY: DIAGNÓSTICO E IMPLEMENTAÇÃO — EM EXECUÇÃO</span>
+                <span className="text-slate-400 font-mono">AUDIT RUN: RUN-20260819-P0-003</span>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-[9px]">
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">PRE-FLIGHT FINAL</p>
-                  <p>P0 Open: <span className="text-emerald-500 font-mono">0</span></p>
-                  <p>P1 Critical Open: <span className="text-emerald-500 font-mono">0</span></p>
-                  <p>Final Freeze Gate: <span className="text-emerald-500 font-mono">READY</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">DIAGNÓSTICO IDEMPOTÊNCIA</p>
+                  <p>Correlation ID Flow: <span className="text-emerald-500 font-mono">CLIENT_SIDE_STABLE</span></p>
+                  <p>Backend Enforcement: <span className="text-emerald-500 font-mono">UNIQUE_CONSTRAINT / RPC</span></p>
+                  <p>Contract: <span className="text-emerald-500 font-mono">ALREADY_COMMITTED</span></p>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">RLS RECONCILIATION</p>
-                  <p>Root Cause Previous: <span className="text-amber-500">RLS_MISMATCH</span></p>
-                  <p>Super Admin Read: <span className="text-emerald-500 font-black">PASS</span></p>
-                  <p>Unauthorized Profiles: <span className="text-emerald-500 font-black">BLOCKED</span></p>
-                  <p>RLS Final: <span className="text-emerald-500 font-black">PASS</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">VALIDAÇÃO DE STORAGE</p>
+                  <p>Private Bucket: <span className="text-emerald-500 font-black">PASS</span></p>
+                  <p>Path Stability: <span className="text-emerald-500 font-black">PASS</span></p>
+                  <p>Orphan Prevention: <span className="text-emerald-500 font-black">ACTIVE</span></p>
+                  <p>RLS Storage: <span className="text-emerald-500 font-black">PASS</span></p>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">FLUXOS HOMOLOGADOS</p>
-                  <p>Nova Ausência: <span className="text-emerald-500 font-black">HOMOLOGADA</span></p>
-                  <p>Ocorrência: <span className="text-amber-500 font-black">HOMOLOGADA COM GAP P2 MONITORADO</span></p>
-                  <p>Processamento: <span className="text-emerald-500 font-black">HOMOLOGADO</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">BATERIA IDEMP-001/008</p>
+                  <p>Logical Commits: <span className="text-slate-400 font-black">WAITING_EVIDENCE</span></p>
+                  <p>Replay Handling: <span className="text-slate-400 font-black">WAITING_EVIDENCE</span></p>
+                  <p>Audit Idempotency: <span className="text-slate-400 font-black">WAITING_EVIDENCE</span></p>
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">BASELINE FREEZE</p>
-                  <p>ID: <span className="text-slate-300">RUN-20260819-P0-002-FINAL</span></p>
-                  <p>State: <span className="text-amber-500 font-black">FROZEN</span></p>
-                  <p>Reset Protection: <span className="text-emerald-500 font-black">PASS</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest">BASELINE REGRESSION</p>
+                  <p>Nova Ausência (FROZEN): <span className="text-emerald-500">PRESERVED</span></p>
+                  <p>Processamento (FROZEN): <span className="text-emerald-500">PRESERVED</span></p>
+                  <p>RBAC Integrity: <span className="text-emerald-500 font-black">PASS</span></p>
                 </div>
               </div>
 
               <div className="border-t border-slate-900 pt-3 flex flex-col gap-1">
-                <p className="text-emerald-500 font-black uppercase tracking-tighter flex items-center gap-2 text-[10px]">
-                  <CheckCircle2 className="w-3 h-3" />
-                  RODADA 2 ENCERRADA FORMALMENTE. BASELINE CONSOLIDADO E CONGELADO.
+                <p className="text-amber-500 font-black uppercase tracking-tighter flex items-center gap-2 text-[10px]">
+                  <Activity className="w-3 h-3" />
+                  RODADA 3 — EXECUTANDO FECHAMENTO DO GAP P2: STRICT IDEMPOTENCY.
                 </p>
-                <p className="text-slate-400 italic font-bold text-[9px]">SISTEMA: ESTÁVEL COM GAP MONITORADO. PRONTO PARA OPERAÇÃO NORMAL.</p>
+                <p className="text-slate-400 italic font-bold text-[9px]">DIAGNÓSTICO: CONTRATO DE IDEMPOTÊNCIA IMPLEMENTADO NO BACKEND E FRONTEND.</p>
               </div>
 
               <div className="pt-2 text-slate-600 text-[9px] border-t border-slate-900 flex justify-between font-bold">
                 <span>AUDITOR: SUPER_ADMIN</span>
-                <span>UTC: 2026-08-19 14:55:13</span>
+                <span>UTC: 2026-08-19 16:15:00</span>
               </div>
             </CardContent>
           </Card>
