@@ -4239,6 +4239,137 @@ export type Database = {
           },
         ]
       }
+      support_knowledge_article_feedback: {
+        Row: {
+          article_id: string
+          created_at: string
+          helpful: boolean
+          id: string
+          user_id: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          helpful: boolean
+          id?: string
+          user_id: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          helpful?: boolean
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_knowledge_article_feedback_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "support_knowledge_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_knowledge_article_links: {
+        Row: {
+          article_id: string
+          created_at: string
+          id: string
+          related_protocol: string | null
+          related_safe_code: string | null
+          related_ticket_id: string | null
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          id?: string
+          related_protocol?: string | null
+          related_safe_code?: string | null
+          related_ticket_id?: string | null
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          id?: string
+          related_protocol?: string | null
+          related_safe_code?: string | null
+          related_ticket_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_knowledge_article_links_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "support_knowledge_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_knowledge_article_links_related_ticket_id_fkey"
+            columns: ["related_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_knowledge_articles: {
+        Row: {
+          archived_at: string | null
+          audience: Database["public"]["Enums"]["support_article_audience"]
+          category: string
+          content: Json
+          created_at: string
+          created_by: string
+          id: string
+          published_at: string | null
+          reviewed_by: string | null
+          slug: string
+          source_module: string | null
+          status: Database["public"]["Enums"]["support_article_status"]
+          summary: string | null
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          archived_at?: string | null
+          audience?: Database["public"]["Enums"]["support_article_audience"]
+          category: string
+          content?: Json
+          created_at?: string
+          created_by: string
+          id?: string
+          published_at?: string | null
+          reviewed_by?: string | null
+          slug: string
+          source_module?: string | null
+          status?: Database["public"]["Enums"]["support_article_status"]
+          summary?: string | null
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          archived_at?: string | null
+          audience?: Database["public"]["Enums"]["support_article_audience"]
+          category?: string
+          content?: Json
+          created_at?: string
+          created_by?: string
+          id?: string
+          published_at?: string | null
+          reviewed_by?: string | null
+          slug?: string
+          source_module?: string | null
+          status?: Database["public"]["Enums"]["support_article_status"]
+          summary?: string | null
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
       support_messages: {
         Row: {
           created_at: string
@@ -7236,6 +7367,12 @@ export type Database = {
         | "SUSPENSO"
         | "CONCLUIDO"
         | "CANCELADO"
+      support_article_audience:
+        | "SUPPORT_ONLY"
+        | "RH"
+        | "SUPER_ADMIN"
+        | "ALL_AUTHORIZED"
+      support_article_status: "DRAFT" | "IN_REVIEW" | "PUBLISHED" | "ARCHIVED"
       support_message_type: "TEXTO" | "SISTEMA" | "ANEXO"
       support_priority: "BAIXA" | "NORMAL" | "ALTA" | "URGENTE"
       support_sla_status:
@@ -7763,6 +7900,13 @@ export const Constants = {
         "CONCLUIDO",
         "CANCELADO",
       ],
+      support_article_audience: [
+        "SUPPORT_ONLY",
+        "RH",
+        "SUPER_ADMIN",
+        "ALL_AUTHORIZED",
+      ],
+      support_article_status: ["DRAFT", "IN_REVIEW", "PUBLISHED", "ARCHIVED"],
       support_message_type: ["TEXTO", "SISTEMA", "ANEXO"],
       support_priority: ["BAIXA", "NORMAL", "ALTA", "URGENTE"],
       support_sla_status: [

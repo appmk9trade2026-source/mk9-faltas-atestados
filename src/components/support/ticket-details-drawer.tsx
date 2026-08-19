@@ -14,11 +14,16 @@ import {
   MessageSquare,
   History,
   ShieldCheck,
-  Zap
+  Zap,
+  BookPlus,
+  ArrowUpRight,
+  Loader2
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { getTicketMessages } from "@/lib/support.functions";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { getTicketMessages, getRelatedArticles, createArticleFromTicket } from "@/lib/support.functions";
 import { toast } from "sonner";
+import { useNavigate } from "@tanstack/react-router";
+
 
 // Nota: Se o componente Drawer do shadcn não estiver instalado, este componente precisará ser ajustado.
 // Como não vi 'drawer' no ls de components/ui, vou usar um Sheet ou um Dialog formatado.
@@ -31,6 +36,7 @@ interface TicketDetailsDrawerProps {
 }
 
 export function TicketDetailsDrawer({ open, onOpenChange, ticket }: TicketDetailsDrawerProps) {
+  const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
 
   const { data: messages = [] } = useQuery({
@@ -38,6 +44,44 @@ export function TicketDetailsDrawer({ open, onOpenChange, ticket }: TicketDetail
     queryFn: () => getTicketMessages({ data: { ticketId: ticket.id } }),
     enabled: !!ticket?.id && open,
   });
+
+  const { data: relatedArticles = [] } = useQuery({
+    queryKey: ['related-kb-articles', ticket?.category, ticket?.source_module, ticket?.safe_code],
+    queryFn: () => getRelatedArticles({ 
+      data: { 
+        category: ticket.category, 
+        module: ticket.source_module, 
+        safeCode: ticket.safe_code 
+      } 
+    }),
+    enabled: !!ticket?.id && open,
+  });
+
+  const createKBArticleMutation = useMutation({
+    mutationFn: () => createArticleFromTicket({
+      data: {
+        ticketId: ticket.id,
+        title: `Documentação: ${ticket.subject}`,
+        summary: `Procedimento de solução para: ${ticket.subject}`,
+        category: ticket.category,
+        module: ticket.source_module,
+        content: {
+          symptom: ticket.description,
+          cause: "Causa em identificação.",
+          solution: "Solução implementada e validada."
+        }
+      }
+    }),
+    onSuccess: (article) => {
+      toast.success("Rascunho de artigo criado na base de conhecimento!");
+      navigate({ to: `/suporte/conhecimento/${article.slug}` });
+      onOpenChange(false);
+    },
+    onError: (err: any) => {
+      toast.error(err.message);
+    }
+  });
+
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -127,7 +171,36 @@ export function TicketDetailsDrawer({ open, onOpenChange, ticket }: TicketDetail
               </p>
             </section>
 
+            {/* Related KB Articles */}
+            {relatedArticles.length > 0 && (
+              <section className="space-y-4">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                  <BookPlus className="w-3 h-3 text-primary" />
+                  Artigos Relacionados
+                </h4>
+                <div className="space-y-2">
+                  {relatedArticles.map((article: any) => (
+                    <button
+                      key={article.id}
+                      onClick={() => {
+                        navigate({ to: `/suporte/conhecimento/${article.slug}` });
+                        onOpenChange(false);
+                      }}
+                      className="w-full flex items-center justify-between p-3 rounded-lg border bg-slate-50 dark:bg-slate-900/50 hover:border-primary/50 transition-colors group"
+                    >
+                      <div className="text-left">
+                        <div className="text-[10px] font-bold group-hover:text-primary transition-colors">{article.title}</div>
+                        <div className="text-[9px] text-muted-foreground line-clamp-1">{article.summary}</div>
+                      </div>
+                      <ArrowUpRight className="w-3 h-3 text-slate-300 group-hover:text-primary" />
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* Messages / Timeline */}
+
             <section className="space-y-4">
               <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                 <History className="w-3 h-3" />
@@ -164,14 +237,28 @@ export function TicketDetailsDrawer({ open, onOpenChange, ticket }: TicketDetail
 
         <div className="p-6 border-t bg-slate-50/50 dark:bg-slate-900/50 flex items-center gap-2">
           <div className="flex items-center gap-2">
+            {ticket.status === 'RESOLVIDO' && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2 border-primary/20 text-primary hover:bg-primary/5"
+                onClick={() => createKBArticleMutation.mutate()}
+                disabled={createKBArticleMutation.isPending}
+              >
+                {createKBArticleMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <BookPlus className="w-4 h-4" />
+                )}
+                Transformar em Artigo
+              </Button>
+            )}
             <Button className="flex-1 gap-2" size="sm">
               <MessageSquare className="w-4 h-4" />
               Responder
             </Button>
-            {ticket.status !== 'RESOLVIDO' && (
-              <Button variant="outline" size="sm">Resolver</Button>
-            )}
           </div>
+
         </div>
       </SheetContent>
     </Sheet>

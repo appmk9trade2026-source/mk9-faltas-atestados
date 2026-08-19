@@ -49,6 +49,7 @@ import { Route as AuthenticatedAlertasRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAcessosRouteImport } from './routes/_authenticated/acessos'
 import { Route as AuthenticatedComunicacoesIndexRouteImport } from './routes/_authenticated/comunicacoes.index'
 import { Route as AuthenticatedSuporteDashboardRouteImport } from './routes/_authenticated/suporte.dashboard'
+import { Route as AuthenticatedSuporteConhecimentoRouteImport } from './routes/_authenticated/suporte.conhecimento'
 import { Route as AuthenticatedInteligenciaSupervisoresRouteImport } from './routes/_authenticated/inteligencia.supervisores'
 import { Route as AuthenticatedInteligenciaQualidadeRouteImport } from './routes/_authenticated/inteligencia.qualidade'
 import { Route as AuthenticatedInteligenciaGovernancaRouteImport } from './routes/_authenticated/inteligencia.governanca'
@@ -78,6 +79,7 @@ import { Route as AuthenticatedComunicacoesWhatsappIndexRouteImport } from './ro
 import { Route as ApiPublicHooksProcessWhatsappOutboxRouteImport } from './routes/api/public/hooks/process-whatsapp-outbox'
 import { Route as ApiPublicHooksEvolutionWhatsappWebhookRouteImport } from './routes/api/public/hooks/evolution-whatsapp-webhook'
 import { Route as AuthenticatedUsuariosIdPermissoesRouteImport } from './routes/_authenticated/usuarios.$id.permissoes'
+import { Route as AuthenticatedSuporteConhecimentoSlugRouteImport } from './routes/_authenticated/suporte.conhecimento.$slug'
 import { Route as AuthenticatedInteligenciaColaboradoresColaboradorIdRouteImport } from './routes/_authenticated/inteligencia.colaboradores.$colaboradorId'
 import { Route as AuthenticatedConfiguracoesProjetosImportarRouteImport } from './routes/_authenticated/configuracoes.projetos_.importar'
 import { Route as AuthenticatedConfiguracoesProjetosConsolidarRouteImport } from './routes/_authenticated/configuracoes.projetos_.consolidar'
@@ -310,6 +312,12 @@ const AuthenticatedSuporteDashboardRoute =
     path: '/dashboard',
     getParentRoute: () => AuthenticatedSuporteRoute,
   } as any)
+const AuthenticatedSuporteConhecimentoRoute =
+  AuthenticatedSuporteConhecimentoRouteImport.update({
+    id: '/conhecimento',
+    path: '/conhecimento',
+    getParentRoute: () => AuthenticatedSuporteRoute,
+  } as any)
 const AuthenticatedInteligenciaSupervisoresRoute =
   AuthenticatedInteligenciaSupervisoresRouteImport.update({
     id: '/supervisores',
@@ -484,6 +492,12 @@ const AuthenticatedUsuariosIdPermissoesRoute =
     path: '/$id/permissoes',
     getParentRoute: () => AuthenticatedUsuariosRoute,
   } as any)
+const AuthenticatedSuporteConhecimentoSlugRoute =
+  AuthenticatedSuporteConhecimentoSlugRouteImport.update({
+    id: '/$slug',
+    path: '/$slug',
+    getParentRoute: () => AuthenticatedSuporteConhecimentoRoute,
+  } as any)
 const AuthenticatedInteligenciaColaboradoresColaboradorIdRoute =
   AuthenticatedInteligenciaColaboradoresColaboradorIdRouteImport.update({
     id: '/colaboradores/$colaboradorId',
@@ -608,6 +622,7 @@ export interface FileRoutesByFullPath {
   '/inteligencia/governanca': typeof AuthenticatedInteligenciaGovernancaRoute
   '/inteligencia/qualidade': typeof AuthenticatedInteligenciaQualidadeRoute
   '/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
+  '/suporte/conhecimento': typeof AuthenticatedSuporteConhecimentoRouteWithChildren
   '/suporte/dashboard': typeof AuthenticatedSuporteDashboardRoute
   '/comunicacoes/': typeof AuthenticatedComunicacoesIndexRoute
   '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
@@ -620,6 +635,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes/projetos/consolidar': typeof AuthenticatedConfiguracoesProjetosConsolidarRoute
   '/configuracoes/projetos/importar': typeof AuthenticatedConfiguracoesProjetosImportarRoute
   '/inteligencia/colaboradores/$colaboradorId': typeof AuthenticatedInteligenciaColaboradoresColaboradorIdRoute
+  '/suporte/conhecimento/$slug': typeof AuthenticatedSuporteConhecimentoSlugRoute
   '/usuarios/$id/permissoes': typeof AuthenticatedUsuariosIdPermissoesRoute
   '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   '/api/public/hooks/process-whatsapp-outbox': typeof ApiPublicHooksProcessWhatsappOutboxRoute
@@ -686,6 +702,7 @@ export interface FileRoutesByTo {
   '/inteligencia/governanca': typeof AuthenticatedInteligenciaGovernancaRoute
   '/inteligencia/qualidade': typeof AuthenticatedInteligenciaQualidadeRoute
   '/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
+  '/suporte/conhecimento': typeof AuthenticatedSuporteConhecimentoRouteWithChildren
   '/suporte/dashboard': typeof AuthenticatedSuporteDashboardRoute
   '/comunicacoes': typeof AuthenticatedComunicacoesIndexRoute
   '/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
@@ -698,6 +715,7 @@ export interface FileRoutesByTo {
   '/configuracoes/projetos/consolidar': typeof AuthenticatedConfiguracoesProjetosConsolidarRoute
   '/configuracoes/projetos/importar': typeof AuthenticatedConfiguracoesProjetosImportarRoute
   '/inteligencia/colaboradores/$colaboradorId': typeof AuthenticatedInteligenciaColaboradoresColaboradorIdRoute
+  '/suporte/conhecimento/$slug': typeof AuthenticatedSuporteConhecimentoSlugRoute
   '/usuarios/$id/permissoes': typeof AuthenticatedUsuariosIdPermissoesRoute
   '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   '/api/public/hooks/process-whatsapp-outbox': typeof ApiPublicHooksProcessWhatsappOutboxRoute
@@ -768,6 +786,7 @@ export interface FileRoutesById {
   '/_authenticated/inteligencia/governanca': typeof AuthenticatedInteligenciaGovernancaRoute
   '/_authenticated/inteligencia/qualidade': typeof AuthenticatedInteligenciaQualidadeRoute
   '/_authenticated/inteligencia/supervisores': typeof AuthenticatedInteligenciaSupervisoresRoute
+  '/_authenticated/suporte/conhecimento': typeof AuthenticatedSuporteConhecimentoRouteWithChildren
   '/_authenticated/suporte/dashboard': typeof AuthenticatedSuporteDashboardRoute
   '/_authenticated/comunicacoes/': typeof AuthenticatedComunicacoesIndexRoute
   '/_authenticated/comunicacoes/whatsapp/configuracao': typeof AuthenticatedComunicacoesWhatsappConfiguracaoRoute
@@ -780,6 +799,7 @@ export interface FileRoutesById {
   '/_authenticated/configuracoes/projetos_/consolidar': typeof AuthenticatedConfiguracoesProjetosConsolidarRoute
   '/_authenticated/configuracoes/projetos_/importar': typeof AuthenticatedConfiguracoesProjetosImportarRoute
   '/_authenticated/inteligencia/colaboradores/$colaboradorId': typeof AuthenticatedInteligenciaColaboradoresColaboradorIdRoute
+  '/_authenticated/suporte/conhecimento/$slug': typeof AuthenticatedSuporteConhecimentoSlugRoute
   '/_authenticated/usuarios/$id/permissoes': typeof AuthenticatedUsuariosIdPermissoesRoute
   '/api/public/hooks/evolution-whatsapp-webhook': typeof ApiPublicHooksEvolutionWhatsappWebhookRoute
   '/api/public/hooks/process-whatsapp-outbox': typeof ApiPublicHooksProcessWhatsappOutboxRoute
@@ -850,6 +870,7 @@ export interface FileRouteTypes {
     | '/inteligencia/governanca'
     | '/inteligencia/qualidade'
     | '/inteligencia/supervisores'
+    | '/suporte/conhecimento'
     | '/suporte/dashboard'
     | '/comunicacoes/'
     | '/comunicacoes/whatsapp/configuracao'
@@ -862,6 +883,7 @@ export interface FileRouteTypes {
     | '/configuracoes/projetos/consolidar'
     | '/configuracoes/projetos/importar'
     | '/inteligencia/colaboradores/$colaboradorId'
+    | '/suporte/conhecimento/$slug'
     | '/usuarios/$id/permissoes'
     | '/api/public/hooks/evolution-whatsapp-webhook'
     | '/api/public/hooks/process-whatsapp-outbox'
@@ -928,6 +950,7 @@ export interface FileRouteTypes {
     | '/inteligencia/governanca'
     | '/inteligencia/qualidade'
     | '/inteligencia/supervisores'
+    | '/suporte/conhecimento'
     | '/suporte/dashboard'
     | '/comunicacoes'
     | '/comunicacoes/whatsapp/configuracao'
@@ -940,6 +963,7 @@ export interface FileRouteTypes {
     | '/configuracoes/projetos/consolidar'
     | '/configuracoes/projetos/importar'
     | '/inteligencia/colaboradores/$colaboradorId'
+    | '/suporte/conhecimento/$slug'
     | '/usuarios/$id/permissoes'
     | '/api/public/hooks/evolution-whatsapp-webhook'
     | '/api/public/hooks/process-whatsapp-outbox'
@@ -1009,6 +1033,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inteligencia/governanca'
     | '/_authenticated/inteligencia/qualidade'
     | '/_authenticated/inteligencia/supervisores'
+    | '/_authenticated/suporte/conhecimento'
     | '/_authenticated/suporte/dashboard'
     | '/_authenticated/comunicacoes/'
     | '/_authenticated/comunicacoes/whatsapp/configuracao'
@@ -1021,6 +1046,7 @@ export interface FileRouteTypes {
     | '/_authenticated/configuracoes/projetos_/consolidar'
     | '/_authenticated/configuracoes/projetos_/importar'
     | '/_authenticated/inteligencia/colaboradores/$colaboradorId'
+    | '/_authenticated/suporte/conhecimento/$slug'
     | '/_authenticated/usuarios/$id/permissoes'
     | '/api/public/hooks/evolution-whatsapp-webhook'
     | '/api/public/hooks/process-whatsapp-outbox'
@@ -1320,6 +1346,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSuporteDashboardRouteImport
       parentRoute: typeof AuthenticatedSuporteRoute
     }
+    '/_authenticated/suporte/conhecimento': {
+      id: '/_authenticated/suporte/conhecimento'
+      path: '/conhecimento'
+      fullPath: '/suporte/conhecimento'
+      preLoaderRoute: typeof AuthenticatedSuporteConhecimentoRouteImport
+      parentRoute: typeof AuthenticatedSuporteRoute
+    }
     '/_authenticated/inteligencia/supervisores': {
       id: '/_authenticated/inteligencia/supervisores'
       path: '/supervisores'
@@ -1523,6 +1556,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUsuariosIdPermissoesRouteImport
       parentRoute: typeof AuthenticatedUsuariosRoute
     }
+    '/_authenticated/suporte/conhecimento/$slug': {
+      id: '/_authenticated/suporte/conhecimento/$slug'
+      path: '/$slug'
+      fullPath: '/suporte/conhecimento/$slug'
+      preLoaderRoute: typeof AuthenticatedSuporteConhecimentoSlugRouteImport
+      parentRoute: typeof AuthenticatedSuporteConhecimentoRoute
+    }
     '/_authenticated/inteligencia/colaboradores/$colaboradorId': {
       id: '/_authenticated/inteligencia/colaboradores/$colaboradorId'
       path: '/colaboradores/$colaboradorId'
@@ -1712,11 +1752,29 @@ const AuthenticatedInteligenciaRouteWithChildren =
     AuthenticatedInteligenciaRouteChildren,
   )
 
+interface AuthenticatedSuporteConhecimentoRouteChildren {
+  AuthenticatedSuporteConhecimentoSlugRoute: typeof AuthenticatedSuporteConhecimentoSlugRoute
+}
+
+const AuthenticatedSuporteConhecimentoRouteChildren: AuthenticatedSuporteConhecimentoRouteChildren =
+  {
+    AuthenticatedSuporteConhecimentoSlugRoute:
+      AuthenticatedSuporteConhecimentoSlugRoute,
+  }
+
+const AuthenticatedSuporteConhecimentoRouteWithChildren =
+  AuthenticatedSuporteConhecimentoRoute._addFileChildren(
+    AuthenticatedSuporteConhecimentoRouteChildren,
+  )
+
 interface AuthenticatedSuporteRouteChildren {
+  AuthenticatedSuporteConhecimentoRoute: typeof AuthenticatedSuporteConhecimentoRouteWithChildren
   AuthenticatedSuporteDashboardRoute: typeof AuthenticatedSuporteDashboardRoute
 }
 
 const AuthenticatedSuporteRouteChildren: AuthenticatedSuporteRouteChildren = {
+  AuthenticatedSuporteConhecimentoRoute:
+    AuthenticatedSuporteConhecimentoRouteWithChildren,
   AuthenticatedSuporteDashboardRoute: AuthenticatedSuporteDashboardRoute,
 }
 
