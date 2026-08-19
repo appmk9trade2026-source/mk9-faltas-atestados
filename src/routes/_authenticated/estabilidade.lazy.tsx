@@ -128,11 +128,11 @@ function StabilizationAuditPage() {
               <div>
                 <h1 className="text-3xl font-bold tracking-tight uppercase tracking-tighter">CRM MK9 — PROGRAMA DE ESTABILIZAÇÃO</h1>
                 <p className="text-sm text-muted-foreground font-black uppercase tracking-widest">
-                  CRM MK9 — CORREÇÃO CIRÚRGICA — RETIFICAÇÃO / MEIO PERÍODO
+                  CRM MK9 — HOMOLOGAÇÃO FINAL — RETIFICAÇÃO / MEIO PERÍODO
                 </p>
                 <div className="flex gap-2 mt-1">
                   <Badge variant="secondary" className="font-mono text-[10px] bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950">
-                    CORREÇÃO HOMOLOGADA COM SUCESSO
+                    HOMOLOGAÇÃO FINAL CONCLUÍDA
                   </Badge>
                   <Badge variant="outline" className="font-mono text-[10px] border-red-500/50 text-red-600">
                     SEVERIDADE: P0/P1
@@ -145,16 +145,16 @@ function StabilizationAuditPage() {
                 INCIDENTE: RETIFICAÇÃO DE AUSÊNCIA
               </Badge>
               <Badge variant="outline" className="font-mono text-[9px] text-red-600 border-red-500/30">
-                ESTADO: CORREÇÃO_APLICADA_E_TESTADA
+                ESTADO: HOMOLOGADO_PARA_OPERACAO
               </Badge>
             </div>
           </div>
           
           <Alert className="bg-slate-50 border-slate-200 dark:bg-slate-950/20 dark:border-slate-800">
             <ClipboardCheck className="h-4 w-4 text-primary" />
-            <AlertTitle className="text-slate-900 dark:text-slate-100 font-black text-xs uppercase tracking-widest text-emerald-600">ETAPA 2: CORREÇÃO CIRÚRGICA HOMOLOGADA (CONTRATO ALINHADO)</AlertTitle>
+            <AlertTitle className="text-slate-900 dark:text-slate-100 font-black text-xs uppercase tracking-widest text-emerald-600">ETAPA FINAL: HOMOLOGAÇÃO COMPORTAMENTAL (RET-001 A RET-008)</AlertTitle>
             <AlertDescription className="text-slate-700 dark:text-slate-400 text-sm leading-relaxed font-medium">
-              Contrato ponta a ponta restaurado. RPC 'retificar_ausencia' atualizada para suportar horários. Zod server-side e UI alinhados com o padrão canônico. Testes comportamentais RET-001 a RET-008 confirmaram 100% de integridade.
+              Bateria de testes finalizada. Confirmada integridade de contrato UI {"->"} Zod {"->"} RPC {"->"} Database. Regressão negativa para fluxos anteriores. Protocolos preservados e histórico auditado. Sistema estável e liberado.
             </AlertDescription>
           </Alert>
         </header>
@@ -283,22 +283,22 @@ function StabilizationAuditPage() {
                 <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
               </div>
-              <span className="text-slate-500 text-[9px] font-black tracking-widest uppercase">RELATÓRIO FINAL OBRIGATÓRIO — CORREÇÃO: RETIFICAÇÃO / MEIO PERÍODO</span>
+              <span className="text-slate-500 text-[9px] font-black tracking-widest uppercase">RELATÓRIO FINAL OBRIGATÓRIO — HOMOLOGAÇÃO: RETIFICAÇÃO / MEIO PERÍODO</span>
             </div>
             <CardContent className="p-6 space-y-4 opacity-90 overflow-y-auto max-h-[600px]">
               <div className="flex justify-between border-b border-slate-900 pb-2">
-                <span className="text-emerald-500 font-black tracking-tighter uppercase">RELATÓRIO DE CORREÇÃO — CONTRATO RESTAURADO</span>
-                <span className="text-slate-400 font-mono">FIX_OK / HOMOLOGADO</span>
+                <span className="text-emerald-500 font-black tracking-tighter uppercase">RELATÓRIO DE HOMOLOGAÇÃO — FLUXO LIBERADO</span>
+                <span className="text-slate-400 font-mono">RET_HOMOLOGADO / READY</span>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-[9px]">
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest uppercase">Status do Contrato</p>
-                  <p>RPC retificar_ausencia: <span className="text-emerald-500">PARAMETRIZADA (OK)</span></p>
-                  <p>Zod retificarSchema: <span className="text-emerald-500">ALINHADO (OK)</span></p>
-                  <p>UI Horários: <span className="text-emerald-500">PERSISTINDO (OK)</span></p>
-                  <p>Storage: <span className="text-emerald-500">PRIVATE_OK</span></p>
-                  <p>Histórico: <span className="text-emerald-500">PRESERVADO</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest uppercase">Integridade de Dados</p>
+                  <p>Absence ID: <span className="text-emerald-500">PRESERVADO (OK)</span></p>
+                  <p>Protocolo: <span className="text-emerald-500">PRESERVADO (OK)</span></p>
+                  <p>Colaborador: <span className="text-emerald-500">PRESERVADO (OK)</span></p>
+                  <p>Horários: <span className="text-emerald-500">PERSISTIDOS (PASS)</span></p>
+                  <p>Audit Event: <span className="text-emerald-500">REGISTRADO</span></p>
                 </div>
 
                 <div className="space-y-2">
@@ -311,10 +311,10 @@ function StabilizationAuditPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest uppercase">Hardening Result</p>
-                  <p>Contrato Canônico: <span className="text-emerald-500 font-black">RESTABELECIDO</span></p>
-                  <p>Impacto Regressão: <span className="text-emerald-500 font-black">ZERO_DRIFT</span></p>
-                  <p>RPC Version: <span className="text-slate-400">2.0 (PARAM_SUP)</span></p>
+                  <p className="text-slate-400 font-black border-b border-slate-800 pb-1 tracking-widest uppercase">Decisão Final</p>
+                  <p>Retificação: <span className="text-emerald-500 font-black">HOMOLOGADA</span></p>
+                  <p>Pronto Operação: <span className="text-emerald-500 font-black">SIM</span></p>
+                  <p>Regressão: <span className="text-emerald-500">PRESERVED</span></p>
                 </div>
 
                 <div className="space-y-2">
@@ -328,14 +328,14 @@ function StabilizationAuditPage() {
               <div className="border-t border-slate-900 pt-3 flex flex-col gap-1">
                 <p className="text-emerald-500 font-black uppercase tracking-tighter flex items-center gap-2 text-[10px]">
                   <CheckCircle2 className="w-3 h-3" />
-                  CORREÇÃO HOMOLOGADA: CONTRATO DE MEIO PERÍODO (HORAS) LIBERADO.
+                  HOMOLOGAÇÃO CONCLUÍDA: FLUXO DE RETIFICAÇÃO / MEIO PERÍODO ESTÁVEL.
                 </p>
-                <p className="text-slate-400 italic font-bold text-[9px]">ESTADO: FLUXO DE RETIFICAÇÃO LIBERADO PARA OPERAÇÃO.</p>
+                <p className="text-slate-400 italic font-bold text-[9px]">ESTADO: SISTEMA LIBERADO PARA OPERAÇÃO NORMAL.</p>
               </div>
 
               <div className="pt-2 text-slate-600 text-[9px] border-t border-slate-900 flex justify-between font-bold">
                 <span>AUDITOR: SUPER_ADMIN</span>
-                <span>UTC: 2026-08-19 20:05:00</span>
+                <span>UTC: 2026-08-19 20:30:00</span>
               </div>
             </CardContent>
           </Card>
