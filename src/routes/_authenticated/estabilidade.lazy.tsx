@@ -6,7 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useSupport } from "@/components/support/support-provider";
 import { AppShell } from "@/components/layout/app-shell";
+
 
 import { useQuery } from "@tanstack/react-query";
 import { getStabilityResults } from "@/lib/stability-audit.functions";
@@ -80,6 +82,8 @@ function Fingerprint(props: any) {
 }
 
 function StabilizationAuditPage() {
+  const { openSupport } = useSupport();
+
   const { data: auditResults = [], isLoading } = useQuery({
     queryKey: ['stability-results'],
     queryFn: () => getStabilityResults(),
@@ -416,6 +420,8 @@ function StabilizationAuditPage() {
         </Drawer>
       </div>
     </AppShell>
+
+
 
 
   );
