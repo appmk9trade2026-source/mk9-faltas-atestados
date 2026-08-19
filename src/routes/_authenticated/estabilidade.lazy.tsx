@@ -128,11 +128,16 @@ function StabilizationAuditPage() {
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">CRM MK9 — PROGRAMA DE ESTABILIZAÇÃO</h1>
                 <p className="text-sm text-muted-foreground font-semibold uppercase tracking-[0.2em]">
-                  RODADA 1.1 — FECHAMENTO DOS GAPS DA AUDITORIA
+                  RODADA 2 — HOMOLOGAÇÃO OPERACIONAL POR PERFIL
                 </p>
-                <Badge variant="secondary" className="mt-1 font-mono text-[10px]">
-                  BASELINE: RUN-20260819-P0-001
-                </Badge>
+                <div className="flex gap-2 mt-1">
+                  <Badge variant="secondary" className="font-mono text-[10px]">
+                    BASELINE: RUN-20260819-P0-001-R1
+                  </Badge>
+                  <Badge variant="outline" className="font-mono text-[10px] border-emerald-500/50 text-emerald-600">
+                    STATUS: OPERACIONAL
+                  </Badge>
+                </div>
               </div>
             </div>
             <div className="text-right">
