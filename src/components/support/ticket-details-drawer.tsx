@@ -389,27 +389,47 @@ export function TicketDetailsDrawer({ open, onOpenChange, ticket }: TicketDetail
           </ScrollArea>
         </Tabs>
 
-        <div className="p-6 border-t bg-slate-50/50 dark:bg-slate-900/50 flex items-center gap-2">
-          {ticket.status === 'RESOLVIDO' && (
+        <div className="p-6 border-t bg-slate-50/50 dark:bg-slate-900/50 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            {ticket.status === 'RESOLVIDO' && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2 border-primary/20 text-primary hover:bg-primary/5"
+                onClick={() => createKBArticleMutation.mutate()}
+                disabled={createKBArticleMutation.isPending}
+              >
+                {createKBArticleMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <BookPlus className="w-4 h-4" />
+                )}
+                Transformar em Artigo
+              </Button>
+            )}
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <Textarea 
+              placeholder="Digite sua resposta..." 
+              className="min-h-[80px] text-xs resize-none"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+            />
             <Button 
-              variant="outline" 
-              size="sm" 
-              className="gap-2 border-primary/20 text-primary hover:bg-primary/5"
-              onClick={() => createKBArticleMutation.mutate()}
-              disabled={createKBArticleMutation.isPending}
+              className="w-full gap-2" 
+              size="sm"
+              onClick={handleSend}
+              disabled={sendMessageMutation.isPending || !newMessage.trim()}
             >
-              {createKBArticleMutation.isPending ? (
+              {sendMessageMutation.isPending ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <BookPlus className="w-4 h-4" />
+                <Send className="w-4 h-4" />
               )}
-              Transformar em Artigo
+              Responder
             </Button>
-          )}
-          <Button className="flex-1 gap-2" size="sm">
-            <MessageSquare className="w-4 h-4" />
-            Responder
-          </Button>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
