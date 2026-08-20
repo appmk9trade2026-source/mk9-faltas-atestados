@@ -43,6 +43,8 @@ interface TicketDetailsDrawerProps {
 export function TicketDetailsDrawer({ open, onOpenChange, ticket }: TicketDetailsDrawerProps) {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const [newMessage, setNewMessage] = useState("");
+  const queryClient = useQueryClient();
 
   const { data: messages = [] } = useQuery({
     queryKey: ['ticket-messages', ticket?.id],
@@ -50,17 +52,28 @@ export function TicketDetailsDrawer({ open, onOpenChange, ticket }: TicketDetail
     enabled: !!ticket?.id && open,
   });
 
-  const { data: relatedArticles = [] } = useQuery({
-    queryKey: ['related-kb-articles', ticket?.category, ticket?.source_route, ticket?.safe_code],
-    queryFn: () => getRelatedArticles({ 
-      data: { 
-        category: ticket.category, 
-        module: ticket.source_route, 
-        safeCode: ticket.safe_code 
-      } 
+  const sendMessageMutation = useMutation({
+    mutationFn: (message: string) => sendMessage({
+      data: {
+        ticketId: ticket.id,
+        message,
+        messageType: 'TEXTO'
+      }
     }),
-    enabled: !!ticket?.id && open,
+    onSuccess: () => {
+      setNewMessage("");
+      toast.success("Mensagem enviada");
+      queryClient.invalidateQueries({ queryKey: ['ticket-messages', ticket.id] });
+    },
+    onError: (err: any) => {
+      toast.error(err.message);
+    }
   });
+
+  const handleSend = () => {
+    if (!newMessage.trim() || sendMessageMutation.isPending) return;
+    sendMessageMutation.mutate(newMessage);
+  };
 
   const createKBArticleMutation = useMutation({
     mutationFn: () => createArticleFromTicket({
