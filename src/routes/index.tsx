@@ -10,58 +10,58 @@ export const Route = createFileRoute('/')({
   component: () => (
     <div className="p-8 font-mono text-xs whitespace-pre-wrap leading-relaxed max-w-4xl mx-auto bg-white dark:bg-slate-950 min-h-screen">
       CRM MK9 — CENTRAL DE SUPORTE
-      PARTE 4B — PROTOCOLO
+      PARTE 4C — AUDITORIA
 
-      GENERATOR TYPE:
-      TRIGGER (PostgreSQL)
-
-      GENERATOR NAME:
-      trg_generate_support_protocol
+      AUDIT INSERT POLICY:
+      SIM (Implementada: "Users can create audit events for their own tickets")
 
       ROOT CAUSE:
-      Ausência de mecanismo de geração automática no banco de dados.
+      Bloqueio de RLS. A tabela support_ticket_events possuía RLS habilitado mas nenhuma política de INSERT para 'authenticated', além de falta de GRANTs explícitos.
 
       CORRECTION:
-      Implementação de SEQUENCE + FUNCTION + TRIGGER BEFORE INSERT.
+      Execução de GRANT SELECT, INSERT e criação de políticas de RLS escopadas para o criador do ticket e administradores.
 
-      MIGRATION REQUIRED:
+      RLS MODIFIED:
       SIM
 
-      PENDING TICKETS COUNT:
-      0
+      RLS PRESERVED:
+      SIM (Restrito a TICKET_CREATED para o próprio autor)
 
-      EXISTING TEST TICKET:
-      CORRECTED (Protocolo gerado retroativamente)
-
-      NEW TICKET CREATED:
-      SIM
-
-      NEW TICKET ID:
-      f9a2d8e4-b7c1-4d3e-a5f2-9b8c7d6e5a4f
-
-      NEW PROTOCOL:
-      SUP-20260820-000002
-
-      FORMAT:
-      PASS (SUP-YYYYMMDD-XXXXXX)
-
-      PENDING:
+      SERVICE ROLE USED:
       NÃO
 
-      UNIQUENESS:
+      TEST TICKET:
+      c8df1e91-5f0d-4b90-ae41-4c4c5ba7066d
+
+      PROTOCOL:
+      SUP-20260820-000003
+
+      TICKET_CREATED EVENT:
       PASS
 
-      CONCURRENCY SAFETY:
-      PASS (Utiliza SEQUENCE atômica)
+      AUDIT COUNT:
+      1
 
-      AUDIT GAP:
+      ACTOR MATCH:
+      PASS (55933680-b1c4-4ac4-b87b-77b83501e977)
+
+      TICKET MATCH:
+      PASS
+
+      DUPLICATE EVENT:
+      NÃO
+
+      TICKETS WITHOUT CREATED EVENT:
+      2 (Protocolos SUP-000001 e SUP-000002)
+
+      BACKFILL EXECUTED:
+      NÃO
+
+      GETTICKETS:
       NOT_TOUCHED
 
       MY TICKETS GAP:
-      NOT_TOUCHED
-
-      HOME GUARDRAIL:
-      PASS
+      OPEN
 
       TYPESCRIPT:
       PASS
@@ -71,13 +71,14 @@ export const Route = createFileRoute('/')({
 
       DECISÃO:
 
-      SUPPORT_PROTOCOL_FIXED:
+      SUPPORT_AUDIT_FIXED:
       SIM
 
       PARAR.
 
-      Aguardar Parte 4C.
+      Aguardar Parte 4D.
     </div>
   ),
 })
+
 
