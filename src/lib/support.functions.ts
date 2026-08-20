@@ -240,11 +240,7 @@ export const getTickets = createServerFn({ method: "GET" })
 
     let query = db
       .from('support_tickets')
-      .select(`
-        *,
-        requester:requester_user_id(id, email),
-        assigned:assigned_user_id(id, email)
-      `);
+      .select('*');
 
     // Regra de visibilidade baseada no papel
     if (roles.role !== 'super_admin' && roles.role !== 'rh') {
@@ -252,9 +248,30 @@ export const getTickets = createServerFn({ method: "GET" })
       query = query.eq('requester_user_id', userId);
     }
 
-    const { data, error } = await query.order('created_at', { ascending: false });
+    const { data: tickets, error } = await query.order('created_at', { ascending: false });
 
     if (error) throw new Error(error.message);
+
+    // Fetch requester profiles manually to avoid schema cache join issues
+    const requesterIds = [...new Set(tickets.map(t => t.requester_user_id).filter((id): id is string => !!id))];
+    const assignedIds = [...new Set(tickets.map(t => t.assigned_user_id).filter((id): id is string => !!id))];
+    const allProfileIds = [...new Set([...requesterIds, ...assignedIds])];
+
+    const { data: profiles } = await db
+      .from('profiles')
+      .select('id, email')
+      .in('id', allProfileIds);
+
+    const profileMap = (profiles || []).reduce((acc: Record<string, any>, p) => {
+      acc[p.id] = p;
+      return acc;
+    }, {});
+
+    const data = tickets.map(t => ({
+      ...t,
+      requester: t.requester_user_id ? profileMap[t.requester_user_id] : null,
+      assigned: t.assigned_user_id ? profileMap[t.assigned_user_id] : null
+    }));
     return data;
   });
 
