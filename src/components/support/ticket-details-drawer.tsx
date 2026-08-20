@@ -368,15 +368,15 @@ export function TicketDetailsDrawer({ open, onOpenChange, ticket }: TicketDetail
                         <div key={msg.id} className={cn("flex gap-3", msg.message_type === 'SISTEMA' ? 'justify-center' : '')}>
                           {msg.message_type === 'SISTEMA' ? (
                             <div className="bg-slate-100 dark:bg-slate-800 text-[10px] font-medium px-3 py-1 rounded-full text-muted-foreground border">
-                              {msg.content}
+                              {msg.message || msg.content}
                             </div>
                           ) : (
                             <div className="flex-1 bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border">
                               <div className="flex items-center justify-between mb-1">
-                                <span className="text-[10px] font-bold">{msg.sender_role}</span>
+                                <span className="text-[10px] font-bold">{msg.sender_role || 'Mensagem'}</span>
                                 <span className="text-[9px] text-muted-foreground">{new Date(msg.created_at).toLocaleTimeString('pt-BR')}</span>
                               </div>
-                              <p className="text-sm">{msg.content}</p>
+                              <p className="text-sm">{msg.message || msg.content}</p>
                             </div>
                           )}
                         </div>
