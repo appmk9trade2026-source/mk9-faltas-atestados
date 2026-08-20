@@ -32,22 +32,18 @@ function readBool(key: string, fallback = false): boolean {
 }
 
 function detectEnvironment(): AppEnvironment {
+  // 1. Explicit override via env var (Highest priority, safe for SSR)
   const explicit = readString("VITE_APP_ENV").toLowerCase();
   if (explicit === "production" || explicit === "prod") return "production";
   if (explicit === "homologacao" || explicit === "homolog" || explicit === "uat") return "homologacao";
   if (explicit === "preview" || explicit === "staging") return "preview";
   if (explicit === "development" || explicit === "dev") return "development";
 
-  // Fallback por hostname (execução no browser)
-  if (typeof window !== "undefined") {
-    const host = window.location.hostname.toLowerCase();
-    if (host === "localhost" || host === "127.0.0.1") return "development";
-    if (host.includes("id-preview--") || host.includes("-dev.lovable.app")) return "preview";
-    if (host.includes("homolog")) return "homologacao";
-    if (host.endsWith(".lovable.app") || host.endsWith(".lovable.dev")) return "production";
-  }
-
-  return import.meta.env.DEV ? "development" : "production";
+  // 2. Browser-only detection (Can cause hydration mismatch if used in SSR)
+  // We avoid this for values that are rendered directly in the initial HTML.
+  
+  // 3. Static build-time detection (Safe for SSR)
+  return import.meta.env.PROD ? "production" : "development";
 }
 
 const environment = detectEnvironment();
