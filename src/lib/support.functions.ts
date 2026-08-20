@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { Database } from "@/integrations/supabase/types";
 import { getRelatedArticles, createArticleFromTicket } from "./knowledge.functions";
 
@@ -167,6 +168,7 @@ export const reopenTicket = createServerFn({ method: "POST" })
 
 
 export const createTicket = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
     category: z.string(),
     priority: z.enum(['BAIXA', 'NORMAL', 'ALTA', 'URGENTE'] as const),
@@ -178,14 +180,14 @@ export const createTicket = createServerFn({ method: "POST" })
     related_protocol: z.string().optional(),
     safe_code: z.string().optional(),
   }).parse(data))
-  .handler(async ({ data }) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
+  .handler(async ({ data, context }) => {
+    const userId = context.userId;
+    const db = context.supabase;
 
-    const { data: roles } = await supabase
+    const { data: roles } = await db
       .from('user_roles')
       .select('role')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single();
 
     if (!roles) throw new Error("User has no role assigned");
@@ -198,13 +200,13 @@ export const createTicket = createServerFn({ method: "POST" })
       throw new Error(`Categoria "${data.category}" não permitida para o seu perfil.`);
     }
 
-    const { data: ticket, error } = await supabase
+    const { data: ticket, error } = await db
       .from('support_tickets')
       .insert({
         ...data,
         category: canonicalCategory, // Salva o valor canônico
         protocol: 'PENDING',
-        requester_user_id: user.id,
+        requester_user_id: userId,
         requester_role: roles.role,
         status: 'ABERTO'
       } as any)
@@ -213,9 +215,9 @@ export const createTicket = createServerFn({ method: "POST" })
 
     if (error) throw new Error(error.message);
 
-    await supabase.from('support_ticket_events').insert({
+    await db.from('support_ticket_events').insert({
       ticket_id: ticket.id,
-      actor_user_id: user.id,
+      actor_user_id: userId,
       event_type: 'TICKET_CREATED'
     });
 
