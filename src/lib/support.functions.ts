@@ -289,30 +289,67 @@ export const getTicketMessages = createServerFn({ method: "GET" })
   });
 
 export const sendMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
     ticketId: z.string().uuid(),
     message: z.string().min(1),
     messageType: z.enum(['TEXTO', 'SISTEMA', 'ANEXO'] as const).default('TEXTO')
   }).parse(data))
-  .handler(async ({ data }) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
+  .handler(async ({ data, context }) => {
+    const userId = context.userId;
+    const db = context.supabase;
 
-    const { data: msg, error } = await supabase
+    // 1. Validar autorização (pode participar do ticket?)
+    const { data: ticket, error: ticketError } = await db
+      .from('support_tickets')
+      .select('requester_user_id, assigned_user_id')
+      .eq('id', data.ticketId)
+      .single();
+
+    if (ticketError || !ticket) {
+      throw new Error("Chamado não encontrado ou acesso negado.");
+    }
+
+    // 2. Verificar papéis
+    const { data: userRole } = await db
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .single();
+
+    const isRequester = ticket.requester_user_id === userId;
+    const isAssigned = ticket.assigned_user_id === userId;
+    const isAdmin = userRole?.role === 'super_admin';
+    const isRH = userRole?.role === 'rh';
+
+    // Regra: Solicitante ou Atendente Atribuído ou Admin podem enviar mensagem.
+    // RH não atribuído é bloqueado para manter integridade da fila (conforme RLS).
+    if (!isRequester && !isAssigned && !isAdmin) {
+      throw new Error("Você não tem permissão para enviar mensagens neste chamado.");
+    }
+
+    const { data: msg, error: msgError } = await db
       .from('support_messages')
       .insert({
         ticket_id: data.ticketId,
-        sender_user_id: user.id,
+        sender_user_id: userId,
         message: data.message,
         message_type: data.messageType
       })
       .select()
       .single();
 
-    if (error) throw new Error(error.message);
+    if (msgError) throw new Error(msgError.message);
 
-    // Atualizar timestamp do ticket
-    await supabase
+    // 3. Auditoria
+    await db.from('support_ticket_events').insert({
+      ticket_id: data.ticketId,
+      actor_user_id: userId,
+      event_type: 'MESSAGE_SENT'
+    });
+
+    // 4. Atualizar timestamp do ticket
+    await db
       .from('support_tickets')
       .update({ updated_at: new Date().toISOString() })
       .eq('id', data.ticketId);
