@@ -23,12 +23,13 @@ import {
   AlertTriangle,
   Activity
 } from "lucide-react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { getTicketMessages, getRelatedArticles, createArticleFromTicket, getCategoryLabel } from "@/lib/support.functions";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getTicketMessages, getRelatedArticles, createArticleFromTicket, getCategoryLabel, sendMessage } from "@/lib/support.functions";
 import { summarizeTicket, suggestDiagnosis, suggestReply } from "@/lib/ai-copilot.functions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
