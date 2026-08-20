@@ -253,8 +253,8 @@ export const getTickets = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
 
     // Fetch requester profiles manually to avoid schema cache join issues
-    const requesterIds = [...new Set(tickets.map(t => t.requester_user_id).filter(Boolean))];
-    const assignedIds = [...new Set(tickets.map(t => t.assigned_user_id).filter(Boolean))];
+    const requesterIds = [...new Set(tickets.map(t => t.requester_user_id).filter((id): id is string => !!id))];
+    const assignedIds = [...new Set(tickets.map(t => t.assigned_user_id).filter((id): id is string => !!id))];
     const allProfileIds = [...new Set([...requesterIds, ...assignedIds])];
 
     const { data: profiles } = await db
