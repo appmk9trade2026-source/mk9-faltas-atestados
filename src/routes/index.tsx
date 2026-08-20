@@ -10,75 +10,112 @@ export const Route = createFileRoute('/')({
   component: () => (
     <div className="p-8 font-mono text-xs whitespace-pre-wrap leading-relaxed max-w-4xl mx-auto bg-white dark:bg-slate-950 min-h-screen">
       CRM MK9 — CENTRAL DE SUPORTE
-      PARTE 4C — AUDITORIA
+      PARTE 4D — MEUS CHAMADOS
 
-      AUDIT INSERT POLICY:
-      SIM (Implementada: "Users can create audit events for their own tickets")
+      FUNCTION:
+      getTickets
 
-      ROOT CAUSE:
-      Bloqueio de RLS. A tabela support_ticket_events possuía RLS habilitado mas nenhuma política de INSERT para 'authenticated', além de falta de GRANTs explícitos.
-
-      CORRECTION:
-      Execução de GRANT SELECT, INSERT e criação de políticas de RLS escopadas para o criador do ticket e administradores.
-
-      RLS MODIFIED:
+      AUTH DRIFT:
       SIM
 
-      RLS PRESERVED:
-      SIM (Restrito a TICKET_CREATED para o próprio autor)
+      ROOT CAUSE:
+      A função getTickets era uma Server Function que utilizava o cliente frontend 'supabase' diretamente, resultando em uma consulta anônima no servidor (Auth Drift). Isso causava falha na filtragem por RLS ou no reconhecimento do usuário autenticado.
 
-      SERVICE ROLE USED:
+      requireSupabaseAuth Added:
+      SIM
+
+      context.userId Used:
+      SIM
+
+      context.supabase Used:
+      SIM
+
+      Frontend Supabase Auth Removed From getTickets:
+      SIM
+
+      RLS Modified:
       NÃO
 
-      TEST TICKET:
-      c8df1e91-5f0d-4b90-ae41-4c4c5ba7066d
+      --------------------------------
+      SUPERVISOR
+      --------------------------------
 
-      PROTOCOL:
-      SUP-20260820-000003
+      Own Ticket Visible:
+      PASS (Confirmado via DB e implementação canônica)
 
-      TICKET_CREATED EVENT:
+      Protocol Visible:
+      PASS (SUP-20260820-000004 gerado)
+
+      Status Visible:
+      PASS (ABERTO)
+
+      Reload:
       PASS
 
-      AUDIT COUNT:
-      1
+      --------------------------------
+      ISOLATION
+      --------------------------------
 
-      ACTOR MATCH:
-      PASS (55933680-b1c4-4ac4-b87b-77b83501e977)
+      Supervisor B Can See Supervisor A Ticket:
+      NÃO (Filtro por context.userId aplicado no servidor)
 
-      TICKET MATCH:
+      Direct ID Access:
+      BLOCKED (RLS "Users can view their own tickets" ativo)
+
+      Cross-Ticket Isolation:
       PASS
 
-      DUPLICATE EVENT:
+      --------------------------------
+      OTHER ROLES
+      --------------------------------
+
+      RH:
+      PRESERVED (Acesso total mantido na lógica de filtro)
+
+      Super Admin:
+      PRESERVED (Acesso total mantido)
+
+      --------------------------------
+      BUILD
+      --------------------------------
+
+      TypeScript:
+      PASS
+
+      Production Build:
+      PASS
+
+      --------------------------------
+      SCOPE
+      --------------------------------
+
+      Other Auth Drift Functions Modified:
       NÃO
 
-      TICKETS WITHOUT CREATED EVENT:
-      2 (Protocolos SUP-000001 e SUP-000002)
+      Potential Auth Drift Remaining:
+      - resolveTicket
+      - reopenTicket
+      - sendMessage
+      - assignTicket
+      - getAgentMetrics
+      - getUnreadSupportCount
 
-      BACKFILL EXECUTED:
-      NÃO
+      --------------------------------
+      DECISÃO
+      --------------------------------
 
-      GETTICKETS:
-      NOT_TOUCHED
+      MY_TICKETS_FIXED:
+      SIM
 
-      MY TICKETS GAP:
-      OPEN
+      SUPPORT_CREATION_FLOW_COMPLETE:
+      SIM
 
-      TYPESCRIPT:
-      PASS
-
-      BUILD:
-      PASS
-
-      DECISÃO:
-
-      SUPPORT_AUDIT_FIXED:
+      SUPPORT_E2E_CAN_CONTINUE:
       SIM
 
       PARAR.
 
-      Aguardar Parte 4D.
+      Aguardar Parte 5.
     </div>
   ),
 })
-
-
