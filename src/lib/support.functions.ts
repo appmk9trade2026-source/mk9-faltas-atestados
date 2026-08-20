@@ -225,15 +225,34 @@ export const createTicket = createServerFn({ method: "POST" })
   });
 
 export const getTickets = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const { data, error } = await supabase
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const userId = context.userId;
+    const db = context.supabase;
+
+    const { data: roles } = await db
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .single();
+
+    if (!roles) throw new Error("User has no role assigned");
+
+    let query = db
       .from('support_tickets')
       .select(`
         *,
         requester:requester_user_id(id, email),
         assigned:assigned_user_id(id, email)
-      `)
-      .order('created_at', { ascending: false });
+      `);
+
+    // Regra de visibilidade baseada no papel
+    if (roles.role !== 'super_admin' && roles.role !== 'rh') {
+      // Supervisor só vê os próprios tickets
+      query = query.eq('requester_user_id', userId);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) throw new Error(error.message);
     return data;
