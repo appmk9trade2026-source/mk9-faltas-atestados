@@ -52,6 +52,18 @@ export function TicketDetailsDrawer({ open, onOpenChange, ticket }: TicketDetail
     enabled: !!ticket?.id && open,
   });
 
+  const { data: relatedArticles = [] } = useQuery({
+    queryKey: ['related-kb-articles', ticket?.category, ticket?.source_route, ticket?.safe_code],
+    queryFn: () => getRelatedArticles({ 
+      data: { 
+        category: ticket.category, 
+        module: ticket.source_route, 
+        safeCode: ticket.safe_code 
+      } 
+    }),
+    enabled: !!ticket?.id && open,
+  });
+
   const sendMessageMutation = useMutation({
     mutationFn: (message: string) => sendMessage({
       data: {
