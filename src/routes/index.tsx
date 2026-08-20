@@ -10,112 +10,55 @@ export const Route = createFileRoute('/')({
   component: () => (
     <div className="p-8 font-mono text-xs whitespace-pre-wrap leading-relaxed max-w-4xl mx-auto bg-white dark:bg-slate-950 min-h-screen">
       CRM MK9 — CENTRAL DE SUPORTE
-      PARTE 4D — MEUS CHAMADOS
+      PARTE 5/5 — HOMOLOGAÇÃO E2E FINAL
 
-      FUNCTION:
-      getTickets
+      RELATÓRIO DE HOMOLOGAÇÃO E2E — PARCIAL (BLOQUEIO)
 
-      AUTH DRIFT:
-      SIM
-
-      ROOT CAUSE:
-      A função getTickets era uma Server Function que utilizava o cliente frontend 'supabase' diretamente, resultando em uma consulta anônima no servidor (Auth Drift). Isso causava falha na filtragem por RLS ou no reconhecimento do usuário autenticado.
-
-      requireSupabaseAuth Added:
-      SIM
-
-      context.userId Used:
-      SIM
-
-      context.supabase Used:
-      SIM
-
-      Frontend Supabase Auth Removed From getTickets:
-      SIM
-
-      RLS Modified:
-      NÃO
+      TICKET: c8df1e91-5f0d-4b90-ae41-4c4c5ba7066d
+      PROTOCOL: SUP-20260820-000003
+      SUPERVISOR OWN TICKET: PASS
 
       --------------------------------
-      SUPERVISOR
+      RH
       --------------------------------
 
-      Own Ticket Visible:
-      PASS (Confirmado via DB e implementação canônica)
-
-      Protocol Visible:
-      PASS (SUP-20260820-000004 gerado)
-
-      Status Visible:
-      PASS (ABERTO)
-
-      Reload:
-      PASS
+      Ticket Visible: FAIL
+      Assign Ticket: FAIL (AUTH_DRIFT)
+      Assign Audit: FAIL
+      Send Message: FAIL (AUTH_DRIFT)
 
       --------------------------------
-      ISOLATION
+      DIAGNÓSTICO DE BLOQUEIO
       --------------------------------
 
-      Supervisor B Can See Supervisor A Ticket:
-      NÃO (Filtro por context.userId aplicado no servidor)
+      1. RH_TICKET_VISIBLE = FAIL
+         Root Cause: RLS "Users can view their own tickets" restringe RH apenas a tickets já atribuídos.
+         Tickets novos (NULL assigned_user_id) são invisíveis para a fila do RH.
 
-      Direct ID Access:
-      BLOCKED (RLS "Users can view their own tickets" ativo)
+      2. AUTH DRIFT DETECTADO
+         As seguintes funções falharam nos testes de isolamento:
+         - assignTicket
+         - sendMessage
+         - resolveTicket
+         - reopenTicket
+         - getAgentMetrics
 
-      Cross-Ticket Isolation:
-      PASS
-
-      --------------------------------
-      OTHER ROLES
-      --------------------------------
-
-      RH:
-      PRESERVED (Acesso total mantido na lógica de filtro)
-
-      Super Admin:
-      PRESERVED (Acesso total mantido)
+      3. SCHEMA CACHE / JOIN ISSUES
+         O PostgREST falhou em realizar join automático com 'profiles'.
+         Implementado fallback manual em getTickets.
 
       --------------------------------
-      BUILD
+      ESTADO FINAL DO E2E
       --------------------------------
 
-      TypeScript:
-      PASS
+      SUPPORT_E2E_READY: NÃO
+      READY_FOR_CONTROLLED_REAL_USE: NÃO
 
-      Production Build:
-      PASS
-
-      --------------------------------
-      SCOPE
-      --------------------------------
-
-      Other Auth Drift Functions Modified:
-      NÃO
-
-      Potential Auth Drift Remaining:
-      - resolveTicket
-      - reopenTicket
-      - sendMessage
-      - assignTicket
-      - getAgentMetrics
-      - getUnreadSupportCount
-
-      --------------------------------
-      DECISÃO
-      --------------------------------
-
-      MY_TICKETS_FIXED:
-      SIM
-
-      SUPPORT_CREATION_FLOW_COMPLETE:
-      SIM
-
-      SUPPORT_E2E_CAN_CONTINUE:
-      SIM
+      P0: RH não vê chamados novos (RLS).
+      P1: Auth Drift em funções críticas de atendimento.
 
       PARAR.
 
-      Aguardar Parte 5.
     </div>
   ),
 })
