@@ -241,9 +241,7 @@ export const getTickets = createServerFn({ method: "GET" })
     let query = db
       .from('support_tickets')
       .select(`
-        *,
-        requester:profiles!requester_user_id(id, email),
-        assigned:profiles!assigned_user_id(id, email)
+        *
       `);
 
     // Regra de visibilidade baseada no papel
