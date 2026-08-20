@@ -23,12 +23,13 @@ import {
   AlertTriangle,
   Activity
 } from "lucide-react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { getTicketMessages, getRelatedArticles, createArticleFromTicket, getCategoryLabel } from "@/lib/support.functions";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getTicketMessages, getRelatedArticles, createArticleFromTicket, getCategoryLabel, sendMessage } from "@/lib/support.functions";
 import { summarizeTicket, suggestDiagnosis, suggestReply } from "@/lib/ai-copilot.functions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,8 @@ interface TicketDetailsDrawerProps {
 export function TicketDetailsDrawer({ open, onOpenChange, ticket }: TicketDetailsDrawerProps) {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const [newMessage, setNewMessage] = useState("");
+  const queryClient = useQueryClient();
 
   const { data: messages = [] } = useQuery({
     queryKey: ['ticket-messages', ticket?.id],
@@ -60,6 +63,29 @@ export function TicketDetailsDrawer({ open, onOpenChange, ticket }: TicketDetail
     }),
     enabled: !!ticket?.id && open,
   });
+
+  const sendMessageMutation = useMutation({
+    mutationFn: (message: string) => sendMessage({
+      data: {
+        ticketId: ticket.id,
+        message,
+        messageType: 'TEXTO'
+      }
+    }),
+    onSuccess: () => {
+      setNewMessage("");
+      toast.success("Mensagem enviada");
+      queryClient.invalidateQueries({ queryKey: ['ticket-messages', ticket.id] });
+    },
+    onError: (err: any) => {
+      toast.error(err.message);
+    }
+  });
+
+  const handleSend = () => {
+    if (!newMessage.trim() || sendMessageMutation.isPending) return;
+    sendMessageMutation.mutate(newMessage);
+  };
 
   const createKBArticleMutation = useMutation({
     mutationFn: () => createArticleFromTicket({
@@ -342,15 +368,15 @@ export function TicketDetailsDrawer({ open, onOpenChange, ticket }: TicketDetail
                         <div key={msg.id} className={cn("flex gap-3", msg.message_type === 'SISTEMA' ? 'justify-center' : '')}>
                           {msg.message_type === 'SISTEMA' ? (
                             <div className="bg-slate-100 dark:bg-slate-800 text-[10px] font-medium px-3 py-1 rounded-full text-muted-foreground border">
-                              {msg.content}
+                              {msg.message || msg.content}
                             </div>
                           ) : (
                             <div className="flex-1 bg-slate-50 dark:bg-slate-900 p-3 rounded-lg border">
                               <div className="flex items-center justify-between mb-1">
-                                <span className="text-[10px] font-bold">{msg.sender_role}</span>
+                                <span className="text-[10px] font-bold">{msg.sender_role || 'Mensagem'}</span>
                                 <span className="text-[9px] text-muted-foreground">{new Date(msg.created_at).toLocaleTimeString('pt-BR')}</span>
                               </div>
-                              <p className="text-sm">{msg.content}</p>
+                              <p className="text-sm">{msg.message || msg.content}</p>
                             </div>
                           )}
                         </div>
@@ -363,27 +389,47 @@ export function TicketDetailsDrawer({ open, onOpenChange, ticket }: TicketDetail
           </ScrollArea>
         </Tabs>
 
-        <div className="p-6 border-t bg-slate-50/50 dark:bg-slate-900/50 flex items-center gap-2">
-          {ticket.status === 'RESOLVIDO' && (
+        <div className="p-6 border-t bg-slate-50/50 dark:bg-slate-900/50 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            {ticket.status === 'RESOLVIDO' && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2 border-primary/20 text-primary hover:bg-primary/5"
+                onClick={() => createKBArticleMutation.mutate()}
+                disabled={createKBArticleMutation.isPending}
+              >
+                {createKBArticleMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <BookPlus className="w-4 h-4" />
+                )}
+                Transformar em Artigo
+              </Button>
+            )}
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <Textarea 
+              placeholder="Digite sua resposta..." 
+              className="min-h-[80px] text-xs resize-none"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+            />
             <Button 
-              variant="outline" 
-              size="sm" 
-              className="gap-2 border-primary/20 text-primary hover:bg-primary/5"
-              onClick={() => createKBArticleMutation.mutate()}
-              disabled={createKBArticleMutation.isPending}
+              className="w-full gap-2" 
+              size="sm"
+              onClick={handleSend}
+              disabled={sendMessageMutation.isPending || !newMessage.trim()}
             >
-              {createKBArticleMutation.isPending ? (
+              {sendMessageMutation.isPending ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <BookPlus className="w-4 h-4" />
+                <Send className="w-4 h-4" />
               )}
-              Transformar em Artigo
+              Responder
             </Button>
-          )}
-          <Button className="flex-1 gap-2" size="sm">
-            <MessageSquare className="w-4 h-4" />
-            Responder
-          </Button>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
