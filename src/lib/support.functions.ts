@@ -240,9 +240,7 @@ export const getTickets = createServerFn({ method: "GET" })
 
     let query = db
       .from('support_tickets')
-      .select(`
-        *
-      `);
+      .select('*');
 
     // Regra de visibilidade baseada no papel
     if (roles.role !== 'super_admin' && roles.role !== 'rh') {
