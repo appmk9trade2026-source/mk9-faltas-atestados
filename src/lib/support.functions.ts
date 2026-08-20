@@ -321,26 +321,32 @@ export const sendMessage = createServerFn({ method: "POST" })
   });
 
 export const assignTicket = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
     ticketId: z.string().uuid()
   }).parse(data))
-  .handler(async ({ data }) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
+  .handler(async ({ data, context }) => {
+    const userId = context.userId;
+    const db = context.supabase;
 
-    const { data: roles } = await supabase
+    const { data: roles } = await db
       .from('user_roles')
       .select('role')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single();
 
     if (!roles) throw new Error("User has no role assigned");
+    
+    // Apenas RH e Super Admin podem assumir tickets
+    if (roles.role !== 'rh' && roles.role !== 'super_admin') {
+      throw new Error("Apenas atendentes autorizados podem assumir chamados.");
+    }
 
     // Verificar concorrência (somente um assume)
-    const { data: ticket, error } = await supabase
+    const { data: ticket, error } = await db
       .from('support_tickets')
       .update({
-        assigned_user_id: user.id,
+        assigned_user_id: userId,
         assigned_role: roles.role,
         status: 'EM_ATENDIMENTO',
         updated_at: new Date().toISOString()
@@ -348,17 +354,17 @@ export const assignTicket = createServerFn({ method: "POST" })
       .eq('id', data.ticketId)
       .is('assigned_user_id', null)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error || !ticket) {
-      throw new Error("Este chamado já foi assumido por outro atendente.");
+      throw new Error("Este chamado já foi assumido por outro atendente ou não está mais disponível.");
     }
 
-    await supabase.from('support_ticket_events').insert({
+    await db.from('support_ticket_events').insert({
       ticket_id: data.ticketId,
-      actor_user_id: user.id,
+      actor_user_id: userId,
       event_type: 'TICKET_ASSIGNED',
-      new_value: user.id
+      new_value: userId
     });
 
     return ticket;
