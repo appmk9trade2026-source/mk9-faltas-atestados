@@ -62,12 +62,13 @@ export function TicketDetailsDrawer({ open, onOpenChange, ticket }: TicketDetail
 
   useEffect(() => {
     if (open && ticket?.id && messages.length > 0) {
-      const hasUnread = messages.some((m: any) => !m.read_at && m.sender_user_id !== ticket.current_user_id);
-      // Note: ticket.current_user_id would be ideal but we check on server too.
-      // For now, mark all unread from others as read when drawer is open.
+      // Check if there are any unread messages from others
+      // Since we don't have the current user ID easily available here, we'll mark all unread as read.
+      // The markMessagesAsRead function on the server already filters by neq('sender_user_id', userId).
       markAsReadMutation.mutate();
     }
   }, [open, ticket?.id, messages.length]);
+
 
 
   const { data: relatedArticles = [] } = useQuery({
