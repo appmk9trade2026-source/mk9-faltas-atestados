@@ -6,7 +6,8 @@ import {
   iniciarProcessamentoAdm, 
   iniciarProcessamentoGrupoAdm,
   concluirProcessamentoAdm, 
-  reatribuirProcessamentoAdm 
+  reatribuirProcessamentoAdm,
+  getCentralProcessamentoFila
 } from "@/lib/ausencias.functions";
 import { resolveAusenciaIdentidade } from "@/lib/ausencia-identidade";
 import { supabase } from "@/integrations/supabase/client";
