@@ -7274,6 +7274,7 @@ export type Database = {
         | "COORDENADOR_DESVINCULADO"
         | "AUSENCIA_RETIFICADA"
         | "AUSENCIA_DUPLICIDADE_BLOQUEADA"
+        | "PROCESSAMENTO_REATRIBUIDO"
       ausencia_motivo_exclusao_categoria_v2:
         | "DATA_PERIODO_INCORRETO"
         | "DUPLICIDADE"
@@ -7799,6 +7800,7 @@ export const Constants = {
         "COORDENADOR_DESVINCULADO",
         "AUSENCIA_RETIFICADA",
         "AUSENCIA_DUPLICIDADE_BLOQUEADA",
+        "PROCESSAMENTO_REATRIBUIDO",
       ],
       ausencia_motivo_exclusao_categoria_v2: [
         "DATA_PERIODO_INCORRETO",
