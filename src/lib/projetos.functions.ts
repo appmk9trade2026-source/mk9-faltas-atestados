@@ -162,12 +162,14 @@ export const createProjeto = createServerFn({ method: "POST" })
       });
        // console.error(`[AUDIT_FORENSIC] STEP D: requirePermission PASS [corr=${gate.correlationId}]`);
     } catch (e: any) {
-       // console.error(`[AUDIT_FORENSIC] STEP D: requirePermission FAIL`, {
+      /*
+      console.error(`[AUDIT_FORENSIC] STEP D: requirePermission FAIL`, {
         code: e.message?.split(":")[0],
         message: e.message,
         hint: e.hint,
         correlationId
       });
+      */
       throw e;
     }
 
