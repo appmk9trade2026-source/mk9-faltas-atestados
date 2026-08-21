@@ -7,6 +7,27 @@ import { getRelatedArticles, createArticleFromTicket } from "./knowledge.functio
 
 export { getRelatedArticles, createArticleFromTicket };
 
+export const markMessagesAsRead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({
+    ticketId: z.string().uuid()
+  }).parse(data))
+  .handler(async ({ data, context }) => {
+    const userId = context.userId;
+    const db = context.supabase;
+
+    const { error } = await db
+      .from('support_messages')
+      .update({ read_at: new Date().toISOString() })
+      .eq('ticket_id', data.ticketId)
+      .neq('sender_user_id', userId)
+      .is('read_at', null);
+
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+
 
 // Tipos baseados no banco
 export type SupportPriority = Database['public']['Enums']['support_priority'];
