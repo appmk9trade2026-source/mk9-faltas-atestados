@@ -4485,6 +4485,7 @@ export type Database = {
           id: string
           message: string
           message_type: Database["public"]["Enums"]["support_message_type"]
+          read_at: string | null
           sender_user_id: string | null
           ticket_id: string
         }
@@ -4494,6 +4495,7 @@ export type Database = {
           id?: string
           message: string
           message_type?: Database["public"]["Enums"]["support_message_type"]
+          read_at?: string | null
           sender_user_id?: string | null
           ticket_id: string
         }
@@ -4503,6 +4505,7 @@ export type Database = {
           id?: string
           message?: string
           message_type?: Database["public"]["Enums"]["support_message_type"]
+          read_at?: string | null
           sender_user_id?: string | null
           ticket_id?: string
         }

@@ -7,6 +7,27 @@ import { getRelatedArticles, createArticleFromTicket } from "./knowledge.functio
 
 export { getRelatedArticles, createArticleFromTicket };
 
+export const markMessagesAsRead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({
+    ticketId: z.string().uuid()
+  }).parse(data))
+  .handler(async ({ data, context }) => {
+    const userId = context.userId;
+    const db = context.supabase;
+
+    const { error } = await db
+      .from('support_messages')
+      .update({ read_at: new Date().toISOString() })
+      .eq('ticket_id', data.ticketId)
+      .neq('sender_user_id', userId)
+      .is('read_at', null);
+
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
+
 
 // Tipos baseados no banco
 export type SupportPriority = Database['public']['Enums']['support_priority'];
@@ -430,18 +451,43 @@ export const getAgentMetrics = createServerFn({ method: "GET" })
   });
 
 export const getUnreadSupportCount = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return 0;
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const userId = context.userId;
+    const db = context.supabase;
 
-    const { count, error } = await supabase
+    // First, find all tickets where the user is either the requester or the assigned agent
+    const { data: tickets, error: ticketError } = await db
       .from('support_tickets')
-      .select('*', { count: 'exact', head: true })
-      .eq('requester_user_id', user.id)
-      .in('status', ['ABERTO', 'EM_ATENDIMENTO', 'AGUARDANDO_USUARIO']);
+      .select('id')
+      .or(`requester_user_id.eq.${userId},assigned_user_id.eq.${userId}`);
 
-    if (error) return 0;
+    if (ticketError) {
+      console.error("Error fetching tickets for unread count:", ticketError);
+      return 0;
+    }
+
+    if (!tickets || tickets.length === 0) return 0;
+
+    const ticketIds = tickets.map(t => t.id);
+
+    // Count unread messages in those tickets that were NOT sent by the current user
+    const { count, error } = await db
+      .from('support_messages')
+      .select('id', { count: 'exact', head: true })
+      .is('read_at', null)
+      .neq('sender_user_id', userId)
+      .in('ticket_id', ticketIds);
+
+    if (error) {
+      console.error("Error fetching unread messages count:", error);
+      return 0;
+    }
+
     return count || 0;
   });
+
+
+
 
 

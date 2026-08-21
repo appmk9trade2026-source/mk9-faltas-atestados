@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -24,7 +24,8 @@ import {
   Activity
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getTicketMessages, getRelatedArticles, createArticleFromTicket, getCategoryLabel, sendMessage } from "@/lib/support.functions";
+import { getTicketMessages, getRelatedArticles, createArticleFromTicket, getCategoryLabel, sendMessage, markMessagesAsRead } from "@/lib/support.functions";
+
 import { summarizeTicket, suggestDiagnosis, suggestReply } from "@/lib/ai-copilot.functions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -51,6 +52,24 @@ export function TicketDetailsDrawer({ open, onOpenChange, ticket }: TicketDetail
     queryFn: () => getTicketMessages({ data: { ticketId: ticket.id } }),
     enabled: !!ticket?.id && open,
   });
+
+  const markAsReadMutation = useMutation({
+    mutationFn: () => markMessagesAsRead({ data: { ticketId: ticket.id } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["support-unread-count"] });
+    },
+  });
+
+  useEffect(() => {
+    if (open && ticket?.id && messages.length > 0) {
+      // Check if there are any unread messages from others
+      // Since we don't have the current user ID easily available here, we'll mark all unread as read.
+      // The markMessagesAsRead function on the server already filters by neq('sender_user_id', userId).
+      markAsReadMutation.mutate();
+    }
+  }, [open, ticket?.id, messages.length]);
+
+
 
   const { data: relatedArticles = [] } = useQuery({
     queryKey: ['related-kb-articles', ticket?.category, ticket?.source_route, ticket?.safe_code],
