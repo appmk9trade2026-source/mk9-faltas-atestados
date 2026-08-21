@@ -75,19 +75,63 @@ export const Route = createFileRoute("/_authenticated/processamento")({
   component: CentralProcessamentoPage,
 });
 
-function KpiCard({ title, value, icon: Icon, color }: any) {
-  return (
-    <Card className="border-none shadow-sm bg-card/50">
-      <CardContent className="p-4 flex items-center justify-between">
-        <div className="min-w-0">
-          <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider truncate">{title}</p>
-          <h3 className="text-xl font-black">{value}</h3>
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+function KpiCard({ title, value, icon: Icon, color, onClick, active, tooltip }: any) {
+  const content = (
+    <Card 
+      className={cn(
+        "border-2 shadow-sm transition-all cursor-pointer select-none relative overflow-hidden group",
+        active ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-transparent bg-card/50 hover:border-primary/30 hover:bg-card/80",
+        "h-full"
+      )}
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      aria-pressed={active}
+      aria-label={`${title}: ${value}`}
+    >
+      <CardContent className="p-4 flex items-center justify-between h-full">
+        <div className="min-w-0 flex-1">
+          <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider truncate group-hover:text-primary transition-colors">
+            {title}
+          </p>
+          <h3 className={cn("text-xl font-black transition-all", active ? "text-primary scale-110 origin-left" : "")}>
+            {value}
+          </h3>
         </div>
-        <div className={cn("p-2 rounded-lg shrink-0", color)}>
+        <div className={cn(
+          "p-2 rounded-lg shrink-0 transition-all group-hover:scale-110", 
+          active ? "bg-primary text-white shadow-md" : color
+        )}>
           <Icon className="h-4 w-4" />
         </div>
       </CardContent>
+      {active && (
+        <div className="absolute bottom-0 left-0 w-full h-1 bg-primary animate-in slide-in-from-left duration-300" />
+      )}
     </Card>
+  );
+
+  if (!tooltip) return content;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {content}
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-[200px] text-center font-medium">
+          {tooltip}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
