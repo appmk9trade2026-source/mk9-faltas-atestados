@@ -435,13 +435,23 @@ export const getUnreadSupportCount = createServerFn({ method: "GET" })
     const userId = context.userId;
     const db = context.supabase;
 
+    // Supabase JS doesn't support easy innerJoin for counts with filters on joined table
+    // We fetch the ticket IDs the user is involved in first, then count unread messages
+    const { data: tickets, error: ticketError } = await db
+      .from('support_tickets')
+      .select('id')
+      .or(`requester_user_id.eq.${userId},assigned_user_id.eq.${userId}`);
+
+    if (ticketError || !tickets || tickets.length === 0) return 0;
+
+    const ticketIds = tickets.map(t => t.id);
+
     const { count, error } = await db
       .from('support_messages')
       .select('id', { count: 'exact', head: true })
       .is('read_at', null)
       .neq('sender_user_id', userId)
-      .innerJoin('support_tickets', 'support_messages.ticket_id', 'support_tickets.id')
-      .or(`requester_user_id.eq.${userId},assigned_user_id.eq.${userId}`);
+      .in('ticket_id', ticketIds);
 
     if (error) {
       console.error("Error fetching unread count:", error);
@@ -449,6 +459,7 @@ export const getUnreadSupportCount = createServerFn({ method: "GET" })
     }
     return count || 0;
   });
+
 
 
 
