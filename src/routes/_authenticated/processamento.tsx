@@ -271,7 +271,7 @@ function CentralProcessamentoPage() {
       mapa.get(chave)!.push(item);
     }
     return Array.from(mapa.values());
-  }, [ausenciasQ.data, search, tabAtiva, user?.id]);
+  }, [ausenciasQ.data, search, tabAtiva, user?.id, filterKpi]);
 
   const iniciarMut = useMutation({
     mutationFn: (id: string) => iniciarFn({ data: { ausencia_id: id } }),
