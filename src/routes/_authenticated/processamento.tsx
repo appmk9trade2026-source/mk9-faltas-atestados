@@ -538,21 +538,31 @@ function CentralProcessamentoPage() {
 
         <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl w-fit border border-dashed">
           <Button 
-            variant={tabAtiva === "AGUARDANDO" ? "default" : "ghost"}
+            variant={tabAtiva === "AGUARDANDO" && !filterKpi ? "default" : "ghost"}
             size="sm"
-            className={cn("font-black text-[10px] uppercase h-8 px-4", tabAtiva === "AGUARDANDO" ? "shadow-md" : "opacity-60")}
-            onClick={() => setTabAtiva("AGUARDANDO")}
+            className={cn("font-black text-[10px] uppercase h-8 px-4", tabAtiva === "AGUARDANDO" && !filterKpi ? "shadow-md" : "opacity-60")}
+            onClick={() => { setTabAtiva("AGUARDANDO"); setFilterKpi(null); }}
           >
             Fila Geral ({kpisQ.data?.backlog ?? "0"})
           </Button>
           <Button 
-            variant={tabAtiva === "MINHA_FILA" ? "default" : "ghost"}
+            variant={(tabAtiva === "MINHA_FILA" || filterKpi === "MINHA_FILA") ? "default" : "ghost"}
             size="sm"
-            className={cn("font-black text-[10px] uppercase h-8 px-4", tabAtiva === "MINHA_FILA" ? "shadow-md text-white bg-blue-600 hover:bg-blue-700" : "opacity-60")}
-            onClick={() => setTabAtiva("MINHA_FILA")}
+            className={cn("font-black text-[10px] uppercase h-8 px-4", (tabAtiva === "MINHA_FILA" || filterKpi === "MINHA_FILA") ? "shadow-md text-white bg-blue-600 hover:bg-blue-700" : "opacity-60")}
+            onClick={() => { setTabAtiva("MINHA_FILA"); setFilterKpi(null); }}
           >
             Minha Fila ({(ausenciasQ.data || []).filter(a => a.responsavel_processamento_id === user?.id && a.status_processamento === "EM_PROCESSAMENTO").length})
           </Button>
+          {filterKpi && filterKpi !== "MINHA_FILA" && (
+            <Button 
+              variant="default"
+              size="sm"
+              className="font-black text-[10px] uppercase h-8 px-4 shadow-md bg-amber-500 hover:bg-amber-600 text-white"
+              onClick={() => setFilterKpi(null)}
+            >
+              Filtro Ativo: {filterKpi.replace('_', ' ')} (Limpar)
+            </Button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
