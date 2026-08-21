@@ -4,192 +4,148 @@ export const Route = createFileRoute('/')({
   component: () => (
     <div className="p-8 font-mono text-sm leading-relaxed whitespace-pre-wrap max-w-4xl mx-auto bg-card border rounded-lg shadow-sm">
       CRM MK9 — INCIDENTE P1
-      RETIFICAÇÃO DE AUSÊNCIAS / ATESTADOS
-      PARTE 1 — DIAGNÓSTICO FORENSE REAL
+      RETIFICACAO_OPERACIONAL_REOPENED
+      PARTE 1B — IDENTIFICAR O PRIMEIRO STAGE QUE FALHA
 
       CONTEXTO
 
-      Usuários continuam sem conseguir concluir retificações de:
+      Já foi confirmado:
 
-      - faltas;
-      - atestados;
-      - meio período;
-      - outros tipos de ausência.
+      RPC retificar_ausencia:
+      EXECUTE = PASS
 
-      Esse problema já havia sido tratado anteriormente, porém o erro continua
-      ocorrendo no ambiente operacional.
+      SECURITY DEFINER:
+      SIM
 
-      Portanto:
+      ausencia_retificacoes:
+      SCHEMA INTEGRO
 
-      RETIFICACAO = FAIL
-      PRODUCTION_RETEST = FAIL
-      INCIDENT_STATUS = REOPENED
+      AUTH DRIFT:
+      NÃO IDENTIFICADO
+
+      Esses resultados NÃO encerram o diagnóstico.
+
+      Ainda precisamos descobrir exatamente onde a operação real falha.
 
       OBJETIVO DESTA PARTE
 
-      Descobrir EXATAMENTE onde a retificação está falhando hoje.
+      Executar uma retificação controlada no ambiente operacional e identificar
+      o PRIMEIRO STAGE que falha.
 
-      NÃO corrigir nada nesta etapa.
-
-      NÃO alterar UI.
-      NÃO alterar RPC.
-      NÃO alterar schema.
-      NÃO criar migration.
-      NÃO alterar RLS/RBAC.
-
-      Somente diagnosticar.
+      NÃO corrigir nada.
 
       ==================================================
-      1 — REPRODUZIR UMA RETIFICAÇÃO REAL
+      1 — REPRODUZIR A FALHA REAL
       ==================================================
 
-      No ambiente publicado:
+      Executar UMA retificação controlada de registro elegível.
 
-      abrir um registro elegível para retificação.
-
-      Executar uma retificação controlada.
+      Preferir cenário que já apresentou erro anteriormente.
 
       Capturar:
 
-      protocolo original;
-      ausencia_id;
-      tipo atual;
-      novo tipo;
-      período;
-      horários quando aplicável;
-      documento quando aplicável;
-      motivo;
-      justificativa.
+      ausencia_id
+      protocolo original
+      tipo atual
+      novo tipo
+      período
+      horario_inicio/horario_fim quando aplicável
+      documento quando aplicável
 
-      Não utilizar dados pessoais desnecessários no relatório.
+      Não expor PII no relatório.
 
       ==================================================
-      2 — CAPTURAR O PRIMEIRO ERRO REAL
+      2 — STAGES OBRIGATÓRIOS
       ==================================================
 
-      Não usar somente o toast amigável como diagnóstico.
+      Rastrear sequencialmente:
 
-      Capturar ANTES da sanitização/mapSupabaseError:
+      STAGE A:
+      UI submit
 
-      raw error code
-      raw error message
-      raw details
-      raw hint
-      HTTP status se aplicável
-      stage da falha
+      STAGE B:
+      upload/documento
 
-      Sanitizar PII e secrets.
+      STAGE C:
+      Zod/schema
+
+      STAGE D:
+      server function
+
+      STAGE E:
+      auth/RBAC
+
+      STAGE F:
+      chamada RPC
+
+      STAGE G:
+      INSERT em ausencia_retificacoes
+
+      STAGE H:
+      UPDATE em ausencias
+
+      STAGE I:
+      audit event
+
+      STAGE J:
+      response handler/frontend
+
+      Registrar:
+
+      PASS / FAIL / NOT_REACHED
+
+      para cada stage.
 
       ==================================================
-      3 — MAPEAR FLUXO PONTA A PONTA
+      3 — CAPTURAR ERRO BRUTO
       ==================================================
 
-      Rastrear o fluxo real:
+      Antes de sanitização/toast:
 
-      RetificarAusenciaDialog / UI
-      → submit handler
-      → upload de documento, se houver
-      → server function
-      → Zod/schema
-      → requireSupabaseAuth
-      → RBAC/RLS
-      → RPC retificar_ausencia
-      → INSERT no histórico
-      → UPDATE da ausência
-      → audit event
-      → resposta ao frontend
+      RAW_ERROR_CODE:
+      [...]
 
-      Identificar o PRIMEIRO stage que falha.
+      RAW_ERROR_MESSAGE_SAFE:
+      [...]
+
+      RAW_ERROR_DETAILS:
+      [...]
+
+      RAW_ERROR_HINT:
+      [...]
+
+      HTTP_STATUS:
+      [...]
+
+      Não retornar somente a mensagem amigável da UI.
 
       ==================================================
-      4 — VERIFICAR CONTRATO DE HORÁRIOS
+      4 — COMPARAR PAYLOAD COM RPC
       ==================================================
 
-      Para retificações de:
+      Comparar parâmetros efetivamente enviados pela server function com a assinatura
+      REAL instalada da RPC.
 
-      MEIO PERÍODO (HORAS)
+      Gerar:
 
-      confirmar se os campos:
+      PARAMETER | SERVER VALUE | RPC EXPECTED | MATCH
 
+      Validar pelo menos:
+
+      ausencia_id
+      novo_tipo
+      periodo
+      data_inicio
+      data_fim
       horario_inicio
       horario_fim
-
-      estão presentes e alinhados em:
-
-      UI
-      schema Zod
-      server function
-      RPC
-      tabela ausencia_retificacoes
-      tabela ausencias
-
-      Reportar divergências.
-
-      Não corrigir.
-
-      ==================================================
-      5 — VERIFICAR DOCUMENTO / STORAGE
-      ==================================================
-
-      Quando o novo tipo exigir documento:
-
-      confirmar:
-
-      upload iniciou?
-      upload concluiu?
-      storage path gerado?
-      bucket privado?
-      RPC recebe o path esperado?
-      schema aceita path relativo?
-      há URL absoluta sendo exigida indevidamente?
+      documento/storage_path
+      motivo
+      justificativa
+      actor/user id
+      correlation_id, se aplicável
 
       Reportar:
-
-      UPLOAD:
-      PASS/FAIL/NOT_APPLICABLE
-
-      STORAGE:
-      PASS/FAIL/NOT_APPLICABLE
-
-      ==================================================
-      6 — VERIFICAR AUTH DRIFT
-      ==================================================
-
-      Inspecionar a server function de retificação.
-
-      Confirmar se usa padrão canônico:
-
-      requireSupabaseAuth
-      context.userId
-      context.supabase
-
-      Verificar se existe anti-pattern:
-
-      supabase.auth.getUser()
-
-      via cliente frontend dentro de Server Function.
-
-      Reportar:
-
-      AUTH_DRIFT:
-      SIM/NÃO
-
-      ==================================================
-      7 — VERIFICAR RPC REAL NO BANCO
-      ==================================================
-
-      Consultar a assinatura REAL instalada de:
-
-      public.retificar_ausencia
-
-      ou nome canônico atual.
-
-      Comparar com os parâmetros enviados pela server function.
-
-      Reportar:
-
-      RPC_SIGNATURE:
-      [...]
 
       SERVER_PAYLOAD_MATCH:
       PASS/FAIL
@@ -201,50 +157,18 @@ export const Route = createFileRoute('/')({
       [...]
 
       ==================================================
-      8 — VERIFICAR HISTÓRICO
+      5 — TESTAR GRANTS DAS TABELAS
       ==================================================
 
-      Inspecionar:
+      Além do EXECUTE da RPC, validar privilégios efetivos necessários nas tabelas.
 
-      public.ausencia_retificacoes
+      Verificar:
 
-      Confirmar se existem todas as colunas necessárias hoje.
-
-      Especialmente:
-
-      tipo anterior/novo
-      período anterior/novo
-      horario_inicio
-      horario_fim
-      documento/path
-      motivo
-      justificativa
-      actor
-      created_at
+      INSERT em ausencia_retificacoes
+      UPDATE em ausencias
+      INSERT em tabela de auditoria correspondente
 
       Reportar:
-
-      HISTORY_SCHEMA_MATCH:
-      PASS/FAIL
-
-      ==================================================
-      9 — VERIFICAR GRANTS + RLS
-      ==================================================
-
-      Como tivemos outros incidentes de privilégios no banco, validar também:
-
-      EXECUTE na RPC
-      SELECT/INSERT/UPDATE necessários
-      RLS da ausência
-      RLS do histórico
-      GRANTs das tabelas envolvidas
-
-      Não alterar.
-
-      Reportar:
-
-      RPC_EXECUTE:
-      PASS/FAIL
 
       HISTORY_INSERT_GRANT:
       PASS/FAIL
@@ -252,14 +176,38 @@ export const Route = createFileRoute('/')({
       AUSENCIA_UPDATE_GRANT:
       PASS/FAIL
 
+      AUDIT_INSERT_GRANT:
+      PASS/FAIL
+
+      Não alterar grants.
+
+      ==================================================
+      6 — VALIDAR RLS
+      ==================================================
+
+      Confirmar se as operações chegam às policies RLS.
+
+      Reportar:
+
+      HISTORY_RLS_REACHED:
+      SIM/NÃO
+
+      AUSENCIA_RLS_REACHED:
+      SIM/NÃO
+
+      AUDIT_RLS_REACHED:
+      SIM/NÃO
+
       RLS_BLOCKING:
       SIM/NÃO/INCONCLUSIVO
 
       ==================================================
-      10 — VERIFICAR PERSISTÊNCIA PARCIAL
+      7 — PERSISTÊNCIA PARCIAL
       ==================================================
 
-      Após a tentativa que falha:
+      Após a tentativa que apresenta erro ao usuário, consultar a fonte de verdade.
+
+      Confirmar:
 
       AUSENCIA_UPDATED:
       SIM/NÃO
@@ -271,65 +219,121 @@ export const Route = createFileRoute('/')({
       SIM/NÃO
 
       DOCUMENT_UPLOADED:
-      SIM/NÃO
+      SIM/NÃO/NOT_APPLICABLE
 
       ORPHAN_STORAGE:
+      SIM/NÃO/NOT_APPLICABLE
+
+      É obrigatório descobrir se existe:
+
+      erro visual após commit
+
+      ou
+
+      falha real antes da persistência.
+
+      ==================================================
+      8 — MEIO PERÍODO
+      ==================================================
+
+      Se o teste utilizar MEIO PERÍODO (HORAS):
+
+      confirmar especificamente:
+
+      horario_inicio chega à RPC:
       SIM/NÃO
 
-      Importante:
+      horario_fim chega à RPC:
+      SIM/NÃO
 
-      não permitir que erro visual esconda commit parcial.
+      campos persistem no histórico:
+      SIM/NÃO
 
-      ==================================================
-      11 — CLASSIFICAR CAUSA
-      ==================================================
-
-      Classificar somente com evidência:
-
-      UI_PAYLOAD
-      ZOD_CONTRACT
-      AUTH_DRIFT
-      RPC_SIGNATURE
-      DATABASE_GRANT
-      RLS
-      HISTORY_SCHEMA
-      STORAGE_CONTRACT
-      AUDIT_FAILURE
-      PARTIAL_COMMIT
-      OTHER
-      INCONCLUSIVE
+      campos persistem na ausência:
+      SIM/NÃO
 
       ==================================================
-      GUARDRAILS
+      9 — RESPONSE HANDLER
+      ==================================================
+
+      Se todos os stages de banco passarem:
+
+      inspecionar a resposta retornada ao frontend.
+
+      Confirmar:
+
+      Content-Type
+      JSON válido
+      HTML inesperado
+      status HTTP
+      parsing
+      retry
+      double-submit
+
+      Reportar:
+
+      BACKEND_COMMIT:
+      PASS/FAIL
+
+      FRONTEND_RECOGNIZED_SUCCESS:
+      SIM/NÃO
+
+      ==================================================
+      10 — NÃO CORRIGIR
       ==================================================
 
       NÃO alterar:
 
+      RPC
+      schemas
+      RLS
+      grants
+      UI
+      storage
+      server functions
       src/routes/index.tsx
-      Nova Ausência
-      Ocorrência de Ponto
-      Processamento Interno
-      Central de Suporte
-      RBAC/RLS
-      Kill Switch
-      AI_KILL_SWITCH
 
-      NÃO escrever relatório técnico na Home.
-
-      NÃO implementar correção nesta execução.
+      Nenhuma migration nesta etapa.
 
       ==================================================
-      RELATÓRIO FINAL
+      RELATÓRIO FINAL OBRIGATÓRIO
       ==================================================
 
       INCIDENT:
       RETIFICACAO_OPERACIONAL_REOPENED
 
-      ENVIRONMENT:
-      PRODUCTION
-
       REPRODUCED:
       SIM/NÃO
+
+      STAGE_A_UI:
+      PASS/FAIL
+
+      STAGE_B_UPLOAD:
+      PASS/FAIL/NOT_APPLICABLE
+
+      STAGE_C_ZOD:
+      PASS/FAIL
+
+      STAGE_D_SERVER_FUNCTION:
+      PASS/FAIL
+
+      STAGE_E_AUTH_RBAC:
+      PASS/FAIL
+
+      STAGE_F_RPC:
+      PASS/FAIL
+
+      STAGE_G_HISTORY_INSERT:
+      PASS/FAIL/NOT_REACHED
+
+      STAGE_H_AUSENCIA_UPDATE:
+      PASS/FAIL/NOT_REACHED
+
+      STAGE_I_AUDIT:
+      PASS/FAIL/NOT_REACHED
+
+      STAGE_J_FRONTEND_RESPONSE:
+      PASS/FAIL/NOT_REACHED
 
       FIRST_FAILED_STAGE:
       [...]
@@ -337,28 +341,10 @@ export const Route = createFileRoute('/')({
       RAW_ERROR_CODE:
       [...]
 
-      RAW_ERROR_SOURCE:
-      [...]
-
       RAW_ERROR_MESSAGE_SAFE:
       [...]
 
-      AUTH_DRIFT:
-      SIM/NÃO
-
-      ZOD_CONTRACT:
-      PASS/FAIL
-
-      RPC_SIGNATURE:
-      [...]
-
       SERVER_PAYLOAD_MATCH:
-      PASS/FAIL
-
-      HISTORY_SCHEMA_MATCH:
-      PASS/FAIL
-
-      RPC_EXECUTE:
       PASS/FAIL
 
       HISTORY_INSERT_GRANT:
@@ -367,14 +353,11 @@ export const Route = createFileRoute('/')({
       AUSENCIA_UPDATE_GRANT:
       PASS/FAIL
 
+      AUDIT_INSERT_GRANT:
+      PASS/FAIL
+
       RLS_BLOCKING:
       SIM/NÃO/INCONCLUSIVO
-
-      UPLOAD:
-      PASS/FAIL/NOT_APPLICABLE
-
-      STORAGE:
-      PASS/FAIL/NOT_APPLICABLE
 
       AUSENCIA_UPDATED:
       SIM/NÃO
@@ -385,7 +368,10 @@ export const Route = createFileRoute('/')({
       AUDIT_EVENT_CREATED:
       SIM/NÃO
 
-      ORPHAN_DATA:
+      BACKEND_COMMIT:
+      PASS/FAIL
+
+      FRONTEND_RECOGNIZED_SUCCESS:
       SIM/NÃO
 
       ROOT_CAUSE_CLASSIFICATION:
@@ -397,8 +383,8 @@ export const Route = createFileRoute('/')({
       ROOT_CAUSE_PROVEN:
       SIM/NÃO
 
-      RECOMMENDED_MINIMAL_FIX:
-      [...]
+      READY_FOR_SURGICAL_FIX:
+      SIM/NÃO
 
       HOME_GUARDRAIL:
       PASS/FAIL
@@ -411,5 +397,6 @@ export const Route = createFileRoute('/')({
     </div>
   ),
 });
+
 
 
