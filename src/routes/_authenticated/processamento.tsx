@@ -177,7 +177,6 @@ function CentralProcessamentoPage() {
             )
           )
         `)
-        .neq("status_processamento", "PROCESSADO")
         .order("registrado_em", { ascending: true });
       
       if (error) throw error;
