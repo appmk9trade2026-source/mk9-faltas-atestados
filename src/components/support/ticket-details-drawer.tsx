@@ -24,7 +24,8 @@ import {
   Activity
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getTicketMessages, getRelatedArticles, createArticleFromTicket, getCategoryLabel, sendMessage } from "@/lib/support.functions";
+import { getTicketMessages, getRelatedArticles, createArticleFromTicket, getCategoryLabel, sendMessage, markMessagesAsRead } from "@/lib/support.functions";
+
 import { summarizeTicket, suggestDiagnosis, suggestReply } from "@/lib/ai-copilot.functions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
