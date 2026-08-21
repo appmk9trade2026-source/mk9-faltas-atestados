@@ -197,13 +197,15 @@ export const createProjeto = createServerFn({ method: "POST" })
       .single();
 
     if (error) {
-       // console.error(`[AUDIT_FORENSIC] STEP F: project INSERT FAIL`, {
+      /*
+      console.error(`[AUDIT_FORENSIC] STEP F: project INSERT FAIL`, {
         code: error.code,
         message: error.message,
         details: error.details,
         hint: error.hint,
         correlationId
       });
+      */
       throw mapSupabaseError(error.message);
     }
      // console.error(`[AUDIT_FORENSIC] STEP F: project INSERT PASS [id=${row.id}]`);
