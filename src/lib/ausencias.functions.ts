@@ -592,9 +592,13 @@ export const createAusencia = createServerFn({ method: "POST" })
         } as never,
       );
       if (error) {
-        // As mensagens de hardening ("Já está vinculado a outro projeto/supervisor") 
-        // são capturadas aqui pela RPC e formatadas pelo ausenciaDbError.
+        console.error(`[P2A-RPC-ERROR] RPC registrar_ausencia_com_colaborador_manual falhou. Correlation: ${gate.correlationId}`, error);
         throw ausenciaDbError(error, "rpc_manual", gate.correlationId);
+      }
+
+      if (!res) {
+        console.error(`[P2A-RPC-ERROR] RPC retornou vazio. Correlation: ${gate.correlationId}`);
+        throw new Error("RPC_EMPTY_RESPONSE: O servidor não retornou dados após o registro.");
       }
 
 
