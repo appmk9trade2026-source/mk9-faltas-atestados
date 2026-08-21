@@ -238,11 +238,25 @@ function CentralProcessamentoPage() {
       
       if (!matchSearch) return false;
 
-      // Filtro de Aba
+      // Se existir filtro por KPI, ele manda no comportamento inicial da listagem
+      if (filterKpi) {
+        if (filterKpi === "MINHA_FILA") return a.responsavel_processamento_id === user?.id && a.status_processamento === "EM_PROCESSAMENTO";
+        if (filterKpi === "AGUARDANDO") return a.status_processamento === "AGUARDANDO";
+        if (filterKpi === "EM_PROCESSAMENTO") return a.status_processamento === "EM_PROCESSAMENTO";
+        if (filterKpi === "CONCLUIDOS_HOJE") {
+          if (!a.processamento_concluido_em) return false;
+          const hoje = format(new Date(), "yyyy-MM-dd");
+          const dataConclusao = format(new Date(a.processamento_concluido_em), "yyyy-MM-dd");
+          return dataConclusao === hoje;
+        }
+        if (filterKpi === "FORA_SLA") return a.status_processamento !== "PROCESSADO" && a.sla_status === "FORA";
+        if (filterKpi === "COLABORADORES") return a.status_processamento !== "PROCESSADO";
+      }
+
+      // Fallback para filtros de aba padrão se nenhum KPI estiver selecionado
       if (tabAtiva === "MINHA_FILA") {
         return a.responsavel_processamento_id === user?.id && a.status_processamento === "EM_PROCESSAMENTO";
       } else {
-        // Aba "AGUARDANDO": Mostrar apenas o que ninguém assumiu ainda
         return a.status_processamento === "AGUARDANDO";
       }
     });
