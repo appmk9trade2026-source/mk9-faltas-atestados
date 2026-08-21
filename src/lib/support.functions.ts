@@ -430,18 +430,25 @@ export const getAgentMetrics = createServerFn({ method: "GET" })
   });
 
 export const getUnreadSupportCount = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return 0;
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const userId = context.userId;
+    const db = context.supabase;
 
-    const { count, error } = await supabase
-      .from('support_tickets')
-      .select('*', { count: 'exact', head: true })
-      .eq('requester_user_id', user.id)
-      .in('status', ['ABERTO', 'EM_ATENDIMENTO', 'AGUARDANDO_USUARIO']);
+    const { count, error } = await db
+      .from('support_messages')
+      .select('id', { count: 'exact', head: true })
+      .is('read_at', null)
+      .neq('sender_user_id', userId)
+      .innerJoin('support_tickets', 'support_messages.ticket_id', 'support_tickets.id')
+      .or(`requester_user_id.eq.${userId},assigned_user_id.eq.${userId}`);
 
-    if (error) return 0;
+    if (error) {
+      console.error("Error fetching unread count:", error);
+      return 0;
+    }
     return count || 0;
   });
+
 
 
