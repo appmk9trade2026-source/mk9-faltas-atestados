@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -52,6 +52,23 @@ export function TicketDetailsDrawer({ open, onOpenChange, ticket }: TicketDetail
     queryFn: () => getTicketMessages({ data: { ticketId: ticket.id } }),
     enabled: !!ticket?.id && open,
   });
+
+  const markAsReadMutation = useMutation({
+    mutationFn: () => markMessagesAsRead({ data: { ticketId: ticket.id } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["support-unread-count"] });
+    },
+  });
+
+  useEffect(() => {
+    if (open && ticket?.id && messages.length > 0) {
+      const hasUnread = messages.some((m: any) => !m.read_at && m.sender_user_id !== ticket.current_user_id);
+      // Note: ticket.current_user_id would be ideal but we check on server too.
+      // For now, mark all unread from others as read when drawer is open.
+      markAsReadMutation.mutate();
+    }
+  }, [open, ticket?.id, messages.length]);
+
 
   const { data: relatedArticles = [] } = useQuery({
     queryKey: ['related-kb-articles', ticket?.category, ticket?.source_route, ticket?.safe_code],

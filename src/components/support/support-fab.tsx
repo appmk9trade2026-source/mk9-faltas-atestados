@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { MessageSquare, Plus, FileText, History, HelpCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,15 +22,19 @@ import {
 } from "@/components/ui/tooltip";
 import { useSupport } from "./support-provider";
 import { useSession } from "@/hooks/use-session";
-import { useQuery } from "@tanstack/react-query";
-import { getUnreadSupportCount } from "@/lib/support.functions";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getUnreadSupportCount, markMessagesAsRead } from "@/lib/support.functions";
+import { supabase } from "@/integrations/supabase/client";
+
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 
 export function SupportFAB() {
   const { openSupport } = useSupport();
-  const { roles } = useSession();
+  const { roles, user } = useSession();
+  const queryClient = useQueryClient();
+
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -43,8 +47,32 @@ export function SupportFAB() {
     queryKey: ["support-unread-count"],
     queryFn: () => getUnreadSupportCount(),
     enabled: isAuthorized,
-    refetchInterval: 60000, // Atualiza a cada minuto
+    refetchInterval: 60000,
   });
+
+  useEffect(() => {
+    if (!isAuthorized || !user?.id) return;
+
+    const channel = supabase
+      .channel('support-unread-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'support_messages'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["support-unread-count"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAuthorized, user?.id, queryClient]);
+
 
   if (!isAuthorized) return null;
 
