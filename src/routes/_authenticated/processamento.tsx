@@ -144,6 +144,7 @@ function CentralProcessamentoPage() {
   const [detalhesAbertos, setDetalhesAbertos] = useState(false);
   const [registroSelecionado, setRegistroSelecionado] = useState<AusenciaCardData | null>(null);
   const [tabAtiva, setTabAtiva] = useState<"AGUARDANDO" | "MINHA_FILA">("AGUARDANDO");
+  const [filterKpi, setFilterKpi] = useState<string | null>(null);
 
   const getKpisFn = useServerFn(getCentralProcessamentoKpis);
   const iniciarFn = useServerFn(iniciarProcessamentoAdm);
