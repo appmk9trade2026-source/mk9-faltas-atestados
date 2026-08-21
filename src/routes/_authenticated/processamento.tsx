@@ -75,19 +75,63 @@ export const Route = createFileRoute("/_authenticated/processamento")({
   component: CentralProcessamentoPage,
 });
 
-function KpiCard({ title, value, icon: Icon, color }: any) {
-  return (
-    <Card className="border-none shadow-sm bg-card/50">
-      <CardContent className="p-4 flex items-center justify-between">
-        <div className="min-w-0">
-          <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider truncate">{title}</p>
-          <h3 className="text-xl font-black">{value}</h3>
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+function KpiCard({ title, value, icon: Icon, color, onClick, active, tooltip }: any) {
+  const content = (
+    <Card 
+      className={cn(
+        "border-2 shadow-sm transition-all cursor-pointer select-none relative overflow-hidden group",
+        active ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-transparent bg-card/50 hover:border-primary/30 hover:bg-card/80",
+        "h-full"
+      )}
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      aria-pressed={active}
+      aria-label={`${title}: ${value}`}
+    >
+      <CardContent className="p-4 flex items-center justify-between h-full">
+        <div className="min-w-0 flex-1">
+          <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider truncate group-hover:text-primary transition-colors">
+            {title}
+          </p>
+          <h3 className={cn("text-xl font-black transition-all", active ? "text-primary scale-110 origin-left" : "")}>
+            {value}
+          </h3>
         </div>
-        <div className={cn("p-2 rounded-lg shrink-0", color)}>
+        <div className={cn(
+          "p-2 rounded-lg shrink-0 transition-all group-hover:scale-110", 
+          active ? "bg-primary text-white shadow-md" : color
+        )}>
           <Icon className="h-4 w-4" />
         </div>
       </CardContent>
+      {active && (
+        <div className="absolute bottom-0 left-0 w-full h-1 bg-primary animate-in slide-in-from-left duration-300" />
+      )}
     </Card>
+  );
+
+  if (!tooltip) return content;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {content}
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="max-w-[200px] text-center font-medium">
+          {tooltip}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -100,6 +144,7 @@ function CentralProcessamentoPage() {
   const [detalhesAbertos, setDetalhesAbertos] = useState(false);
   const [registroSelecionado, setRegistroSelecionado] = useState<AusenciaCardData | null>(null);
   const [tabAtiva, setTabAtiva] = useState<"AGUARDANDO" | "MINHA_FILA">("AGUARDANDO");
+  const [filterKpi, setFilterKpi] = useState<string | null>(null);
 
   const getKpisFn = useServerFn(getCentralProcessamentoKpis);
   const iniciarFn = useServerFn(iniciarProcessamentoAdm);
@@ -132,7 +177,6 @@ function CentralProcessamentoPage() {
             )
           )
         `)
-        .neq("status_processamento", "PROCESSADO")
         .order("registrado_em", { ascending: true });
       
       if (error) throw error;
@@ -194,11 +238,25 @@ function CentralProcessamentoPage() {
       
       if (!matchSearch) return false;
 
-      // Filtro de Aba
+      // Se existir filtro por KPI, ele manda no comportamento inicial da listagem
+      if (filterKpi) {
+        if (filterKpi === "MINHA_FILA") return a.responsavel_processamento_id === user?.id && a.status_processamento === "EM_PROCESSAMENTO";
+        if (filterKpi === "AGUARDANDO") return a.status_processamento === "AGUARDANDO";
+        if (filterKpi === "EM_PROCESSAMENTO") return a.status_processamento === "EM_PROCESSAMENTO";
+        if (filterKpi === "CONCLUIDOS_HOJE") {
+          if (!a.processamento_concluido_em) return false;
+          const hoje = format(new Date(), "yyyy-MM-dd");
+          const dataConclusao = format(new Date(a.processamento_concluido_em), "yyyy-MM-dd");
+          return dataConclusao === hoje;
+        }
+        if (filterKpi === "FORA_SLA") return a.status_processamento !== "PROCESSADO" && a.sla_status === "FORA";
+        if (filterKpi === "COLABORADORES") return a.status_processamento !== "PROCESSADO";
+      }
+
+      // Fallback para filtros de aba padrão se nenhum KPI estiver selecionado
       if (tabAtiva === "MINHA_FILA") {
         return a.responsavel_processamento_id === user?.id && a.status_processamento === "EM_PROCESSAMENTO";
       } else {
-        // Aba "AGUARDANDO": Mostrar apenas o que ninguém assumiu ainda
         return a.status_processamento === "AGUARDANDO";
       }
     });
@@ -404,12 +462,60 @@ function CentralProcessamentoPage() {
     <AppShell title="Central de Processamento" breadcrumb={["Operações", "Central de Processamento"]} actions={<SupportHelpButton context={{ sourceModule: "Central de Processamento", suggestedCategory: "PROCESSAMENTO_INTERNO" }} />}>
       <div className="space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
-          <KpiCard title="Minha Fila" value={(ausenciasQ.data || []).filter(a => a.responsavel_processamento_id === user?.id && a.status_processamento === 'EM_PROCESSAMENTO').length} icon={User} color="bg-indigo-50 text-indigo-600" />
-          <KpiCard title="Colaboradores" value={agrupado.length} icon={Users} color="bg-violet-50 text-violet-600" />
-          <KpiCard title="Aguardando" value={kpisQ.data?.backlog ?? "0"} icon={History} color="bg-slate-50 text-slate-600" />
-          <KpiCard title="Em Processamento" value={kpisQ.data?.em_processamento ?? "0"} icon={TrendingUp} color="bg-blue-50 text-blue-600" />
-          <KpiCard title="Concluídos Hoje" value={kpisQ.data?.processados_hoje ?? "0"} icon={CheckCircle2} color="bg-emerald-50 text-emerald-600" />
-          <KpiCard title="Fora SLA" value={kpisQ.data?.fora_sla ?? "0"} icon={AlertTriangle} color="bg-red-50 text-red-600" />
+          <KpiCard 
+            title="Minha Fila" 
+            value={(ausenciasQ.data || []).filter(a => a.responsavel_processamento_id === user?.id && a.status_processamento === 'EM_PROCESSAMENTO').length} 
+            icon={User} 
+            color="bg-indigo-50 text-indigo-600" 
+            onClick={() => setFilterKpi(filterKpi === "MINHA_FILA" ? null : "MINHA_FILA")}
+            active={filterKpi === "MINHA_FILA"}
+            tooltip="Registros atualmente atribuídos a você."
+          />
+          <KpiCard 
+            title="Colaboradores" 
+            value={agrupado.length} 
+            icon={Users} 
+            color="bg-violet-50 text-violet-600" 
+            onClick={() => setFilterKpi(filterKpi === "COLABORADORES" ? null : "COLABORADORES")}
+            active={filterKpi === "COLABORADORES"}
+            tooltip="Colaboradores com registros na Central de Processamento."
+          />
+          <KpiCard 
+            title="Aguardando" 
+            value={kpisQ.data?.backlog ?? "0"} 
+            icon={History} 
+            color="bg-slate-50 text-slate-600" 
+            onClick={() => setFilterKpi(filterKpi === "AGUARDANDO" ? null : "AGUARDANDO")}
+            active={filterKpi === "AGUARDANDO"}
+            tooltip="Registros que ainda aguardam início do processamento."
+          />
+          <KpiCard 
+            title="Em Processamento" 
+            value={kpisQ.data?.em_processamento ?? "0"} 
+            icon={TrendingUp} 
+            color="bg-blue-50 text-blue-600" 
+            onClick={() => setFilterKpi(filterKpi === "EM_PROCESSAMENTO" ? null : "EM_PROCESSAMENTO")}
+            active={filterKpi === "EM_PROCESSAMENTO"}
+            tooltip="Registros já assumidos e atualmente em tratamento."
+          />
+          <KpiCard 
+            title="Concluídos Hoje" 
+            value={kpisQ.data?.processados_hoje ?? "0"} 
+            icon={CheckCircle2} 
+            color="bg-emerald-50 text-emerald-600" 
+            onClick={() => setFilterKpi(filterKpi === "CONCLUIDOS_HOJE" ? null : "CONCLUIDOS_HOJE")}
+            active={filterKpi === "CONCLUIDOS_HOJE"}
+            tooltip="Registros finalizados hoje."
+          />
+          <KpiCard 
+            title="Fora SLA" 
+            value={kpisQ.data?.fora_sla ?? "0"} 
+            icon={AlertTriangle} 
+            color="bg-red-50 text-red-600" 
+            onClick={() => setFilterKpi(filterKpi === "FORA_SLA" ? null : "FORA_SLA")}
+            active={filterKpi === "FORA_SLA"}
+            tooltip="Registros que ultrapassaram o prazo operacional previsto."
+          />
           <Button className="h-full bg-primary font-black shadow-lg hover:bg-primary/90 transition-all hover:scale-[1.02]" onClick={assumirProximo} disabled={iniciarMut.isPending}>
             <Zap className="h-4 w-4 mr-2 fill-current" /> ASSUMIR PRÓXIMO
           </Button>
@@ -432,21 +538,31 @@ function CentralProcessamentoPage() {
 
         <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl w-fit border border-dashed">
           <Button 
-            variant={tabAtiva === "AGUARDANDO" ? "default" : "ghost"}
+            variant={tabAtiva === "AGUARDANDO" && !filterKpi ? "default" : "ghost"}
             size="sm"
-            className={cn("font-black text-[10px] uppercase h-8 px-4", tabAtiva === "AGUARDANDO" ? "shadow-md" : "opacity-60")}
-            onClick={() => setTabAtiva("AGUARDANDO")}
+            className={cn("font-black text-[10px] uppercase h-8 px-4", tabAtiva === "AGUARDANDO" && !filterKpi ? "shadow-md" : "opacity-60")}
+            onClick={() => { setTabAtiva("AGUARDANDO"); setFilterKpi(null); }}
           >
             Fila Geral ({kpisQ.data?.backlog ?? "0"})
           </Button>
           <Button 
-            variant={tabAtiva === "MINHA_FILA" ? "default" : "ghost"}
+            variant={(tabAtiva === "MINHA_FILA" || filterKpi === "MINHA_FILA") ? "default" : "ghost"}
             size="sm"
-            className={cn("font-black text-[10px] uppercase h-8 px-4", tabAtiva === "MINHA_FILA" ? "shadow-md text-white bg-blue-600 hover:bg-blue-700" : "opacity-60")}
-            onClick={() => setTabAtiva("MINHA_FILA")}
+            className={cn("font-black text-[10px] uppercase h-8 px-4", (tabAtiva === "MINHA_FILA" || filterKpi === "MINHA_FILA") ? "shadow-md text-white bg-blue-600 hover:bg-blue-700" : "opacity-60")}
+            onClick={() => { setTabAtiva("MINHA_FILA"); setFilterKpi(null); }}
           >
             Minha Fila ({(ausenciasQ.data || []).filter(a => a.responsavel_processamento_id === user?.id && a.status_processamento === "EM_PROCESSAMENTO").length})
           </Button>
+          {filterKpi && filterKpi !== "MINHA_FILA" && (
+            <Button 
+              variant="default"
+              size="sm"
+              className="font-black text-[10px] uppercase h-8 px-4 shadow-md bg-amber-500 hover:bg-amber-600 text-white"
+              onClick={() => setFilterKpi(null)}
+            >
+              Filtro Ativo: {filterKpi === "CONCLUIDOS_HOJE" ? "CONCLUÍDOS HOJE" : filterKpi.replace('_', ' ')} (Limpar)
+            </Button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
