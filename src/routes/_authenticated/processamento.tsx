@@ -560,7 +560,7 @@ function CentralProcessamentoPage() {
               className="font-black text-[10px] uppercase h-8 px-4 shadow-md bg-amber-500 hover:bg-amber-600 text-white"
               onClick={() => setFilterKpi(null)}
             >
-              Filtro Ativo: {filterKpi.replace('_', ' ')} (Limpar)
+              Filtro Ativo: {filterKpi === "CONCLUIDOS_HOJE" ? "CONCLUÍDOS HOJE" : filterKpi.replace('_', ' ')} (Limpar)
             </Button>
           )}
         </div>
