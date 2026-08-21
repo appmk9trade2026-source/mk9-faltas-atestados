@@ -145,11 +145,12 @@ export const createProjeto = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     const correlationId = crypto.randomUUID();
-    console.log(`[AUDIT_FORENSIC] STEP A: server function entered [corr=${correlationId}]`);
+    // Usando console.error para garantir que saia no log de erro se o stdout estiver bufferizado
+     // console.error(`[AUDIT_FORENSIC] STEP A: server function entered [corr=${correlationId}]`);
     
-    console.log(`[AUDIT_FORENSIC] STEP B: auth check [uid=${context.userId}]`);
+     // console.error(`[AUDIT_FORENSIC] STEP B: auth check [uid=${context.userId}]`);
     
-    console.log(`[AUDIT_FORENSIC] STEP C: requirePermission started [code=${PERMISSION_MAP.createProject}]`);
+     // console.error(`[AUDIT_FORENSIC] STEP C: requirePermission started [code=${PERMISSION_MAP.createProject}]`);
     let gate;
     try {
       gate = await requirePermission({
@@ -159,9 +160,9 @@ export const createProjeto = createServerFn({ method: "POST" })
         route: "/configuracoes/projetos",
         correlationId,
       });
-      console.log(`[AUDIT_FORENSIC] STEP D: requirePermission PASS [corr=${gate.correlationId}]`);
+       // console.error(`[AUDIT_FORENSIC] STEP D: requirePermission PASS [corr=${gate.correlationId}]`);
     } catch (e: any) {
-      console.error(`[AUDIT_FORENSIC] STEP D: requirePermission FAIL`, {
+       // console.error(`[AUDIT_FORENSIC] STEP D: requirePermission FAIL`, {
         code: e.message?.split(":")[0],
         message: e.message,
         hint: e.hint,
@@ -186,7 +187,7 @@ export const createProjeto = createServerFn({ method: "POST" })
       observacoes: data.observacoes?.trim() ? data.observacoes.trim() : null,
     };
 
-    console.log(`[AUDIT_FORENSIC] STEP E: project INSERT started`);
+     // console.error(`[AUDIT_FORENSIC] STEP E: project INSERT started`);
     const { data: row, error } = await context.supabase
       .from("projetos")
       .insert(payload as never)
@@ -194,7 +195,7 @@ export const createProjeto = createServerFn({ method: "POST" })
       .single();
 
     if (error) {
-      console.error(`[AUDIT_FORENSIC] STEP F: project INSERT FAIL`, {
+       // console.error(`[AUDIT_FORENSIC] STEP F: project INSERT FAIL`, {
         code: error.code,
         message: error.message,
         details: error.details,
@@ -203,13 +204,13 @@ export const createProjeto = createServerFn({ method: "POST" })
       });
       throw mapSupabaseError(error.message);
     }
-    console.log(`[AUDIT_FORENSIC] STEP F: project INSERT PASS [id=${row.id}]`);
+     // console.error(`[AUDIT_FORENSIC] STEP F: project INSERT PASS [id=${row.id}]`);
 
-    console.log(`[AUDIT_FORENSIC] STEP G: internal protocol audit started`);
+     // console.error(`[AUDIT_FORENSIC] STEP G: internal protocol audit started`);
     await audit(context.supabase, "PROJETO_CRIADO", row.id as string, gate.correlationId,
       null, payload, "criação", data.empresa_id, row.id as string);
     
-    console.log(`[AUDIT_FORENSIC] STEP H: final transaction success`);
+     // console.error(`[AUDIT_FORENSIC] STEP H: final transaction success`);
     return { id: row.id as string, correlation_id: gate.correlationId };
   });
 
