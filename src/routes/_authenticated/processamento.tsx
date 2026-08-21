@@ -462,12 +462,60 @@ function CentralProcessamentoPage() {
     <AppShell title="Central de Processamento" breadcrumb={["Operações", "Central de Processamento"]} actions={<SupportHelpButton context={{ sourceModule: "Central de Processamento", suggestedCategory: "PROCESSAMENTO_INTERNO" }} />}>
       <div className="space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-7 gap-3">
-          <KpiCard title="Minha Fila" value={(ausenciasQ.data || []).filter(a => a.responsavel_processamento_id === user?.id && a.status_processamento === 'EM_PROCESSAMENTO').length} icon={User} color="bg-indigo-50 text-indigo-600" />
-          <KpiCard title="Colaboradores" value={agrupado.length} icon={Users} color="bg-violet-50 text-violet-600" />
-          <KpiCard title="Aguardando" value={kpisQ.data?.backlog ?? "0"} icon={History} color="bg-slate-50 text-slate-600" />
-          <KpiCard title="Em Processamento" value={kpisQ.data?.em_processamento ?? "0"} icon={TrendingUp} color="bg-blue-50 text-blue-600" />
-          <KpiCard title="Concluídos Hoje" value={kpisQ.data?.processados_hoje ?? "0"} icon={CheckCircle2} color="bg-emerald-50 text-emerald-600" />
-          <KpiCard title="Fora SLA" value={kpisQ.data?.fora_sla ?? "0"} icon={AlertTriangle} color="bg-red-50 text-red-600" />
+          <KpiCard 
+            title="Minha Fila" 
+            value={(ausenciasQ.data || []).filter(a => a.responsavel_processamento_id === user?.id && a.status_processamento === 'EM_PROCESSAMENTO').length} 
+            icon={User} 
+            color="bg-indigo-50 text-indigo-600" 
+            onClick={() => setFilterKpi(filterKpi === "MINHA_FILA" ? null : "MINHA_FILA")}
+            active={filterKpi === "MINHA_FILA"}
+            tooltip="Registros atualmente atribuídos a você."
+          />
+          <KpiCard 
+            title="Colaboradores" 
+            value={agrupado.length} 
+            icon={Users} 
+            color="bg-violet-50 text-violet-600" 
+            onClick={() => setFilterKpi(filterKpi === "COLABORADORES" ? null : "COLABORADORES")}
+            active={filterKpi === "COLABORADORES"}
+            tooltip="Colaboradores com registros na Central de Processamento."
+          />
+          <KpiCard 
+            title="Aguardando" 
+            value={kpisQ.data?.backlog ?? "0"} 
+            icon={History} 
+            color="bg-slate-50 text-slate-600" 
+            onClick={() => setFilterKpi(filterKpi === "AGUARDANDO" ? null : "AGUARDANDO")}
+            active={filterKpi === "AGUARDANDO"}
+            tooltip="Registros que ainda aguardam início do processamento."
+          />
+          <KpiCard 
+            title="Em Processamento" 
+            value={kpisQ.data?.em_processamento ?? "0"} 
+            icon={TrendingUp} 
+            color="bg-blue-50 text-blue-600" 
+            onClick={() => setFilterKpi(filterKpi === "EM_PROCESSAMENTO" ? null : "EM_PROCESSAMENTO")}
+            active={filterKpi === "EM_PROCESSAMENTO"}
+            tooltip="Registros já assumidos e atualmente em tratamento."
+          />
+          <KpiCard 
+            title="Concluídos Hoje" 
+            value={kpisQ.data?.processados_hoje ?? "0"} 
+            icon={CheckCircle2} 
+            color="bg-emerald-50 text-emerald-600" 
+            onClick={() => setFilterKpi(filterKpi === "CONCLUIDOS_HOJE" ? null : "CONCLUIDOS_HOJE")}
+            active={filterKpi === "CONCLUIDOS_HOJE"}
+            tooltip="Registros finalizados hoje."
+          />
+          <KpiCard 
+            title="Fora SLA" 
+            value={kpisQ.data?.fora_sla ?? "0"} 
+            icon={AlertTriangle} 
+            color="bg-red-50 text-red-600" 
+            onClick={() => setFilterKpi(filterKpi === "FORA_SLA" ? null : "FORA_SLA")}
+            active={filterKpi === "FORA_SLA"}
+            tooltip="Registros que ultrapassaram o prazo operacional previsto."
+          />
           <Button className="h-full bg-primary font-black shadow-lg hover:bg-primary/90 transition-all hover:scale-[1.02]" onClick={assumirProximo} disabled={iniciarMut.isPending}>
             <Zap className="h-4 w-4 mr-2 fill-current" /> ASSUMIR PRÓXIMO
           </Button>
