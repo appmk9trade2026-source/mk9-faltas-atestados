@@ -4606,6 +4606,7 @@ export type Database = {
           resolution_internal_notes: string | null
           resolution_summary: string | null
           resolved_at: string | null
+          resolved_by: string | null
           safe_code: string | null
           sla_first_response_at: string | null
           sla_paused_at: string | null
@@ -4639,6 +4640,7 @@ export type Database = {
           resolution_internal_notes?: string | null
           resolution_summary?: string | null
           resolved_at?: string | null
+          resolved_by?: string | null
           safe_code?: string | null
           sla_first_response_at?: string | null
           sla_paused_at?: string | null
@@ -4672,6 +4674,7 @@ export type Database = {
           resolution_internal_notes?: string | null
           resolution_summary?: string | null
           resolved_at?: string | null
+          resolved_by?: string | null
           safe_code?: string | null
           sla_first_response_at?: string | null
           sla_paused_at?: string | null

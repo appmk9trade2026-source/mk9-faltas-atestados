@@ -118,17 +118,45 @@ export const getTicketsByModule = createServerFn({ method: "GET" })
 
 
 export const resolveTicket = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({
     ticketId: z.string().uuid(),
     category: z.string(),
     summary: z.string().min(10),
     internalNotes: z.string().optional()
   }).parse(data))
-  .handler(async ({ data }) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
+  .handler(async ({ data, context }) => {
+    const userId = context.userId;
+    const db = context.supabase;
 
-    const { data: ticket, error } = await supabase
+    // 1. Verificar autorização
+    const { data: userRole } = await db
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .single();
+
+    if (!userRole || (userRole.role !== 'rh' && userRole.role !== 'super_admin')) {
+      throw new Error("Apenas atendentes autorizados podem resolver chamados.");
+    }
+
+    // 2. Verificar se o ticket existe e escopo (se for RH, deve estar atribuído ou livre para Admin)
+    const { data: ticket, error: fetchError } = await db
+      .from('support_tickets')
+      .select('status, assigned_user_id')
+      .eq('id', data.ticketId)
+      .single();
+
+    if (fetchError || !ticket) {
+      throw new Error("Chamado não encontrado.");
+    }
+
+    if (ticket.status === 'RESOLVIDO') {
+      return ticket; // Idempotência básica
+    }
+
+    // 3. Atualizar ticket
+    const { data: updatedTicket, error } = await db
       .from('support_tickets')
       .update({
         status: 'RESOLVIDO',
@@ -136,6 +164,7 @@ export const resolveTicket = createServerFn({ method: "POST" })
         resolution_summary: data.summary,
         resolution_internal_notes: data.internalNotes,
         resolved_at: new Date().toISOString(),
+        resolved_by: userId, // Identidade derivada server-side
         sla_status: 'CONCLUIDO',
         updated_at: new Date().toISOString()
       })
@@ -145,13 +174,14 @@ export const resolveTicket = createServerFn({ method: "POST" })
 
     if (error) throw new Error(error.message);
 
-    await supabase.from('support_ticket_events').insert({
+    // 4. Auditoria
+    await db.from('support_ticket_events').insert({
       ticket_id: data.ticketId,
-      actor_user_id: user.id,
+      actor_user_id: userId,
       event_type: 'TICKET_RESOLVED'
     });
 
-    return ticket;
+    return updatedTicket;
   });
 
 export const reopenTicket = createServerFn({ method: "POST" })
